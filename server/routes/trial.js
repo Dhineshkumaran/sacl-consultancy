@@ -12,6 +12,17 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status || null]);
     res.status(201).json({ trialId: result.insertId });
 }));
+
+router.get('/', asyncErrorHandler(async (req, res, next) => {
+    const [rows] = await Client.query('SELECT * FROM trial_cards');
+    res.status(200).json({ trials: rows });
+}));
+
+router.get('/count', asyncErrorHandler(async (req, res, next) => {
+    const [rows] = await Client.query('SELECT COUNT(*) AS count FROM trial_cards');
+    res.status(200).json({ count: rows[0].count });
+}));
+
 export default router;
 
 // CREATE TABLE trial_cards (
