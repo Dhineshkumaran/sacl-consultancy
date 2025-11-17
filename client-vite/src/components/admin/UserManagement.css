@@ -1,0 +1,36 @@
+.user-management {
+  padding: 2rem;
+}
+
+.user-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.user-management-header h2 {
+  color: #333;
+  margin: 0;
+}
+
+.create-user-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.create-user-button:hover {
+  background-color: #218838;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
