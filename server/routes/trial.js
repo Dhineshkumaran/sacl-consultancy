@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
+import transporter from '../utils/mailSender.js';
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
     const { trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status } = req.body || {};
@@ -29,6 +30,20 @@ router.get('/id', asyncErrorHandler(async (req, res, next) => {
     const count = rows[0].count + 1;
     const formattedId = `${part_name}-${count}`;
     res.status(200).json({ trialId: formattedId });
+}));
+
+router.post('/notify', asyncErrorHandler(async (req, res, next) => {
+    const { to, subject, text } = req.body || {};
+    if (!to || !subject || !text) {
+        return res.status(400).json({ message: 'Missing required fields for sending email' });
+    }
+    const mailOptions = {
+        to,
+        subject,
+        text
+    };
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Email sent successfully' });
 }));
 
 export default router;
