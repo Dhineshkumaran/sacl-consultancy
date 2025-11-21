@@ -17,8 +17,8 @@ import {
   Alert,
 } from '@mui/material';
 
-import SandPropertiesTable from './sand.tsx';
-import type { SandProperties } from './sand.tsx';
+import SandPropertiesTable from './sand';
+import type { SandProperties } from './sand';
 import MouldingTable from './moulding';
 
 // Colors
@@ -40,50 +40,6 @@ const theme = createTheme({
     secondary: { main: SAKTHI_COLORS.secondary },
   },
 });
-
-// Helper functions
-const parseChemicalComposition = (composition: string) => {
-  const data = { c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: '' };
-  if (!composition) return data;
-  
-  const lines = composition.split('\n');
-  lines.forEach(line => {
-    const cleanLine = line.trim().toLowerCase();
-    if (cleanLine.includes('c') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.c) data.c = match[0];
-    }
-    if (cleanLine.includes('si') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.si) data.si = match[0];
-    }
-    if (cleanLine.includes('mn') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.mn) data.mn = match[0];
-    }
-    if (cleanLine.includes('p') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.p) data.p = match[0];
-    }
-    if (cleanLine.includes('s') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.s) data.s = match[0];
-    }
-    if (cleanLine.includes('mg') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.mg) data.mg = match[0];
-    }
-    if (cleanLine.includes('cr') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.cr) data.cr = match[0];
-    }
-    if (cleanLine.includes('cu') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.cu) data.cu = match[0];
-    }
-  });
-  return data;
-};
 
 const parseTensileData = (tensile: string) => {
   const lines = tensile.split('\n');
@@ -289,7 +245,7 @@ interface PouringDetailsProps {
 
 // Component to display submitted sample card data (exact same tables)
 const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submittedData }) => {
-  const chemicalData = submittedData.selectedPart ? parseChemicalComposition(submittedData.selectedPart.chemical_composition) : { c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: '' };
+  const chemicalData = submittedData.selectedPart ? submittedData.selectedPart.chemical_composition : { c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: '' };
   const tensileData = submittedData.selectedPart ? parseTensileData(submittedData.selectedPart.tensile) : { tensileStrength: '', yieldStrength: '', elongation: '', impactCold: '', impactRoom: '' };
   const microData = submittedData.selectedPart ? parseMicrostructureData(submittedData.selectedPart.micro_structure) : { nodularity: '', pearlite: '', carbide: '' };
   const hardnessData = submittedData.selectedPart ? parseHardnessData(submittedData.selectedPart.hardness) : { surface: '', core: '' };

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Paper,
@@ -18,8 +18,13 @@ import {
   Button,
   Alert,
   CircularProgress,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
+
+import PouringDetailsTable from './pouring';
+import type { PouringDetails } from './pouring';
 
 // Colors
 const SAKTHI_COLORS = {
@@ -33,8 +38,6 @@ const SAKTHI_COLORS = {
   white: "#FFFFFF",
   success: "#10B981",
 };
-import PouringDetailsTable from './pouring.tsx';
-import type { PouringDetails } from './pouring.tsx';
 
 const MACHINES = ["DISA-1", "DISA-2", "DISA-3", "DISA-4", "DISA-5"];
 const SAMPLING_REASONS = ["First trial", "Metallurgy trial", "Porosity verification", "others"];
@@ -102,7 +105,8 @@ interface PartData {
   pattern_code: string;
   part_name: string;
   material_grade: string;
-  chemical_composition: string;
+  // chemical_composition may come as an object (preferred) or as a JSON string
+  chemical_composition: any;
   micro_structure: string;
   tensile: string;
   impact: string;
@@ -118,51 +122,56 @@ interface MouldCorrection {
   fillerSize: string;
 }
 
-const parseChemicalComposition = (composition: string) => {
-  const data = { c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: '' };
+/*
+  REPLACED PARSING LOGIC:
+  Backend now returns chemical_composition as JSON (object). Accept either object or JSON string.
+  Normalize keys case-insensitively and return a simple object with keys: c, si, mn, p, s, mg, cr, cu
+*/
+const parseChemicalComposition = (composition: any) => {
+  const blank = { c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: '' };
+  if (!composition) return blank;
 
-  if (!composition) return data;
+  let obj: any = composition;
 
-  const lines = composition.split('\n');
+  if (typeof composition === 'string') {
+    // try parse; if fails, return a fallback placing the string under c for visibility
+    try {
+      obj = JSON.parse(composition);
+    } catch (e) {
+      console.warn('chemical_composition is string and JSON.parse failed, using raw string as C', e);
+      return { ...blank, c: composition };
+    }
+  }
 
-  lines.forEach(line => {
-    const cleanLine = line.trim().toLowerCase();
+  if (typeof obj !== 'object' || obj === null) return blank;
 
-    if (cleanLine.includes('c') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.c) data.c = match[0];
-    }
-    if (cleanLine.includes('si') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.si) data.si = match[0];
-    }
-    if (cleanLine.includes('mn') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.mn) data.mn = match[0];
-    }
-    if (cleanLine.includes('p') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.p) data.p = match[0];
-    }
-    if (cleanLine.includes('s') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.s) data.s = match[0];
-    }
-    if (cleanLine.includes('mg') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.mg) data.mg = match[0];
-    }
-    if (cleanLine.includes('cr') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.cr) data.cr = match[0];
-    }
-    if (cleanLine.includes('cu') && cleanLine.match(/\d/)) {
-      const match = cleanLine.match(/[\d.]+/);
-      if (match && !data.cu) data.cu = match[0];
+  // build lowercase-key map to handle "C" or "c" etc.
+  const map: Record<string, any> = {};
+  Object.keys(obj).forEach((k) => {
+    if (typeof k === 'string') {
+      map[k.toLowerCase().replace(/\s+/g, '')] = obj[k];
     }
   });
 
-  return data;
+  // support common alternative names if needed
+  const siKeyCandidates = ['si', 'silicon'];
+  const getFirst = (keys: string[]) => {
+    for (const k of keys) {
+      if (map[k] !== undefined && map[k] !== null) return String(map[k]);
+    }
+    return '';
+  };
+
+  return {
+    c: getFirst(['c']),
+    si: getFirst(siKeyCandidates),
+    mn: getFirst(['mn']),
+    p: getFirst(['p']),
+    s: getFirst(['s']),
+    mg: getFirst(['mg']),
+    cr: getFirst(['cr']),
+    cu: getFirst(['cu']),
+  };
 };
 
 const parseTensileData = (tensile: string) => {
@@ -398,21 +407,23 @@ function SampleCardSubmitted({
 }
 
 export default function FoundrySampleCard() {
-  const [selectedPart, setSelectedPart] = React.useState<PartData | null>(null);
-  const [selectedPattern, setSelectedPattern] = React.useState<PartData | null>(null);
-  const [machine, setMachine] = React.useState("");
-  const [reason, setReason] = React.useState("");
-  const [trialNo, setTrialNo] = React.useState("");
-  const [hodApproved, setHodApproved] = React.useState(false);
+  const [selectedPart, setSelectedPart] = useState<PartData | null>(null);
+  const [selectedPattern, setSelectedPattern] = useState<PartData | null>(null);
+  const [machine, setMachine] = useState("");
+  const [reason, setReason] = useState("");
+  const [trialNo, setTrialNo] = useState<string>("");
+  const [hodApproved, setHodApproved] = useState(false);
   const [masterParts, setMasterParts] = useState<PartData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [samplingDate, setSamplingDate] = React.useState("");
-  const [mouldCount, setMouldCount] = React.useState("");
+  const [trialLoading, setTrialLoading] = useState(false);
+  const [trialError, setTrialError] = useState<string | null>(null);
+  const [samplingDate, setSamplingDate] = useState("");
+  const [mouldCount, setMouldCount] = useState("");
   const [sampleTraceability, setSampleTraceability] = useState("");
   const [toolingType, setToolingType] = useState("");
   const [toolingFiles, setToolingFiles] = useState<File[]>([]);
-  
+
   // New state for routing
   const [currentView, setCurrentView] = useState<'form' | 'submitted' | 'pouring'>('form');
   const [submittedData, setSubmittedData] = useState<any>(null);
@@ -457,10 +468,10 @@ export default function FoundrySampleCard() {
     sampleTraceability &&
     toolingType &&
     // Check if all mould corrections have required fields filled
-    mouldCorrections.every(correction => 
-      correction.compressibility && 
-      correction.squeezePressure && 
-      correction.fillerSize 
+    mouldCorrections.every(correction =>
+      correction.compressibility &&
+      correction.squeezePressure &&
+      correction.fillerSize
     )
   );
 
@@ -500,11 +511,11 @@ export default function FoundrySampleCard() {
   };
 
   useEffect(() => {
-    const getMasterParts = async() => {
+    const getMasterParts = async () => {
       try {
         setLoading(true);
         const response = await fetch('http://localhost:3000/api/master-list');
-        if(!response.ok){
+        if (!response.ok) {
           throw new Error("Failed to fetch master list");
         }
         const data = await response.json();
@@ -520,7 +531,7 @@ export default function FoundrySampleCard() {
     getMasterParts();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedPart) {
       setSelectedPattern(selectedPart);
     } else {
@@ -528,6 +539,52 @@ export default function FoundrySampleCard() {
     }
   }, [selectedPart]);
 
+  // Generate trial number when selectedPart changes (auto-generate via backend)
+  const generateTrialId = async (partName?: string) => {
+    const name = partName || selectedPart?.part_name;
+    if (!name) {
+      setTrialNo('');
+      setTrialError(null);
+      return;
+    }
+
+    setTrialLoading(true);
+    setTrialError(null);
+    try {
+      // call backend API (your backend examples use /api/trial/id?part_name="PART_NAME")
+      const res = await fetch(`http://localhost:3000/api/trial/id?part_name=${encodeURIComponent(name)}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`Failed to generate trial id (${res.status}) ${body}`);
+      }
+      const json = await res.json();
+      if (json && json.trialId) {
+        setTrialNo(json.trialId);
+      } else {
+        setTrialNo('');
+        setTrialError('Unexpected response from server');
+      }
+    } catch (err) {
+      console.error('Error generating trial id:', err);
+      setTrialError('Failed to generate trial number');
+    } finally {
+      setTrialLoading(false);
+    }
+  };
+
+  // auto-generate when user selects a part
+  useEffect(() => {
+    if (!selectedPart) {
+      setTrialNo('');
+      setTrialError(null);
+      return;
+    }
+    // generate trial id for selected part
+    generateTrialId(selectedPart.part_name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPart]);
+
+  // Use the new JSON-parsing chemical data
   const chemicalData = selectedPart ? parseChemicalComposition(selectedPart.chemical_composition) : { c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: '' };
   const tensileData = selectedPart ? parseTensileData(selectedPart.tensile) : { tensileStrength: '', yieldStrength: '', elongation: '', impactCold: '', impactRoom: '' };
   const microData = selectedPart ? parseMicrostructureData(selectedPart.micro_structure) : { nodularity: '', pearlite: '', carbide: '' };
@@ -629,7 +686,7 @@ export default function FoundrySampleCard() {
                       onChange={(_, newValue) => handlePatternChange(newValue)}
                       getOptionLabel={(option) => option.pattern_code}
                       renderOption={(props, option) => (
-                        <li {...props} style={{ whiteSpace: 'normal', lineHeight: '1.5', padding: '8px 16px' }}>
+                        <li {...props} key={option.id} style={{ whiteSpace: 'normal', lineHeight: '1.5', padding: '8px 16px' }}>
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{option.pattern_code}</Typography>
                             <Typography variant="caption" color="text.secondary">{option.part_name}</Typography>
@@ -660,7 +717,7 @@ export default function FoundrySampleCard() {
                       onChange={(_, newValue) => handlePartChange(newValue)}
                       getOptionLabel={(option) => option.part_name}
                       renderOption={(props, option) => (
-                        <li {...props} style={{ whiteSpace: 'normal', lineHeight: '1.5', padding: '8px 16px' }}>
+                        <li {...props} key={option.id} style={{ whiteSpace: 'normal', lineHeight: '1.5', padding: '8px 16px' }}>
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{option.part_name}</Typography>
                             <Typography variant="caption" color="text.secondary">{option.pattern_code}</Typography>
@@ -685,16 +742,35 @@ export default function FoundrySampleCard() {
 
                   <Box>
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, opacity: 0.9 }}>TRIAL No</Typography>
-                    <TextField
-                      fullWidth
-                      value={trialNo}
-                      onChange={(e) => setTrialNo(e.target.value)}
-                      placeholder="Enter trial number"
-                      size="small"
-                      type="number"
-                      required
-                      InputProps={{ sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2 } }}
-                    />
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                      <TextField
+                        fullWidth
+                        value={trialNo}
+                        placeholder="Auto-generated"
+                        size="small"
+                        InputProps={{
+                          readOnly: true,
+                          sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2 },
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              {trialLoading ? <CircularProgress size={18} /> : null}
+                            </InputAdornment>
+                          )
+                        }}
+                      />
+                      <IconButton
+                        color="primary"
+                        onClick={() => generateTrialId(selectedPart?.part_name)}
+                        disabled={!selectedPart || trialLoading}
+                        size="large"
+                        title="Regenerate trial number"
+                        sx={{ bgcolor: SAKTHI_COLORS.white, borderRadius: 2, '&:hover': { bgcolor: '#f0f4ff' } }}
+                      >
+                        {/* using a simple unicode refresh glyph to avoid extra dependency */}
+                        <span style={{ fontSize: 18 }}>⟳</span>
+                      </IconButton>
+                    </Box>
+                    {trialError && <Typography color="error" variant="caption">{trialError}</Typography>}
                   </Box>
                 </Box>
               </Box>

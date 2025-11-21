@@ -7,6 +7,7 @@ const UserDashboard: React.FC = () => {
   const [showUserDetails, setShowUserDetails] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showPending, setShowPending] = useState(false);
 
   // Function to get department name based on user role
   const getDepartmentInfo = () => {
@@ -118,8 +119,8 @@ const UserDashboard: React.FC = () => {
             borderRadius: '50%',
             transition: 'background-color 0.2s'
           }} 
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           onClick={() => setShowNotifications(true)}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -150,8 +151,8 @@ const UserDashboard: React.FC = () => {
               transition: 'background-color 0.2s'
             }}
             onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             <div style={{
               width: '32px',
@@ -238,8 +239,8 @@ const UserDashboard: React.FC = () => {
                   transition: 'background-color 0.2s'
                 }}
                 onClick={logout}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 🚪 Logout
               </div>
@@ -348,14 +349,126 @@ const UserDashboard: React.FC = () => {
             cursor: 'pointer',
             transition: 'background-color 0.2s'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#545b62'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
         >
           Close
         </button>
       </div>
     </div>
   );
+
+  // Pending Modal Component (opened by the new "Pending Cards" button)
+  const PendingModal = () => {
+    // Example pending items — replace with real data or props as needed
+    const pendingItems = [
+      { id: 1, title: 'Pending Approval - Report #234', info: 'Awaiting manager approval' },
+      { id: 2, title: 'Pending Review - QC Task', info: 'Assigned to QC team' },
+      { id: 3, title: 'Pending Update - NPD Document', info: 'Requested additional info' }
+    ];
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000
+      }} onClick={() => setShowPending(false)}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '20px',
+          width: '90%',
+          maxWidth: '600px',
+          maxHeight: '80vh',
+          overflow: 'auto',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+        }} onClick={(e) => e.stopPropagation()}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            borderBottom: '1px solid #e0e0e0',
+            paddingBottom: '15px'
+          }}>
+            <h3 style={{ margin: 0, color: '#333' }}>Pending Cards</h3>
+            <button 
+              onClick={() => setShowPending(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {pendingItems.map(item => (
+              <div key={item.id} style={{
+                padding: '12px',
+                backgroundColor: '#fff8e6',
+                borderRadius: '6px',
+                borderLeft: '4px solid #ffc107'
+              }}>
+                <div style={{ fontWeight: 600, color: '#333' }}>{item.title}</div>
+                <div style={{ fontSize: '14px', color: '#666' }}>{item.info}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
+            <button 
+              onClick={() => setShowPending(false)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                // Placeholder: navigate to pending items page or open a detailed view.
+                // Replace with real navigation or action as needed.
+                alert('Navigate to Pending Items view (implement navigation)');
+              }}
+              style={{
+                flex: 1,
+                padding: '10px',
+                backgroundColor: '#ffc107',
+                color: '#333',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+            >
+              Open Pending View
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="dashboard" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
@@ -392,6 +505,26 @@ const UserDashboard: React.FC = () => {
               </div>
               <div className="button-group" style={{ display: 'flex', gap: '15px' }}>
                 <button 
+                  className="btn-pending-cards"
+                  onClick={() => setShowPending(true)}
+                  style={{
+                    backgroundColor: '#ffc107',
+                    color: '#333',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e0ac06')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffc107')}
+                >
+                  ⏳ Pending Cards
+                </button>
+
+                <button 
                   className="btn-view-users"
                   onClick={() => setShowUserDetails(true)}
                   style={{
@@ -405,8 +538,8 @@ const UserDashboard: React.FC = () => {
                     fontSize: '14px',
                     transition: 'background-color 0.2s'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#545b62'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
                 >
                   👥 View User Details
                 </button>
@@ -556,8 +689,8 @@ const UserDashboard: React.FC = () => {
               cursor: 'pointer',
               transition: 'background-color 0.2s'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#545b62'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
           >
             ← Back to Dashboard
           </button>
@@ -566,6 +699,9 @@ const UserDashboard: React.FC = () => {
 
       {/* Notification Modal */}
       {showNotifications && <NotificationModal />}
+
+      {/* Pending Modal */}
+      {showPending && <PendingModal />}
     </div>
   );
 };
