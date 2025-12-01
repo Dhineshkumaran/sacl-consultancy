@@ -46,6 +46,8 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
+      console.log(credentials);
+      
       await login(credentials);
     } catch (err: any) {
       setError(err.message || 'Login failed');

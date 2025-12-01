@@ -10,6 +10,8 @@ import userRoutes from './routes/users.js';
 import loginRoutes from './routes/login.js';
 import departmentRoutes from './routes/departments.js';
 import trial from './routes/trial.js';
+import metallurgicalSpecs from './routes/metallurgicalSpecs.js';
+import mechanicalProperties from './routes/mechanicalProperties.js';
 
 const app = express();
 app.use(express.json());
@@ -24,6 +26,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/login', loginRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/trial', trial);
+app.use('/api/metallurgical-specs', metallurgicalSpecs);
+app.use('/api/mechanical-properties', mechanicalProperties);
 app.use('/health', (req, res) => {
     res.status(200).json({status: 'OK'});
 });
@@ -53,7 +57,7 @@ async function query(arg){
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, '0.0.0.0', async ()=>{
+app.listen(port, 'localhost', async ()=>{
     try {
         const res = await query('SELECT NOW()');
         console.log(res[0]);
