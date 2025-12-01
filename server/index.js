@@ -53,7 +53,7 @@ async function query(arg){
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, 'localhost', async ()=>{
+app.listen(port, '0.0.0.0', async ()=>{
     try {
         const res = await query('SELECT NOW()');
         console.log(res[0]);
