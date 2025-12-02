@@ -1,6 +1,5 @@
 import mysql from 'mysql2';
 import dotenv from 'dotenv';
-import fs from 'fs';
 
 dotenv.config();
 
@@ -12,11 +11,7 @@ const pool = mysql.createPool({
   port: process.env.DB_PORT,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  ssl: {
-    ca: fs.readFileSync("./config/ca.pem"),
-    rejectUnauthorized: true
-  }
+  queueLimit: 0
 });
 
 const promisePool = pool.promise();
