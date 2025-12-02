@@ -15,7 +15,7 @@ import mechanicalProperties from './routes/mechanicalProperties.js';
 
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
     origin: "*"
@@ -29,7 +29,7 @@ app.use('/api/trial', trial);
 app.use('/api/metallurgical-specs', metallurgicalSpecs);
 app.use('/api/mechanical-properties', mechanicalProperties);
 app.use('/health', (req, res) => {
-    res.status(200).json({status: 'OK'});
+    res.status(200).json({ status: 'OK' });
 });
 // app.all('*', (req, res, next)=>{
 //     const err = new CustomError(`Can't find the ${req.originalUrl} on the server!`, 404);
@@ -42,11 +42,11 @@ app.use((error, req, res, next) => {
     res.status(error.statusCode).json({
         success: false,
         message: error.message,
-        error: process.env.NODE_ENV == 'production'?{}:error
+        error: process.env.NODE_ENV == 'production' ? {} : error
     });
 });
 
-async function query(arg){
+async function query(arg) {
     try {
         const res = await Client.query(arg);
         return res;
@@ -57,7 +57,7 @@ async function query(arg){
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, 'localhost', async ()=>{
+app.listen(port, async () => {
     try {
         const res = await query('SELECT NOW()');
         console.log(res[0]);
