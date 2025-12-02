@@ -27,19 +27,11 @@ const generateRefreshToken = (user_id, username) => {
 };
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
-    const { username, password, role, department_id } = req.body || {};
+    const { username, password } = req.body || {};
     console.log(req.body);
 
     if (!username || !password) {
         return next(new CustomError('Username and password are required', 400));
-    }
-
-    if (!role) {
-        return next(new CustomError('Role is required', 400));
-    }
-
-    if ((role === 'HOD' || role === 'User') && !department_id) {
-        return next(new CustomError('Department is required for HOD and User roles', 400));
     }
 
     try {
@@ -51,20 +43,13 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
 
         let user = rows[0];
         const departmentQuery = `SELECT department_name FROM departments WHERE department_id = ? LIMIT 1`;
-        if (department_id) {
-            const [deptRows] = await Client.query(departmentQuery, [department_id]);
+        if (user.department_id) {
+            const [deptRows] = await Client.query(departmentQuery, [user.department_id]);
             if (deptRows && deptRows.length > 0) {
                 user.department = deptRows[0].department_name;
             } else {
                 return next(new CustomError('Invalid department', 400));
             }
-        }
-
-        console.log(user);
-        
-
-        if (user.role !== role) {
-            return next(new CustomError(`Invalid role. User role is ${user.role}`, 403));
         }
 
         const match = await bcrypt.compare(password, user.password_hash);

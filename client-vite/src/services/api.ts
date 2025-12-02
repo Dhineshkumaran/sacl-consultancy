@@ -35,7 +35,7 @@ class ApiService {
                 const retryConfig = {
                   ...config,
                   headers: {
-                    ...(config.headers as Record<string,string>),
+                    ...(config.headers as Record<string, string>),
                     Authorization: `Bearer ${refreshData.token}`
                   }
                 };

@@ -1,5 +1,7 @@
 import mysql from 'mysql2';
 import dotenv from 'dotenv';
+import fs from 'fs';
+
 dotenv.config();
 
 const pool = mysql.createPool({
@@ -11,6 +13,10 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  ssl: {
+    ca: fs.readFileSync("./config/ca.pem"),
+    rejectUnauthorized: true
+  }
 });
 
 const promisePool = pool.promise();
@@ -21,7 +27,7 @@ promisePool.getConnection()
     conn.release();
   })
   .catch(err => {
-    console.error("MySQL connection failed:", err.message);
+    console.error("MySQL connection failed:", err);
   });
 
 export default promisePool;
