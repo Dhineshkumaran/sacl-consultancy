@@ -12,6 +12,47 @@
   align-items: center;
   z-index: 1000;
 }
+.password-field {
+  position: relative;
+}
+
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  width: 100%;
+  padding-right: 40px; /* Space for the eye icon */
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 18px;
+  background: none;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  opacity: 0.7;
+}
+
+.password-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Ensure the eye icon doesn't interfere with input focus */
+.password-input-container:focus-within .password-toggle {
+  opacity: 0.8;
+}
 
 .modal-content {
   background: white;

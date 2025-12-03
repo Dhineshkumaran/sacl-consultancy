@@ -51,400 +51,666 @@ const DashboardPage: React.FC = () => {
 
   const departmentInfo = getDepartmentInfo();
 
-  // Add Master List Modal Component
-  const AddMasterModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-    const [formData, setFormData] = useState({
-      pattern_code: '',
-      part_name: '',
-      material_grade: '',
-      chemical_composition: JSON.stringify({
-        c: '',
-        si: '',
-        mn: '',
-        p: '',
-        s: '',
-        mg: '',
-        cr: '',
-        cu: ''
-      }, null, 2),
-      micro_structure: '',
-      tensile: '',
-      impact: '--',
-      hardness: ''
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState(false);
+// Add Master List Modal Component
+const AddMasterModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [formData, setFormData] = useState({
+    pattern_code: '',
+    part_name: '',
+    material_grade: '',
 
-    const handleInputChange = (field: string, value: string) => {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    };
+    // Chemical Composition (JSON)
+    chemical_composition: {
+      C: '',
+      Si: '',
+      Mn: '',
+      P: '',
+      S: '',
+      Mg: '',
+      Cr: '',
+      Cu: '',
+      Nodularity: '',
+      Pearlite: '',
+      Carbide: ''
+    },
 
-    const handleChemicalChange = (element: string, value: string) => {
-      try {
-        const currentChem = JSON.parse(formData.chemical_composition);
-        const updatedChem = { ...currentChem, [element]: value };
-        setFormData(prev => ({
-          ...prev,
-          chemical_composition: JSON.stringify(updatedChem, null, 2)
-        }));
-      } catch (e) {
-        console.error('Error parsing chemical composition:', e);
+    // Microstructure
+    micro_structure: '',
+
+    // Mechanical Properties
+    tensile_strength_min: '',
+    yield_strength_min: '',
+    elongation: '',
+    impact_cold: '',
+    impact_room: '',
+
+    // NDT Inspection
+    hardness_surface: '',
+    hardness_core: '',
+    xray: '',
+    mpi: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleChemicalChange = (element: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      chemical_composition: {
+        ...prev.chemical_composition,
+        [element]: value
       }
+    }));
+  };
+
+  const testExactSQLPayload = async () => {
+    console.log('🧪 Testing with EXACT SQL payload structure...');
+    
+    // This is the EXACT same structure as your working SQL insert
+    const exactSQLPayload = {
+      pattern_code: 'PC-' + Date.now(), // Make it unique
+      part_name: 'Gear Wheel',
+      material_grade: 'EN8',
+      chemical_composition: {
+        C: '0.40',
+        Mn: '0.70',
+        Nodularity: 'N/A'
+      },
+      micro_structure: 'Fine pearlite with ferrite',
+      tensile_strength_min: '550 MPa',
+      yield_strength_min: '420 MPa',
+      elongation: '12%',
+      impact_room: '20 J',
+      impact_cold: '18 J',
+      hardness_surface: '62 HRC',
+      hardness_core: '58 HRC',
+      xray: 'No internal defects',
+      mpi: 'No indications'
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setLoading(true);
-      setError(null);
+    console.log('🔧 EXACT SQL Payload:', JSON.stringify(exactSQLPayload, null, 2));
 
-      try {
-        // Parse chemical composition to ensure it's valid JSON
-        let chemicalComp;
-        try {
-          chemicalComp = JSON.parse(formData.chemical_composition);
-        } catch (parseError) {
-          throw new Error('Invalid chemical composition JSON format');
-        }
-
-        const payload = {
-          ...formData,
-          chemical_composition: chemicalComp
-        };
-
-        const response = await fetch('http://localhost:3000/api/master-list', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to add to master list');
-        }
-
-        const result = await response.json();
-        setSuccess(true);
-        setTimeout(() => {
-          onClose();
-          setSuccess(false);
-          setFormData({
-            pattern_code: '',
-            part_name: '',
-            material_grade: '',
-            chemical_composition: JSON.stringify({
-              c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: ''
-            }, null, 2),
-            micro_structure: '',
-            tensile: '',
-            impact: '--',
-            hardness: ''
-          });
-        }, 2000);
-
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (!isOpen) return null;
-
-    // Parse chemical composition for the table
-    let chemicalData;
     try {
-      chemicalData = JSON.parse(formData.chemical_composition);
-    } catch {
-      chemicalData = { c: '', si: '', mn: '', p: '', s: '', mg: '', cr: '', cu: '' };
-    }
+      const response = await fetch('http://localhost:3000/api/master-list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exactSQLPayload),
+      });
 
-    return (
+      const responseText = await response.text();
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response text:', responseText);
+
+      if (response.ok) {
+        console.log('✅ SUCCESS with exact SQL payload!');
+        return true;
+      } else {
+        console.log('❌ FAILED with exact SQL payload');
+        return false;
+      }
+    } catch (err) {
+      console.error('❌ Error with exact SQL payload:', err);
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      // First, test with the exact SQL payload to see if it works
+      console.log('🚀 Step 1: Testing with exact SQL payload...');
+      const sqlTestSuccess = await testExactSQLPayload();
+
+      if (!sqlTestSuccess) {
+        throw new Error('Even the exact SQL payload fails! The issue is in the backend API validation.');
+      }
+
+      console.log('🚀 Step 2: Now trying with form data...');
+
+      // Validate required fields
+      if (!formData.pattern_code.trim()) {
+        throw new Error('Pattern Code is required');
+      }
+      if (!formData.part_name.trim()) {
+        throw new Error('Part Name is required');
+      }
+
+      // Prepare chemical composition - only include non-empty values
+      const chemicalComposition: Record<string, string> = {};
+      Object.entries(formData.chemical_composition).forEach(([element, value]) => {
+        if (value && value.trim() !== '') {
+          chemicalComposition[element] = value.trim();
+        }
+      });
+
+      // Create payload - include new fields and use same JSON shape for chemical_composition
+      const payload = {
+        pattern_code: formData.pattern_code.trim(),
+        part_name: formData.part_name.trim(),
+        material_grade: formData.material_grade.trim() || null,
+        chemical_composition: Object.keys(chemicalComposition).length > 0 ? chemicalComposition : null,
+        micro_structure: formData.micro_structure.trim() || null,
+
+        // Mechanical properties
+        tensile_strength_min: formData.tensile_strength_min.trim() || null,
+        yield_strength_min: formData.yield_strength_min.trim() || null,
+        elongation: formData.elongation.trim() || null,
+        impact_cold: formData.impact_cold.trim() || null,
+        impact_room: formData.impact_room.trim() || null,
+
+        // NDT Inspection
+        hardness_surface: formData.hardness_surface.trim() || null,
+        hardness_core: formData.hardness_core.trim() || null,
+        xray: formData.xray.trim() || null,
+        mpi: formData.mpi.trim() || null
+      };
+
+      console.log('🔧 Form Data Payload:', JSON.stringify(payload, null, 2));
+
+      const response = await fetch('http://localhost:3000/api/master-list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await response.text();
+      console.log('📡 Form Data Response status:', response.status);
+      console.log('📡 Form Data Response text:', responseText);
+
+      if (!response.ok) {
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = responseText || errorMessage;
+        }
+        
+        // If we get "Missing required fields" but SQL test worked, there's a backend validation issue
+        if (errorMessage.includes('Missing required fields') && sqlTestSuccess) {
+          errorMessage += '\n\n💡 The exact SQL payload works but form data fails. Check backend validation rules.';
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        onClose();
+        setSuccess(false);
+        // Reset form
+        setFormData({
+          pattern_code: '',
+          part_name: '',
+          material_grade: '',
+          chemical_composition: { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' },
+          micro_structure: '',
+          tensile_strength_min: '',
+          yield_strength_min: '',
+          elongation: '',
+          impact_cold: '',
+          impact_room: '',
+          hardness_surface: '',
+          hardness_core: '',
+          xray: '',
+          mpi: ''
+        });
+      }, 2000);
+
+    } catch (err) {
+      console.error('❌ Error submitting form:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while submitting the form');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        pattern_code: '',
+        part_name: '',
+        material_grade: '',
+        chemical_composition: { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' },
+        micro_structure: '',
+        tensile_strength_min: '',
+        yield_strength_min: '',
+        elongation: '',
+        impact_cold: '',
+        impact_room: '',
+        hardness_surface: '',
+        hardness_core: '',
+        xray: '',
+        mpi: ''
+      });
+      setError(null);
+      setSuccess(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    }} onClick={onClose}>
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000
-      }} onClick={onClose}>
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        padding: '20px',
+        width: '95%',
+        maxWidth: '1200px',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+      }} onClick={(e) => e.stopPropagation()}>
         <div style={{
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          padding: '20px',
-          width: '95%',
-          maxWidth: '1200px',
-          maxHeight: '90vh',
-          overflow: 'auto',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-        }} onClick={(e) => e.stopPropagation()}>
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+          borderBottom: '1px solid #e0e0e0',
+          paddingBottom: '15px'
+        }}>
+          <h3 style={{ margin: 0, color: '#333', fontWeight: 700 }}>Add to Master List</h3>
+          <button 
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '18px',
+              cursor: 'pointer',
+              color: '#666'
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {error && (
           <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px',
-            borderBottom: '1px solid #e0e0e0',
-            paddingBottom: '15px'
+            padding: '12px',
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            borderRadius: '4px',
+            marginBottom: '15px',
+            fontWeight: 500,
+            border: '1px solid #f5c6cb',
+            fontSize: '14px',
+            whiteSpace: 'pre-wrap'
           }}>
-            <h3 style={{ margin: 0, color: '#333', fontWeight: 700 }}>Add to Master List</h3>
-            <button 
-              onClick={onClose}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '18px',
-                cursor: 'pointer',
-                color: '#666'
-              }}
-            >
-              ×
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>❌</span>
+              <span style={{ flex: 1 }}>{error}</span>
+            </div>
+          </div>
+        )}
+
+        {success && (
+          <div style={{
+            padding: '12px',
+            backgroundColor: '#d4edda',
+            color: '#155724',
+            borderRadius: '4px',
+            marginBottom: '15px',
+            fontWeight: 500,
+            border: '1px solid #c3e6cb',
+            fontSize: '14px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>✅</span>
+              <span>Successfully added to master list!</span>
+            </div>
+          </div>
+        )}
+
+        
+
+        <form onSubmit={handleSubmit}>
+          {/* Basic Information */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ marginBottom: '15px', color: '#333' }}>Basic Information</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>
+                  Pattern Code *
+                </label>
+                <input
+                  type="text"
+                  value={formData.pattern_code}
+                  onChange={(e) => handleInputChange('pattern_code', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    backgroundColor: '#fafafa'
+                  }}
+                  placeholder="e.g., PC-001"
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>
+                  Part Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.part_name}
+                  onChange={(e) => handleInputChange('part_name', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    backgroundColor: '#fafafa'
+                  }}
+                  placeholder="e.g., Gear Wheel"
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>
+                  Material Grade
+                </label>
+                <input
+                  type="text"
+                  value={formData.material_grade}
+                  onChange={(e) => handleInputChange('material_grade', e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    backgroundColor: '#fafafa'
+                  }}
+                  placeholder="e.g., EN8"
+                />
+              </div>
+            </div>
           </div>
 
-          {error && (
-            <div style={{
-              padding: '10px',
-              backgroundColor: '#f8d7da',
-              color: '#721c24',
-              borderRadius: '4px',
-              marginBottom: '15px',
-              fontWeight: 500
-            }}>
-              {error}
+          {/* Chemical Composition Table */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ marginBottom: '15px', color: '#333' }}>Chemical Composition</h4>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#f8f9fa' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#2950bbff', color: 'white' }}>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>C%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Si%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Mn%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>P%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>S%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Mg%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Cr%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Cu%</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Nodularity</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Pearlite</th>
+                    <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Carbide</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    {['C', 'Si', 'Mn', 'P', 'S', 'Mg', 'Cr', 'Cu', 'Nodularity', 'Pearlite', 'Carbide'].map((element) => (
+                      <td key={element} style={{ padding: '8px', textAlign: 'center' }}>
+                        <input
+                          type="text"
+                          value={formData.chemical_composition[element as keyof typeof formData.chemical_composition]}
+                          onChange={(e) => handleChemicalChange(element, e.target.value)}
+                          style={{
+                            width: '80%',
+                            padding: '8px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            textAlign: 'center',
+                            backgroundColor: 'white'
+                          }}
+                          placeholder="--"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
 
-          {success && (
-            <div style={{
-              padding: '10px',
-              backgroundColor: '#d4edda',
-              color: '#155724',
-              borderRadius: '4px',
-              marginBottom: '15px',
-              fontWeight: 500
-            }}>
-              ✅ Successfully added to master list!
-            </div>
-          )}
+          {/* Additional Properties */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ marginBottom: '15px', color: '#333' }}>Material Properties</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Micro Structure</label>
+                <textarea
+                  value={formData.micro_structure}
+                  onChange={(e) => handleInputChange('micro_structure', e.target.value)}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    resize: 'vertical',
+                    backgroundColor: '#fafafa'
+                  }}
+                  placeholder="e.g., Fine pearlite with ferrite"
+                />
+              </div>
 
-          <form onSubmit={handleSubmit}>
-            {/* Basic Information */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ marginBottom: '15px', color: '#333' }}>Basic Information</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Pattern Code *</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Tensile Strength (Min)</label>
                   <input
                     type="text"
-                    value={formData.pattern_code}
-                    onChange={(e) => handleInputChange('pattern_code', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                    required
+                    value={formData.tensile_strength_min}
+                    onChange={(e) => handleInputChange('tensile_strength_min', e.target.value)}
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
+                    placeholder="e.g., 550 MPa"
                   />
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Part Name *</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Yield Strength (Min)</label>
                   <input
                     type="text"
-                    value={formData.part_name}
-                    onChange={(e) => handleInputChange('part_name', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                    required
+                    value={formData.yield_strength_min}
+                    onChange={(e) => handleInputChange('yield_strength_min', e.target.value)}
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
+                    placeholder="e.g., 420 MPa"
                   />
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Material Grade *</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Elongation</label>
                   <input
                     type="text"
-                    value={formData.material_grade}
-                    onChange={(e) => handleInputChange('material_grade', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                    required
+                    value={formData.elongation}
+                    onChange={(e) => handleInputChange('elongation', e.target.value)}
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
+                    placeholder="e.g., 12%"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Chemical Composition Table */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ marginBottom: '15px', color: '#333' }}>Chemical Composition</h4>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#f8f9fa' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#2950bbff', color: 'white' }}>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>C%</th>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Si%</th>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Mn%</th>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>P%</th>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>S%</th>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Mg%</th>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Cr%</th>
-                      <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Cu%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      {['c', 'si', 'mn', 'p', 's', 'mg', 'cr', 'cu'].map((element) => (
-                        <td key={element} style={{ padding: '8px', textAlign: 'center' }}>
-                          <input
-                            type="text"
-                            value={chemicalData[element] || ''}
-                            onChange={(e) => handleChemicalChange(element, e.target.value)}
-                            style={{
-                              width: '80%',
-                              padding: '5px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              textAlign: 'center'
-                            }}
-                            placeholder="--"
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Additional Properties */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ marginBottom: '15px', color: '#333' }}>Material Properties</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Micro Structure</label>
-                  <textarea
-                    value={formData.micro_structure}
-                    onChange={(e) => handleInputChange('micro_structure', e.target.value)}
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      resize: 'vertical'
-                    }}
-                    placeholder="e.g., Nodularity ≥85%, Pearlite 10-20%, Carbide ≤2%"
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Tensile Properties</label>
-                  <textarea
-                    value={formData.tensile}
-                    onChange={(e) => handleInputChange('tensile', e.target.value)}
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      resize: 'vertical'
-                    }}
-                    placeholder="e.g., Tensile Strength ≥450 MPa, Yield Strength ≥250 MPa, Elongation ≥18%"
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Impact</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Impact (Cold)</label>
                   <input
                     type="text"
-                    value={formData.impact}
-                    onChange={(e) => handleInputChange('impact', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                    placeholder="--"
+                    value={formData.impact_cold}
+                    onChange={(e) => handleInputChange('impact_cold', e.target.value)}
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
+                    placeholder="e.g., 18 J"
                   />
                 </div>
+
                 <div>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Hardness</label>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Impact (Room)</label>
                   <input
                     type="text"
-                    value={formData.hardness}
-                    onChange={(e) => handleInputChange('hardness', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                    placeholder="e.g., Surface 170-230 BHN, Core 160-220 BHN"
+                    value={formData.impact_room}
+                    onChange={(e) => handleInputChange('impact_room', e.target.value)}
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
+                    placeholder="e.g., 20 J"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Hardness (Surface)</label>
+                  <input
+                    type="text"
+                    value={formData.hardness_surface}
+                    onChange={(e) => handleInputChange('hardness_surface', e.target.value)}
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
+                    placeholder="e.g., 62 HRC"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button
-                type="button"
-                onClick={onClose}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 500
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: loading ? '#6c757d' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontWeight: 500
-                }}
-              >
-                {loading ? 'Adding...' : 'Add to Master List'}
-              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Hardness (Core)</label>
+                  <input
+                    type="text"
+                    value={formData.hardness_core}
+                    onChange={(e) => handleInputChange('hardness_core', e.target.value)}
+                    style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
+                    placeholder="e.g., 58 HRC"
+                  />
+                </div>
+
+                <div>
+  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>X-Ray</label>
+  <input
+    type="text"
+    value={formData.xray}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      // Check if MPI is included
+      const mpiMatch = value.match(/MPI\s*[:\-]\s*(.*)$/i);
+
+      if (mpiMatch) {
+        // Extract MPI value
+        const mpi = mpiMatch[1].trim();
+
+        // Extract X-Ray part before MPI
+        const xrayValue = value
+          .replace(mpiMatch[0], "")  // remove "MPI: ..."
+          .replace(/•$/, "")         // remove trailing dot if exists
+          .trim();
+
+        // Update both fields
+        handleInputChange("xray", xrayValue);
+        handleInputChange("mpi", mpi);
+      } else {
+        // Standard X-ray update
+        handleInputChange("xray", value);
+      }
+    }}
+    style={{
+      width: '100%',
+      padding: '10px',
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+      fontSize: '14px',
+      backgroundColor: '#fafafa'
+    }}
+    placeholder="e.g., No internal defects"
+  />
+</div>
+
+
+                <div>
+  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>MPI</label>
+  <input
+    type="text"
+    value={formData.mpi}
+    onChange={(e) => handleInputChange('mpi', e.target.value)}
+    style={{
+      width: '100%',
+      padding: '10px',
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+      fontSize: '14px',
+      backgroundColor: '#fafafa'
+    }}
+    placeholder="e.g., No indications"
+  />
+</div>
+              </div>
             </div>
-          </form>
-        </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '14px'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: loading ? '#6c757d' : '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontWeight: 500,
+                fontSize: '14px'
+              }}
+            >
+              {loading ? 'Testing...' : 'Debug & Submit'}
+            </button>
+          </div>
+        </form>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   const CustomHeader = () => (
     <header style={{

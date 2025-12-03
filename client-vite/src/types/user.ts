@@ -14,7 +14,7 @@ export interface CreateUserRequest {
   username: string;
   full_name: string;
   password: string;
-  email: string;
+  email?: string;
   department_name?: string | null;
   role?: string;
 }

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/components/PouringDetailsTable.tsx
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Paper,
   Table,
@@ -15,7 +16,12 @@ import {
   FormControl,
   Button,
   Alert,
+  CircularProgress,
 } from '@mui/material';
+
+import axios from 'axios';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 import SandPropertiesTable from './sand';
 import type { SandProperties } from './sand';
@@ -46,7 +52,7 @@ const parseTensileData = (tensile: string) => {
   let tensileStrength = '';
   let yieldStrength = '';
   let elongation = '';
-  
+
   lines.forEach(line => {
     const cleanLine = line.trim();
     if (cleanLine.match(/\d+\s*(MPa|N\/mm²|Mpa|Kgf\/mm²)/) || cleanLine.includes('Tensile Strength') || cleanLine.match(/[≥>]\s*\d+/)) {
@@ -64,7 +70,7 @@ const parseTensileData = (tensile: string) => {
         if (numberMatch && !tensileStrength) tensileStrength = numberMatch[1];
       }
     }
-    
+
     if (cleanLine.includes('Yield Strength') || cleanLine.includes('Yield')) {
       if (cleanLine.includes('≥')) {
         const numberMatch = cleanLine.match(/≥\s*(\d+)/);
@@ -80,7 +86,7 @@ const parseTensileData = (tensile: string) => {
         if (numberMatch && !yieldStrength) yieldStrength = numberMatch[1];
       }
     }
-    
+
     if (cleanLine.includes('Elongation') || cleanLine.includes('%') || cleanLine.match(/[≥>]\s*\d+\s*%/)) {
       if (cleanLine.includes('≥')) {
         const numberMatch = cleanLine.match(/≥\s*(\d+)/);
@@ -97,7 +103,7 @@ const parseTensileData = (tensile: string) => {
       }
     }
   });
-  
+
   return { tensileStrength, yieldStrength, elongation, impactCold: '', impactRoom: '' };
 };
 
@@ -106,7 +112,7 @@ const parseMicrostructureData = (microstructure: string) => {
   let nodularity = '';
   let pearlite = '';
   let carbide = '';
-  
+
   lines.forEach(line => {
     const cleanLine = line.trim().toLowerCase();
     if (cleanLine.includes('nodularity')) {
@@ -121,7 +127,7 @@ const parseMicrostructureData = (microstructure: string) => {
         if (match) nodularity = match[1];
       }
     }
-    
+
     if (cleanLine.includes('pearlite')) {
       if (cleanLine.includes('≥')) {
         const match = cleanLine.match(/≥\s*(\d+)/);
@@ -149,7 +155,7 @@ const parseMicrostructureData = (microstructure: string) => {
         if (match) pearlite = match[1];
       }
     }
-    
+
     if (cleanLine.includes('carbide') || cleanLine.includes('cementite')) {
       if (cleanLine.includes('≤')) {
         const match = cleanLine.match(/≤\s*(\d+)/);
@@ -175,11 +181,11 @@ const parseMicrostructureData = (microstructure: string) => {
       }
     }
   });
-  
-  return { 
+
+  return {
     nodularity: nodularity || '--',
-    pearlite: pearlite || '--', 
-    carbide: carbide || '--' 
+    pearlite: pearlite || '--',
+    carbide: carbide || '--'
   };
 };
 
@@ -187,7 +193,7 @@ const parseHardnessData = (hardness: string) => {
   const lines = hardness.split('\n');
   let surface = '';
   let core = '';
-  
+
   lines.forEach(line => {
     const cleanLine = line.trim().toLowerCase();
     if (cleanLine.includes('surface')) {
@@ -201,7 +207,7 @@ const parseHardnessData = (hardness: string) => {
       if (match) surface = match[1];
     }
   });
-  
+
   return { surface: surface || '--', core: core || '--' };
 };
 
@@ -257,40 +263,40 @@ const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submi
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3, alignItems: 'start' }}>
           <Box>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, opacity: 0.9 }}>Pattern Code</Typography>
-            <TextField 
+            <TextField
               fullWidth
               value={submittedData.selectedPattern?.pattern_code || ''}
               size="small"
-              InputProps={{ 
+              InputProps={{
                 readOnly: true,
-                sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2, color: SAKTHI_COLORS.darkGray } 
+                sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2, color: SAKTHI_COLORS.darkGray }
               }}
             />
           </Box>
 
           <Box>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, opacity: 0.9 }}>Part Name</Typography>
-            <TextField 
+            <TextField
               fullWidth
               value={submittedData.selectedPart?.part_name || ''}
               size="small"
-              InputProps={{ 
+              InputProps={{
                 readOnly: true,
-                sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2, color: SAKTHI_COLORS.darkGray } 
+                sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2, color: SAKTHI_COLORS.darkGray }
               }}
             />
           </Box>
 
           <Box>
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, opacity: 0.9 }}>TRIAL No</Typography>
-            <TextField 
+            <TextField
               fullWidth
-              value={submittedData.trialNo} 
-              size="small" 
-              InputProps={{ 
+              value={submittedData.trialNo}
+              size="small"
+              InputProps={{
                 readOnly: true,
-                sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2, color: SAKTHI_COLORS.darkGray } 
-              }} 
+                sx: { bgcolor: SAKTHI_COLORS.white, borderRadius: 2, color: SAKTHI_COLORS.darkGray }
+              }}
             />
           </Box>
         </Box>
@@ -298,17 +304,17 @@ const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submi
 
       {/* Info Chip */}
       <Box sx={{ px: 3, pt: 3, pb: 2 }}>
-        <Chip 
-          icon={<span style={{ fontSize: '1.2rem' }}>📋</span>} 
-          label="Submitted Sample Card Data (Read Only)" 
-          sx={{ 
-            bgcolor: SAKTHI_COLORS.success + '20', 
-            color: SAKTHI_COLORS.darkGray, 
-            border: `1px dashed ${SAKTHI_COLORS.success}`, 
-            fontWeight: 600, 
-            fontSize: '0.875rem', 
-            py: 2.5 
-          }} 
+        <Chip
+          icon={<span style={{ fontSize: '1.2rem' }}>📋</span>}
+          label="Submitted Sample Card Data (Read Only)"
+          sx={{
+            bgcolor: SAKTHI_COLORS.success + '20',
+            color: SAKTHI_COLORS.darkGray,
+            border: `1px dashed ${SAKTHI_COLORS.success}`,
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            py: 2.5
+          }}
         />
       </Box>
 
@@ -423,26 +429,26 @@ const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submi
             <TableBody>
               <TableRow>
                 <TableCell>
-                  <TextField 
-                    fullWidth 
-                    value={submittedData.samplingDate} 
-                    size="small" 
-                    InputProps={{ 
+                  <TextField
+                    fullWidth
+                    value={submittedData.samplingDate}
+                    size="small"
+                    InputProps={{
                       readOnly: true,
-                      sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 } 
-                    }} 
+                      sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 }
+                    }}
                   />
                 </TableCell>
                 <TableCell>
-                  <TextField 
-                    fullWidth 
-                    value={submittedData.mouldCount} 
-                    placeholder="10" 
-                    size="small" 
-                    InputProps={{ 
+                  <TextField
+                    fullWidth
+                    value={submittedData.mouldCount}
+                    placeholder="10"
+                    size="small"
+                    InputProps={{
                       readOnly: true,
-                      sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 } 
-                    }} 
+                      sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 }
+                    }}
                   />
                 </TableCell>
                 <TableCell>
@@ -470,15 +476,15 @@ const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submi
                   </FormControl>
                 </TableCell>
                 <TableCell>
-                  <TextField 
-                    fullWidth 
-                    value={submittedData.sampleTraceability} 
-                    placeholder="Enter option" 
-                    size="small" 
-                    InputProps={{ 
+                  <TextField
+                    fullWidth
+                    value={submittedData.sampleTraceability}
+                    placeholder="Enter option"
+                    size="small"
+                    InputProps={{
                       readOnly: true,
-                      sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 } 
-                    }} 
+                      sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 }
+                    }}
                   />
                 </TableCell>
               </TableRow>
@@ -494,30 +500,30 @@ const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submi
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
             <Box>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, color: SAKTHI_COLORS.darkGray }}>Type</Typography>
-              <TextField 
-                fullWidth 
-                placeholder="No modifications recorded" 
-                size="small" 
-                multiline 
-                rows={2} 
-                InputProps={{ 
+              <TextField
+                fullWidth
+                placeholder="No modifications recorded"
+                size="small"
+                multiline
+                rows={2}
+                InputProps={{
                   readOnly: true,
-                  sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 } 
-                }} 
+                  sx: { bgcolor: SAKTHI_COLORS.background, borderRadius: 1 }
+                }}
               />
             </Box>
             <Box>
               <Typography variant="body2" sx={{ mb: 1, fontWeight: 600, color: SAKTHI_COLORS.darkGray }}>Attach Photo or PDF</Typography>
-              <Button 
-                variant="outlined" 
-                fullWidth 
+              <Button
+                variant="outlined"
+                fullWidth
                 disabled
-                sx={{ 
-                  borderWidth: 2, 
-                  borderStyle: 'dashed', 
-                  borderColor: SAKTHI_COLORS.lightGray, 
-                  color: SAKTHI_COLORS.darkGray, 
-                  py: 1.5, 
+                sx={{
+                  borderWidth: 2,
+                  borderStyle: 'dashed',
+                  borderColor: SAKTHI_COLORS.lightGray,
+                  color: SAKTHI_COLORS.darkGray,
+                  py: 1.5,
                   bgcolor: SAKTHI_COLORS.background,
                 }}
               >
@@ -533,18 +539,18 @@ const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submi
             <Typography variant="body1" sx={{ fontWeight: 600, color: SAKTHI_COLORS.success }}>✓ Approved by HOD</Typography>
           </Box>
           <Box sx={{ marginLeft: 'auto' }}>
-            <Button 
-              variant="contained" 
-              color="success" 
+            <Button
+              variant="contained"
+              color="success"
               disabled
-              sx={{ 
-                minWidth: 200, 
-                height: 48, 
-                fontSize: '1rem', 
-                fontWeight: 700, 
+              sx={{
+                minWidth: 200,
+                height: 48,
+                fontSize: '1rem',
+                fontWeight: 700,
                 boxShadow: 2,
                 bgcolor: SAKTHI_COLORS.success,
-                color: SAKTHI_COLORS.white 
+                color: SAKTHI_COLORS.white
               }}
             >
               ✓ APPROVED
@@ -556,12 +562,14 @@ const SubmittedSampleCard: React.FC<{ submittedData: SubmittedData }> = ({ submi
   );
 };
 
-const PouringDetailsTable: React.FC<PouringDetailsProps> = ({ 
-  pouringDetails, 
-  onPouringDetailsChange, 
+const PouringDetailsTable: React.FC<PouringDetailsProps> = ({
+  pouringDetails,
+  onPouringDetailsChange,
   submittedData,
-  readOnly = false 
+  readOnly = false
 }) => {
+  const printRef = useRef<HTMLDivElement | null>(null);
+
   const handleChange = (field: string, value: string) => {
     if (!readOnly) {
       onPouringDetailsChange({
@@ -577,6 +585,7 @@ const PouringDetailsTable: React.FC<PouringDetailsProps> = ({
       const currentDate = new Date().toISOString().split('T')[0];
       handleChange('date', currentDate);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // HOD approval and submission state
@@ -585,27 +594,49 @@ const PouringDetailsTable: React.FC<PouringDetailsProps> = ({
   const [currentView, setCurrentView] = useState<'pouring' | 'success' | 'sand' | 'moulding'>('pouring');
   const [sandData, setSandData] = useState<SandProperties | null>(null);
 
+  const [exporting, setExporting] = useState(false);
+
   const handleHodApproval = () => {
     if (!submittedData) return; // require submitted sample card
     setHodApproved(true);
   };
 
-  const handleFinalSubmit = () => {
-    if (!hodApproved) return;
-    setSubmitInProgress(true);
-    // Simulate API call
-    setTimeout(() => {
-      setSubmitInProgress(false);
-      setCurrentView('success');
-    }, 600);
-  };
+  const handleFinalSubmit = async () => {
+  if (!hodApproved) return;
+  setSubmitInProgress(true);
+
+  try {
+    const payload = {
+      pouringDetails,
+      submittedData
+    };
+
+    const token = localStorage.getItem('token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    // 🔥 IMPORTANT: Backend URL here
+    const BACKEND = 'http://localhost:3000';
+
+    const res = await axios.post(`${BACKEND}/api/pouring`, payload, { headers });
+
+    setSubmitInProgress(false);
+    setCurrentView('success');
+  } catch (err: any) {
+    console.error('Submit failed', err);
+    setSubmitInProgress(false);
+    alert(err?.response?.data?.message || 'Submit failed. Check console.');
+  }
+};
 
   // keep sandData usage to avoid unused-variable lint
   useEffect(() => {
     if (sandData) {
       // placeholder: sandData is available after sand step
-      // we log it for now; later this can be sent to backend or passed to moulding
-      // eslint-disable-next-line no-console
       console.log('Sand properties available:', sandData);
     }
   }, [sandData]);
@@ -623,38 +654,111 @@ const PouringDetailsTable: React.FC<PouringDetailsProps> = ({
     setCurrentView('pouring');
   };
 
+  // ---------- PDF Export ----------
+  const handleExportPDF = async () => {
+    const el = printRef.current;
+    if (!el) {
+      alert('Nothing to export');
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      const originalScrollY = window.scrollY;
+      el.scrollIntoView({ behavior: 'auto', block: 'center' });
+
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
+
+      window.scrollTo(0, originalScrollY);
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+
+      const scale = (pageWidth - margin * 2) / canvas.width;
+      const imgHeight = canvas.height * scale;
+      const imgWidth = canvas.width * scale;
+
+      if (imgHeight <= pageHeight - margin * 2) {
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+      } else {
+        const totalPages = Math.ceil(imgHeight / (pageHeight - margin * 2));
+        const sliceHeightPx = Math.floor((pageHeight - margin * 2) / scale);
+
+        for (let page = 0; page < totalPages; page++) {
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          const remainingPx = canvas.height - page * sliceHeightPx;
+          pageCanvas.height = remainingPx < sliceHeightPx ? remainingPx : sliceHeightPx;
+
+          const ctx = pageCanvas.getContext('2d');
+          if (!ctx) throw new Error('Could not get canvas context');
+
+          ctx.drawImage(
+            canvas,
+            0,
+            page * sliceHeightPx,
+            canvas.width,
+            pageCanvas.height,
+            0,
+            0,
+            pageCanvas.width,
+            pageCanvas.height
+          );
+
+          const pageData = pageCanvas.toDataURL('image/png');
+          const pageImgHeight = pageCanvas.height * scale;
+
+          if (page > 0) pdf.addPage();
+          pdf.addImage(pageData, 'PNG', margin, margin, imgWidth, pageImgHeight);
+        }
+      }
+
+      const safeName = (submittedData?.selectedPart?.part_name || 'pouring_details').replace(/\s+/g, '_');
+      pdf.save(`${safeName}.pdf`);
+    } catch (err) {
+      console.error('Export PDF failed:', err);
+      alert('Failed to export PDF. See console for details.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Render sand properties page
   if (currentView === 'sand') {
-  return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ p: 3 }}>
-        <SandPropertiesTable 
-          submittedData={submittedData} // Pass the submitted data
-          onSave={handleSandComplete}
-          onComplete={() => setCurrentView('moulding')}
-        />
-      </Box>
-    </ThemeProvider>
-  );
-}
+    return (
+      <ThemeProvider theme={theme}>
+        <Box sx={{ p: 3 }}>
+          <SandPropertiesTable
+            submittedData={submittedData} // Pass the submitted data
+            onSave={handleSandComplete}
+            onComplete={() => setCurrentView('moulding')}
+          />
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   // Render moulding page
   if (currentView === 'moulding') {
-  return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ p: 3 }}>
-        <MouldingTable 
-          submittedData={submittedData} // Pass the submitted data
-          onComplete={() => {
-            // Handle final completion
-            console.log('Entire process completed!');
-            // You can add navigation to a final success page or dashboard here
-          }}
-        />
-      </Box>
-    </ThemeProvider>
-  );
-}
+    return (
+      <ThemeProvider theme={theme}>
+        <Box sx={{ p: 3 }}>
+          <MouldingTable
+            submittedData={submittedData} // Pass the submitted data
+            onComplete={() => {
+              // Handle final completion
+              console.log('Entire process completed!');
+              // You can add navigation to a final success page or dashboard here
+            }}
+          />
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   // Render success message
   if (currentView === 'success') {
@@ -665,30 +769,30 @@ const PouringDetailsTable: React.FC<PouringDetailsProps> = ({
             <Alert severity="success" sx={{ mb: 3, fontSize: '1.1rem', fontWeight: 600 }}>
               ✅ Sample Card & Pouring Details Submitted Successfully!
             </Alert>
-            
+
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: SAKTHI_COLORS.primary }}>
               Data Successfully Sent
             </Typography>
-            
+
             <Typography variant="body1" sx={{ mb: 3, color: SAKTHI_COLORS.darkGray }}>
               Your sample card and pouring details have been successfully submitted and stored in the system.
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 onClick={handleBackToPouring}
                 sx={{ minWidth: 140 }}
               >
                 Back to Pouring
               </Button>
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 onClick={handleGoToSand}
-                sx={{ 
-                  minWidth: 160, 
+                sx={{
+                  minWidth: 160,
                   background: `linear-gradient(135deg, ${SAKTHI_COLORS.accent} 0%, ${SAKTHI_COLORS.primary} 100%)`,
-                  fontWeight: 700 
+                  fontWeight: 700
                 }}
               >
                 Proceed to Sand Properties
@@ -703,468 +807,485 @@ const PouringDetailsTable: React.FC<PouringDetailsProps> = ({
   // Render pouring details form
   return (
     <ThemeProvider theme={theme}>
-      {/* Display submitted sample card data (read-only) */}
-      <SubmittedSampleCard submittedData={submittedData} />
+      {/* Wrap printable area with ref */}
+      <div ref={printRef}>
+        {/* Display submitted sample card data (read-only) */}
+        <SubmittedSampleCard submittedData={submittedData} />
 
-      {/* Pouring Details Table (editable) */}
-      <Paper variant="outlined" sx={{ border: `2px solid ${SAKTHI_COLORS.secondary}`, overflow: "auto", mb: 3, bgcolor: '#FFFACD' }}>
-        <Table size="small" sx={{ borderCollapse: 'collapse' }}>
-          <TableHead>
-            {/* Main Header */}
-            <TableRow>
-              <TableCell 
-                colSpan={7} 
-                align="center" 
-                sx={{ 
-                  fontWeight: 700, 
-                  fontSize: '1.2rem', 
-                  color: SAKTHI_COLORS.white, 
-                  py: 2,
-                  bgcolor: SAKTHI_COLORS.secondary,
-                  border: '2px solid black'
-                }}
-              >
-                POURING DETAILS
-              </TableCell>
-            </TableRow>
-            
-            {/* Column Headers */}
-            <TableRow>
-              <TableCell 
-                rowSpan={2}
-                sx={{ 
-                  fontWeight: 700, 
-                  bgcolor: '#FFFF00', 
-                  border: '2px solid black', 
-                  width: '150px', 
-                  textAlign: 'center', 
-                  verticalAlign: 'middle',
-                  fontSize: '0.9rem'
-                }}
-              >
-                Date & Heat code
-              </TableCell>
-              <TableCell 
-                colSpan={3}
-                align="center"
-                sx={{ 
-                  fontWeight: 700, 
-                  bgcolor: '#FFFF00', 
-                  border: '2px solid black', 
-                  fontSize: '0.9rem'
-                }}
-              >
-                Composition
-              </TableCell>
-              <TableCell 
-                sx={{ 
-                  fontWeight: 700, 
-                  bgcolor: '#FFFF00', 
-                  border: '2px solid black', 
-                  textAlign: 'center',
-                  fontSize: '0.9rem'
-                }}
-              >
-                Pouring Temperature Deg.C
-              </TableCell>
-              <TableCell 
-                sx={{ 
-                  fontWeight: 700, 
-                  bgcolor: '#FFFF00', 
-                  border: '2px solid black', 
-                  textAlign: 'center',
-                  fontSize: '0.9rem'
-                }}
-              >
-                Pouring Time (Sec.)
-              </TableCell>
-              <TableCell 
-                sx={{ 
-                  fontWeight: 700, 
-                  bgcolor: '#FFFF00', 
-                  border: '2px solid black', 
-                  textAlign: 'center',
-                  fontSize: '0.9rem'
-                }}
-              >
-                Other Remarks
-              </TableCell>
-            </TableRow>
+        {/* Pouring Details Table (editable) */}
+        <Paper variant="outlined" sx={{ border: `2px solid ${SAKTHI_COLORS.secondary}`, overflow: "auto", mb: 3, bgcolor: '#FFFACD' }}>
+          <Table size="small" sx={{ borderCollapse: 'collapse' }}>
+            <TableHead>
+              {/* Main Header */}
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  align="center"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '1.2rem',
+                    color: SAKTHI_COLORS.white,
+                    py: 2,
+                    bgcolor: SAKTHI_COLORS.secondary,
+                    border: '2px solid black'
+                  }}
+                >
+                  POURING DETAILS
+                </TableCell>
+              </TableRow>
 
-            {/* Composition Sub-headers */}
-            <TableRow>
-              <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFF00', border: '2px solid black', textAlign: 'center', fontSize: '0.8rem' }}>
-                C
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFF00', border: '2px solid black', textAlign: 'center', fontSize: '0.8rem' }}>
-                Si
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFF00', border: '2px solid black', textAlign: 'center', fontSize: '0.8rem' }}>
-                Mn
-              </TableCell>
-              <TableCell sx={{ border: '2px solid black', bgcolor: '#FFFF00' }}></TableCell>
-              <TableCell sx={{ border: '2px solid black', bgcolor: '#FFFF00' }}></TableCell>
-              <TableCell sx={{ border: '2px solid black', bgcolor: '#FFFF00' }}></TableCell>
-            </TableRow>
-          </TableHead>
-          
-          <TableBody>
-            {/* First Data Row - Date and C, Si, Mn */}
-            <TableRow sx={{ bgcolor: '#FFFACD' }}>
-              {/* Date */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth
-                  size="small" 
-                  type="date"
-                  value={pouringDetails.date}
-                  onChange={(e) => handleChange('date', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
+              {/* Column Headers */}
+              <TableRow>
+                <TableCell
+                  rowSpan={2}
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor: '#FFFF00',
+                    border: '2px solid black',
+                    width: '150px',
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    fontSize: '0.9rem'
                   }}
-                />
-              </TableCell>
-              
-              {/* Composition - C, Si, Mn */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.cComposition}
-                  onChange={(e) => handleChange('cComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
+                >
+                  Date & Heat code
+                </TableCell>
+                <TableCell
+                  colSpan={3}
+                  align="center"
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor: '#FFFF00',
+                    border: '2px solid black',
+                    fontSize: '0.9rem'
                   }}
-                />
-              </TableCell>
-              
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.siComposition}
-                  onChange={(e) => handleChange('siComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
+                >
+                  Composition
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor: '#FFFF00',
+                    border: '2px solid black',
+                    textAlign: 'center',
+                    fontSize: '0.9rem'
                   }}
-                />
-              </TableCell>
-              
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.mnComposition}
-                  onChange={(e) => handleChange('mnComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
+                >
+                  Pouring Temperature Deg.C
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor: '#FFFF00',
+                    border: '2px solid black',
+                    textAlign: 'center',
+                    fontSize: '0.9rem'
                   }}
-                />
-              </TableCell>
-              
-              {/* Pouring Temperature */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.pouringTempDegC}
-                  onChange={(e) => handleChange('pouringTempDegC', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
+                >
+                  Pouring Time (Sec.)
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor: '#FFFF00',
+                    border: '2px solid black',
+                    textAlign: 'center',
+                    fontSize: '0.9rem'
                   }}
-                />
-              </TableCell>
-              
-              {/* Pouring Time */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.pouringTimeSec}
-                  onChange={(e) => handleChange('pouringTimeSec', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-              
-              {/* Other Remarks - F/C & Heat No. */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  placeholder="F/C & Heat No."
-                  value={pouringDetails.ficHeatNo}
-                  onChange={(e) => handleChange('ficHeatNo', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-            </TableRow>
+                >
+                  Other Remarks
+                </TableCell>
+              </TableRow>
 
-            {/* Second Data Row - Heat Code and P, S, Mg */}
-            <TableRow sx={{ bgcolor: '#FFFACD' }}>
-              {/* Heat Code */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth
-                  size="small" 
-                  placeholder="Heat Code"
-                  value={pouringDetails.heatCode}
-                  onChange={(e) => handleChange('heatCode', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-              
-              {/* Composition - P, S, Mg */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.pComposition}
-                  onChange={(e) => handleChange('pComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-              
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.sComposition}
-                  onChange={(e) => handleChange('sComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-              
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.mgComposition}
-                  onChange={(e) => handleChange('mgComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-              
-              {/* Empty cells for Pouring Temperature and Time */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              
-              {/* Other Remarks - PP Code */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  placeholder="PP Code"
-                  value={pouringDetails.ppCode}
-                  onChange={(e) => handleChange('ppCode', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-            </TableRow>
+              {/* Composition Sub-headers */}
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFF00', border: '2px solid black', textAlign: 'center', fontSize: '0.8rem' }}>
+                  C
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFF00', border: '2px solid black', textAlign: 'center', fontSize: '0.8rem' }}>
+                  Si
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, bgcolor: '#FFFF00', border: '2px solid black', textAlign: 'center', fontSize: '0.8rem' }}>
+                  Mn
+                </TableCell>
+                <TableCell sx={{ border: '2px solid black', bgcolor: '#FFFF00' }}></TableCell>
+                <TableCell sx={{ border: '2px solid black', bgcolor: '#FFFF00' }}></TableCell>
+                <TableCell sx={{ border: '2px solid black', bgcolor: '#FFFF00' }}></TableCell>
+              </TableRow>
+            </TableHead>
 
-            {/* Third Data Row - Cu, Cr */}
-            <TableRow sx={{ bgcolor: '#FFFACD' }}>
-              {/* Empty Date & Heat Code */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              
-              {/* Composition - Cu, Cr */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.cuComposition}
-                  onChange={(e) => handleChange('cuComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-              
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  value={pouringDetails.crComposition}
-                  onChange={(e) => handleChange('crComposition', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-              
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              
-              {/* Other Remarks - Followed by */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  placeholder="Followed by"
-                  value={pouringDetails.followedBy}
-                  onChange={(e) => handleChange('followedBy', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-            </TableRow>
+            <TableBody>
+              {/* First Data Row - Date and C, Si, Mn */}
+              <TableRow sx={{ bgcolor: '#FFFACD' }}>
+                {/* Date */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="date"
+                    value={pouringDetails.date}
+                    onChange={(e) => handleChange('date', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
 
-            {/* Fourth Data Row - Username */}
-            <TableRow sx={{ bgcolor: '#FFFACD' }}>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
-              
-              {/* Other Remarks - Username */}
-              <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
-                <TextField 
-                  fullWidth 
-                  size="small" 
-                  placeholder="Username"
-                  value={pouringDetails.userName}
-                  onChange={(e) => handleChange('userName', e.target.value)}
-                  InputProps={{ 
-                    sx: { 
-                      bgcolor: SAKTHI_COLORS.white, 
-                      borderRadius: 0, 
-                      fontSize: '0.8rem',
-                    }, 
-                    readOnly 
-                  }}
-                />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Paper>
+                {/* Composition - C, Si, Mn */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.cComposition}
+                    onChange={(e) => handleChange('cComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
 
-      {/* HOD Approval + Submit area */}
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center', mt: 2 }}>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.siComposition}
+                    onChange={(e) => handleChange('siComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
 
-        <Box>
-          <Button
-            variant={hodApproved ? 'contained' : 'outlined'}
-            color={hodApproved ? 'success' : 'primary'}
-            onClick={handleHodApproval}
-            disabled={hodApproved}
-            sx={{ minWidth: 160, fontWeight: 700 }}
-          >
-            {hodApproved ? '✓ APPROVED' : 'HOD APPROVAL'}
-          </Button>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.mnComposition}
+                    onChange={(e) => handleChange('mnComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                {/* Pouring Temperature */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.pouringTempDegC}
+                    onChange={(e) => handleChange('pouringTempDegC', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                {/* Pouring Time */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.pouringTimeSec}
+                    onChange={(e) => handleChange('pouringTimeSec', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                {/* Other Remarks - F/C & Heat No. */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="F/C & Heat No."
+                    value={pouringDetails.ficHeatNo}
+                    onChange={(e) => handleChange('ficHeatNo', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+              </TableRow>
+
+              {/* Second Data Row - Heat Code and P, S, Mg */}
+              <TableRow sx={{ bgcolor: '#FFFACD' }}>
+                {/* Heat Code */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Heat Code"
+                    value={pouringDetails.heatCode}
+                    onChange={(e) => handleChange('heatCode', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                {/* Composition - P, S, Mg */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.pComposition}
+                    onChange={(e) => handleChange('pComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.sComposition}
+                    onChange={(e) => handleChange('sComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.mgComposition}
+                    onChange={(e) => handleChange('mgComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                {/* Empty cells for Pouring Temperature and Time */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+
+                {/* Other Remarks - PP Code */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="PP Code"
+                    value={pouringDetails.ppCode}
+                    onChange={(e) => handleChange('ppCode', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+              </TableRow>
+
+              {/* Third Data Row - Cu, Cr */}
+              <TableRow sx={{ bgcolor: '#FFFACD' }}>
+                {/* Empty Date & Heat Code */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+
+                {/* Composition - Cu, Cr */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.cuComposition}
+                    onChange={(e) => handleChange('cuComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={pouringDetails.crComposition}
+                    onChange={(e) => handleChange('crComposition', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+
+                {/* Other Remarks - Followed by */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Followed by"
+                    value={pouringDetails.followedBy}
+                    onChange={(e) => handleChange('followedBy', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+              </TableRow>
+
+              {/* Fourth Data Row - Username */}
+              <TableRow sx={{ bgcolor: '#FFFACD' }}>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}></TableCell>
+
+                {/* Other Remarks - Username */}
+                <TableCell sx={{ border: '2px solid #999', p: 0.5 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Username"
+                    value={pouringDetails.userName}
+                    onChange={(e) => handleChange('userName', e.target.value)}
+                    InputProps={{
+                      sx: {
+                        bgcolor: SAKTHI_COLORS.white,
+                        borderRadius: 0,
+                        fontSize: '0.8rem',
+                      },
+                      readOnly
+                    }}
+                  />
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Paper>
+
+        {/* HOD Approval + Submit area with Export button */}
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', alignItems: 'center', mt: 2 }}>
+          <Box>
+            <Button
+              variant={hodApproved ? 'contained' : 'outlined'}
+              color={hodApproved ? 'success' : 'primary'}
+              onClick={() => {
+                if (!submittedData) return;
+                setHodApproved(true);
+              }}
+              disabled={hodApproved}
+              sx={{ minWidth: 160, fontWeight: 700 }}
+            >
+              {hodApproved ? '✓ APPROVED' : 'HOD APPROVAL'}
+            </Button>
+          </Box>
+
+          <Box>
+            <Button
+              variant="contained"
+              onClick={handleFinalSubmit}
+              disabled={!hodApproved || submitInProgress}
+              sx={{
+                minWidth: 220,
+                background: `linear-gradient(135deg, ${SAKTHI_COLORS.primary} 0%, ${SAKTHI_COLORS.lightBlue} 100%)`,
+                fontWeight: 700,
+                '&:disabled': {
+                  bgcolor: SAKTHI_COLORS.lightGray,
+                  color: SAKTHI_COLORS.darkGray
+                }
+              }}
+            >
+              {submitInProgress ? 'Submitting...' : 'Submit Sample & Pouring'}
+            </Button>
+          </Box>
+
+          <Box>
+            <Button
+              variant="outlined"
+              onClick={handleExportPDF}
+              disabled={exporting}
+              startIcon={exporting ? <CircularProgress size={16} /> : undefined}
+              sx={{ minWidth: 160, fontWeight: 700 }}
+            >
+              {exporting ? 'Generating...' : 'Export as PDF'}
+            </Button>
+          </Box>
         </Box>
-
-        <Box>
-          <Button
-            variant="contained"
-            onClick={handleFinalSubmit}
-            disabled={!hodApproved || submitInProgress}
-            sx={{ 
-              minWidth: 220, 
-              background: `linear-gradient(135deg, ${SAKTHI_COLORS.primary} 0%, ${SAKTHI_COLORS.lightBlue} 100%)`, 
-              fontWeight: 700,
-              '&:disabled': {
-                bgcolor: SAKTHI_COLORS.lightGray,
-                color: SAKTHI_COLORS.darkGray
-              }
-            }}
-          >
-            {submitInProgress ? 'Submitting...' : 'Submit Sample & Pouring'}
-          </Button>
-        </Box>
-      </Box>
+      </div>
     </ThemeProvider>
   );
 };

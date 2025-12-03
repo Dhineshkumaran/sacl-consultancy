@@ -19,9 +19,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    password: 'sacl123',
+    confirmPassword: 'sacl123',
     department_id: '',
     role: 'User',
   });
@@ -29,6 +28,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Fetch departments on mount or when modal opens
   useEffect(() => {
@@ -70,9 +71,9 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
     setError('');
     setSuccess('');
 
-    // Validation
-    if (!formData.username || !formData.full_name || !formData.email || !formData.password) {
-      setError('All fields are required');
+    // Validation (email removed — default password used)
+    if (!formData.username || !formData.full_name || !formData.password) {
+      setError('All required fields must be filled');
       return;
     }
 
@@ -92,8 +93,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       const payload = {
         username: formData.username,
         full_name: formData.full_name,
-        email: formData.email,
-        password: formData.password,
+        // email removed as per admin flow
+        password: formData.password || 'sacl123',
         department_id: formData.department_id ? parseInt(formData.department_id) : null,
         role: formData.role,
       };
@@ -103,9 +104,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       setFormData({
         username: '',
         full_name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
+        password: 'sacl123',
+        confirmPassword: 'sacl123',
         department_id: '',
         role: 'User',
       });
@@ -120,6 +120,14 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   if (!isOpen) return null;
@@ -166,19 +174,22 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
+              <label htmlFor="role">Role</label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
                 onChange={handleChange}
-                placeholder="Enter email"
                 disabled={loading}
-                required
-              />
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </div>
-            {formData.role !== 'Methods' && (
+            {formData.role !== 'Methods' && formData.role !== 'Admin' && (
               <div className="form-group">
                 <label htmlFor="department_id">Department</label>
                 <select
@@ -200,49 +211,50 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group password-field">
               <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter password (min 6 characters)"
-                disabled={loading}
-                required
-              />
+              <div className="password-input-container">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter password (min 6 characters)"
+                  disabled={loading}
+                  required
+                  readOnly
+                />
+                <span 
+                  className="password-toggle"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </span>
+              </div>
             </div>
-            <div className="form-group">
+            <div className="form-group password-field">
               <label htmlFor="confirmPassword">Confirm Password</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm password"
-                disabled={loading}
-                required
-              />
+              <div className="password-input-container">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm password"
+                  disabled={loading}
+                  required
+                  readOnly
+                />
+                <span 
+                  className="password-toggle"
+                  onClick={toggleConfirmPasswordVisibility}
+                >
+                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                </span>
+              </div>
             </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              disabled={loading}
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
           </div>
 
           {error && <div className="error-message">{error}</div>}

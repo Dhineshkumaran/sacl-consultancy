@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/api';
 import './Login.css';
@@ -16,6 +17,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch departments when role changes to HOD or User
   useEffect(() => {
@@ -46,9 +48,17 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      console.log(credentials);
-      
-      await login(credentials);
+      const res = await login(credentials);
+      if (res) {
+        if (res.needsEmailVerification) {
+          navigate('/update-email');
+          return;
+        }
+        if (res.needsPasswordChange) {
+          navigate('/change-password');
+          return;
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

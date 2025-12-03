@@ -3,8 +3,6 @@ import { apiService } from './api';
 export const authService = {
   async login(username: string, password: string, role?: string, department_id?: string) {
     const response = await apiService.login(username, password, role, department_id);
-    console.log(response);
-    
     
     // Store token and user info
     localStorage.setItem('authToken', response.token);

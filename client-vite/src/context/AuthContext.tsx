@@ -4,34 +4,33 @@ import { authService } from '../services/authService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// ✅ Use normal function component (not React.FC)
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = () => {
-      const storedToken = authService.getToken();
-      const storedUser = authService.getStoredUser();
-      
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(storedUser);
-      }
-      setLoading(false);
-    };
-
-    initializeAuth();
+    const storedToken = authService.getToken();
+    const storedUser = authService.getStoredUser();
+    
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(storedUser);
+    }
+    setLoading(false);
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
-    try {
-      const response = await authService.login(credentials.username, credentials.password, credentials.role, credentials.department_id);
-      setUser(response.user);
-      setToken(response.token);
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.login(
+      credentials.username,
+      credentials.password,
+      credentials.role,
+      credentials.department_id
+    );
+    setUser(response.user);
+    setToken(response.token);
+    return response;
   };
 
   const logout = () => {
@@ -40,22 +39,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
   };
 
-  const value: AuthContextType = {
-    user,
-    token,
-    login,
-    logout,
-    isAuthenticated: !!token,
-    loading,
-  };
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        isAuthenticated: !!token,
+        loading
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = () => {
+// ✅ Keep hook as a named export
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-};
+}

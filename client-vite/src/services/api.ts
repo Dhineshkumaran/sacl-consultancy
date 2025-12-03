@@ -35,7 +35,7 @@ class ApiService {
                 const retryConfig = {
                   ...config,
                   headers: {
-                    ...(config.headers as Record<string, string>),
+                    ...(config.headers as Record<string,string>),
                     Authorization: `Bearer ${refreshData.token}`
                   }
                 };
@@ -88,6 +88,27 @@ class ApiService {
     return this.request('/users', {
       method: 'POST',
       body: JSON.stringify(userData),
+    });
+  }
+
+  async sendEmailOtp(email: string) {
+    return this.request('/users/send-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async verifyEmailOtp(email: string, otp: string) {
+    return this.request('/users/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+  }
+
+  async changePassword(newPassword: string) {
+    return this.request('/users/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
     });
   }
 
