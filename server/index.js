@@ -13,6 +13,7 @@ import departmentRoutes from './routes/departments.js';
 import trial from './routes/trial.js';
 import metallurgicalSpecs from './routes/metallurgicalSpecs.js';
 import mechanicalProperties from './routes/mechanicalProperties.js';
+import departmentProgress from './routes/departmentProgress.js';
 
 const app = express();
 app.use(express.json());
@@ -34,6 +35,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/trial', trial);
 app.use('/api/metallurgical-specs', metallurgicalSpecs);
 app.use('/api/mechanical-properties', mechanicalProperties);
+app.use('/api/department-progress', departmentProgress);
 app.use('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });

@@ -5,10 +5,10 @@ import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
-    const { trial_id, department_id, username, completed_at, approval_status, remarks } = req.body;
+    const { trial_id, department_id, completed_at, approval_status, remarks, username } = req.body;
     const [result] = await Client.query(
-        `INSERT INTO department_progress (trial_id, department_id, username, completed_at, approval_status, remarks) VALUES (?, ?, ?, ?, ?, ?)`,
-        [trial_id, department_id, username, completed_at, approval_status, remarks]
+        `INSERT INTO department_progress (trial_id, department_id, completed_at, approval_status, remarks, username) VALUES (?, ?, ?, ?, ?, ?)`,
+        [trial_id, department_id, completed_at, approval_status, remarks, username]
     );
     res.status(201).json({
         success: true,
@@ -17,7 +17,7 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
 }));
 
 router.put('/update', asyncErrorHandler(async (req, res, next) => {
-    const { progress_id, current_department_id, username, role } = req.body;
+    const { progress_id, current_department_id, username, role, remarks } = req.body;
     if (role == 'HOD') {
         const next_department_id = current_department_id + 1;
         const next_department_user = await Client.query(
@@ -29,12 +29,12 @@ router.put('/update', asyncErrorHandler(async (req, res, next) => {
         }
         const next_department_username = next_department_user[0].username;
         const [result] = await Client.query(
-            `UPDATE department_progress SET current_department_id = ?, username = ? WHERE progress_id = ?`,
-            [next_department_id, next_department_username, progress_id]
+            `UPDATE department_progress SET department_id = ?, username = ?, remarks = ? WHERE progress_id = ?`,
+            [next_department_id, next_department_username, remarks, progress_id]
         );
         res.status(200).json({
             success: true,
-            data: "Department progress approved successfully"
+            data: "Department progress updated successfully"
         });
     }
     else if (role == 'user') {
@@ -68,6 +68,20 @@ router.put('/approve', asyncErrorHandler(async (req, res, next) => {
         data: "Department progress approved successfully"
     });
 }));
+
+router.get('/get-progress', asyncErrorHandler(async (req, res, next) => {
+    const trial_id = req.query.trial_id;
+    const [result] = await Client.query(
+        `SELECT * FROM department_progress WHERE trial_id = ?`,
+        [trial_id]
+    );
+    res.status(200).json({
+        success: true,
+        data: result
+    });
+}));
+
+export default router;
 
 // CREATE TABLE department_progress (
 //     progress_id SERIAL PRIMARY KEY,
