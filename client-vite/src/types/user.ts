@@ -16,6 +16,7 @@ export interface CreateUserRequest {
   password: string;
   email?: string;
   department_name?: string | null;
+  department_id?: number | null;
   role?: string;
 }
 

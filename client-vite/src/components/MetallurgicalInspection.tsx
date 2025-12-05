@@ -1,5 +1,6 @@
 // src/components/MetallurgicalInspection.tsx
 import { useEffect, useState } from "react";
+import React from "react";
 import type { Dispatch, SetStateAction } from "react";
 import {
   Box,
@@ -25,7 +26,11 @@ import Autocomplete from "@mui/material/Autocomplete";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const COLORS = {
   primary: "#2446acff",
@@ -302,10 +307,21 @@ const fileToMeta = (f: File | null) => {
 };
 
 export default function MetallurgicalInspection() {
+  const navigate = useNavigate();
+  const printRef = React.useRef<HTMLDivElement | null>(null);
+
   const [, setUserName] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState< { severity: "success" | "error" | "info" | "warning"; message: string } | null >(null);
+
+  // Preview states (like moulding)
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewPayload, setPreviewPayload] = useState<any | null>(null);
+  const [previewSubmitted, setPreviewSubmitted] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [sending, setSending] = useState(false);
 
   // Microstructure dynamic columns state
   const [microCols, setMicroCols] = useState<MicroCol[]>([{ id: 'c1', label: 'Value' }]);
@@ -375,6 +391,144 @@ export default function MetallurgicalInspection() {
   };
 
   const handleSave = async () => {
+    // Open preview instead of saving directly
+    const payload = buildPayload();
+    setPreviewPayload(payload);
+    setPreviewMode(true);
+    setPreviewSubmitted(false);
+    setMessage(null);
+  };
+
+  // Send to server
+  const sendToServer = async (payload: any) => {
+    const BACKEND = "http://localhost:3000";
+    const url = `${BACKEND}/api/metallurgical-inspection`;
+    try {
+      setSending(true);
+      const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await axios.post(url, payload, { headers, timeout: 10000 });
+      if (!res || res.status < 200 || res.status >= 300) throw new Error(res?.data?.message || `Server ${res?.status}`);
+      return res.data;
+    } catch (err) {
+      console.error('Inspection submit failed', err);
+      throw err;
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Final save from preview
+  const handleFinalSave = async () => {
+    if (!previewPayload) return;
+    try {
+      setMessage(null);
+      const result = await sendToServer(previewPayload);
+      setPreviewSubmitted(true);
+      setMessage('Inspection data submitted successfully.');
+      setAlert({ severity: "success", message: "Inspection saved successfully!" });
+    } catch (err: any) {
+      console.error('Inspection final save error', err);
+      setMessage(err?.message || 'Failed to submit inspection data');
+    }
+  };
+
+  // Export PDF from preview
+  const handleExportPDF = async () => {
+    const el = printRef.current;
+    if (!el) {
+      setMessage('Nothing to export');
+      return;
+    }
+
+    try {
+      setExporting(true);
+      const originalScrollY = window.scrollY;
+      el.scrollIntoView({ behavior: 'auto', block: 'center' });
+
+      const sourceCanvas = await html2canvas(el as HTMLElement, { scale: 2, useCORS: true, logging: false });
+      window.scrollTo(0, originalScrollY);
+
+      // Convert to black & white (grayscale)
+      const bwCanvas = document.createElement('canvas');
+      bwCanvas.width = sourceCanvas.width;
+      bwCanvas.height = sourceCanvas.height;
+      const bwCtx = bwCanvas.getContext('2d');
+      if (!bwCtx) throw new Error('Could not get BW canvas context');
+
+      bwCtx.drawImage(sourceCanvas, 0, 0);
+      const imgDataObj = bwCtx.getImageData(0, 0, bwCanvas.width, bwCanvas.height);
+      const dataArr = imgDataObj.data;
+      for (let i = 0; i < dataArr.length; i += 4) {
+        const r = dataArr[i];
+        const g = dataArr[i + 1];
+        const b = dataArr[i + 2];
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        dataArr[i] = gray;
+        dataArr[i + 1] = gray;
+        dataArr[i + 2] = gray;
+      }
+      bwCtx.putImageData(imgDataObj, 0, 0);
+
+      const canvas = bwCanvas;
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+
+      const scale = (pageWidth - margin * 2) / canvas.width;
+      const imgHeight = canvas.height * scale;
+      const imgWidth = canvas.width * scale;
+
+      if (imgHeight <= pageHeight - margin * 2) {
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+      } else {
+        const totalPages = Math.ceil(imgHeight / (pageHeight - margin * 2));
+        const sliceHeightPx = Math.floor((pageHeight - margin * 2) / scale);
+
+        for (let page = 0; page < totalPages; page++) {
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          const remainingPx = canvas.height - page * sliceHeightPx;
+          pageCanvas.height = remainingPx < sliceHeightPx ? remainingPx : sliceHeightPx;
+
+          const ctx = pageCanvas.getContext('2d');
+          if (!ctx) throw new Error('Could not get canvas context');
+
+          ctx.drawImage(
+            canvas,
+            0,
+            page * sliceHeightPx,
+            canvas.width,
+            pageCanvas.height,
+            0,
+            0,
+            pageCanvas.width,
+            pageCanvas.height
+          );
+
+          const pageData = pageCanvas.toDataURL('image/png');
+          const pageImgHeight = pageCanvas.height * scale;
+
+          if (page > 0) pdf.addPage();
+          pdf.addImage(pageData, 'PNG', margin, margin, imgWidth, pageImgHeight);
+        }
+      }
+
+      const pdfBlobUrl = pdf.output('bloburl');
+      window.open(pdfBlobUrl, '_blank');
+    } catch (err) {
+      console.error('Export PDF failed:', err);
+      setMessage('Failed to export PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleSaveOld = async () => {
     setLoading(true);
     setAlert(null);
     try {
@@ -404,6 +558,95 @@ export default function MetallurgicalInspection() {
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ minHeight: "100vh", bgcolor: "background.default", p: 3 }}>
+        {/* Preview overlay (Apple-glass) */}
+        {previewMode && previewPayload && (
+          <Box
+            sx={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1300,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(15,23,42,0.5)',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <Box
+              sx={{
+                width: '90%',
+                maxWidth: 980,
+                maxHeight: '80vh',
+                overflow: 'auto',
+                borderRadius: 4,
+                p: 3,
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.82), rgba(248,250,252,0.9))',
+                boxShadow: '0 25px 80px rgba(15,23,42,0.45)',
+                border: '1px solid rgba(255,255,255,0.8)',
+                position: 'relative',
+              }}
+              ref={printRef}
+            >
+              {/* Close button - routes to visual inspection */}
+              <IconButton
+                onClick={() => {
+                  navigate('/visual-inspection');
+                }}
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  color: '#DC2626',
+                  '&:hover': { backgroundColor: 'rgba(220,38,38,0.08)' },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} pr={5}>
+                <Box>
+                  <Box component="div" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                    Metallurgical Inspection – Preview
+                  </Box>
+                  <Box component="div" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                    Review your inspection data before final submission
+                  </Box>
+                </Box>
+              </Box>
+
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, mb: 2 }}>
+                <Box sx={{ fontWeight: 700, mb: 1 }}>Inspection Summary</Box>
+                <Typography variant="body2">Date: {previewPayload.inspection_date || '--'}</Typography>
+                <Typography variant="body2">Microstructure Rows: {previewPayload.microRows?.length || 0}</Typography>
+                <Typography variant="body2">Mechanical Properties: {previewPayload.mechRows?.length || 0}</Typography>
+                <Typography variant="body2">Impact Strength: {previewPayload.impactRows?.length || 0}</Typography>
+                <Typography variant="body2">Hardness: {previewPayload.hardRows?.length || 0}</Typography>
+                <Typography variant="body2">NDT Analysis: {previewPayload.ndtRows?.length || 0}</Typography>
+              </Paper>
+
+              {message && (
+                <Box mt={1}>
+                  <Box sx={{ p: 1, bgcolor: previewSubmitted ? 'rgba(16,185,129,0.12)' : 'rgba(14,165,233,0.06)', borderRadius: 2 }}>{message}</Box>
+                </Box>
+              )}
+
+              <Box mt={3} display="flex" alignItems="center" gap={2}>
+                <Button variant="outlined" onClick={() => setPreviewMode(false)} disabled={sending || previewSubmitted}>
+                  Edit
+                </Button>
+
+                <Button variant="contained" onClick={() => handleExportPDF()} disabled={exporting} sx={{ backgroundColor: COLORS.primary }}>
+                  {exporting ? 'Generating PDF...' : 'Export PDF'}
+                </Button>
+
+                <Button variant="contained" onClick={handleFinalSave} disabled={sending || previewSubmitted} sx={{ backgroundColor: COLORS.accent }}>
+                  {sending ? 'Saving...' : previewSubmitted ? 'Saved' : 'Save'}
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        )}
+
         <Paper elevation={2}>
           <Box flex={1} p={2}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>

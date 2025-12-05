@@ -15,7 +15,10 @@ import {
   Chip,
   Alert,
   CircularProgress,
+  IconButton,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -161,6 +164,7 @@ const SubmittedSampleCard: React.FC<{ submittedData?: SubmittedData }> = ({ subm
   Main SandPropertiesTable component
 ------------------------- */
 const SandPropertiesTable: React.FC<SandPropertiesTableProps> = ({ submittedData, onSave, onComplete, readOnly = false }) => {
+  const navigate = useNavigate();
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const [data, setData] = useState<SandProperties>({
@@ -180,28 +184,168 @@ const SandPropertiesTable: React.FC<SandPropertiesTableProps> = ({ submittedData
   const [submitted, setSubmitted] = useState(false);
   const [submittedSandData, setSubmittedSandData] = useState<SandProperties | null>(null);
 
+  // Preview overlay states (like moulding)
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewPayload, setPreviewPayload] = useState<any | null>(null);
+  const [previewSubmitted, setPreviewSubmitted] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [sending, setSending] = useState(false);
+
   const initialTouched: Record<keyof SandProperties, boolean> = {
     tClay: false, aClay: false, vcm: false, loi: false, afs: false, gcs: false, moi: false, compactability: false, perm: false, otherRemarks: false, date: false
   };
   const [touched, setTouched] = useState(initialTouched);
   const [triedSubmit, setTriedSubmit] = useState(false);
 
-  const [exporting, setExporting] = useState(false);
+  const [exporting_old, setExporting_old] = useState(false);
   const printRef = useRef<HTMLDivElement | null>(null);
 
   const setField = useCallback((key: keyof SandProperties, value: string) => setData(prev => ({ ...prev, [key]: value })), []);
   const handleBlur = useCallback((key: keyof SandProperties) => setTouched(t => ({ ...t, [key]: true })), []);
 
-  const allFilled = Object.values(data).every(v => v.toString().trim() !== "");
-  const shouldShowError = useCallback((key: keyof SandProperties) => (touched[key] || triedSubmit) && data[key].toString().trim() === "", [touched, triedSubmit, data]);
+  // Validation removed - no required fields
 
-  const handleSave = useCallback(async () => {
-    setTriedSubmit(true);
-    if (!allFilled) {
-      setTouched(Object.keys(touched).reduce((acc, k) => { (acc as any)[k] = true; return acc; }, { ...initialTouched }));
+  // Send payload to backend
+  const sendToServer = useCallback(async (payload: any) => {
+    const BACKEND = (import.meta.env?.VITE_API_BASE as string) || "http://localhost:3000";
+    const url = `${BACKEND}/api/sand`;
+    try {
+      setSending(true);
+      const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await axios.post(url, payload, { headers, timeout: 10000 });
+      if (!res || res.status < 200 || res.status >= 300) throw new Error(res?.data?.message || `Server ${res?.status}`);
+      return res.data;
+    } catch (err) {
+      console.error('Sand submit failed', err);
+      throw err;
+    } finally {
+      setSending(false);
+    }
+  }, []);
+
+  // Open preview (like moulding)
+  const handleSaveAndContinue = () => {
+    const payload = { sand: data, submittedData: submittedData ?? undefined };
+    setPreviewPayload(payload);
+    setPreviewMode(true);
+    setPreviewSubmitted(false);
+    setMessage(null);
+  };
+
+  // Final save from preview
+  const handleFinalSave = async () => {
+    if (!previewPayload) return;
+    try {
+      setMessage(null);
+      const result = await sendToServer(previewPayload);
+      setPreviewSubmitted(true);
+      setMessage('Sand data submitted successfully.');
+      setSubmittedSandData(previewPayload.sand);
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error('Sand final save error', err);
+      setMessage(err?.message || 'Failed to submit sand data');
+    }
+  };
+
+  // Export PDF from preview
+  const handleExportPDF = async () => {
+    const el = printRef.current;
+    if (!el) {
+      setMessage('Nothing to export');
       return;
     }
 
+    try {
+      setExporting(true);
+      const originalScrollY = window.scrollY;
+      el.scrollIntoView({ behavior: 'auto', block: 'center' });
+
+      const sourceCanvas = await html2canvas(el as HTMLElement, { scale: 2, useCORS: true, logging: false });
+      window.scrollTo(0, originalScrollY);
+
+      // Convert to black & white (grayscale)
+      const bwCanvas = document.createElement('canvas');
+      bwCanvas.width = sourceCanvas.width;
+      bwCanvas.height = sourceCanvas.height;
+      const bwCtx = bwCanvas.getContext('2d');
+      if (!bwCtx) throw new Error('Could not get BW canvas context');
+
+      bwCtx.drawImage(sourceCanvas, 0, 0);
+      const imgDataObj = bwCtx.getImageData(0, 0, bwCanvas.width, bwCanvas.height);
+      const dataArr = imgDataObj.data;
+      for (let i = 0; i < dataArr.length; i += 4) {
+        const r = dataArr[i];
+        const g = dataArr[i + 1];
+        const b = dataArr[i + 2];
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        dataArr[i] = gray;
+        dataArr[i + 1] = gray;
+        dataArr[i + 2] = gray;
+      }
+      bwCtx.putImageData(imgDataObj, 0, 0);
+
+      const canvas = bwCanvas;
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+
+      const scale = (pageWidth - margin * 2) / canvas.width;
+      const imgHeight = canvas.height * scale;
+      const imgWidth = canvas.width * scale;
+
+      if (imgHeight <= pageHeight - margin * 2) {
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+      } else {
+        const totalPages = Math.ceil(imgHeight / (pageHeight - margin * 2));
+        const sliceHeightPx = Math.floor((pageHeight - margin * 2) / scale);
+
+        for (let page = 0; page < totalPages; page++) {
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          const remainingPx = canvas.height - page * sliceHeightPx;
+          pageCanvas.height = remainingPx < sliceHeightPx ? remainingPx : sliceHeightPx;
+
+          const ctx = pageCanvas.getContext('2d');
+          if (!ctx) throw new Error('Could not get canvas context');
+
+          ctx.drawImage(
+            canvas,
+            0,
+            page * sliceHeightPx,
+            canvas.width,
+            pageCanvas.height,
+            0,
+            0,
+            pageCanvas.width,
+            pageCanvas.height
+          );
+
+          const pageData = pageCanvas.toDataURL('image/png');
+          const pageImgHeight = pageCanvas.height * scale;
+
+          if (page > 0) pdf.addPage();
+          pdf.addImage(pageData, 'PNG', margin, margin, imgWidth, pageImgHeight);
+        }
+      }
+
+      const pdfBlobUrl = pdf.output('bloburl');
+      window.open(pdfBlobUrl, '_blank');
+    } catch (err) {
+      console.error('Export PDF failed:', err);
+      setMessage('Failed to export PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleSave = useCallback(async () => {
     const payload = { sand: data, submittedData: submittedData || {} };
     console.log('🔧 DEBUG - Sending sand data to API:', payload);
 
@@ -224,7 +368,7 @@ const SandPropertiesTable: React.FC<SandPropertiesTableProps> = ({ submittedData
       const errMsg = err?.response?.data?.message || err?.message || 'Save failed - check server console';
       alert(errMsg);
     }
-  }, [allFilled, data, initialTouched, onSave, submittedData, touched]);
+  }, [data, initialTouched, onSave, submittedData, touched]);
 
   const handleClear = useCallback(() => {
     setData({ tClay: "", aClay: "", vcm: "", loi: "", afs: "", gcs: "", moi: "", compactability: "", perm: "", otherRemarks: "", date: today });
@@ -234,125 +378,147 @@ const SandPropertiesTable: React.FC<SandPropertiesTableProps> = ({ submittedData
 
   const handleProceedToMould = useCallback(() => { onComplete && onComplete(); }, [onComplete]);
 
-  const handleExportPDF = async () => {
-    const el = printRef.current;
-    if (!el) { alert('Nothing to export'); return; }
-    try {
-      setExporting(true);
-      const originalScroll = window.scrollY;
-      el.scrollIntoView({ behavior: 'auto', block: 'center' });
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: false });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      const scale = (pageWidth - margin * 2) / canvas.width;
-      const imgHeight = canvas.height * scale;
-      const imgWidth = canvas.width * scale;
-      if (imgHeight <= pageHeight - margin * 2) {
-        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
-      } else {
-        const totalPages = Math.ceil(imgHeight / (pageHeight - margin * 2));
-        const sliceHeightPx = Math.floor((pageHeight - margin * 2) / scale);
-        for (let page = 0; page < totalPages; page++) {
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          const remainingPx = canvas.height - page * sliceHeightPx;
-          pageCanvas.height = remainingPx < sliceHeightPx ? remainingPx : sliceHeightPx;
-          const ctx = pageCanvas.getContext('2d');
-          if (!ctx) throw new Error('Could not get canvas context');
-          ctx.drawImage(canvas, 0, page * sliceHeightPx, canvas.width, pageCanvas.height, 0, 0, pageCanvas.width, pageCanvas.height);
-          const pageData = pageCanvas.toDataURL('image/png');
-          const pageImgHeight = pageCanvas.height * scale;
-          if (page > 0) pdf.addPage();
-          pdf.addImage(pageData, 'PNG', margin, margin, imgWidth, pageImgHeight);
-        }
-      }
-      const safeName = (submittedData?.selectedPart?.part_name || 'sand_properties').replace(/\s+/g, '_');
-      pdf.save(`${safeName}.pdf`);
-      window.scrollTo(0, originalScroll);
-    } catch (err) {
-      console.error('Export PDF failed:', err);
-      alert('Failed to export PDF. See console for details.');
-    } finally {
-      setExporting(false);
-    }
-  };
 
-  if (submitted) {
-    return (
-      <Box sx={{ p: 3 }} ref={printRef}>
-        {submittedData && <SubmittedSampleCard submittedData={submittedData} />}
-
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', mb: 3, bgcolor: SAKTHI_COLORS.success + '10', border: `2px solid ${SAKTHI_COLORS.success}` }}>
-          <Alert severity="success" sx={{ mb: 3, fontSize: '1.1rem', fontWeight: 600 }}>✅ Sand Properties Submitted Successfully!</Alert>
-
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: SAKTHI_COLORS.primary }}>Sand Data Successfully Recorded</Typography>
-          <Typography variant="body1" sx={{ mb: 3, color: SAKTHI_COLORS.darkGray }}>Your sand properties have been successfully submitted and stored in the system.</Typography>
-
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button variant="outlined" onClick={() => setSubmitted(false)} sx={{ minWidth: 140 }}>Back to Edit</Button>
-            <Button variant="contained" onClick={handleProceedToMould} sx={{ minWidth: 160, background: `linear-gradient(135deg, ${SAKTHI_COLORS.accent} 0%, ${SAKTHI_COLORS.primary} 100%)`, fontWeight: 700 }}>Proceed to Moulding</Button>
-            <Button variant="outlined" onClick={handleExportPDF} disabled={exporting} startIcon={exporting ? <CircularProgress size={16} /> : undefined} sx={{ minWidth: 160 }}>{exporting ? 'Generating...' : 'Export as PDF'}</Button>
-          </Box>
-        </Paper>
-
-        <Paper elevation={0} sx={{ width: "100%", maxWidth: 1200, mx: "auto", border: "2px solid #000", bgcolor: "#f5f5f5", p: 0, mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", background: "#bfbfbf", borderBottom: "2px solid #000", px: 1.5, py: 0.7 }}>
-            <Typography sx={{ fontWeight: 800, letterSpacing: 0.5, fontSize: "0.95rem" }}>SAND PROPERTIES (Submitted)</Typography>
-            <Box sx={{ flex: 1 }} />
-          </Box>
-
-          <Box sx={{ px: 0, py: 0 }}>
-            <Table size="small" sx={{ borderCollapse: "collapse" }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell colSpan={9} sx={{ border: "none", background: "transparent" }} />
-                  <TableCell sx={{ border: "1px solid #000", background: "#d0d0d0", px: 1 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                      <Typography sx={{ fontWeight: 700, fontSize: "0.9rem" }}>Date :</Typography>
-                      <Typography sx={{ fontSize: "0.9rem" }}>{submittedSandData?.date}</Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-
-                <TableRow>
-                  {["T.Clay","A.Clay","VCM","LOI","AFS","G.C.S","MOI","Compactability","Perm","Other Remarks"].map(label => (
-                    <TableCell key={label} align="center" sx={{ border: "1px solid #000", background: "#d0d0d0", fontWeight: 700, px: 0.5, py: 0.7, fontSize: "0.85rem" }}>{label}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                <TableRow>
-                  <TableCell sx={{ border: "1px solid #000", width: 100, p: 0.5 }}>{submittedSandData?.tClay || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 100, p: 0.5 }}>{submittedSandData?.aClay || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}>{submittedSandData?.vcm || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}>{submittedSandData?.loi || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}>{submittedSandData?.afs || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}>{submittedSandData?.gcs || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}>{submittedSandData?.moi || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 140, p: 0.5 }}>{submittedSandData?.compactability || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}>{submittedSandData?.perm || '--'}</TableCell>
-                  <TableCell sx={{ border: "1px solid #000", p: 0.5 }}>{submittedSandData?.otherRemarks || '--'}</TableCell>
-                </TableRow>
-
-                {/* Fixed spacer row - correct JSX */}
-                <TableRow>
-                  <TableCell colSpan={10} sx={{ border: "none", background: "transparent", height: 12 }} />
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Box>
-        </Paper>
-      </Box>
-    );
-  }
-
-  // Editable form
+  // Editable form with preview overlay
   return (
     <Box sx={{ p: 3 }} ref={printRef}>
+      {/* Preview overlay (Apple-glass) */}
+      {previewMode && previewPayload && (
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1300,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'rgba(15,23,42,0.5)',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <Box
+            sx={{
+              width: '90%',
+              maxWidth: 980,
+              maxHeight: '80vh',
+              overflow: 'auto',
+              borderRadius: 4,
+              p: 3,
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.82), rgba(248,250,252,0.9))',
+              boxShadow: '0 25px 80px rgba(15,23,42,0.45)',
+              border: '1px solid rgba(255,255,255,0.8)',
+              position: 'relative',
+            }}
+          >
+            {/* Close button in preview - routes to metallurgical inspection */}
+            <IconButton
+              onClick={() => {
+                navigate('/metallurgical-inspection');
+              }}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                color: '#DC2626',
+                '&:hover': { backgroundColor: 'rgba(220,38,38,0.08)' },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} pr={5}>
+              <Box>
+                <Box component="div" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                  Sand – Preview
+                </Box>
+                <Box component="div" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                  Review your data before final submission
+                </Box>
+              </Box>
+            </Box>
+
+            {previewPayload.submittedData && (
+              <Box mb={3}>
+                <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+                    <Box>
+                      <Box sx={{ fontWeight: 600, mb: 0.5 }}>Pattern Code</Box>
+                      <TextField fullWidth size="small" value={previewPayload.submittedData.selectedPattern?.pattern_code || ''} InputProps={{ readOnly: true }} />
+                    </Box>
+                    <Box>
+                      <Box sx={{ fontWeight: 600, mb: 0.5 }}>Part Name</Box>
+                      <TextField fullWidth size="small" value={previewPayload.submittedData.selectedPart?.part_name || ''} InputProps={{ readOnly: true }} />
+                    </Box>
+                    <Box>
+                      <Box sx={{ fontWeight: 600, mb: 0.5 }}>TRIAL No</Box>
+                      <TextField fullWidth size="small" value={previewPayload.submittedData.trialNo || ''} InputProps={{ readOnly: true }} />
+                    </Box>
+                  </Box>
+                </Paper>
+              </Box>
+            )}
+
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, mb: 2 }}>
+              <Box sx={{ fontWeight: 700, mb: 1 }}>Sand Properties Data</Box>
+              <Table size="small">
+                <TableBody>
+                  <TableRow>
+                    <TableCell>T.Clay</TableCell>
+                    <TableCell>{previewPayload.sand.tClay || '--'}</TableCell>
+                    <TableCell>A.Clay</TableCell>
+                    <TableCell>{previewPayload.sand.aClay || '--'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>VCM</TableCell>
+                    <TableCell>{previewPayload.sand.vcm || '--'}</TableCell>
+                    <TableCell>LOI</TableCell>
+                    <TableCell>{previewPayload.sand.loi || '--'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>AFS</TableCell>
+                    <TableCell>{previewPayload.sand.afs || '--'}</TableCell>
+                    <TableCell>G.C.S</TableCell>
+                    <TableCell>{previewPayload.sand.gcs || '--'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>MOI</TableCell>
+                    <TableCell>{previewPayload.sand.moi || '--'}</TableCell>
+                    <TableCell>Compactability</TableCell>
+                    <TableCell>{previewPayload.sand.compactability || '--'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Perm</TableCell>
+                    <TableCell>{previewPayload.sand.perm || '--'}</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell>{previewPayload.sand.date || '--'}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Paper>
+
+            {message && (
+              <Box mt={1}>
+                <Box sx={{ p: 1, bgcolor: previewSubmitted ? 'rgba(16,185,129,0.12)' : 'rgba(14,165,233,0.06)', borderRadius: 2 }}>{message}</Box>
+              </Box>
+            )}
+
+            <Box mt={3} display="flex" alignItems="center" gap={2}>
+              <Button variant="outlined" onClick={() => setPreviewMode(false)} disabled={sending || previewSubmitted}>
+                Edit
+              </Button>
+
+              <Button variant="contained" onClick={() => handleExportPDF()} disabled={exporting} sx={{ backgroundColor: SAKTHI_COLORS.primary }}>
+                {exporting ? 'Generating PDF...' : 'Export PDF'}
+              </Button>
+
+              <Button variant="contained" onClick={handleFinalSave} disabled={sending || previewSubmitted} sx={{ backgroundColor: SAKTHI_COLORS.accent }}>
+                {sending ? 'Saving...' : previewSubmitted ? 'Saved' : 'Save'}
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
       {submittedData && <SubmittedSampleCard submittedData={submittedData} />}
 
       <Paper elevation={0} sx={{ width: "100%", maxWidth: 1200, mx: "auto", border: "2px solid #000", bgcolor: "#f5f5f5", p: 0, mb: 3 }}>
@@ -369,7 +535,7 @@ const SandPropertiesTable: React.FC<SandPropertiesTableProps> = ({ submittedData
                 <TableCell sx={{ border: "1px solid #000", background: "#d0d0d0", px: 1 }}>
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: "0.9rem" }}>Date :</Typography>
-                    <Field value={data.date} onChange={(v) => setField("date", v)} onBlur={() => handleBlur("date")} error={shouldShowError("date")} helperText={shouldShowError("date") ? "Required" : ""} type="date" />
+                    <Field value={data.date} onChange={(v) => setField("date", v)} type="date" />
                   </Box>
                 </TableCell>
               </TableRow>
@@ -383,16 +549,16 @@ const SandPropertiesTable: React.FC<SandPropertiesTableProps> = ({ submittedData
 
             <TableBody>
               <TableRow>
-                <TableCell sx={{ border: "1px solid #000", width: 100, p: 0.5 }}><Field value={data.tClay} onChange={(v) => setField("tClay", v)} onBlur={() => handleBlur("tClay")} error={shouldShowError("tClay")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 100, p: 0.5 }}><Field value={data.aClay} onChange={(v) => setField("aClay", v)} onBlur={() => handleBlur("aClay")} error={shouldShowError("aClay")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.vcm} onChange={(v) => setField("vcm", v)} onBlur={() => handleBlur("vcm")} error={shouldShowError("vcm")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.loi} onChange={(v) => setField("loi", v)} onBlur={() => handleBlur("loi")} error={shouldShowError("loi")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.afs} onChange={(v) => setField("afs", v)} onBlur={() => handleBlur("afs")} error={shouldShowError("afs")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.gcs} onChange={(v) => setField("gcs", v)} onBlur={() => handleBlur("gcs")} error={shouldShowError("gcs")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.moi} onChange={(v) => setField("moi", v)} onBlur={() => handleBlur("moi")} error={shouldShowError("moi")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 140, p: 0.5 }}><Field value={data.compactability} onChange={(v) => setField("compactability", v)} onBlur={() => handleBlur("compactability")} error={shouldShowError("compactability")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.perm} onChange={(v) => setField("perm", v)} onBlur={() => handleBlur("perm")} error={shouldShowError("perm")} /></TableCell>
-                <TableCell sx={{ border: "1px solid #000", p: 0.5 }}><Field value={data.otherRemarks} onChange={(v) => setField("otherRemarks", v)} onBlur={() => handleBlur("otherRemarks")} error={shouldShowError("otherRemarks")} multiline /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 100, p: 0.5 }}><Field value={data.tClay} onChange={(v) => setField("tClay", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 100, p: 0.5 }}><Field value={data.aClay} onChange={(v) => setField("aClay", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.vcm} onChange={(v) => setField("vcm", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.loi} onChange={(v) => setField("loi", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.afs} onChange={(v) => setField("afs", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.gcs} onChange={(v) => setField("gcs", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.moi} onChange={(v) => setField("moi", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 140, p: 0.5 }}><Field value={data.compactability} onChange={(v) => setField("compactability", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", width: 90, p: 0.5 }}><Field value={data.perm} onChange={(v) => setField("perm", v)} /></TableCell>
+                <TableCell sx={{ border: "1px solid #000", p: 0.5 }}><Field value={data.otherRemarks} onChange={(v) => setField("otherRemarks", v)} multiline /></TableCell>
               </TableRow>
 
               <TableRow>
@@ -404,12 +570,9 @@ const SandPropertiesTable: React.FC<SandPropertiesTableProps> = ({ submittedData
 
         <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", p: 2 }}>
           <Button variant="outlined" color="secondary" onClick={handleClear}>Clear</Button>
-          <Button variant="contained" color="primary" onClick={handleSave} disabled={!allFilled}>Submit Sand Properties</Button>
-          <Button variant="outlined" onClick={handleExportPDF} disabled={exporting} startIcon={exporting ? <CircularProgress size={16} /> : undefined}>{exporting ? 'Generating...' : 'Export as PDF'}</Button>
+          <Button variant="contained" color="primary" onClick={handleSaveAndContinue}>Submit Sand Properties</Button>
         </Box>
       </Paper>
-
-      {allFilled && <Alert severity="success" sx={{ mb: 2 }}>Sand properties data is ready to be submitted. Click "Submit Sand Properties" to proceed.</Alert>}
     </Box>
   );
 };

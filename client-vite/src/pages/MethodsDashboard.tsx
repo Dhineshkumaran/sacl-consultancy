@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import UserManagement from '../components/admin/UserManagement';
-import FoundrySampleCard from '../components/FoundrySampleCard';
 import { useAuth } from '../context/AuthContext';
 
 const MethodsDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [showUserDetails, setShowUserDetails] = useState(false);
-  const [showFoundryCard, setShowFoundryCard] = useState(false);
+  const navigate = useNavigate();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -375,29 +375,7 @@ const MethodsDashboard: React.FC = () => {
     <div className="dashboard" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
       <CustomHeader />
       <main className="dashboard-content" style={{ padding: '20px' }}>
-        {showFoundryCard ? (
-          <div>
-            <FoundrySampleCard />
-            <button 
-              className="btn-back"
-              onClick={() => setShowFoundryCard(false)}
-              style={{ 
-                marginTop: '20px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#545b62'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
-            >
-              ← Back to Dashboard
-            </button>
-          </div>
-        ) : showUserDetails ? (
+        {showUserDetails ? (
           <UserManagement />
         ) : (
           <div className="welcome-section">
@@ -429,7 +407,7 @@ const MethodsDashboard: React.FC = () => {
               <div className="button-group" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                 <button 
                   className="btn-view-users"
-                  onClick={() => setShowFoundryCard(true)}
+                  onClick={() => navigate('/foundry-sample-card')}
                   style={{
                     backgroundColor: '#007bff',
                     color: 'white',
