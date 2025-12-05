@@ -14,6 +14,9 @@ import trial from './routes/trial.js';
 import metallurgicalSpecs from './routes/metallurgicalSpecs.js';
 import mechanicalProperties from './routes/mechanicalProperties.js';
 import departmentProgress from './routes/departmentProgress.js';
+import visualInspection from './routes/visualInspection.js';
+import ndtInspection from './routes/NDTInspection.js';
+import materialCorrection from './routes/materialCorrection.js';
 
 const app = express();
 app.use(express.json());
@@ -36,6 +39,9 @@ app.use('/api/trial', trial);
 app.use('/api/metallurgical-specs', metallurgicalSpecs);
 app.use('/api/mechanical-properties', mechanicalProperties);
 app.use('/api/department-progress', departmentProgress);
+app.use('/api/visual-inspection', visualInspection);
+app.use('/api/ndt-inspection', ndtInspection);
+app.use('/api/material-correction', materialCorrection);
 app.use('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });
