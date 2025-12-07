@@ -26,6 +26,9 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
         [trial_id, tensile_strength, yield_strength, elongation, impact_strength_cold, impact_strength_room, hardness_surface, hardness_core, x_ray_inspection, mpi]
     );
 
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Mechanical properties created', `Mechanical properties ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
+
     const insertId = response[0].insertId;
     res.status(201).json({
         message: "Mechanical properties created successfully.",

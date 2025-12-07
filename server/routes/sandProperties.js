@@ -11,6 +11,8 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     }
     const sql = 'INSERT INTO sand_properties (trial_id, date, t_clay, a_clay, vcm, loi, afs, gcs, moi, compactability, permeability, other_remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, date, t_clay, a_clay, vcm, loi, afs, gcs, moi, compactability, permeability, other_remarks]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Sand properties created', `Sand properties ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({ sandPropertiesId: result.insertId });
 }));
 

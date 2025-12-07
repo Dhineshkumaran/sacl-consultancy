@@ -76,6 +76,9 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
             expiresIn: '24h',
             message: `Login successful as ${user.role}`
         });
+
+        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+        const [audit_result] = await Client.query(audit_sql, [user.user_id, user.department_id, 'Login', `User ${user.username} logged in with IP ${req.ip}`, 'Login']);
     } catch (err) {
         return next(new CustomError('Server error during login', 500));
     }

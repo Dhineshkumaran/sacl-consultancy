@@ -12,6 +12,8 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const ndtJson = JSON.stringify(ndt);
     const sql = 'INSERT INTO ndt_inspection (trial_id, ndt, ndt_ok, remarks) VALUES (?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, ndtJson, ndt_ok, remarks]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'NDT inspection created', `NDT inspection ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({ ndtInspectionId: result.insertId });
 }));
 

@@ -12,7 +12,13 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const inspectionsJson = JSON.stringify(inspections);
     const sql = 'INSERT INTO machine_shop (trial_id, inspection_date, inspections, remarks) VALUES (?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, inspection_date, inspectionsJson, remarks]);
-    res.status(201).json({ machineShopId: result.insertId });
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Machine shop created', `Machine shop ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
+    const insertId = result.insertId;
+    res.status(201).json({
+        message: "Machine shop created successfully.",
+        id: insertId
+    });
 }));
 
 router.get('/', asyncErrorHandler(async (req, res, next) => {

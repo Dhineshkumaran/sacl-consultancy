@@ -3,6 +3,7 @@ const router = express.Router();
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
+import { transporter } from '../config/nodemailer.js';
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
     const { trial_id, department_id, completed_at, approval_status, remarks, username } = req.body;
@@ -10,6 +11,18 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
         `INSERT INTO department_progress (trial_id, department_id, completed_at, approval_status, remarks, username) VALUES (?, ?, ?, ?, ?, ?)`,
         [trial_id, department_id, completed_at, approval_status, remarks, username]
     );
+    const user = await Client.query(
+        `SELECT * FROM users WHERE username = ?`,
+        [username]
+    );
+    const mailOptions = {
+        to: user[0].email,
+        subject: 'Department Progress Added',
+        text: `Department progress ${result.insertId} added by ${username} with trial id ${trial_id} to department ${department_id}. Please check the progress by logging into the application.`
+    };
+    await transporter.sendMail(mailOptions);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress added', `Department progress ${result.insertId} added by ${username} with trial id ${trial_id} to department ${department_id}`]);
     res.status(201).json({
         success: true,
         data: "Department progress added successfully"
@@ -32,6 +45,18 @@ router.put('/update', asyncErrorHandler(async (req, res, next) => {
             `UPDATE department_progress SET department_id = ?, username = ?, remarks = ? WHERE progress_id = ?`,
             [next_department_id, next_department_username, remarks, progress_id]
         );
+        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+        const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${next_department_id} for ${role}`]);
+        const user = await Client.query(
+            `SELECT * FROM users WHERE username = ?`,
+            [next_department_username]
+        );
+        const mailOptions = {
+            to: user[0].email,
+            subject: 'Department Progress Updated',
+            text: `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${next_department_id} for ${role}. Please check the progress by logging into the application.`
+        };
+        await transporter.sendMail(mailOptions);
         res.status(200).json({
             success: true,
             data: "Department progress updated successfully"
@@ -50,6 +75,18 @@ router.put('/update', asyncErrorHandler(async (req, res, next) => {
             `UPDATE department_progress SET username = ?, remarks = ? WHERE progress_id = ?`,
             [current_department_hod_username, remarks, progress_id]
         );
+        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+        const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}`]);
+        const user = await Client.query(
+            `SELECT * FROM users WHERE username = ?`,
+            [current_department_hod_username]
+        );
+        const mailOptions = {
+            to: user[0].email,
+            subject: 'Department Progress Updated',
+            text: `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}. Please check the progress by logging into the application.`
+        };
+        await transporter.sendMail(mailOptions);
         res.status(200).json({
             success: true,
             data: "Department progress updated successfully"
@@ -63,6 +100,8 @@ router.put('/approve', asyncErrorHandler(async (req, res, next) => {
         `UPDATE department_progress SET approval_status = 'approved', remarks = ? WHERE progress_id = ?`,
         [remarks, progress_id]
     );
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress approved', `Department progress ${progress_id} approved by ${req.user.username} with trial id ${trial_id}`]);
     res.status(200).json({
         success: true,
         data: "Department progress approved successfully"
