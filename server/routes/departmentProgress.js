@@ -131,3 +131,75 @@ export default router;
 //     approval_status VARCHAR(20) DEFAULT 'pending',
 //     remarks TEXT
 // );
+
+// API: http://localhost:3000/department-progress
+// Method: POST
+// Sample data: 
+// {
+//     "trial_id": 1,
+//     "department_id": 1,
+//     "username": "user1",
+//     "completed_at": "2022-01-01",
+//     "approval_status": "pending",
+//     "remarks": "remarks"
+// }
+
+// API: http://localhost:3000/department-progress/update
+// Method: PUT
+// Sample data: 
+// {
+//     "progress_id": 1,
+//     "current_department_id": 1,
+//     "username": "user1",
+//     "role": "HOD",
+//     "remarks": "remarks"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": "Department progress updated successfully"
+// }
+
+// API: http://localhost:3000/department-progress/approve
+// Method: PUT
+// Sample data: 
+// {
+//     "progress_id": 1,
+//     "remarks": "remarks"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": "Department progress approved successfully"
+// }
+
+// API: http://localhost:3000/department-progress/get-progress
+// Method: GET
+// Sample data: 
+// {
+//     "trial_id": 1
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "progress_id": 1,
+//             "trial_id": 1,
+//             "department_id": 1,
+//             "username": "user1",
+//             "completed_at": "2022-01-01",
+//             "approval_status": "pending",
+//             "remarks": "remarks"
+//         },
+//         {
+//             "progress_id": 2,
+//             "trial_id": 1,
+//             "department_id": 2,
+//             "username": "user2",
+//             "completed_at": "2022-01-02",
+//             "approval_status": "pending",
+//             "remarks": "remarks"
+//         }
+//     ]
+// }

@@ -14,12 +14,12 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [trial_id, ndtJson, ndt_ok, remarks]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'NDT inspection created', `NDT inspection ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
-    res.status(201).json({ ndtInspectionId: result.insertId });
+    res.status(201).json({ success: true, message: 'NDT inspection created successfully.' });
 }));
 
 router.get('/', asyncErrorHandler(async (req, res, next) => {
     const [rows] = await Client.query('SELECT * FROM ndt_inspection');
-    res.status(200).json({ ndtInspections: rows });
+    res.status(200).json({ success: true, data: rows });
 }));
 
 router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
@@ -29,7 +29,7 @@ router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
     }
     trial_id = trial_id.replace(/['"]+/g, '');
     const [rows] = await Client.query('SELECT * FROM ndt_inspection WHERE trial_id = ?', [trial_id]);
-    res.status(200).json({ ndtInspections: rows });
+    res.status(200).json({ success: true, data: rows });
 }));
 
 export default router;
@@ -43,3 +43,54 @@ export default router;
 // );
 
 // ndt [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}]
+
+// API: http://localhost:3000/ndt-inspection
+// Method: GET
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "inspection_id": 1,
+//             "trial_id": "trial_id",
+//             "ndt": [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}],
+//             "ndt_ok": true,
+//             "remarks": "remarks"
+//         }
+//     ]
+// }
+
+// API: http://localhost:3000/ndt-inspection
+// Method: POST
+// Sample data: 
+// {
+//     "trial_id": "trial_id",
+//     "ndt": [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}],
+//     "ndt_ok": true,
+//     "remarks": "remarks"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "message": "NDT inspection created successfully."
+// }
+
+// API: http://localhost:3000/ndt-inspection/trial_id
+// Method: GET
+// Sample data: 
+// {
+//     "trial_id": "trial_id"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "inspection_id": 1,
+//             "trial_id": "trial_id",
+//             "ndt": [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Reason for rejection:": ""}],
+//             "ndt_ok": true,
+//             "remarks": "remarks"
+//         }
+//     ]
+// }

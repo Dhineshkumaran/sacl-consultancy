@@ -9,7 +9,7 @@ router.get('/', asyncErrorHandler(async(req, res, next)=>{
         `SELECT * FROM metallurgical_specifications`
     )
     console.log(response[0]);
-    res.status(200).json(response[0]);
+    res.status(200).json({success:true, data:response[0]});
 }))
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
@@ -35,8 +35,8 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const insertId = response[0].insertId;
 
     res.status(201).json({
-        message: "Metallurgical specifications created successfully.",
-        id: insertId
+        success: true,
+        message: "Metallurgical specifications created successfully."
     });
 }));
 
@@ -48,3 +48,51 @@ export default router;
 //     chemical_composition JSON,
 //     microstructure JSON
 // );
+
+// API: http://localhost:3000/metallurgical-specs
+// Method: GET
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "spec_id": 1,
+//             "trial_id": "trial_id",
+//             "chemical_composition": {},
+//             "microstructure": {},
+//         }
+//     ]
+// }
+
+// API: http://localhost:3000/metallurgical-specs
+// Method: POST
+// Sample data: 
+// {
+//     "trial_id": "trial_id",
+//     "chemical_composition": {},
+//     "microstructure": {}
+// }
+// Response: 
+// {
+//     "success": true,
+//     "message": "Metallurgical specifications created successfully."
+// }
+
+// API: http://localhost:3000/metallurgical-specs/trial_id
+// Method: GET
+// Sample data: 
+// {
+//     "trial_id": "trial_id"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "spec_id": 1,
+//             "trial_id": "trial_id",
+//             "chemical_composition": {},
+//             "microstructure": {},
+//         }
+//     ]
+// }

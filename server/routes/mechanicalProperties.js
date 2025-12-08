@@ -9,7 +9,7 @@ router.get('/', asyncErrorHandler(async (req, res, next) => {
         `SELECT * FROM mechanical_properties_final`
     )
     console.log(response[0]);
-    res.status(200).json(response[0]);
+    res.status(200).json({success:true, data:response[0]});
 }))
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
@@ -31,6 +31,7 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
 
     const insertId = response[0].insertId;
     res.status(201).json({
+        success: true,
         message: "Mechanical properties created successfully.",
         id: insertId
     });
@@ -51,3 +52,72 @@ export default router;
 //     x_ray_inspection TEXT,
 //     mpi TEXT
 // );
+
+// API: http://localhost:3000/mechanical-properties
+// Method: GET
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "prop_id": 1,
+//             "trial_id": "trial_id",
+//             "tensile_strength": "tensile_strength",
+//             "yield_strength": "yield_strength",
+//             "elongation": "elongation",
+//             "impact_strength_cold": "impact_strength_cold",
+//             "impact_strength_room": "impact_strength_room",
+//             "hardness_surface": "hardness_surface",
+//             "hardness_core": "hardness_core",
+//             "x_ray_inspection": "x_ray_inspection",
+//             "mpi": "mpi"
+//         }
+//     ]
+// }
+
+// API: http://localhost:3000/mechanical-properties/trial_id
+// Method: GET
+// Sample data: 
+// {
+//     "trial_id": "trial_id"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "prop_id": 1,
+//             "trial_id": "trial_id",
+//             "tensile_strength": "tensile_strength",
+//             "yield_strength": "yield_strength",
+//             "elongation": "elongation",
+//             "impact_strength_cold": "impact_strength_cold",
+//             "impact_strength_room": "impact_strength_room",
+//             "hardness_surface": "hardness_surface",
+//             "hardness_core": "hardness_core",
+//             "x_ray_inspection": "x_ray_inspection",
+//             "mpi": "mpi"
+//         }
+//     ]
+// }
+
+// API: http://localhost:3000/mechanical-properties
+// Method: POST
+// Sample data: 
+// {
+//     "trial_id": "trial_id",
+//     "tensile_strength": "tensile_strength",
+//     "yield_strength": "yield_strength",
+//     "elongation": "elongation",
+//     "impact_strength_cold": "impact_strength_cold",
+//     "impact_strength_room": "impact_strength_room",
+//     "hardness_surface": "hardness_surface",
+//     "hardness_core": "hardness_core",
+//     "x_ray_inspection": "x_ray_inspection",
+//     "mpi": "mpi"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "message": "Mechanical properties created successfully."
+// }

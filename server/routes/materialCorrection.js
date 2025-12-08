@@ -7,7 +7,7 @@ import CustomError from '../utils/customError.js';
 router.post('/', asyncErrorHandler(async (req, res, next) => {
     const { trial_id, chemical_composition, process_parameters } = req.body || {};
     if (!trial_id || !chemical_composition || !process_parameters) {
-        return res.status(400).json({ message: 'Missing required fields' });
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const sql = 'INSERT INTO material_correction (trial_id, chemical_composition, process_parameters) VALUES (?, ?, ?)';
     const chemicalCompositionJson = JSON.stringify(chemical_composition);
@@ -17,6 +17,7 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Material correction created', `Material correction ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     const insertId = result.insertId;
     res.status(201).json({
+        success: true,
         message: "Material correction created successfully.",
         id: insertId
     });
@@ -24,17 +25,17 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
 
 router.get('/', asyncErrorHandler(async (req, res, next) => {
     const [rows] = await Client.query('SELECT * FROM material_correction');
-    res.status(200).json({ materialCorrections: rows });
+    res.status(200).json({ success: true, data: rows });
 }));
 
 router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
     let trial_id = req.query.trial_id;
     if (!trial_id) {
-        return res.status(400).json({ message: 'trial_id query parameter is required' });
+        return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });
     }
     trial_id = trial_id.replace(/['"]+/g, '');
     const [rows] = await Client.query('SELECT * FROM material_correction WHERE trial_id = ?', [trial_id]);
-    res.status(200).json({ materialCorrections: rows });
+    res.status(200).json({ success: true, data: rows });
 }));
 
 export default router;
@@ -63,4 +64,93 @@ export default router;
 //         "inoculant_per_sec": "",
 //         "inoculant_type": ""
 //     }
+// }
+
+// API: http://localhost:3000/material-correction
+// Method: GET
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "correction_id": 1,
+//             "trial_id": "trial_id",
+//             "chemical_composition": {
+//                 "c_percent": "",
+//                 "si_percent": "",
+//                 "mn_percent": "",
+//                 "p_percent": "",
+//                 "s_percent": "",
+//                 "mg_percent": "",
+//                 "cu_percent": "",
+//                 "cr_percent": ""
+//             },
+//             "process_parameters": {
+//                 "pouring_temp_c": "",
+//                 "inoculant_per_sec": "",
+//                 "inoculant_type": ""
+//             },
+//             "remarks": "remarks"
+//         }
+//     ]
+// }
+
+// API: http://localhost:3000/material-correction/trial_id
+// Method: GET
+// Sample data: 
+// {
+//     "trial_id": "trial_id"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "correction_id": 1,
+//             "trial_id": "trial_id",
+//             "chemical_composition": {
+//                 "c_percent": "",
+//                 "si_percent": "",
+//                 "mn_percent": "",
+//                 "p_percent": "",
+//                 "s_percent": "",
+//                 "mg_percent": "",
+//                 "cu_percent": "",
+//                 "cr_percent": ""
+//             },
+//             "process_parameters": {
+//                 "pouring_temp_c": "",
+//                 "inoculant_per_sec": "",
+//                 "inoculant_type": ""
+//             },
+//             "remarks": "remarks"
+//         }
+//     ]
+// }
+
+// API: http://localhost:3000/material-correction
+// Method: POST
+// Sample data: 
+// {
+//     "trial_id": "trial_id",
+//     "chemical_composition": {
+//         "c_percent": "",
+//         "si_percent": "",
+//         "mn_percent": "",
+//         "p_percent": "",
+//         "s_percent": "",
+//         "mg_percent": "",
+//         "cu_percent": "",
+//         "cr_percent": ""
+//     },
+//     "process_parameters": {
+//         "pouring_temp_c": "",
+//         "inoculant_per_sec": "",
+//         "inoculant_type": ""
+//     }
+// }
+// Response: 
+// {
+//     "id": 1,
+//     "message": "Material correction created successfully."
 // }

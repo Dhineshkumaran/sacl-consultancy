@@ -25,7 +25,7 @@ router.post('/', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(async (
   const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
   const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'User created', `User ${username} created by ${req.user.username}`]);
   const [result] = await Client.execute(sql, [username, full_name, hash, email, department_id, role]);
-  res.status(201).json({ userId: result.insertId });
+  res.status(201).json({ success: true, message: 'User created successfully.' });
 }));
 
 router.post('/send-otp', verifyToken, asyncErrorHandler(async (req, res, next) => {

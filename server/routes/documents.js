@@ -44,3 +44,43 @@ export default router;
 //     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 //     remarks TEXT
 // );
+
+// API: http://localhost:3000/documents
+// Method: POST
+// Sample data: 
+// {
+//     "trial_id": "trial_id",
+//     "document_type": "document_type",
+//     "file_name": "file_name",
+//     "file_base64": "file_base64",
+//     "uploaded_by": "uploaded_by",
+//     "remarks": "remarks"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": "Document uploaded successfully."
+// }
+
+// API: http://localhost:3000/documents
+// Method: GET
+// Sample data: 
+// {
+//     "trial_id": "trial_id"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": [
+//         {
+//             "document_id": 1,
+//             "trial_id": "trial_id",
+//             "document_type": "document_type",
+//             "file_name": "file_name",
+//             "file_base64": "file_base64",
+//             "uploaded_by": "uploaded_by",
+//             "uploaded_at": "uploaded_at",
+//             "remarks": "remarks"
+//         }
+//     ]
+// }

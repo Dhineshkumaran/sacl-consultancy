@@ -57,3 +57,66 @@ export default router;
 // );
 
 // inspections [{"Cavity Number": "", "Casting Weight": ""}]
+
+// API: http://localhost:3000/dimensional-inspection
+// Method: POST
+// Sample data: 
+// {
+//     "trial_id": "trial_id",
+//     "inspection_date": "inspection_date",
+//     "casting_weight": 1,
+//     "bunch_weight": 1,
+//     "no_of_cavities": 1,
+//     "yields": 1,
+//     "inspections": [{"Cavity Number": "", "Casting Weight": ""}],
+//     "remarks": "remarks"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": "Dimensional inspection created successfully."
+// }
+
+// API: http://localhost:3000/dimensional-inspection
+// Method: GET
+// Response: 
+// {
+//     "success": true,
+//     "inspections": [
+//         {
+//             "inspection_id": 1,
+//             "trial_id": "trial_id",
+//             "inspection_date": "inspection_date",
+//             "casting_weight": 1,
+//             "bunch_weight": 1,
+//             "no_of_cavities": 1,
+//             "yields": 1,
+//             "inspections": [{"Cavity Number": "", "Casting Weight": ""}],
+//             "remarks": "remarks"
+//         }
+//     ]
+// }
+
+// API: http://localhost:3000/dimensional-inspection/trial_id
+// Method: GET
+// Sample data: 
+// {
+//     "trial_id": "trial_id"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "inspections": [
+//         {
+//             "inspection_id": 1,
+//             "trial_id": "trial_id",
+//             "inspection_date": "inspection_date",
+//             "casting_weight": 1,
+//             "bunch_weight": 1,
+//             "no_of_cavities": 1,
+//             "yields": 1,
+//             "inspections": [{"Cavity Number": "", "Casting Weight": ""}],
+//             "remarks": "remarks"
+//         }
+//     ]
+// }
