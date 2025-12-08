@@ -11,7 +11,7 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         `INSERT INTO documents (trial_id, document_type, file_name, file_base64, uploaded_by, remarks) VALUES (?, ?, ?, ?, ?, ?)`,
         [trial_id, document_type, file_name, file_base64, uploaded_by, remarks]
     );
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Document uploaded', `Document ${file_name} uploaded by ${req.user.username} with trial id ${trial_id} for ${document_type}`]);
     const insertId = result.insertId;
     res.status(201).json({

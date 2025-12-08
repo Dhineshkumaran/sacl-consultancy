@@ -12,7 +12,7 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const mouldJson = JSON.stringify(mould_correction);
     const sql = 'INSERT INTO trial_cards (part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const [result] = await Client.query(sql, [part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status || null, current_department_id, disa, sample_traceability, mouldJson]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Trial created', `Trial ${trial_id} created by ${req.user.username} with part name ${part_name}`]);
     res.status(201).json({ trialId: result.insertId });
 }));

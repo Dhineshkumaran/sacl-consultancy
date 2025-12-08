@@ -12,6 +12,8 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const inspectionsJson = JSON.stringify(inspections);
     const sql = 'INSERT INTO visual_inspection (trial_id, inspections, visual_ok, remarks) VALUES (?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, inspectionsJson, visual_ok, remarks]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Visual inspection created', `Visual inspection ${trial_id} created by ${req.user.username}`]);
     res.status(201).json({ visualInspectionId: result.insertId });
 }));
 

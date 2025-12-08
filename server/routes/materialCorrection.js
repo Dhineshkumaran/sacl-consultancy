@@ -13,7 +13,7 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     const chemicalCompositionJson = JSON.stringify(chemical_composition);
     const processParametersJson = JSON.stringify(process_parameters);
     const [result] = await Client.query(sql, [trial_id, chemicalCompositionJson, processParametersJson]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Material correction created', `Material correction ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     const insertId = result.insertId;
     res.status(201).json({

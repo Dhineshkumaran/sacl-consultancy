@@ -22,6 +22,8 @@ router.post('/', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(async (
   const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
   const hash = await bcrypt.hash(password, saltRounds);
   const sql = 'INSERT INTO users (username, full_name, password_hash, email, department_id, role) VALUES (?, ?, ?, ?, ?, ?)';
+  const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+  const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'User created', `User ${username} created by ${req.user.username}`]);
   const [result] = await Client.execute(sql, [username, full_name, hash, email, department_id, role]);
   res.status(201).json({ userId: result.insertId });
 }));
@@ -48,7 +50,6 @@ router.post('/send-otp', verifyToken, asyncErrorHandler(async (req, res, next) =
 
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_USER,
       to: email,
       subject: 'Your verification code',
       text: `Your OTP code is: ${otp}. It expires in 5 minutes.`

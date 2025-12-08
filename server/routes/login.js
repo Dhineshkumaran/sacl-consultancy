@@ -61,6 +61,9 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
         const token = generateToken(user.user_id, user.username, user.department_id, user.role);
         const refreshToken = generateRefreshToken(user.user_id, user.username);
 
+        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+        const [audit_result] = await Client.query(audit_sql, [user.user_id, user.department_id, 'Login', `User ${user.username} logged in with IP ${req.ip}`]);
+        
         return res.status(200).json({
             success: true,
             token,
@@ -77,8 +80,6 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
             message: `Login successful as ${user.role}`
         });
 
-        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, action_timestamp, remarks) VALUES (?, ?, ?, ?, ?)';
-        const [audit_result] = await Client.query(audit_sql, [user.user_id, user.department_id, 'Login', `User ${user.username} logged in with IP ${req.ip}`, 'Login']);
     } catch (err) {
         return next(new CustomError('Server error during login', 500));
     }
