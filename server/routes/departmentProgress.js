@@ -3,7 +3,7 @@ const router = express.Router();
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
-import { transporter } from '../utils/mailSender.js';
+import transporter from '../utils/mailSender.js';
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
     const { trial_id, department_id, completed_at, approval_status, remarks, username } = req.body;
