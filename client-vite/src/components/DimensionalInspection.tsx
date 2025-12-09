@@ -223,7 +223,7 @@ export default function DimensionalInspection({
 
   // Cavities management (dynamic columns)
   const addCavity = () => {
-    const next = `Cavity ${cavities.length + 1}`;
+    const next = `Value ${cavities.length + 1}`;
     setCavities((c) => [...c, next]);
     setCavRows((rows) => rows.map((r) => ({ ...r, values: [...r.values, ""] })));
   };
@@ -296,11 +296,51 @@ export default function DimensionalInspection({
     if (!previewPayload) return;
     setSaving(true);
     try {
-      await onSave(previewPayload);
-      setPreviewSubmitted(true);
-      setAlert({ severity: "success", message: "Dimensional data submitted successfully" });
+      // Build API payload according to provided spec
+      const trialId = new URLSearchParams(window.location.search).get('trial_id') || (localStorage.getItem('trial_id') ?? 'trial_id');
+
+      // find rows
+      const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
+      const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
+
+      const inspections = (previewPayload.cavities || []).map((_: any, i: number) => ({
+        "Cavity Number": (cavityRow?.values?.[i] ?? previewPayload.cavities[i] ?? null),
+        "Casting Weight": (castingRow?.values?.[i] ?? null)
+      }));
+
+      const apiPayload = {
+        trial_id: trialId,
+        inspection_date: previewPayload.inspection_date || previewPayload.created_at || null,
+        casting_weight: parseFloat(previewPayload.weight_target) || 0,
+        bunch_weight: parseFloat(previewPayload.bunch_weight) || 0,
+        no_of_cavities: parseInt(previewPayload.number_of_cavity) || (previewPayload.cavities ? previewPayload.cavities.length : 0),
+        yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
+        inspections: inspections,
+        remarks: previewPayload.dimensional_remarks || previewPayload.additionalRemarks || null
+      };
+
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('http://localhost:3000/api/dimensional-inspection', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(apiPayload)
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.success) {
+        setPreviewSubmitted(true);
+        setAlert({ severity: "success", message: data.data || "Dimensional inspection created successfully." });
+      } else {
+        setAlert({ severity: "error", message: data?.message || "Failed to save dimensional inspection" });
+        console.error("Dimensional Inspection API error:", data);
+      }
     } catch (err: any) {
-      setAlert({ severity: "error", message: "Submission failed" });
+      console.error("Error saving dimensional inspection:", err);
+      setAlert({ severity: "error", message: "Failed to save dimensional inspection. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -309,6 +349,9 @@ export default function DimensionalInspection({
   const handleExportPDF = () => {
     window.print();
   };
+
+  // Font style for data values to match inputs
+  const dataFontStyle = { fontFamily: '"Roboto Mono", monospace', fontWeight: 500 };
 
   return (
     <ThemeProvider theme={theme}>
@@ -389,7 +432,7 @@ export default function DimensionalInspection({
                   sx={{ bgcolor: 'white' }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Bunch Weight (Kg)</Typography>
                 <TextField
                   size="small"
@@ -400,7 +443,7 @@ export default function DimensionalInspection({
                   sx={{ bgcolor: 'white' }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Number of Cavity</Typography>
                 <TextField
                   size="small"
@@ -412,38 +455,17 @@ export default function DimensionalInspection({
                   sx={{ bgcolor: 'white' }}
                 />
               </Grid>
-            </Grid>
-
-            {/* Yield Calculation Row */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={0} sx={{ p: 2, bgcolor: '#fffbeb', border: '2px solid #fcd34d' }}>
-                  <Typography variant="caption" sx={{ display: 'block', mb: 1, color: '#92400e', fontWeight: 700 }}>YIELD CALCULATION</Typography>
-                  <Typography variant="body2" sx={{ color: '#78350f', fontSize: '0.75rem', mb: 1 }}>
-                    Yield = ((Casting weight × no of cavity) / Bunch weight) × 100
-                  </Typography>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    value={calculateYield()}
-                    InputProps={{
-                      readOnly: true,
-                      endAdornment: <Typography variant="body2" sx={{ ml: 1, color: COLORS.textSecondary }}>%</Typography>
-                    }}
-                    sx={{
-                      bgcolor: 'white',
-                      '& .MuiInputBase-input': {
-                        fontWeight: 700,
-                        fontSize: '1.1rem',
-                        color: COLORS.primary
-                      }
-                    }}
-                    placeholder="Auto-calculated"
-                  />
-                </Paper>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Yield (%)</Typography>
+                <TextField
+                  size="small"
+                  fullWidth
+                  value={calculateYield()}
+                  InputProps={{ readOnly: true }}
+                  sx={{ bgcolor: 'white', '& .MuiInputBase-input': { fontWeight: 700 } }}
+                />
               </Grid>
             </Grid>
-
 
             {/* Cavity Table */}
             <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
@@ -784,7 +806,7 @@ export default function DimensionalInspection({
                   </tbody>
                 </table>
 
-                <div style={{ marginTop: '20px', padding: '10px', border: '1px solid black' }}>
+                <div style={{ marginTop: "20px", padding: "10px", border: "1px solid black" }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>General Remarks</div>
                   <div>{previewPayload.dimensional_remarks || '-'}</div>
                 </div>

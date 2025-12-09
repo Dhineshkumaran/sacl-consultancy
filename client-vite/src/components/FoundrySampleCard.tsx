@@ -524,8 +524,8 @@ function FoundrySampleCard() {
         if (!response.ok) {
           throw new Error("Failed to fetch master list");
         }
-        const data = await response.json();
-        setMasterParts(data);
+        const res = await response.json();
+        setMasterParts(res.data || []);
         setError(null);
       } catch (error) {
         console.error("Error loading master parts:", error);

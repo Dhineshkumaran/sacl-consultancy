@@ -157,8 +157,11 @@ function FoundrySampleCard() {
   // Attach PDF / Images
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
-
-
+  // Add these states near other useState declarations
+  const [mouldCorrectionLoading, setMouldCorrectionLoading] = useState(false);
+  const [mouldCorrectionSubmitted, setMouldCorrectionSubmitted] = useState(false);
+  const [mouldDate, setMouldDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  
   const [previewMode, setPreviewMode] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [userIP, setUserIP] = useState<string>("");
@@ -196,10 +199,6 @@ function FoundrySampleCard() {
     setPreviewMode(true);
   };
 
-  const handleFinalSubmit = () => {
-    setSubmitted(true);
-  };
-
   const handleExportPDF = () => { window.print(); };
 
   // Helper grid box for preview
@@ -216,6 +215,71 @@ function FoundrySampleCard() {
       <Typography variant="h6" sx={{ fontSize: '1rem' }}>{value || "-"}</Typography>
     </Box>
   );
+
+  /**
+   * Post mould correction to server
+   * payload must include: mould_thickness, compressability, squeeze_pressure, mould_hardness, remarks
+   * trial_id will be taken from URL query or localStorage fallback.
+   */
+  const postMouldCorrection = async (payload: {
+    mould_thickness: string;
+    compressability: string;
+    squeeze_pressure: string;
+    mould_hardness: string;
+    remarks: string;
+    trial_id?: string;
+  }) => {
+    setMouldCorrectionLoading(true);
+    try {
+      const trialId = new URLSearchParams(window.location.search).get('trial_id') || (localStorage.getItem('trial_id') ?? 'trial_id');
+      const body = { ...payload, trial_id: 'Sample1', date: mouldDate };
+
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('http://localhost:3000/api/moulding-correction', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      });
+      
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.success) {
+        setMouldCorrectionSubmitted(true);
+        return { ok: true, data };
+      } else {
+        return { ok: false, message: data?.message || 'Failed to save mould correction', data };
+      }
+    } catch (err) {
+      return { ok: false, message: 'Network error' };
+    } finally {
+      setMouldCorrectionLoading(false);
+    }
+  };
+
+  // Example: call postMouldCorrection when user clicks Confirm (adjust to your component fields)
+  const handleFinalSubmit = async () => {
+    // replace these with your component state variables
+    const payload = {
+      mould_thickness: mouldState.thickness,        // string state in your component
+      compressability: mouldState.compressability, // string state in your component
+      squeeze_pressure: mouldState.pressure,
+      mould_hardness: mouldState.hardness,
+      remarks: mouldState.remarks
+    };
+
+    const result = await postMouldCorrection(payload);
+    if (!result.ok) {
+      // minimal feedback - replace with your toast/snackbar
+      alert(result.message || 'Failed to submit mould correction');
+    } else {
+      // success handling
+      alert('Mould correction created successfully.');
+      setSubmitted(true);
+    }
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -244,6 +308,13 @@ function FoundrySampleCard() {
               <Typography variant="h6">MOULDING DETAILS</Typography>
             </Box>
             <Box display="flex" gap={1} alignItems="center">
+              <TextField
+                type="date"
+                size="small"
+                value={mouldDate}
+                onChange={(e) => setMouldDate(e.target.value)}
+                sx={{ bgcolor: 'white', borderRadius: 1, width: 150 }}
+              />
               <Chip label={userIP} size="small" variant="outlined" sx={{ bgcolor: 'white' }} />
               <Chip
                 label="USER NAME"

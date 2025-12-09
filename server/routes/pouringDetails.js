@@ -6,6 +6,7 @@ import CustomError from '../utils/customError.js';
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
     const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks } = req.body || {};
+    console.log('req.body:', req.body);
     if (!trial_id || !pour_date || !heat_code || !composition || !pouring_temp_c || !pouring_time_sec || !inoculation || !other_remarks || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
@@ -33,6 +34,8 @@ router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Pouring details created', `Pouring details ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     res.status(200).json({ success: true, data: rows });
 }));
+
+export default router;
 
 // CREATE TABLE pouring_details (
 //     id SERIAL PRIMARY KEY,

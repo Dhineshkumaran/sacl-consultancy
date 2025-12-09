@@ -173,6 +173,7 @@ function FoundrySampleCard() {
   const [previewMode, setPreviewMode] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [userIP, setUserIP] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchIP = async () => { try { const r = await fetch("https://api.ipify.org?format=json"); const d = await r.json(); setUserIP(d.ip); } catch { setUserIP("Offline"); } };
@@ -208,8 +209,44 @@ function FoundrySampleCard() {
     setPreviewMode(true);
   };
 
-  const handleConfirm = () => {
-    setSubmitted(true);
+  const handleConfirm = async () => {
+    console.log(localStorage.getItem("authToken"));
+    setLoading(true);
+    try {
+      const trialId = new URLSearchParams(window.location.search).get('trial_id') || (localStorage.getItem('trial_id') ?? 'trial_id');
+
+      const payload = {
+        trial_id: trialId,
+        date: sandDate,
+        t_clay: Number((sandProps as any).tClay) || 0,
+        a_clay: Number((sandProps as any).aClay) || 0,
+        vcm: Number((sandProps as any).vcm) || 0,
+        loi: Number((sandProps as any).loi) || 0,
+        afs: Number((sandProps as any).afs) || 0,
+        gcs: Number((sandProps as any).gcs) || 0,
+        moi: Number((sandProps as any).moi) || 0,
+        compactability: Number((sandProps as any).compactability) || 0,
+        permeability: Number((sandProps as any).perm) || 0,
+        remarks: (sandProps as any).remarks || ""
+      };
+
+      const res = await fetch("http://localhost:3000/api/sand-properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": localStorage.getItem("authToken") || "" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data?.success) {
+        setSubmitted(true);
+      } else {
+        alert(data?.message || "Failed to submit sand properties");
+      }
+    } catch (err) {
+      alert("Network error while submitting sand properties");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExportPDF = () => { window.print(); };
@@ -510,8 +547,9 @@ function FoundrySampleCard() {
                       variant="contained"
                       sx={{ bgcolor: COLORS.secondary }}
                       onClick={handleConfirm}
+                      disabled={loading}
                     >
-                      Confirm & Submit
+                      {loading ? "Submitting..." : "Confirm & Submit"}
                     </Button>
                   )}
                 </Box>

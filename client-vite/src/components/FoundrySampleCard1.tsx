@@ -325,8 +325,8 @@ function FoundrySampleCard() {
         try {
           const response = await fetch("http://localhost:3000/api/master-list");
           if (response.ok) {
-            const data = await response.json();
-            setMasterParts(data);
+            const res = await response.json();
+            setMasterParts(res.data || []);
           } else { throw new Error("API Error"); }
         } catch (e) {
           setMasterParts(mockData);

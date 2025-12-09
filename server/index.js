@@ -17,13 +17,18 @@ import departmentProgress from './routes/departmentProgress.js';
 import visualInspection from './routes/visualInspection.js';
 import ndtInspection from './routes/NDTInspection.js';
 import materialCorrection from './routes/materialCorrection.js';
+import sandProperties from './routes/sandProperties.js';
+import pouringDetails from './routes/pouringDetails.js';
+import mouldCorrection from './routes/mouldCorrection.js';
+import dimensionalInspection from './routes/dimensionalInspection.js';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-    origin: "*"
+    origin: 'http://localhost:5173',
+    credentials: true
 }))
 
 app.use((req, res, next) => {
@@ -42,6 +47,10 @@ app.use('/api/department-progress', departmentProgress);
 app.use('/api/visual-inspection', visualInspection);
 app.use('/api/ndt-inspection', ndtInspection);
 app.use('/api/material-correction', materialCorrection);
+app.use('/api/sand-properties', sandProperties);
+app.use('/api/pouring-details', pouringDetails);
+app.use('/api/moulding-correction', mouldCorrection);
+app.use('/api/dimensional-inspection', dimensionalInspection);
 app.use('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });
