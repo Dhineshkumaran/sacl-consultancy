@@ -35,6 +35,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PrintIcon from '@mui/icons-material/Print';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import { authService } from '../services/authService';
 
 /* ---------------- 1. Theme Configuration ---------------- */
 
@@ -159,6 +160,8 @@ export default function McShopInspection({
   const [userName, setUserName] = useState<string>("");
   const [userTime, setUserTime] = useState<string>("");
   const [userIP, setUserIP] = useState<string>("Loading...");
+  const [trialId, setTrialId] = useState<string>("");
+  const [remarks, setRemarks] = useState<string>("");
 
   // dynamic columns
   const [cavities, setCavities] = useState<string[]>([...initialCavities]);
@@ -300,11 +303,51 @@ export default function McShopInspection({
     if (!previewPayload) return;
     setSaving(true);
     try {
-      await onSave(previewPayload);
-      setPreviewSubmitted(true);
-      setAlert({ severity: "success", message: "Inspection data submitted successfully" });
+      // build server payload according to API spec
+      const payload = buildPayload();
+      const rowsByLabel = (labelSnippet: string) => rows.find(r => (r.label || '').toLowerCase().includes(labelSnippet));
+      const receivedRow = rowsByLabel('received');
+      const inspectedRow = rowsByLabel('inspected');
+      const acceptedRow = rowsByLabel('accepted');
+      const rejectedRow = rowsByLabel('rejected');
+      const reasonRow = rowsByLabel('reason');
+
+      const inspections: any[] = cavities.map((cav, idx) => {
+        return {
+          'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
+          'Received Quantity': receivedRow?.values?.[idx] ?? null,
+          'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
+          'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
+          'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
+          'Reason for rejection': reasonRow?.values?.[idx] ?? null,
+        };
+      });
+
+      const serverPayload = {
+        trial_id: trialId || null,
+        inspection_date: payload.inspection_date,
+        inspections,
+        remarks: remarks || groupMeta.remarks || null,
+      };
+
+      const token = authService.getToken();
+      const res = await fetch('http://localhost:3000/api/machine-shop', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(serverPayload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success) {
+        setPreviewSubmitted(true);
+        setAlert({ severity: 'success', message: data?.data || 'Machine shop created successfully.' });
+      } else {
+        setAlert({ severity: 'error', message: data?.message || 'Submission failed' });
+      }
     } catch (err: any) {
-      setAlert({ severity: "error", message: "Submission failed" });
+      setAlert({ severity: 'error', message: err?.message || 'Submission failed' });
     } finally {
       setSaving(false);
     }
@@ -414,6 +457,15 @@ export default function McShopInspection({
                   fullWidth
                   sx={{ bgcolor: 'white' }}
                 />
+              </Grid>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Trial ID</Typography>
+                <TextField size="small" value={trialId} onChange={(e) => setTrialId(e.target.value)} fullWidth sx={{ bgcolor: 'white' }} />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Remarks</Typography>
+                <TextField size="small" value={remarks} onChange={(e) => setRemarks(e.target.value)} fullWidth multiline rows={2} sx={{ bgcolor: 'white' }} />
               </Grid>
 
             </Grid>

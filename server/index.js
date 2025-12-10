@@ -21,6 +21,8 @@ import sandProperties from './routes/sandProperties.js';
 import pouringDetails from './routes/pouringDetails.js';
 import mouldCorrection from './routes/mouldCorrection.js';
 import dimensionalInspection from './routes/dimensionalInspection.js';
+import metallurgicalInspection from './routes/metallurgicalInspection.js';
+import machineShop from './routes/machineShop.js';
 
 const app = express();
 app.use(express.json());
@@ -51,6 +53,8 @@ app.use('/api/sand-properties', sandProperties);
 app.use('/api/pouring-details', pouringDetails);
 app.use('/api/moulding-correction', mouldCorrection);
 app.use('/api/dimensional-inspection', dimensionalInspection);
+app.use('/api/metallurgical-inspection', metallurgicalInspection);
+app.use('/api/machine-shop', machineShop);
 app.use('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });

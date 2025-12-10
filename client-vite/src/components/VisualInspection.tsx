@@ -39,6 +39,7 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ScienceIcon from '@mui/icons-material/Science';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import { authService } from '../services/authService';
 
 
 /* ---------------- 1. Theme Configuration ---------------- */
@@ -175,6 +176,7 @@ export default function VisualInspection({
 
     const [cols, setCols] = useState<string[]>([...initialCols]);
     const [rows, setRows] = useState<Row[]>(() => makeRows(initialRows));
+    const [trialId, setTrialId] = useState<string>("");
 
     // Calculate rejection percentage for a specific column
     const calculateRejectionPercentage = (colIndex: number): string => {
@@ -357,11 +359,61 @@ export default function VisualInspection({
         setSaving(true);
         setMessage(null);
         try {
-            await onSave(previewPayload);
-            setSubmitted(true);
-            setAlert({ severity: "success", message: "Inspection data submitted successfully" });
+            // Map rows to fields per column
+            const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
+            const cavityRow = findRow('cavity number');
+            const inspectedRow = findRow('inspected quantity');
+            const acceptedRow = findRow('accepted quantity');
+            const rejectedRow = findRow('rejected quantity');
+            const reasonRow = findRow('reason for rejection');
+
+            const inspections = cols.map((col, idx) => {
+                const inspected = inspectedRow?.values?.[idx] ?? null;
+                const accepted = acceptedRow?.values?.[idx] ?? null;
+                const rejected = rejectedRow?.values?.[idx] ?? null;
+                const rejectionPercentage = (() => {
+                    const ins = parseFloat(String(inspected ?? '0'));
+                    const rej = parseFloat(String(rejected ?? '0'));
+                    if (isNaN(ins) || isNaN(rej) || ins === 0) return null;
+                    return ((rej / ins) * 100).toFixed(2);
+                })();
+
+                return {
+                    'Cavity number': cavityRow?.values?.[idx] ?? col ?? null,
+                    'Inspected Quantity': inspected ?? null,
+                    'Accepted Quantity': accepted ?? null,
+                    'Rejected Quantity': rejected ?? null,
+                    'Rejection Percentage': rejectionPercentage ?? null,
+                    'Reason for rejection': reasonRow?.values?.[idx] ?? null,
+                };
+            });
+
+            const serverPayload = {
+                trial_id: trialId || null,
+                inspections,
+                visual_ok: previewPayload.group?.ok ?? null,
+                remarks: previewPayload.additionalRemarks || previewPayload.group?.remarks || null,
+            };
+
+            const token = authService.getToken();
+            const res = await fetch('http://localhost:3000/api/visual-inspection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(serverPayload),
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data?.success) {
+                setSubmitted(true);
+                setAlert({ severity: 'success', message: data?.message || 'Visual inspection created successfully.' });
+            } else {
+                setAlert({ severity: 'error', message: data?.message || 'Submission failed' });
+            }
         } catch (err: any) {
-            setAlert({ severity: "error", message: "Submission failed" });
+            setAlert({ severity: 'error', message: err?.message || 'Submission failed' });
         } finally {
             setSaving(false);
         }
@@ -423,6 +475,13 @@ export default function VisualInspection({
                             <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
                         </Box>
                         <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
+
+                        <Grid container spacing={2} sx={{ mb: 2 }}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Trial ID</Typography>
+                                <TextField size="small" value={trialId} onChange={(e) => setTrialId(e.target.value)} fullWidth sx={{ bgcolor: 'white' }} />
+                            </Grid>
+                        </Grid>
 
                         {alert && <Alert severity={alert.severity} sx={{ mb: 2 }}>{alert.message}</Alert>}
 
