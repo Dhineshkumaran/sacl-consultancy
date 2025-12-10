@@ -73,6 +73,7 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
                 username: user.username,
                 full_name: user.full_name,
                 email: user.email,
+                department_id: user.department_id,
                 department: user.department,
                 role: user.role
             },

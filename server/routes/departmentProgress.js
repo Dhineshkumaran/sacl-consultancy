@@ -29,24 +29,24 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     });
 }));
 
-router.put('/update', asyncErrorHandler(async (req, res, next) => {
-    const { progress_id, current_department_id, username, role, remarks } = req.body;
-    if (role == 'HOD') {
-        const next_department_id = current_department_id + 1;
+router.put('/update-department', asyncErrorHandler(async (req, res, next) => {
+    const { progress_id, next_department_id, username, role, remarks } = req.body;
         const next_department_user = await Client.query(
-            `SELECT * FROM users WHERE department_id = ? AND role = 'user'`,
+            `SELECT * FROM users WHERE department_id = ? AND role = 'User' LIMIT 1`,
             [next_department_id]
         );
         if (next_department_user.length === 0) {
             throw new CustomError("No user found for the department.");
         }
-        const next_department_username = next_department_user[0].username;
+        console.log(next_department_user);
+        const next_department_username = next_department_user[0][0].username;
+        console.log(next_department_user[0][0].username);
         const [result] = await Client.query(
             `UPDATE department_progress SET department_id = ?, username = ?, remarks = ? WHERE progress_id = ?`,
             [next_department_id, next_department_username, remarks, progress_id]
         );
-        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-        const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${next_department_id} for ${role}`]);
+        // const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+        // const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${next_department_id} for ${role}`]);
         const user = await Client.query(
             `SELECT * FROM users WHERE username = ?`,
             [next_department_username]
@@ -62,36 +62,38 @@ router.put('/update', asyncErrorHandler(async (req, res, next) => {
             data: "Department progress updated successfully"
         });
     }
-    else if (role == 'user') {
-        const current_department_hod = await Client.query(
-            `SELECT * FROM users WHERE department_id = ? AND role = 'HOD'`,
-            [current_department_id]
-        );
-        if (current_department_hod.length === 0) {
-            throw new CustomError("No HOD found for the department.");
-        }
-        const current_department_hod_username = current_department_hod[0].username;
-        const [result] = await Client.query(
-            `UPDATE department_progress SET username = ?, remarks = ? WHERE progress_id = ?`,
-            [current_department_hod_username, remarks, progress_id]
-        );
-        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-        const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}`]);
-        const user = await Client.query(
-            `SELECT * FROM users WHERE username = ?`,
-            [current_department_hod_username]
-        );
-        const mailOptions = {
-            to: user[0].email,
-            subject: 'Department Progress Updated',
-            text: `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}. Please check the progress by logging into the application.`
-        };
-        await transporter.sendMail(mailOptions);
-        res.status(200).json({
-            success: true,
-            data: "Department progress updated successfully"
-        });
+));
+
+router.put('/update-role', asyncErrorHandler(async (req, res, next) => {
+    const { progress_id, current_department_id, username, role, remarks } = req.body;
+    const current_department_hod = await Client.query(
+        `SELECT * FROM users WHERE department_id = ? AND role = 'HOD' LIMIT 1`,
+        [current_department_id]
+    );
+    if (current_department_hod.length === 0) {
+        throw new CustomError("No HOD found for the department.");
     }
+    const current_department_hod_username = current_department_hod[0][0].username;
+    const [result] = await Client.query(
+        `UPDATE department_progress SET username = ?, remarks = ? WHERE progress_id = ?`,
+        [current_department_hod_username, remarks, progress_id]
+    );
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}`]);
+    const user = await Client.query(
+        `SELECT * FROM users WHERE username = ?`,
+        [current_department_hod_username]
+    );
+    const mailOptions = {
+        to: user[0].email,
+        subject: 'Department Progress Updated',
+        text: `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}. Please check the progress by logging into the application.`
+    };
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({
+        success: true,
+        data: "Department progress updated successfully"
+    });
 }));
 
 router.put('/approve', asyncErrorHandler(async (req, res, next) => {
@@ -109,10 +111,10 @@ router.put('/approve', asyncErrorHandler(async (req, res, next) => {
 }));
 
 router.get('/get-progress', asyncErrorHandler(async (req, res, next) => {
-    const trial_id = req.query.trial_id;
+    const username = req.query.username;
     const [result] = await Client.query(
-        `SELECT * FROM department_progress WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM department_progress WHERE username = ?`,
+        [username]
     );
     res.status(200).json({
         success: true,
@@ -144,14 +146,30 @@ export default router;
 //     "remarks": "remarks"
 // }
 
-// API: http://localhost:3000/department-progress/update
+// API: http://localhost:3000/department-progress/update-department
+// Method: PUT
+// Sample data: 
+// {
+//     "progress_id": 1,
+//     "next_department_id": 1,
+//     "username": "user1",
+//     "role": "HOD",
+//     "remarks": "remarks"
+// }
+// Response: 
+// {
+//     "success": true,
+//     "data": "Department progress updated successfully"
+// }
+
+// API: http://localhost:3000/department-progress/update-role
 // Method: PUT
 // Sample data: 
 // {
 //     "progress_id": 1,
 //     "current_department_id": 1,
 //     "username": "user1",
-//     "role": "HOD",
+//     "role": "user",
 //     "remarks": "remarks"
 // }
 // Response: 
