@@ -35,6 +35,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import PrintIcon from '@mui/icons-material/Print';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import NoAccess from "./common/NoAccess";
+import { useAuth } from '../context/AuthContext';
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 
@@ -152,6 +154,13 @@ export default function McShopInspection({
   initialCavities?: string[];
   onSave?: (payload: any) => Promise<any> | any;
 }) {
+  const { user } = useAuth();
+
+  // Check if user has access to this page
+  // if (user?.department_id !== 8) {
+  //   return <NoAccess />;
+  // }
+
   // header fields
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [userName, setUserName] = useState<string>("");

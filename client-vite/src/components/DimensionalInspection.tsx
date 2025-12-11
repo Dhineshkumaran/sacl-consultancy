@@ -35,6 +35,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import PrintIcon from '@mui/icons-material/Print';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import NoAccess from "./common/NoAccess";
+import { useAuth } from '../context/AuthContext';
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 
@@ -153,6 +155,7 @@ export default function DimensionalInspection({
   initialCavities?: string[];
   onSave?: (payload: any) => Promise<any> | any;
 }) {
+  const { user } = useAuth();
   const navigate = useNavigate();
   // top-level fields
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
@@ -327,6 +330,11 @@ export default function DimensionalInspection({
 
   // Font style for data values to match inputs
   const dataFontStyle = { fontFamily: '"Roboto Mono", monospace', fontWeight: 500 };
+
+  // Check if user has access to this page
+  // if (user?.department_id !== 10) {
+  //   return <NoAccess />;
+  // }
 
   return (
     <ThemeProvider theme={theme}>

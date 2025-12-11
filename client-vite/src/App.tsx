@@ -26,7 +26,7 @@ import type { PouringDetails, SubmittedData } from './components/PouringDetailsT
 import SandTable from './components/Sand';
 import NotificationPage from './pages/NotificationPage';
 import PendingSampleCardsPage from './pages/PendingSampleCardsPage';
-import PartIdentification from './components/common/PartIdentification';
+import PartIdentification from './components/common/Common';
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -78,8 +78,8 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<ProtectedRoute>{getDashboardByRole()}</ProtectedRoute>} />
 
-      <Route path="/part-identification" element={
-        <PartIdentification />
+      <Route path="/common" element={
+        <PartIdentification trialId={'trial_id'}/>
       } />
 
       <Route path="/update-email" element={<ProtectedRoute><UpdateEmailPage /></ProtectedRoute>} />

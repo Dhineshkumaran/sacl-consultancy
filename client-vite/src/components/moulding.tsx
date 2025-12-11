@@ -33,6 +33,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import NoAccess from "./common/NoAccess";
+import { useAuth } from '../context/AuthContext';
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 /* ---------------- 1. Theme Configuration ---------------- */
@@ -145,6 +147,13 @@ const SpecInput = ({ inputStyle, ...props }: any) => (
 /* ---------------- Main Component ---------------- */
 
 function FoundrySampleCard() {
+  const { user } = useAuth();
+
+  // Check if user has access to this page
+  // if (user?.department_id !== 6) {
+  //   return <NoAccess />;
+  // }
+
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

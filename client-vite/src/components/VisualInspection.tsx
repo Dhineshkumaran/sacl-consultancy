@@ -39,6 +39,8 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ScienceIcon from '@mui/icons-material/Science';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import NoAccess from "./common/NoAccess";
+import { useAuth } from '../context/AuthContext';
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 
@@ -162,6 +164,13 @@ export default function VisualInspection({
     initialCols?: string[];
     onSave?: (payload: any) => Promise<any> | any;
 }) {
+    const { user } = useAuth();
+
+    // Check if user has access to this page
+    // if (user?.department_id !== 5) {
+    //     return <NoAccess />;
+    // }
+
     const navigate = useNavigate();
 
     const makeRows = (labels: string[]): Row[] =>

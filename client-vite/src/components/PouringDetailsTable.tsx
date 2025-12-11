@@ -33,6 +33,8 @@ import DownloadIcon from '@mui/icons-material/Download'; // Added Download Icon
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import NoAccess from "./common/NoAccess";
+import { useAuth } from '../context/AuthContext';
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 
@@ -199,6 +201,13 @@ interface PouringDetailsTableProps {
 /* ---------------- Main Component ---------------- */
 
 function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submittedData }: PouringDetailsTableProps) {
+    const { user } = useAuth();
+
+    // Check if user has access to this page
+    // if (user?.department_id !== 9) {
+    //     return <NoAccess />;
+    // }
+
     const navigate = useNavigate();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

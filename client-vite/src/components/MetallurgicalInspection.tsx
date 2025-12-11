@@ -41,6 +41,8 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ScienceIcon from '@mui/icons-material/Science';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
+import NoAccess from "./common/NoAccess";
+import { useAuth } from '../context/AuthContext';
 import { ipService } from '../services/ipService';
 /* ---------------- 1. Theme Configuration (Matched to FoundryApp) ---------------- */
 
@@ -689,6 +691,13 @@ function MicrostructureTable({
 /* ---------------- Main Component ---------------- */
 
 export default function MetallurgicalInspection() {
+  const { user } = useAuth();
+
+  // Check if user has access to this page
+  // if (user?.department_id !== 7) {
+  //   return <NoAccess />;
+  // }
+
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement | null>(null);
 
