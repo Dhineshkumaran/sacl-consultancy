@@ -182,13 +182,7 @@ function FoundrySampleCard() {
   const [machine, setMachine] = useState("");
   const [reason, setReason] = useState("");
   const [sampleTraceability, setSampleTraceability] = useState("");
-  const [patternFiles, setPatternFiles] = useState<File[]>([]);
-  const handlePatternFilesChange = (newFiles: File[]) => {
-    setPatternFiles(prev => [...prev, ...newFiles]);
-  };
-  const removePatternFile = (index: number) => setPatternFiles(prev => prev.filter((_, i) => i !== index));
-
-  const [toolingType, setToolingType] = useState("");
+  const [toolingModification, setToolingModification] = useState("");
   const [toolingFiles, setToolingFiles] = useState<File[]>([]);
   const handleToolingFilesChange = (newFiles: File[]) => {
     setToolingFiles(prev => [...prev, ...newFiles]);
@@ -306,8 +300,7 @@ function FoundrySampleCard() {
       machine,
       reason,
       sampleTraceability,
-      patternFiles,
-      toolingType,
+      toolingModification,
       toolingFiles,
       remarks,
       mouldCorrections,
@@ -661,27 +654,15 @@ function FoundrySampleCard() {
                     <Typography variant="subtitle1">{previewPayload?.sampleTraceability || "-"}</Typography>
                   </Paper>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                  <Paper elevation={0} sx={{ p: 2, border: `1px solid ${COLORS.border}` }}>
-                    <Typography variant="caption" color="text.secondary">Pattern Files</Typography>
-                    <Typography variant="subtitle1">{(previewPayload?.patternFiles?.length) ? `${previewPayload.patternFiles.length} file(s)` : "0"}</Typography>
-                  </Paper>
-                </Grid>
               </Grid>
 
               <Typography variant="subtitle2" sx={{ mb: 2, color: COLORS.primary }}>Tooling Modification</Typography>
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Paper elevation={0} sx={{ p: 2, border: `1px solid ${COLORS.border}` }}>
-                    <Typography variant="caption" color="text.secondary"></Typography>
-                    <Typography variant="subtitle1">{previewPayload?.toolingType || "-"}</Typography>
-                  </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Paper elevation={0} sx={{ p: 2, border: `1px solid ${COLORS.border}` }}>
-                    <Typography variant="caption" color="text.secondary">Tooling Files</Typography>
-                    <Typography variant="subtitle1">{(previewPayload?.toolingFiles?.length) ? `${previewPayload.toolingFiles.length} file(s)` : "0"}</Typography>
-                  </Paper>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Modification Details</Typography>
+                    <Typography variant="subtitle1">{previewPayload?.toolingModification || "-"}</Typography>
+                  </Box>
                 </Grid>
               </Grid>
 
@@ -807,39 +788,6 @@ function FoundrySampleCard() {
                       placeholder="Enter option"
                     />
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth
-                      sx={{ borderStyle: "dashed" }}
-                    >
-                      Upload
-                      <input
-                        type="file"
-                        hidden
-                        multiple
-                        onChange={(e) => {
-                          if (e.target.files) {
-                            handlePatternFilesChange(Array.from(e.target.files));
-                          }
-                        }}
-                      />
-                    </Button>
-                    {patternFiles.length > 0 && (
-                      <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                        {patternFiles.map((f, i) => (
-                          <Chip
-                            key={i}
-                            label={f.name}
-                            onDelete={() => removePatternFile(i)}
-                            size="small"
-                            sx={{ maxWidth: '100%' }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                  </TableCell>
 
                 </TableRow>
               </TableBody>
@@ -855,14 +803,17 @@ function FoundrySampleCard() {
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
-                  Pattern Files
+                  Tooling Modification
                 </Typography>
-                <FileUploadSection
-                  files={patternFiles}
-                  onFilesChange={handlePatternFilesChange}
-                  onFileRemove={removePatternFile}
-                  showAlert={showAlert}
-                  label="Attach Pattern PDF"
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  variant="outlined"
+                  placeholder="Enter tooling modification details..."
+                  value={toolingModification}
+                  onChange={(e) => setToolingModification(e.target.value)}
+                  sx={{ bgcolor: '#fff' }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -1010,19 +961,10 @@ function FoundrySampleCard() {
                 </div>
               </Box>
 
-              <h3 style={{ borderBottom: "1px solid #ccc", marginBottom: "10px" }}>Pattern Data Sheet</h3>
-              <p>
-                <strong>Files:</strong> {previewPayload.patternFiles?.map((f: any) => f.name).join(", ") || "None"}
-              </p>
-
               <h3 style={{ borderBottom: "1px solid #ccc", marginBottom: "10px", marginTop: "20px" }}>Tooling Modification</h3>
               <p>
-                <strong>Type:</strong> {previewPayload.toolingType || "-"}
+                <strong>Details:</strong> {previewPayload.toolingModification || "-"}
               </p>
-              <p>
-                <strong>Files attached:</strong> {previewPayload.toolingFiles?.map((f: any) => f.name).join(", ") || "None"}
-              </p>
-
               <h3 style={{ borderBottom: "1px solid #ccc", marginBottom: "10px", marginTop: "20px" }}>Mould Corrections</h3>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", marginBottom: 16 }}>
                 <thead>
