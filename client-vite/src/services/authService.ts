@@ -1,5 +1,7 @@
 import { apiService } from './commonService';
 
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:3000/api";
+
 export const authService = {
   async login(username: string, password: string, role?: string, department_id?: string) {
     const response = await apiService.login(username, password, role, department_id);
@@ -16,7 +18,7 @@ export const authService = {
   async refresh() {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) throw new Error('No refresh token available');
-    const res = await fetch('http://localhost:3000/api/login/refresh-token', {
+    const res = await fetch(API_BASE + '/login/refresh-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),

@@ -23,7 +23,7 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     });
 }));
 
-router.put('/', asyncErrorHandler(async (req, res, next) => {
+router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks } = req.body || {};
     console.log(req.body);
     if (!trial_id || !inspection_date || !casting_weight || !bunch_weight || !no_of_cavities || !yields || !inspections || !remarks) {
@@ -41,7 +41,7 @@ router.put('/', asyncErrorHandler(async (req, res, next) => {
     });
 }));
 
-router.get('/', asyncErrorHandler(async (req, res, next) => {
+router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [rows] = await Client.query('SELECT * FROM dimensional_inspection');
     res.status(200).json({
         success: true,
@@ -49,7 +49,7 @@ router.get('/', asyncErrorHandler(async (req, res, next) => {
     });
 }));
 
-router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
+router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) => {
     let trial_id = req.query.trial_id;
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });

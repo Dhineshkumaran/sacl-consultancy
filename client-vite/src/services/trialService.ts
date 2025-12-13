@@ -2,8 +2,7 @@
  * Trial Management Service
  * Handles API calls related to trials, master lists, and sample cards
  */
-
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:3000/api";
 
 export const trialService = {
     /**
@@ -12,7 +11,7 @@ export const trialService = {
      */
     async getMasterList(): Promise<any[]> {
         try {
-            const response = await fetch(`${API_BASE_URL}/master-list`, {
+            const response = await fetch(`${API_BASE}/master-list`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -41,7 +40,7 @@ export const trialService = {
     async getTrialByPartName(partName: string): Promise<any> {
         try {
             const response = await fetch(
-                `${API_BASE_URL}/trial/id?part_name=${encodeURIComponent(partName)}`
+                `${API_BASE}/trial/id?part_name=${encodeURIComponent(partName)}`
             );
 
             if (!response.ok) {
@@ -64,7 +63,7 @@ export const trialService = {
     async getTrialByTrialId(trialId: string): Promise<any> {
         try {
             const response = await fetch(
-                `${API_BASE_URL}/trial/trial_id?trial_id=${encodeURIComponent(trialId)}`
+                `${API_BASE}/trial/trial_id?trial_id=${encodeURIComponent(trialId)}`
             );
 
             if (!response.ok) {
@@ -91,7 +90,7 @@ export const trialService = {
      */
     async submitTrialNovember(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/trial-november`, {
+            const response = await fetch(`${API_BASE}/trial-november`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -120,7 +119,7 @@ export const trialService = {
      */
     async getPendingSampleCards(): Promise<any[]> {
         try {
-            const response = await fetch(`${API_BASE_URL}/pending-sample-cards`);
+            const response = await fetch(`${API_BASE}/pending-sample-cards`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch pending cards');

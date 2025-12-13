@@ -3,8 +3,9 @@ const router = express.Router();
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
+import verifyToken from '../utils/verifyToken.js';
 
-router.get('/', asyncErrorHandler(async(req, res, next)=>{
+router.get('/', verifyToken, asyncErrorHandler(async(req, res, next)=>{
     const response = await Client.query(
         `SELECT * FROM metallurgical_specifications`
     )
@@ -12,7 +13,7 @@ router.get('/', asyncErrorHandler(async(req, res, next)=>{
     res.status(200).json({success:true, data:response[0]});
 }))
 
-router.post('/', asyncErrorHandler(async (req, res, next) => {
+router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, chemical_composition, microstructure } = req.body;
 
     if (!trial_id || !chemical_composition || !microstructure) {

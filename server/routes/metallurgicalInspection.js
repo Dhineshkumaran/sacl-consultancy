@@ -36,12 +36,12 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     });
 }));
 
-router.get('/', asyncErrorHandler(async (req, res, next) => {
+router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [rows] = await Client.query('SELECT * FROM metallurgical_inspection');
     res.status(200).json({ success: true, data: rows });
 }));
 
-router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
+router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) => {
     let trial_id = req.query.trial_id;
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });

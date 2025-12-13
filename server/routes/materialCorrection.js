@@ -5,7 +5,7 @@ import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
 import verifyToken from '../utils/verifyToken.js';
 
-router.post('/', asyncErrorHandler(async (req, res, next) => {
+router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, chemical_composition, process_parameters } = req.body || {};
     if (!trial_id || !chemical_composition || !process_parameters) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -33,8 +33,8 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const chemicalCompositionJson = JSON.stringify(chemical_composition);
     const processParametersJson = JSON.stringify(process_parameters);
     const [result] = await Client.query(sql, [chemicalCompositionJson, processParametersJson, trial_id]);
-    // const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    // const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Material correction updated', `Material correction ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Material correction updated', `Material correction ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
     const insertId = result.insertId;
     res.status(201).json({
         success: true,
@@ -43,12 +43,12 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     });
 }));
 
-router.get('/', asyncErrorHandler(async (req, res, next) => {
+router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [rows] = await Client.query('SELECT * FROM material_correction');
     res.status(200).json({ success: true, data: rows });
 }));
 
-router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
+router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) => {
     let trial_id = req.query.trial_id;
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });

@@ -3,8 +3,9 @@ const router = express.Router();
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
 import transporter from '../utils/mailSender.js';
+import verifyToken from '../utils/verifyToken.js';
 
-router.post('/', asyncErrorHandler(async (req, res, next) => {
+router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction } = req.body || {};
     if (!trial_id || !part_name || !pattern_code || !material_grade || !initiated_by || !date_of_sampling || !no_of_moulds || !reason_for_sampling, !current_department_id, !disa, !sample_traceability) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -17,12 +18,12 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     res.status(201).json({ success: true, message: 'Trial created successfully.' });
 }));
 
-router.get('/', asyncErrorHandler(async (req, res, next) => {
+router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [rows] = await Client.query('SELECT * FROM trial_cards');
     res.status(200).json({ success: true, data: rows });
 }));
 
-router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
+router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) => {
     let trial_id = req.query.trial_id;
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });
@@ -32,7 +33,7 @@ router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
     res.status(200).json({ success: true, data: rows });
 }));
 
-router.get('/id', asyncErrorHandler(async (req, res, next) => {
+router.get('/id', verifyToken, asyncErrorHandler(async (req, res, next) => {
     let part_name = req.query.part_name;
     if (!part_name) {
         return res.status(400).json({ success: false, message: 'part_name query parameter is required' });
@@ -43,20 +44,6 @@ router.get('/id', asyncErrorHandler(async (req, res, next) => {
     const count = rows[0].count + 1;
     const formattedId = `${part_name}-${count}`;
     res.status(200).json({ success: true, data: formattedId });
-}));
-
-router.post('/notify', asyncErrorHandler(async (req, res, next) => {
-    const { to, subject, text } = req.body || {};
-    if (!to || !subject || !text) {
-        return res.status(400).json({ success: false, message: 'Missing required fields for sending email' });
-    }
-    const mailOptions = {
-        to,
-        subject,
-        text
-    };
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: 'Email sent successfully' });
 }));
 
 export default router;

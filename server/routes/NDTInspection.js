@@ -3,8 +3,9 @@ const router = express.Router();
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
+import verifyToken from '../utils/verifyToken.js';
 
-router.post('/', asyncErrorHandler(async (req, res, next) => {
+router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, ndt, ndt_ok, remarks } = req.body || {};
     if (!trial_id || !ndt || !ndt_ok || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -17,12 +18,12 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     res.status(201).json({ success: true, message: 'NDT inspection created successfully.' });
 }));
 
-router.get('/', asyncErrorHandler(async (req, res, next) => {
+router.get('/',  verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [rows] = await Client.query('SELECT * FROM ndt_inspection');
     res.status(200).json({ success: true, data: rows });
 }));
 
-router.get('/trial_id', asyncErrorHandler(async (req, res, next) => {
+router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) => {
     let trial_id = req.query.trial_id;
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });

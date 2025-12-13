@@ -18,15 +18,12 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     title,
     description,
     severity = 'warning',
-    icon,
     action
 }) => {
-    const defaultIcon = severity === 'warning' ? <WarningAmberIcon /> : <InfoIcon />;
 
     return (
         <Alert severity={severity} sx={{ my: 3 }}>
             <Box display="flex" alignItems="center" gap={2}>
-                {icon || defaultIcon}
                 <Box flexGrow={1}>
                     <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
                         {title}

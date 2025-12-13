@@ -3,7 +3,7 @@
  * Handles API calls for all inspection types (Metallurgical, Visual, Dimensional, etc.)
  */
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:3000/api";
 
 export const inspectionService = {
     /**
@@ -13,7 +13,7 @@ export const inspectionService = {
      */
     async submitMetallurgicalInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/metallurgical-inspection`, {
+            const response = await fetch(`${API_BASE}/metallurgical-inspection`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export const inspectionService = {
      */
     async submitVisualInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/visual-inspection`, {
+            const response = await fetch(`${API_BASE}/visual-inspection`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export const inspectionService = {
      */
     async submitDimensionalInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/dimensional-inspection`, {
+            const response = await fetch(`${API_BASE}/dimensional-inspection`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ export const inspectionService = {
      */
     async submitMachineShopInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/machine-shop`, {
+            const response = await fetch(`${API_BASE}/machine-shop`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ export const inspectionService = {
      */
     async submitPouringDetails(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/pouring-details`, {
+            const response = await fetch(`${API_BASE}/pouring-details`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -162,7 +162,7 @@ export const inspectionService = {
      */
     async submitSandProperties(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/sand-properties`, {
+            const response = await fetch(`${API_BASE}/sand-properties`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ export const inspectionService = {
      */
     async submitMouldingCorrection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/moulding-correction`, {
+            const response = await fetch(`${API_BASE}/moulding-correction`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ export const inspectionService = {
     // Sand Properties
     async getSandProperties(trialId: string): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/sand-properties/trial_id?trial_id=${trialId}`, {
+            const response = await fetch(`${API_BASE}/sand-properties/trial_id?trial_id=${trialId}`, {
                 headers: { 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
@@ -224,7 +224,7 @@ export const inspectionService = {
     },
     async updateSandProperties(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/sand-properties`, {
+            const response = await fetch(`${API_BASE}/sand-properties`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
                 body: JSON.stringify(payload)
@@ -238,7 +238,7 @@ export const inspectionService = {
     // Moulding Correction
     async getMouldingCorrection(trialId: string): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/moulding-correction/trial_id?trial_id=${trialId}`, {
+            const response = await fetch(`${API_BASE}/moulding-correction/trial_id?trial_id=${trialId}`, {
                 headers: { 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
@@ -246,7 +246,7 @@ export const inspectionService = {
     },
     async updateMouldingCorrection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/moulding-correction`, {
+            const response = await fetch(`${API_BASE}/moulding-correction`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
                 body: JSON.stringify(payload)
@@ -260,7 +260,7 @@ export const inspectionService = {
     // Visual Inspection
     async getVisualInspection(trialId: string): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/visual-inspection/trial_id?trial_id=${trialId}`, {
+            const response = await fetch(`${API_BASE}/visual-inspection/trial_id?trial_id=${trialId}`, {
                 headers: { 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
@@ -268,7 +268,7 @@ export const inspectionService = {
     },
     async updateVisualInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/visual-inspection`, {
+            const response = await fetch(`${API_BASE}/visual-inspection`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
                 body: JSON.stringify(payload)
@@ -282,7 +282,7 @@ export const inspectionService = {
     // Dimensional Inspection
     async getDimensionalInspection(trialId: string): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/dimensional-inspection/trial_id?trial_id=${trialId}`, {
+            const response = await fetch(`${API_BASE}/dimensional-inspection/trial_id?trial_id=${trialId}`, {
                 headers: { 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
@@ -290,7 +290,7 @@ export const inspectionService = {
     },
     async updateDimensionalInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/dimensional-inspection`, {
+            const response = await fetch(`${API_BASE}/dimensional-inspection`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
                 body: JSON.stringify(payload)
@@ -304,7 +304,7 @@ export const inspectionService = {
     // Metallurgical Inspection
     async getMetallurgicalInspection(trialId: string): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/metallurgical-inspection/trial_id?trial_id=${trialId}`, {
+            const response = await fetch(`${API_BASE}/metallurgical-inspection/trial_id?trial_id=${trialId}`, {
                 headers: { 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
@@ -312,7 +312,7 @@ export const inspectionService = {
     },
     async updateMetallurgicalInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/metallurgical-inspection`, {
+            const response = await fetch(`${API_BASE}/metallurgical-inspection`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
                 body: JSON.stringify(payload)
@@ -326,7 +326,7 @@ export const inspectionService = {
     // Pouring Details
     async getPouringDetails(trialId: string): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/pouring-details/trial_id?trial_id=${trialId}`, {
+            const response = await fetch(`${API_BASE}/pouring-details/trial_id?trial_id=${trialId}`, {
                 headers: { 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
@@ -334,7 +334,7 @@ export const inspectionService = {
     },
     async updatePouringDetails(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/pouring-details`, {
+            const response = await fetch(`${API_BASE}/pouring-details`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
                 body: JSON.stringify(payload)
@@ -349,7 +349,7 @@ export const inspectionService = {
     async getMachineShopInspection(trialId: string): Promise<any> {
         try {
             // Machine shop might not have specific route in list, deducing from post route
-            const response = await fetch(`${API_BASE_URL}/machine-shop/trial_id?trial_id=${trialId}`, {
+            const response = await fetch(`${API_BASE}/machine-shop/trial_id?trial_id=${trialId}`, {
                 headers: { 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
@@ -357,7 +357,7 @@ export const inspectionService = {
     },
     async updateMachineShopInspection(payload: any): Promise<any> {
         try {
-            const response = await fetch(`${API_BASE_URL}/machine-shop`, {
+            const response = await fetch(`${API_BASE}/machine-shop`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
                 body: JSON.stringify(payload)
@@ -366,5 +366,51 @@ export const inspectionService = {
             if (!response.ok) throw new Error(data.message || 'Failed to update machine shop inspection');
             return data;
         } catch (error) { console.error('Error updating machine shop inspection:', error); throw error; }
+    },
+    // Material Correction
+    async submitMaterialCorrection(payload: any): Promise<any> {
+        try {
+            const response = await fetch(`${API_BASE}/material-correction`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to submit material correction');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error submitting material correction:', error);
+            throw error;
+        }
+    },
+
+    async getMaterialCorrection(trialId: string): Promise<any> {
+        try {
+            const response = await fetch(`${API_BASE}/material-correction/trial_id?trial_id=${trialId}`, {
+                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
+            });
+            return await response.json();
+        } catch (error) { console.error('Error fetching material correction:', error); throw error; }
+    },
+
+    async updateMaterialCorrection(payload: any): Promise<any> {
+        try {
+            const response = await fetch(`${API_BASE}/material-correction`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to update material correction');
+            return data;
+        } catch (error) { console.error('Error updating material correction:', error); throw error; }
     }
 };

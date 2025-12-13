@@ -1,6 +1,6 @@
 import type { AuthResponse, CreateUserRequest, User } from '../types/user';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:3000/api";
 
 class ApiService {
   async request(endpoint: string, options: RequestInit = {}) {
@@ -15,13 +15,13 @@ class ApiService {
     };
 
     try {
-      let response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+      let response = await fetch(`${API_BASE}${endpoint}`, config);
 
       if (response.status === 401) {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           try {
-            const refreshRes = await fetch(`${API_BASE_URL.replace(/\/api$/, '')}/api/login/refresh-token`, {
+            const refreshRes = await fetch(`${API_BASE}/login/refresh-token`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ refreshToken })
@@ -37,7 +37,7 @@ class ApiService {
                     Authorization: `Bearer ${refreshData.token}`
                   }
                 };
-                response = await fetch(`${API_BASE_URL}${endpoint}`, retryConfig);
+                response = await fetch(`${API_BASE}${endpoint}`, retryConfig);
               }
             }
           } catch (err) {

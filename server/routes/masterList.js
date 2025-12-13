@@ -1,9 +1,10 @@
 import express from 'express';
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
+import verifyToken from '../utils/verifyToken.js';
 const router = express.Router();
 
-router.get('/', asyncErrorHandler(async(req, res, next)=>{
+router.get('/', verifyToken, asyncErrorHandler(async(req, res, next)=>{
     const response = await Client.query(
         `SELECT * FROM master_card`
     )
@@ -11,7 +12,7 @@ router.get('/', asyncErrorHandler(async(req, res, next)=>{
     res.status(200).json({success:true, data:response[0]});
 }))
 
-router.post('/', asyncErrorHandler(async(req, res, next)=>{
+router.post('/', verifyToken, asyncErrorHandler(async(req, res, next)=>{
     const {pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray} = req.body || {};
     if(!pattern_code || !part_name || !material_grade || !chemical_composition, micro_structure, tensile, impact, hardness, xray){
         return res.status(400).json({success: false, message: 'Missing required fields'});

@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:3000/api";
 
 export const documentService = {
     async uploadDocument(trial_id: string, document_type: string, file_name: string, file_base64: string, uploaded_by: string, uploaded_at: string, remarks: string) {
@@ -11,7 +11,7 @@ export const documentService = {
             "uploaded_at": uploaded_at,
             "remarks": remarks
         };
-        const response = await fetch(`${API_BASE_URL}/documents`, {
+        const response = await fetch(`${API_BASE}/documents`, {
             method: "POST",
             body: JSON.stringify(body),
             headers: {
@@ -22,7 +22,7 @@ export const documentService = {
     },
 
     async getDocument(trial_id: string) {
-        const response = await fetch(`${API_BASE_URL}/documents?trial_id=${trial_id}`);
+        const response = await fetch(`${API_BASE}/documents?trial_id=${trial_id}`);
         return response;
     }
 };

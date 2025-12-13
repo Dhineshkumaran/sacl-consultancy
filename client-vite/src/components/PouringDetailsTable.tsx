@@ -37,13 +37,12 @@ import DownloadIcon from '@mui/icons-material/Download';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
-import NoAccess from "./common/NoAccess";
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
 import DepartmentHeader from "./common/DepartmentHeader";
-import { FileUploadSection, PreviewModal, SpecInput, FormSection, ActionButtons, Common } from './common';
+import { FileUploadSection, PreviewModal, SpecInput, FormSection, ActionButtons, Common, EmptyState } from './common';
 
 
 
@@ -329,7 +328,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
     }, []);
 
     if (assigned === null) return <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}><CircularProgress /></Box>;
-    if (!assigned) return <NoPendingWorks />;
+  if (!assigned) return <EmptyState title="No pending works at the moment" severity="warning" />;
 
     const handleSaveAndContinue = () => {
         const payload = {

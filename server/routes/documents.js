@@ -5,15 +5,15 @@ import verifyToken from '../utils/verifyToken.js';
 
 const router = express.Router();
 
-router.post('/', asyncErrorHandler(async (req, res, next) => {
+router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     console.log("req.body", req.body);
     const { trial_id, document_type, file_name, file_base64, uploaded_by, remarks } = req.body;
     const [result] = await Client.query(
         `INSERT INTO documents (trial_id, document_type, file_name, file_base64, uploaded_by, remarks) VALUES (?, ?, ?, ?, ?, ?)`,
         [trial_id, document_type, file_name, file_base64, uploaded_by, remarks]
     );
-    // const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    // const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Document uploaded', `Document ${file_name} uploaded by ${req.user.username} with trial id ${trial_id} for ${document_type}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Document uploaded', `Document ${file_name} uploaded by ${req.user.username} with trial id ${trial_id} for ${document_type}`]);
     const insertId = result.insertId;
     res.status(201).json({
         message: "Document uploaded successfully.",
@@ -21,7 +21,7 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     });
 }));
 
-router.get('/', asyncErrorHandler(async (req, res, next) => {
+router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id } = req.query;
     const [documents] = await Client.query(
         `SELECT * FROM documents WHERE trial_id = ? ORDER BY document_id`,

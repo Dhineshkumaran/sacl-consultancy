@@ -26,6 +26,7 @@ import SandTable from './components/Sand';
 import NotificationPage from './pages/NotificationPage';
 import PendingSampleCardsPage from './pages/PendingSampleCardsPage';
 import Common from '../src/components/common/Common';
+import MaterialCorrection from './components/MaterialCorrection';
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -87,6 +88,10 @@ const AppRoutes: React.FC = () => {
 
       <Route path="/metallurgical-inspection" element={
         <ProtectedRoute><MetallurgicalInspection /></ProtectedRoute>
+      } />
+
+      <Route path="/material-correction" element={
+        <ProtectedRoute><MaterialCorrection /></ProtectedRoute>
       } />
 
       <Route path="/visual-inspection" element={
