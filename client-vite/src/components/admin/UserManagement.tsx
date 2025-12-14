@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import type { User, CreateUserRequest } from '../../types/user';
+import type { User } from '../../types/user';
 import { apiService } from '../../services/commonService.ts';
 import UserTable from './UserTable.tsx';
-import CreateUserModal from './CreateUserModal.tsx';
+import AddUserModal from './AddUserModal.tsx';
 import './UserManagement.css';
 
 const UserManagement: React.FC = () => {
@@ -27,16 +27,6 @@ const UserManagement: React.FC = () => {
     loadUsers();
   }, []);
 
-  const handleCreateUser = async (userData: CreateUserRequest) => {
-    try {
-      await apiService.createUser(userData);
-      setShowCreateModal(false);
-      await loadUsers(); // Refresh the list
-    } catch (err: any) {
-      throw new Error(err.message || 'Failed to create user');
-    }
-  };
-
   if (loading) {
     return <div className="loading">Loading users...</div>;
   }
@@ -58,9 +48,10 @@ const UserManagement: React.FC = () => {
       <UserTable users={users} />
 
       {showCreateModal && (
-        <CreateUserModal
+        <AddUserModal
+          isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateUser}
+          onUserCreated={loadUsers}
         />
       )}
     </div>

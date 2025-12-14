@@ -12,7 +12,6 @@ export const trialService = {
     async getMasterList(): Promise<any[]> {
         try {
             const response = await fetch(`${API_BASE}/master-list`, {
-                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': localStorage.getItem('authToken') || ''
@@ -40,7 +39,13 @@ export const trialService = {
     async getTrialByPartName(partName: string): Promise<any> {
         try {
             const response = await fetch(
-                `${API_BASE}/trial/id?part_name=${encodeURIComponent(partName)}`
+                `${API_BASE}/trial/id?part_name=${encodeURIComponent(partName)}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                },
+                credentials: 'include'
+                }
             );
 
             if (!response.ok) {
@@ -63,7 +68,13 @@ export const trialService = {
     async getTrialByTrialId(trialId: string): Promise<any> {
         try {
             const response = await fetch(
-                `${API_BASE}/trial/trial_id?trial_id=${encodeURIComponent(trialId)}`
+                `${API_BASE}/trial/trial_id?trial_id=${encodeURIComponent(trialId)}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                },
+                credentials: 'include'
+                }
             );
 
             if (!response.ok) {
@@ -119,7 +130,13 @@ export const trialService = {
      */
     async getPendingSampleCards(): Promise<any[]> {
         try {
-            const response = await fetch(`${API_BASE}/pending-sample-cards`);
+            const response = await fetch(`${API_BASE}/pending-sample-cards`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                },
+                credentials: 'include'
+            });
 
             if (!response.ok) {
                 throw new Error('Failed to fetch pending cards');

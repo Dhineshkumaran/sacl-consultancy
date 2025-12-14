@@ -74,13 +74,17 @@ class ApiService {
   }
 
   async getUsers(): Promise<User[]> {
-    const response = await this.request('/users');
+    const response = await this.request('/users', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
+    });
     return response.users || [];
   }
 
   async createUser(userData: CreateUserRequest): Promise<{ userId: number }> {
     return this.request('/users', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
       body: JSON.stringify(userData),
     });
   }
@@ -107,12 +111,18 @@ class ApiService {
   }
 
   async getMasterList(): Promise<any[]> {
-    const response = await this.request('/master-list');
+    const response = await this.request('/master-list', {
+      method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
+    });
     return response.data || [];
   }
 
   async getDepartments(): Promise<any[]> {
-    const response = await this.request('/departments');
+    const response = await this.request('/departments', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
+    });
     return response.data || [];
   }
 }

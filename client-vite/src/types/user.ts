@@ -34,4 +34,6 @@ export interface AuthResponse {
     role: string;
   };
   refreshToken?: string;
+  needsEmailVerification?: boolean;
+  needsPasswordChange?: boolean;
 }

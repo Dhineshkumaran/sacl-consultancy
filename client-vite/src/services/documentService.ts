@@ -16,13 +16,19 @@ export const documentService = {
             body: JSON.stringify(body),
             headers: {
                 "Content-Type": "application/json",
+                "Authorization": localStorage.getItem('authToken') || ''
             },
         });
         return response;
     },
 
     async getDocument(trial_id: string) {
-        const response = await fetch(`${API_BASE}/documents?trial_id=${trial_id}`);
+        const response = await fetch(`${API_BASE}/documents?trial_id=${trial_id}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('authToken') || ''
+            },
+        });
         return response;
     }
 };

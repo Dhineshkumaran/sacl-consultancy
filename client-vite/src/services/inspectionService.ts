@@ -136,7 +136,8 @@ export const inspectionService = {
             const response = await fetch(`${API_BASE}/pouring-details`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
                 },
                 credentials: 'include',
                 body: JSON.stringify(payload)
@@ -261,7 +262,7 @@ export const inspectionService = {
     async getVisualInspection(trialId: string): Promise<any> {
         try {
             const response = await fetch(`${API_BASE}/visual-inspection/trial_id?trial_id=${trialId}`, {
-                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
         } catch (error) { console.error('Error fetching visual inspection:', error); throw error; }
@@ -283,7 +284,7 @@ export const inspectionService = {
     async getDimensionalInspection(trialId: string): Promise<any> {
         try {
             const response = await fetch(`${API_BASE}/dimensional-inspection/trial_id?trial_id=${trialId}`, {
-                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
         } catch (error) { console.error('Error fetching dimensional inspection:', error); throw error; }
@@ -305,7 +306,7 @@ export const inspectionService = {
     async getMetallurgicalInspection(trialId: string): Promise<any> {
         try {
             const response = await fetch(`${API_BASE}/metallurgical-inspection/trial_id?trial_id=${trialId}`, {
-                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
         } catch (error) { console.error('Error fetching metallurgical inspection:', error); throw error; }
@@ -327,7 +328,7 @@ export const inspectionService = {
     async getPouringDetails(trialId: string): Promise<any> {
         try {
             const response = await fetch(`${API_BASE}/pouring-details/trial_id?trial_id=${trialId}`, {
-                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
         } catch (error) { console.error('Error fetching pouring details:', error); throw error; }
@@ -350,7 +351,7 @@ export const inspectionService = {
         try {
             // Machine shop might not have specific route in list, deducing from post route
             const response = await fetch(`${API_BASE}/machine-shop/trial_id?trial_id=${trialId}`, {
-                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
         } catch (error) { console.error('Error fetching machine shop inspection:', error); throw error; }
@@ -395,7 +396,7 @@ export const inspectionService = {
     async getMaterialCorrection(trialId: string): Promise<any> {
         try {
             const response = await fetch(`${API_BASE}/material-correction/trial_id?trial_id=${trialId}`, {
-                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }
             });
             return await response.json();
         } catch (error) { console.error('Error fetching material correction:', error); throw error; }

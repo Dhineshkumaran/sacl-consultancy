@@ -290,6 +290,7 @@ export default function DimensionalInspection({
         // 2. Approve
         const approvalPayload = {
           progress_id: progressData.progress_id,
+          trial_id: progressData.trial_id,
           next_department_id: progressData.department_id + 1,
           username: user.username,
           role: user.role,
@@ -354,6 +355,7 @@ export default function DimensionalInspection({
         try {
           await updateDepartmentRole({
             progress_id: progressData.progress_id,
+            trial_id: progressData.trial_id,
             current_department_id: progressData.department_id,
             username: user?.username || "user",
             role: "user",

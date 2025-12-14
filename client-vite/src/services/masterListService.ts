@@ -4,7 +4,7 @@ export const masterListService = {
   submitMasterListJson(payload: Record<string, unknown>) {
     return fetch(`${API_BASE}/master-list`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
       body: JSON.stringify(payload),
     });
   },
@@ -18,6 +18,10 @@ export const masterListService = {
 
     return fetch(`${API_BASE}/master-list`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': localStorage.getItem('authToken') || ''
+      },
       body: formData,
     });
   },

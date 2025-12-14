@@ -1,5 +1,10 @@
 import express from 'express';
 const router = express.Router();
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
@@ -31,42 +36,60 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
 }));
 
 router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res, next) => {
-    const { progress_id, next_department_id, username, role, remarks } = req.body;
-        const next_department_user = await Client.query(
-            `SELECT * FROM users WHERE department_id = ? AND role = 'User' LIMIT 1`,
-            [next_department_id]
-        );
-        if (next_department_user.length === 0) {
-            throw new CustomError("No user found for the department.");
-        }
-        console.log(next_department_user);
-        const next_department_username = next_department_user[0][0].username;
-        console.log(next_department_user[0][0].username);
-        const [result] = await Client.query(
-            `UPDATE department_progress SET department_id = ?, username = ?, remarks = ? WHERE progress_id = ?`,
-            [next_department_id, next_department_username, remarks, progress_id]
-        );
-        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-        const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${next_department_id} for ${role}`]);
-        const user = await Client.query(
-            `SELECT * FROM users WHERE username = ?`,
-            [next_department_username]
-        );
-        const mailOptions = {
-            to: user[0].email,
-            subject: 'Department Progress Updated',
-            text: `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${next_department_id} for ${role}. Please check the progress by logging into the application.`
-        };
-        await transporter.sendMail(mailOptions);
-        res.status(200).json({
-            success: true,
-            data: "Department progress updated successfully"
-        });
+    const { progress_id, trial_id, next_department_id, username, role, remarks } = req.body;
+    const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result_completion] = await Client.query(audit_sql_completion, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${username} with trial id ${trial_id} as completed at ${req.user.department}`]);
+
+    const next_department_user = await Client.query(
+        `SELECT * FROM users WHERE department_id = ? AND role = 'User' LIMIT 1`,
+        [next_department_id]
+    );
+    if (next_department_user.length === 0) {
+        throw new CustomError("No user found for the department.");
     }
-));
+    const next_department_username = next_department_user[0][0].username;
+    const [result] = await Client.query(
+        `UPDATE department_progress SET department_id = ?, username = ?, remarks = ? WHERE progress_id = ?`,
+        [next_department_id, next_department_username, remarks, progress_id]
+    );
+    const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result_assignment] = await Client.query(audit_sql_assignment, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${next_department_id} for ${role}`]);
+
+    const user = await Client.query(
+        `SELECT * FROM users WHERE username = ?`,
+        [next_department_username]
+    );
+    const mailOptions = {
+        to: user[0].email,
+        subject: 'A new request assigned',
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                <img src="cid:sacllogo" alt="SACL Logo" style="max-width: 200px; margin-bottom: 20px;" />
+                <h2 style="color: #2950bb;">New Request Assigned</h2>
+                <p>Hello,</p>
+                <p>Department progress <strong>${progress_id}</strong> has been assigned to you by <strong>${req.user.username}</strong>.</p>
+                <p><strong>Trial ID:</strong> ${trial_id}</p>
+                <p>Please check the progress by logging into the application.</p>
+                <p><a href="http://localhost:5173/dashboard" style="background-color: #2950bb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Dashboard</a></p>
+            </div>
+        `,
+        attachments: [{
+            filename: 'SACL-LOGO-01.jpg',
+            path: path.resolve(__dirname, '../assets/SACL-LOGO-01.jpg'),
+            cid: 'sacllogo'
+        }]
+    };
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({
+        success: true,
+        data: "Department progress updated successfully"
+    });
+}));
 
 router.put('/update-role', verifyToken, asyncErrorHandler(async (req, res, next) => {
-    const { progress_id, current_department_id, username, role, remarks } = req.body;
+    const { progress_id, trial_id, current_department_id, username, role, remarks } = req.body;
+    const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result_completion] = await Client.query(audit_sql_completion, [req.user.user_id, req.user.department_id, 'Department progress completed', `Department progress ${progress_id} marked as completed by ${req.user.username} with trial id ${trial_id}`]);
     const current_department_hod = await Client.query(
         `SELECT * FROM users WHERE department_id = ? AND role = 'HOD' LIMIT 1`,
         [current_department_id]
@@ -76,19 +99,34 @@ router.put('/update-role', verifyToken, asyncErrorHandler(async (req, res, next)
     }
     const current_department_hod_username = current_department_hod[0][0].username;
     const [result] = await Client.query(
-        `UPDATE department_progress SET username = ?, remarks = ? WHERE progress_id = ?`,
+        `UPDATE department_progress SET username = ?, remarks = ?, approval_status = 'pending' WHERE progress_id = ?`,
         [current_department_hod_username, remarks, progress_id]
     );
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}`]);
+    const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const [audit_result_assignment] = await Client.query(audit_sql_assignment, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress ${progress_id} assigned to HOD ${current_department_hod_username} by ${req.user.username} with trial id ${trial_id}`]);
     const user = await Client.query(
         `SELECT * FROM users WHERE username = ?`,
         [current_department_hod_username]
     );
     const mailOptions = {
-        to: user[0].email,
-        subject: 'Department Progress Updated',
-        text: `Department progress ${progress_id} updated by ${req.user.username} with trial id ${trial_id} to department ${current_department_hod_username} for ${role}. Please check the progress by logging into the application.`
+        to: 'trackkumaran@gmail.com',
+        subject: 'A new request assigned',
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                <img src="cid:sacllogo" alt="SACL Logo" style="max-width: 200px; margin-bottom: 20px;" />
+                <h2 style="color: #2950bb;">New Request Assigned</h2>
+                <p>Hello,</p>
+                <p>Department progress <strong>${progress_id}</strong> has been assigned to you by <strong>${req.user.username}</strong>.</p>
+                <p><strong>Trial ID:</strong> ${trial_id}</p>
+                <p>Please check the progress by logging into the application.</p>
+                <p><a href="http://localhost:5173/dashboard" style="background-color: #2950bb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Dashboard</a></p>
+            </div>
+        `,
+        attachments: [{
+            filename: 'SACL-LOGO-01.jpg',
+            path: path.resolve(__dirname, '../assets/SACL-LOGO-01.jpg'),
+            cid: 'sacllogo'
+        }]
     };
     await transporter.sendMail(mailOptions);
     res.status(200).json({

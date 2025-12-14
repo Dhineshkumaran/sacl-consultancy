@@ -27,24 +27,14 @@ async function handleResponse(res: Response) {
 
 export async function getProgress(username: string): Promise<ProgressItem[]> {
   const url = `${API_BASE}/department-progress/get-progress?username=${encodeURIComponent(username || "")}`;
-  const res = await fetch(url, { method: "GET", credentials: "include" });
+  const res = await fetch(url, { method: "GET", headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }, credentials: "include" });
   const json = await handleResponse(res);
   return Array.isArray(json.data) ? json.data as ProgressItem[] : [];
 }
 
-export async function updateProgress(progressId: number | string, payload: any) {
-  const url = `${API_BASE}/department-progress/update/${encodeURIComponent(String(progressId))}`;
-  const res = await fetch(url, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("authToken")}` },
-    credentials: "include",
-    body: JSON.stringify(payload),
-  });
-  return handleResponse(res);
-}
-
 export async function updateDepartment(payload: {
   progress_id: number;
+  trial_id: string;
   next_department_id: number;
   username: string;
   role: string;
@@ -53,7 +43,7 @@ export async function updateDepartment(payload: {
   const url = `${API_BASE}/department-progress/update-department`;
   const res = await fetch(url, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("authToken")}` },
+    headers: { "Content-Type": "application/json", "Authorization": localStorage.getItem("authToken") || '' },
     credentials: "include",
     body: JSON.stringify(payload),
   });
@@ -62,6 +52,7 @@ export async function updateDepartment(payload: {
 
 export async function updateDepartmentRole(payload: {
   progress_id: number;
+  trial_id: string;
   current_department_id: number;
   username: string;
   role: string;
@@ -70,11 +61,11 @@ export async function updateDepartmentRole(payload: {
   const url = `${API_BASE}/department-progress/update-role`;
   const res = await fetch(url, {
     method: "PUT",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("authToken")}` },
+    headers: { "Content-Type": "application/json", "Authorization": localStorage.getItem("authToken") || '' },
     credentials: "include",
     body: JSON.stringify(payload),
   });
   return handleResponse(res);
 }
 
-export default { getProgress, updateProgress, updateDepartment, updateDepartmentRole };
+export default { getProgress, updateDepartment, updateDepartmentRole };
