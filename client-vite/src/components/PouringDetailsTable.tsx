@@ -151,6 +151,7 @@ const LabelText = ({ children }: { children: React.ReactNode }) => (
 
 
 
+/* eslint-disable */
 export interface PouringDetails {
     date: string;
     heatCode: string;
@@ -389,7 +390,6 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
 
                     // 2. Approve
                     const approvalPayload = {
-                        progress_id: progressData.progress_id,
                         trial_id: progressData.trial_id,
                         next_department_id: progressData.department_id + 1,
                         username: user.username,
@@ -447,7 +447,6 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
             if (progressData) {
                 try {
                     await updateDepartmentRole({
-                        progress_id: progressData.progress_id,
                         trial_id: progressData.trial_id,
                         current_department_id: progressData.department_id,
                         username: user?.username || "user",

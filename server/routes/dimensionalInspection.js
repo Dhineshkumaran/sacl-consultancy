@@ -15,11 +15,9 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Dimensional inspection created', `Dimensional inspection ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
-    const insertId = result.insertId;
     res.status(201).json({
         message: "Dimensional inspection created successfully.",
-        success: true,
-        id: insertId
+        success: true
     });
 }));
 
@@ -33,11 +31,9 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Dimensional inspection updated', `Dimensional inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
-    const insertId = result.insertId;
     res.status(201).json({
         message: "Dimensional inspection updated successfully.",
-        success: true,
-        id: insertId
+        success: true
     });
 }));
 
@@ -63,80 +59,3 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) =>
 }));
 
 export default router;
-
-// CREATE TABLE dimensional_inspection (
-//     inspection_id SERIAL PRIMARY KEY,
-//     trial_id VARCHAR(255) REFERENCES trial_cards(trial_id) NOT NULL,
-//     inspection_date DATE,
-//     casting_weight INT,
-//     bunch_weight INT,
-//     no_of_cavities INT,
-//     yields INT,
-//     inspections JSON[]
-//     remarks TEXT
-// );
-
-// inspections [{"Cavity Number": "", "Casting Weight": ""}]
-
-// API: http://localhost:3000/dimensional-inspection
-// Method: POST
-// Sample data: 
-// {
-//     "trial_id": "trial_id",
-//     "inspection_date": "inspection_date",
-//     "casting_weight": 1,
-//     "bunch_weight": 1,
-//     "no_of_cavities": 1,
-//     "yields": 1,
-//     "inspections": [{"Cavity Number": "", "Casting Weight": ""}],
-//     "remarks": "remarks"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "data": "Dimensional inspection created successfully."
-// }
-
-// API: http://localhost:3000/dimensional-inspection
-// Method: GET
-// Response: 
-// {
-//     "success": true,
-//     "inspections": [
-//         {
-//             "inspection_id": 1,
-//             "trial_id": "trial_id",
-//             "inspection_date": "inspection_date",
-//             "casting_weight": 1,
-//             "bunch_weight": 1,
-//             "no_of_cavities": 1,
-//             "yields": 1,
-//             "inspections": [{"Cavity Number": "", "Casting Weight": ""}],
-//             "remarks": "remarks"
-//         }
-//     ]
-// }
-
-// API: http://localhost:3000/dimensional-inspection/trial_id
-// Method: GET
-// Sample data: 
-// {
-//     "trial_id": "trial_id"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "inspections": [
-//         {
-//             "inspection_id": 1,
-//             "trial_id": "trial_id",
-//             "inspection_date": "inspection_date",
-//             "casting_weight": 1,
-//             "bunch_weight": 1,
-//             "no_of_cavities": 1,
-//             "yields": 1,
-//             "inspections": [{"Cavity Number": "", "Casting Weight": ""}],
-//             "remarks": "remarks"
-//         }
-//     ]
-// }

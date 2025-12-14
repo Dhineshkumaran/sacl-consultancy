@@ -14,7 +14,6 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     );
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Document uploaded', `Document ${file_name} uploaded by ${req.user.username} with trial id ${trial_id} for ${document_type}`]);
-    const insertId = result.insertId;
     res.status(201).json({
         message: "Document uploaded successfully.",
         success: true
@@ -34,54 +33,3 @@ router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
 }));
 
 export default router;
-
-// CREATE TABLE documents (
-//     document_id SERIAL PRIMARY KEY,
-//     trial_id INT REFERENCES trial_cards(trial_id) ON DELETE CASCADE,
-//     document_type VARCHAR(50) NOT NULL,
-//     file_name VARCHAR(255) NOT NULL,
-//     file_base64 TEXT,
-//     uploaded_by INT REFERENCES users(user_id),
-//     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     remarks TEXT
-// );
-
-// API: http://localhost:3000/documents
-// Method: POST
-// Sample data: 
-// {
-//     "trial_id": "trial_id",
-//     "document_type": "document_type",
-//     "file_name": "file_name",
-//     "file_base64": "file_base64",
-//     "uploaded_by": "uploaded_by",
-//     "remarks": "remarks"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "data": "Document uploaded successfully."
-// }
-
-// API: http://localhost:3000/documents
-// Method: GET
-// Sample data: 
-// {
-//     "trial_id": "trial_id"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "document_id": 1,
-//             "trial_id": "trial_id",
-//             "document_type": "document_type",
-//             "file_name": "file_name",
-//             "file_base64": "file_base64",
-//             "uploaded_by": "uploaded_by",
-//             "uploaded_at": "uploaded_at",
-//             "remarks": "remarks"
-//         }
-//     ]
-// }

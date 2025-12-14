@@ -111,6 +111,29 @@ const DashboardPage: React.FC = () => {
               >
                 View User Details
               </button>
+
+              <button
+                className="btn-view-trials"
+                onClick={() => window.location.href = '/trials'} // Using href for simpler nav outside current context if needed, or better use navigate() if possible but this is a quick edit
+                style={{
+                  backgroundImage: 'none',
+                  backgroundColor: '#6f42c1',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  marginLeft: '10px',
+                  transition: 'background-color 0.2s',
+                  boxShadow: '0 2px 4px rgba(111, 66, 193, 0.2)'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#59359a')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6f42c1')}
+              >
+                View All Trials
+              </button>
             </WelcomeSection>
 
             {/* Overview Section */}

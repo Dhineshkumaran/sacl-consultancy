@@ -15,7 +15,7 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [trial_id, user_name, dates, microExaminationJson, remarks]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Metallurgical inspection created', `Metallurgical inspection ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
-    res.status(201).json({ success: true, message: 'Metallurgical inspection created successfully.', id: result.insertId });
+    res.status(201).json({ success: true, message: 'Metallurgical inspection created successfully.' });
 }));
 
 router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
@@ -28,11 +28,9 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [user_name, dates, microExaminationJson, remarks, trial_id]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Metallurgical inspection updated', `Metallurgical inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
-    const insertId = result.insertId;
     res.status(201).json({
         success: true,
-        message: "Metallurgical inspection updated successfully.",
-        id: insertId
+        message: "Metallurgical inspection updated successfully."
     });
 }));
 
@@ -52,68 +50,3 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) =>
 }));
 
 export default router;
-
-// CREATE TABLE metallurgical_inspection (
-//     inspection_id SERIAL PRIMARY KEY,
-//     trial_id VARCHAR(255) REFERENCES trial_cards(trial_id) NOT NULL,
-//     user_name TEXT,
-//     date DATE,
-//     micro_examination JSON[],
-//     remarks TEXT
-// );
-
-// micro_examination [{"Cavity number": "", "Nodularity": "", "Matrix": "", "Carbide": "", "Inclusion": ""} ]
-
-// API: http://localhost:3000/metallurgical-inspection
-// Method: GET
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "inspection_id": 1,
-//             "trial_id": "trial_id",
-//             "user_name": "user_name",
-//             "date": "date",
-//             "micro_examination": [{"Cavity number": "", "Nodularity": "", "Matrix": "", "Carbide": "", "Inclusion": ""} ],
-//             "remarks": "remarks"
-//         }
-//     ]
-// }
-
-// API: http://localhost:3000/metallurgical-inspection/trial_id
-// Method: GET
-// Sample data: 
-// {
-//     "trial_id": "trial_id"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "inspection_id": 1,
-//             "trial_id": "trial_id",
-//             "user_name": "user_name",
-//             "date": "date",
-//             "micro_examination": [{"Cavity number": "", "Nodularity": "", "Matrix": "", "Carbide": "", "Inclusion": ""} ],
-//             "remarks": "remarks"
-//         }
-//     ]
-// }
-
-// API: http://localhost:3000/metallurgical-inspection
-// Method: POST
-// Sample data: 
-// {
-//     "trial_id": "trial_id",
-//     "user_name": "user_name",
-//     "date": "date",
-//     "micro_examination": [{"Cavity number": "", "Nodularity": "", "Matrix": "", "Carbide": "", "Inclusion": ""} ],
-//     "remarks": "remarks"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "message": "Metallurgical inspection created successfully."
-// }

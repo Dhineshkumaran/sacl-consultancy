@@ -215,9 +215,8 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
         // 2. Approve
         const approvalPayload = {
-          progress_id: progressData.progress_id,
           trial_id: progressData.trial_id,
-          next_department_id: progressData.department_id + 1, // Move to next department
+          next_department_id: progressData.department_id + 1,
           username: user.username,
           role: user.role,
           remarks: sandProps.remarks || "Approved by HOD"
@@ -272,7 +271,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         if (progressData) {
           try {
             await updateDepartmentRole({
-              progress_id: progressData.progress_id,
               trial_id: progressData.trial_id,
               current_department_id: progressData.department_id,
               username: user?.username || "user",

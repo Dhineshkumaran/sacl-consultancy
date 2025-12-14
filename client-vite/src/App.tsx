@@ -27,6 +27,8 @@ import NotificationPage from './pages/NotificationPage';
 import PendingSampleCardsPage from './pages/PendingSampleCardsPage';
 import Common from '../src/components/common/Common';
 import MaterialCorrection from './components/MaterialCorrection';
+import FullReportPage from './pages/FullReportPage';
+import AllTrialsPage from './pages/AllTrialsPage';
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -84,7 +86,7 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute requiredRole="Admin"><UsersPage /></ProtectedRoute>
       } />
 
-      <Route path="/common" element={<Common trialId='trial_id' /> } />
+      <Route path="/common" element={<Common trialId='trial_id' />} />
 
       <Route path="/metallurgical-inspection" element={
         <ProtectedRoute><MetallurgicalInspection /></ProtectedRoute>
@@ -96,6 +98,14 @@ const AppRoutes: React.FC = () => {
 
       <Route path="/visual-inspection" element={
         <ProtectedRoute><VisualInspection /></ProtectedRoute>
+      } />
+
+      <Route path="/full-report" element={
+        <ProtectedRoute><FullReportPage /></ProtectedRoute>
+      } />
+
+      <Route path="/trials" element={
+        <ProtectedRoute><AllTrialsPage /></ProtectedRoute>
       } />
 
       <Route path="/dimensional-inspection" element={

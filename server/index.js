@@ -24,6 +24,7 @@ import dimensionalInspection from './routes/dimensionalInspection.js';
 import metallurgicalInspection from './routes/metallurgicalInspection.js';
 import machineShop from './routes/machineShop.js';
 import document from './routes/documents.js';
+import getAllDepartmentData from './routes/getAllDepartmentData.js';
 
 const app = express();
 // Increase body size limits to support file uploads (base64 encoded files can be large)
@@ -58,6 +59,8 @@ app.use('/api/dimensional-inspection', dimensionalInspection);
 app.use('/api/metallurgical-inspection', metallurgicalInspection);
 app.use('/api/machine-shop', machineShop);
 app.use('/api/documents', document);
+app.use('/api/get-all-department-data', getAllDepartmentData);
+
 app.use('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });
 });

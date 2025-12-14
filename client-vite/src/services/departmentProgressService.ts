@@ -1,6 +1,5 @@
 export interface ProgressItem {
-  progress_id: number;
-  trial_id: number;
+  trial_id: string;
   department_id: number;
   username: string;
   completed_at?: string | null;
@@ -33,7 +32,6 @@ export async function getProgress(username: string): Promise<ProgressItem[]> {
 }
 
 export async function updateDepartment(payload: {
-  progress_id: number;
   trial_id: string;
   next_department_id: number;
   username: string;
@@ -51,7 +49,6 @@ export async function updateDepartment(payload: {
 }
 
 export async function updateDepartmentRole(payload: {
-  progress_id: number;
   trial_id: string;
   current_department_id: number;
   username: string;

@@ -33,7 +33,6 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [pour_date, heat_code, compositionJson, pouring_temp_c, pouring_time_sec, inoculationJson, otherRemarksJson, remarks, trial_id]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Pouring details updated', `Pouring details ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
-    const insertId = result.insertId;
     res.status(201).json({
         success: true,
         message: "Pouring details updated successfully."
@@ -58,86 +57,3 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) =>
 }));
 
 export default router;
-
-// CREATE TABLE pouring_details (
-//     id SERIAL PRIMARY KEY,
-//     trial_id VARCHAR(255) REFERENCES trial_cards(trial_id) NOT NULL,
-//     pour_date DATE,
-//     heat_code TEXT,
-//     composition JSON,
-//     pouring_temp_c NUMERIC(6,2),
-//     pouring_time_sec INT,
-//     inoculation JSON,
-//     other_remarks JSON,
-//     remarks TEXT
-// );
-
-// composition {"C": "", "Si": "", "Mn": "", "P": "", "S": "", "Mg": "", "Cu": "", "Cr": ""}
-// other_remarks {"F/C & Heat No." : "", "PP Code" : "", "Followed by" : "", "Username" : ""}
-// inoculation {"Stream" : "", "Inmould" : ""}
-
-// API: http://localhost:3000/pouring-details
-// Method: GET
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "id": 1,
-//             "trial_id": "trial_id",
-//             "pour_date": "pour_date",
-//             "heat_code": "heat_code",
-//             "composition": {"C": "", "Si": "", "Mn": "", "P": "", "S": "", "Mg": "", "Cu": "", "Cr": ""},
-//             "pouring_temp_c": 0,
-//             "pouring_time_sec": 0,
-//             "inoculation": {"Stream" : "", "Inmould" : ""},
-//             "other_remarks": {"F/C & Heat No." : "", "PP Code" : "", "Followed by" : "", "Username" : ""},
-//             "remarks": "remarks"
-//         }
-//     ]
-// }
-
-// API: http://localhost:3000/pouring-details
-// Method: POST
-// Sample data: 
-// {
-//     "trial_id": "trial_id",
-//     "pour_date": "pour_date",
-//     "heat_code": "heat_code",
-//     "composition": {"C": "", "Si": "", "Mn": "", "P": "", "S": "", "Mg": "", "Cu": "", "Cr": ""},
-//     "pouring_temp_c": 0,
-//     "pouring_time_sec": 0,
-//     "inoculation": {"Stream" : "", "Inmould" : ""},
-//     "other_remarks": {"F/C & Heat No." : "", "PP Code" : "", "Followed by" : "", "Username" : ""},
-//     "remarks": "remarks"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "message": "Pouring details created successfully."
-// }
-
-// API: http://localhost:3000/pouring-details/trial_id
-// Method: GET
-// Sample data: 
-// {
-//     "trial_id": "trial_id"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "id": 1,
-//             "trial_id": "trial_id",
-//             "pour_date": "pour_date",
-//             "heat_code": "heat_code",
-//             "composition": {"C": "", "Si": "", "Mn": "", "P": "", "S": "", "Mg": "", "Cu": "", "Cr": ""},
-//             "pouring_temp_c": 0,
-//             "pouring_time_sec": 0,
-//             "inoculation": {"Stream" : "", "Inmould" : ""},
-//             "other_remarks": {"F/C & Heat No." : "", "PP Code" : "", "Followed by" : "", "Username" : ""},
-//             "remarks": "remarks"
-//         }
-//     ]
-// }

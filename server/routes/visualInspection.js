@@ -28,7 +28,6 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const [result] = await Client.query(sql, [inspectionsJson, visual_ok, remarks, trial_id]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Visual inspection updated', `Visual inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
-    const insertId = result.insertId;
     res.status(201).json({
         success: true,
         message: "Visual inspection updated successfully."
@@ -51,64 +50,3 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) =>
 }));
 
 export default router;
-
-// CREATE TABLE visual_inspection (
-//     inspection_id SERIAL PRIMARY KEY,
-//     trial_id VARCHAR(255) REFERENCES trial_cards(trial_id) NOT NULL,
-//     inspections JSON[],
-//     visual_ok BOOLEAN,
-//     remarks TEXT
-// );
-
-// inspections [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}]
-
-// API: http://localhost:3000/visual-inspection
-// Method: GET
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "inspection_id": "inspection_id",
-//             "trial_id": "trial_id",
-//             "inspections": [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}],
-//             "visual_ok": true,
-//             "remarks": "remarks"
-//         }
-//     ]
-// }
-
-// API: http://localhost:3000/visual-inspection
-// Method: POST
-// Sample data: 
-// {
-//     "trial_id": "trial_id",
-//     "inspections": [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}],
-//     "visual_ok": true,
-//     "remarks": "remarks"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "message": "Visual inspection created successfully."
-// }
-
-// API: http://localhost:3000/visual-inspection/trial_id
-// Method: GET
-// Sample data: 
-// {
-//     "trial_id": "trial_id"
-// }
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "inspection_id": "inspection_id",
-//             "trial_id": "trial_id",
-//             "inspections": [{"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}, {"Cavity number": "", "Inspected Quantity": "", "Accepted Quantity": "", "Rejected Quantity": "", "Rejection Percentage": "", "Reason for rejection": ""}],
-//             "visual_ok": true,
-//             "remarks": "remarks"
-//         }
-//     ]
-// }

@@ -45,7 +45,7 @@ export const trialService = {
                     'Authorization': localStorage.getItem('authToken') || ''
                 },
                 credentials: 'include'
-                }
+            }
             );
 
             if (!response.ok) {
@@ -74,7 +74,7 @@ export const trialService = {
                     'Authorization': localStorage.getItem('authToken') || ''
                 },
                 credentials: 'include'
-                }
+            }
             );
 
             if (!response.ok) {
@@ -146,6 +146,32 @@ export const trialService = {
             return data;
         } catch (error) {
             console.error('Failed to fetch pending sample cards:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Fetches all trials
+     * @returns Promise resolving to array of all trials
+     */
+    async getAllTrials(): Promise<any[]> {
+        try {
+            const response = await fetch(`${API_BASE}/trial`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            return data.data || [];
+        } catch (error) {
+            console.error('Failed to fetch all trials:', error);
             throw error;
         }
     }

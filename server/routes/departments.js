@@ -17,20 +17,3 @@ router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
 }));
 
 export default router;
-
-// API: http://localhost:3000/departments
-// Method: GET
-// Response: 
-// {
-//     "success": true,
-//     "data": [
-//         {
-//             "department_id": 1,
-//             "department_name": "Department 1"
-//         },
-//         {
-//             "department_id": 2,
-//             "department_name": "Department 2"
-//         }
-//     ]
-// }

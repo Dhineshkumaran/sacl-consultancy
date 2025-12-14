@@ -115,12 +115,3 @@ router.post('/change-password', asyncErrorHandler(async (req, res, next) => {
 }));
 
 export default router;
-
-// CREATE TABLE audit_log (
-//     audit_id SERIAL PRIMARY KEY,
-//     user_id INT REFERENCES users(user_id) NOT NULL,
-//     department_id INT REFERENCES departments(department_id) NOT NULL,
-//     action VARCHAR(100) NOT NULL,
-//     action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//     remarks TEXT
-// );

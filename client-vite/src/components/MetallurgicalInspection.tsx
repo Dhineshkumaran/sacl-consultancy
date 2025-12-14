@@ -804,7 +804,6 @@ export default function MetallurgicalInspection() {
 
         // 2. Approve
         const approvalPayload = {
-          progress_id: progressData.progress_id,
           trial_id: progressData.trial_id,
           next_department_id: progressData.department_id + 1,
           username: user.username,
@@ -831,7 +830,6 @@ export default function MetallurgicalInspection() {
       if (progressData) {
         try {
           await updateDepartmentRole({
-            progress_id: progressData.progress_id,
             trial_id: progressData.trial_id,
             current_department_id: progressData.department_id,
             username: user?.username || "user",
