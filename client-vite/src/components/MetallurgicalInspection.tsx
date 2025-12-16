@@ -53,6 +53,7 @@ import { fileToMeta, generateUid, validateFileSizes } from '../utils';
 import SaclHeader from "./common/SaclHeader";
 import DepartmentHeader from "./common/DepartmentHeader";
 import { LoadingState, EmptyState, ActionButtons, PreviewModal, Common, FileUploadSection } from './common';
+import { ipService } from "../services/ipService";
 
 interface Row {
   id: string;
@@ -88,6 +89,8 @@ function SectionTable({
   showTotal = false,
   onValidationError,
   showAlert,
+  user,
+  isEditing,
 }: {
   title: string;
   rows: Row[];
@@ -95,14 +98,14 @@ function SectionTable({
   showTotal?: boolean;
   onValidationError?: (message: string) => void;
   showAlert?: (severity: 'success' | 'error', message: string) => void;
+  user: any;
+  isEditing: boolean;
 }) {
   const [cols, setCols] = useState<MicroCol[]>(() => {
     // Initialize columns based on max values length
     const maxLen = Math.max(...rows.map(r => (r.value ? r.value.split('|').length : 1)), 1);
     return Array.from({ length: maxLen }, (_, i) => ({ id: `c${i + 1}`, label: '' })); // Labels lost in string storage
   });
-
-  const [cavityNumbers, setCavityNumbers] = useState<string[]>(() => Array(cols.length).fill('')); // Cavity nums not stored in row value string
 
   const [values, setValues] = useState<Record<string, string[]>>(() => {
     const init: Record<string, string[]> = {};
@@ -116,26 +119,29 @@ function SectionTable({
 
   useEffect(() => {
     if (rows.length > 0) {
-      const first = rows[0];
-      setGroupMeta(prev => ({
-        ...prev,
-        ok: first.ok === true || String(first.ok) === "1" || String(first.ok) === "true",
-        remarks: first.remarks || prev.remarks || ""
-      }));
+      // Logic: If ANY row has a non-null ok status, we take it. Or specifically look for a "group" marker if we had one.
+      // But here we rely on the rows preservation.
+      const firstWithStatus = rows.find(r => r.ok !== null && r.ok !== undefined);
+      if (firstWithStatus) {
+        setGroupMeta(prev => ({
+          ...prev,
+          ok: firstWithStatus.ok,
+          remarks: firstWithStatus.remarks || prev.remarks || ""
+        }));
+      }
     }
   }, [rows]);
 
   useEffect(() => {
     setValues((prev) => {
       const copy: Record<string, string[]> = {};
-      rows.forEach((r) => { copy[r.id] = prev[r.id] ?? ['']; });
+      rows.forEach((r) => { copy[r.id] = prev[r.id] ?? (r.value ? r.value.split('|').map(s => s.trim()) : Array(cols.length).fill('')); });
       return copy;
     });
   }, [rows]);
 
   const addColumn = () => {
     setCols((prev) => [...prev, { id: `c${prev.length + 1}`, label: '' }]);
-    setCavityNumbers((prev) => [...prev, '']);
     setValues((prev) => {
       const copy: Record<string, string[]> = {};
       Object.keys(prev).forEach((k) => { copy[k] = [...prev[k], '']; });
@@ -145,11 +151,6 @@ function SectionTable({
 
   const removeColumn = (index: number) => {
     setCols((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
-    setCavityNumbers((prev) => {
-      const arr = [...prev];
-      if (arr.length > index) arr.splice(index, 1);
-      return arr.length > 0 ? arr : [''];
-    });
     setValues((prev) => {
       const copy: Record<string, string[]> = {};
       Object.keys(prev).forEach((k) => {
@@ -165,7 +166,7 @@ function SectionTable({
     setValues((prev) => {
       const arr = prev[rowId].map((v, i) => (i === colIndex ? val : v));
       const copy = { ...prev, [rowId]: arr };
-      const combined = arr.filter(Boolean).join(' | ');
+      const combined = arr.map(v => v || "").join(' | '); // Join with empty strings preserved
       const total = arr.reduce((acc, s) => {
         const n = parseFloat(String(s).trim());
         return acc + (isNaN(n) ? 0 : n);
@@ -177,7 +178,14 @@ function SectionTable({
 
   const updateGroupMeta = (patch: Partial<{ attachment: File | null; ok: boolean | null; remarks: string }>) => {
     setGroupMeta((prev) => ({ ...prev, ...patch }));
+    // Propagate meta changes to all rows (or just first/dummy) so it persists
+    rows.forEach(r => {
+      onChange(r.id, { ...patch });
+    });
   };
+
+  const cavityRow = rows.find(r => r.label === "Cavity number");
+  const dataRows = rows.filter(r => r.label !== "Cavity number");
 
   return (
     <Box mb={4}>
@@ -202,8 +210,9 @@ function SectionTable({
                       variant="standard"
                       InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
                       sx={{ input: { textAlign: 'center' } }}
+                      disabled={user?.role === 'HOD' && !isEditing}
                     />
-                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }}>
+                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={user?.role === 'HOD' && !isEditing}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Box>
@@ -229,10 +238,11 @@ function SectionTable({
                   <TextField
                     size="small"
                     fullWidth
-                    value={cavityNumbers[ci] ?? ""}
-                    onChange={(e) => setCavityNumbers((prev) => prev.map((v, i) => (i === ci ? e.target.value : v)))}
+                    value={cavityRow ? (values[cavityRow.id]?.[ci] ?? "") : ""}
+                    onChange={(e) => cavityRow && updateCell(cavityRow.id, ci, e.target.value)}
                     variant="outlined"
                     sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                    disabled={user?.role === 'HOD' && !isEditing}
                   />
                 </TableCell>
               ))}
@@ -242,8 +252,8 @@ function SectionTable({
               <TableCell rowSpan={rows.length + (title === "NDT INSPECTION ANALYSIS" ? 2 : 1)} sx={{ bgcolor: COLORS.successBg, verticalAlign: "middle", textAlign: 'center', width: 140, borderBottom: 'none' }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                   <RadioGroup row sx={{ justifyContent: 'center' }} value={groupMeta.ok === null ? "" : String(groupMeta.ok)} onChange={(e) => updateGroupMeta({ ok: e.target.value === "true" })}>
-                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} />
-                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} />
+                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={user?.role === 'HOD' && !isEditing} />
+                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={user?.role === 'HOD' && !isEditing} />
                   </RadioGroup>
                 </Box>
               </TableCell>
@@ -260,12 +270,13 @@ function SectionTable({
                     placeholder="Enter remarks..."
                     variant="outlined"
                     sx={{ bgcolor: 'white' }}
+                    disabled={user?.role === 'HOD' && !isEditing}
                   />
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 'auto' }}>
-                    <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`${title}-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateGroupMeta({ attachment: file }); }} />
+                    <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`${title}-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateGroupMeta({ attachment: file }); }} disabled={user?.role === 'HOD' && !isEditing} />
                     <label htmlFor={`${title}-group-file`}>
-                      <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}>
+                      <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }} disabled={user?.role === 'HOD' && !isEditing}>
                         Attach PDF
                       </Button>
                     </label>
@@ -278,6 +289,7 @@ function SectionTable({
                         size="small"
                         variant="outlined"
                         sx={{ maxWidth: 120 }}
+                        disabled={user?.role === 'HOD' && !isEditing}
                       />
                     )}
                   </Box>
@@ -285,7 +297,7 @@ function SectionTable({
               </TableCell>
             </TableRow>
 
-            {rows.map((r: Row, idx: number) => {
+            {dataRows.map((r: Row, idx: number) => {
               const rowVals = values[r.id] ?? [];
               const displayTotal = rowVals.reduce((acc, s) => {
                 const n = parseFloat(String(s).trim());
@@ -306,6 +318,7 @@ function SectionTable({
                         onChange={(e) => updateCell(r.id, ci, e.target.value)}
                         variant="outlined"
                         sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                        disabled={user?.role === 'HOD' && !isEditing}
                       />
                     </TableCell>
                   ))}
@@ -322,6 +335,7 @@ function SectionTable({
                         placeholder="Enter reason for rejection..."
                         variant="outlined"
                         sx={{ "& .MuiInputBase-input": { fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                        disabled={user?.role === 'HOD' && !isEditing}
                       />
                     </TableCell>
                   )}
@@ -384,6 +398,7 @@ function SectionTable({
         onClick={addColumn}
         startIcon={<AddCircleIcon />}
         sx={{ mt: 1, color: COLORS.secondary }}
+        disabled={user?.role === 'HOD' && !isEditing}
       >
         Add Column
       </Button>
@@ -400,6 +415,8 @@ function MicrostructureTable({
   setValues,
   setMeta,
   showAlert,
+  user,
+  isEditing,
 }: {
   params: string[];
   cols: MicroCol[];
@@ -409,6 +426,8 @@ function MicrostructureTable({
   setValues: (v: Record<string, string[]> | ((prev: Record<string, string[]>) => Record<string, string[]>)) => void;
   setMeta: (m: Record<string, { attachment: File | null; ok: boolean | null; remarks: string }> | ((prev: any) => any)) => void;
   showAlert?: (severity: 'success' | 'error', message: string) => void;
+  user: any;
+  isEditing: boolean;
 }) {
   const [cavityNumbers, setCavityNumbers] = useState<string[]>(['']);
 
@@ -475,8 +494,9 @@ function MicrostructureTable({
                       variant="standard"
                       InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
                       sx={{ input: { textAlign: 'center' } }}
+                      disabled={user?.role === 'HOD' && !isEditing}
                     />
-                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }}>
+                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={user?.role === 'HOD' && !isEditing}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Box>
@@ -502,6 +522,7 @@ function MicrostructureTable({
                       onChange={(e) => updateCell(param, ci, e.target.value)}
                       variant="outlined"
                       sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                      disabled={user?.role === 'HOD' && !isEditing}
                     />
                   </TableCell>
                 ))}
@@ -515,8 +536,8 @@ function MicrostructureTable({
                         value={meta["group"]?.ok === null ? "" : String(meta["group"]?.ok)}
                         onChange={(e) => updateMeta("group", { ok: e.target.value === "true" })}
                       >
-                        <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} />
-                        <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} />
+                        <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={user?.role === 'HOD' && !isEditing} />
+                        <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={user?.role === 'HOD' && !isEditing} />
                       </RadioGroup>
                     </TableCell>
 
@@ -532,12 +553,13 @@ function MicrostructureTable({
                           placeholder="Enter remarks..."
                           variant="outlined"
                           sx={{ bgcolor: 'white' }}
+                          disabled={user?.role === 'HOD' && !isEditing}
                         />
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 'auto' }}>
-                          <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`micro-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateMeta('group', { attachment: file }); }} />
+                          <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`micro-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateMeta('group', { attachment: file }); }} disabled={user?.role === 'HOD' && !isEditing} />
                           <label htmlFor={`micro-group-file`}>
-                            <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}>
+                            <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }} disabled={user?.role === 'HOD' && !isEditing}>
                               Attach PDF
                             </Button>
                           </label>
@@ -550,6 +572,7 @@ function MicrostructureTable({
                               size="small"
                               variant="outlined"
                               sx={{ maxWidth: 120 }}
+                              disabled={user?.role === 'HOD' && !isEditing}
                             />
                           )}
                         </Box>
@@ -562,7 +585,7 @@ function MicrostructureTable({
           </TableBody>
         </Table>
       </Box>
-      <Button size="small" onClick={addColumn} startIcon={<AddCircleIcon />} sx={{ mt: 1, color: COLORS.secondary }}>Add Column</Button>
+      <Button size="small" onClick={addColumn} startIcon={<AddCircleIcon />} sx={{ mt: 1, color: COLORS.secondary }} disabled={user?.role === 'HOD' && !isEditing}>Add Column</Button>
     </Box>
   );
 }
@@ -577,17 +600,16 @@ export default function MetallurgicalInspection() {
   const [loading, setLoading] = useState(false);
   const [userIP, setUserIP] = useState<string>("Loading...");
   const { alert, showAlert } = useAlert();
-  const [loadKey, setLoadKey] = useState(0); // Key to force re-render of tables on fetch
-  const [isEditing, setIsEditing] = useState(false); // HOD Edit Mode
+  const [loadKey, setLoadKey] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
   const [ndtValidationError, setNdtValidationError] = useState<string | null>(null);
 
-  // Preview states
   const [previewMode, setPreviewMode] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any | null>(null);
   const [previewSubmitted, setPreviewSubmitted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]); // Added for File Uploads
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   const [microCols, setMicroCols] = useState<MicroCol[]>([{ id: 'c1', label: '' }]);
   const [microValues, setMicroValues] = useState<Record<string, string[]>>(() => {
@@ -602,10 +624,10 @@ export default function MetallurgicalInspection() {
     return init;
   });
 
-  const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Tensile strength", "Yield strength", "Elongation"]));
-  const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cold Temp °C", "Room Temp °C"]));
-  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Surface", "Core"]));
-  const [ndtRows, setNdtRows] = useState<Row[]>(initialRows(["Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
+  const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Cavity number", "Tensile strength", "Yield strength", "Elongation"]));
+  const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity number", "Cold Temp °C", "Room Temp °C"]));
+  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity number", "Surface", "Core"]));
+  const [ndtRows, setNdtRows] = useState<Row[]>(initialRows(["Cavity number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
   const [progressData, setProgressData] = useState<any>(null);
 
   const handleAttachFiles = (newFiles: File[]) => {
@@ -618,9 +640,8 @@ export default function MetallurgicalInspection() {
 
   useEffect(() => {
     const fetchIP = async () => {
-      // const ip = await ipService.getUserIP(); // Assuming ipService is still needed or replaced
-      // setUserIP(ip);
-      setUserIP("127.0.0.1"); // Placeholder for now
+      const ip = await ipService.getUserIP();
+      setUserIP(ip);
     };
     fetchIP();
   }, []);
@@ -643,7 +664,6 @@ export default function MetallurgicalInspection() {
     return () => { mounted = false; };
   }, [user]);
 
-  // Fetch Logic for HOD
   useEffect(() => {
     const fetchData = async () => {
       if (user?.role === 'HOD' && progressData?.trial_id) {
@@ -653,14 +673,12 @@ export default function MetallurgicalInspection() {
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
 
-            // Helper to parsing rows
             const parseRows = (jsonStr: string | object) => {
               if (!jsonStr) return [];
               const arr = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
               return Array.isArray(arr) ? arr : [];
             };
 
-            // Restore Microstructure
             if (data.micro_structure) {
               const microData = parseRows(data.micro_structure);
               if (microData.length > 0) {
@@ -673,7 +691,6 @@ export default function MetallurgicalInspection() {
                 });
                 setMicroValues(prev => ({ ...prev, ...newValues }));
 
-                // Restore Group meta from separate fields
                 setMicroMeta(prev => ({
                   ...prev,
                   'group': {
@@ -685,14 +702,13 @@ export default function MetallurgicalInspection() {
               }
             }
 
-            // Restore Section Tables (Mech, Impact, Hard, NDT)
             const restoreSection = (source: any) => {
               const arr = parseRows(source);
               return arr.map((r: any) => ({
                 id: r.label + "-" + generateUid(),
                 label: r.label,
                 value: Array.isArray(r.values) ? r.values.join(' | ') : r.value,
-                ok: r.ok === true || String(r.ok) === "1" || String(r.ok) === "true",
+                ok: r.ok === null || r.ok === undefined ? null : (r.ok === true || String(r.ok) === "1" || String(r.ok) === "true"),
                 remarks: r.remarks,
                 total: r.total,
                 attachment: null
@@ -788,20 +804,16 @@ export default function MetallurgicalInspection() {
   };
 
   const sendToServer = async (payload: any) => {
-    // Simulated backend call
     return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 1000));
   };
 
   const handleFinalSave = async () => {
     if (!previewPayload) return;
 
-    // Transform payload to match new API schema
     const transformToServerPayload = (payload: any) => {
-      // Extract OK status and remarks from grouped metadata
       const microOk = microMeta['group']?.ok ?? null;
       const microRemarks = microMeta['group']?.remarks ?? '';
 
-      // For other sections, check if any row has ok=false, then section is not ok
       const getMechOk = () => {
         const hasNotOk = payload.mechRows?.some((r: any) => r.ok === false);
         if (hasNotOk) return false;
@@ -947,7 +959,6 @@ export default function MetallurgicalInspection() {
     window.print();
   };
 
-  /* Preview Components */
   const PreviewSectionTable = ({ title, rows }: { title: string, rows: any[] }) => {
     const hasTotal = rows.some(r => typeof r.total === 'number' && !isNaN(r.total));
     return (
@@ -1122,7 +1133,6 @@ export default function MetallurgicalInspection() {
 
               <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 
-                {/* Input Controls */}
                 <Box
                   display="flex"
                   justifyContent="space-between"
@@ -1140,11 +1150,12 @@ export default function MetallurgicalInspection() {
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       sx={{ width: 160 }}
+                      disabled={user?.role === 'HOD'}
                     />
                   </Box>
                 </Box>
 
-                <AlertMessage alert={alert} />
+
 
                 {/* Tables */}
                 <MicrostructureTable
@@ -1156,6 +1167,8 @@ export default function MetallurgicalInspection() {
                   setValues={setMicroValues}
                   setMeta={setMicroMeta}
                   showAlert={showAlert}
+                  user={user}
+                  isEditing={isEditing}
                 />
 
                 <Grid container spacing={3}>
@@ -1166,6 +1179,8 @@ export default function MetallurgicalInspection() {
                       rows={mechRows}
                       onChange={updateRow(setMechRows)}
                       showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1175,6 +1190,8 @@ export default function MetallurgicalInspection() {
                       rows={impactRows}
                       onChange={updateRow(setImpactRows)}
                       showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1184,6 +1201,8 @@ export default function MetallurgicalInspection() {
                       rows={hardRows}
                       onChange={updateRow(setHardRows)}
                       showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, md: 6 }}>
@@ -1195,6 +1214,8 @@ export default function MetallurgicalInspection() {
                       showTotal={true}
                       onValidationError={setNdtValidationError}
                       showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
                     />
                   </Grid>
                 </Grid>
@@ -1209,6 +1230,7 @@ export default function MetallurgicalInspection() {
                     onFileRemove={removeAttachedFile}
                     showAlert={showAlert}
                     label="Attach PDF"
+                    disabled={user?.role === 'HOD' && !isEditing}
                   />
                 </Box>
 
@@ -1252,10 +1274,12 @@ export default function MetallurgicalInspection() {
                     </Box>
                     <Divider sx={{ mb: 3 }} />
 
+                    <AlertMessage alert={alert} />
+
                     {/* Render ALL sections */}
                     <PreviewMicroTable data={previewPayload?.microRows} />
                     <PreviewSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload?.mechRows} />
-                    {/* <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} /> */}
+                    <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} />
                     <PreviewSectionTable title="HARDNESS" rows={previewPayload?.hardRows} />
                     <PreviewSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload?.ndtRows} />
                   </Box>
@@ -1282,7 +1306,7 @@ export default function MetallurgicalInspection() {
                   <>
                     <PrintMicroTable data={previewPayload.microRows} />
                     <PrintSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload.mechRows} />
-                    {/* <PrintSectionTable title="IMPACT STRENGTH" rows={previewPayload.impactRows} /> */}
+                    <PrintSectionTable title="IMPACT STRENGTH" rows={previewPayload.impactRows} />
                     <PrintSectionTable title="HARDNESS" rows={previewPayload.hardRows} />
                     <PrintSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload.ndtRows} />
                   </>

@@ -13,6 +13,7 @@ interface FileUploadSectionProps {
     multiple?: boolean;
     label?: string;
     showAlert?: (severity: 'success' | 'error', message: string) => void;
+    disabled?: boolean;
 }
 
 const FileUploadSection: React.FC<FileUploadSectionProps> = ({
@@ -22,7 +23,8 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     accept = "image/*,application/pdf",
     multiple = true,
     label = "Attach Files",
-    showAlert
+    showAlert,
+    disabled = false
 }) => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(e.target.files ?? []);
@@ -54,6 +56,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                 variant="outlined"
                 startIcon={<UploadFileIcon />}
                 sx={{ mb: files.length > 0 ? 2 : 0 }}
+                disabled={disabled}
             >
                 {label}
                 <input
@@ -62,6 +65,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                     multiple={multiple}
                     accept={accept}
                     onChange={handleFileChange}
+                    disabled={disabled}
                 />
             </Button>
 
@@ -76,6 +80,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                                     aria-label="delete"
                                     onClick={() => onFileRemove(index)}
                                     size="small"
+                                    disabled={disabled}
                                 >
                                     <DeleteIcon />
                                 </IconButton>

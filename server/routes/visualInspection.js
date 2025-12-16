@@ -6,7 +6,6 @@ import CustomError from '../utils/customError.js';
 import verifyToken from '../utils/verifyToken.js';
 
 router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
-    console.log(req.body);
     const { trial_id, inspections, visual_ok, remarks } = req.body || {};
     if (!trial_id || !inspections || !visual_ok || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });

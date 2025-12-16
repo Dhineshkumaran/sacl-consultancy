@@ -152,9 +152,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
     fetchIP();
   }, []);
 
-  // Early exits now occur after all hooks have been registered
-
-
   const handleChange = (field: string, value: string) => {
     setSandProps(prev => ({ ...prev, [field]: value }));
   };

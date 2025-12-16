@@ -99,6 +99,8 @@ export default function VisualInspection({
     const [progressData, setProgressData] = useState<any>(null);
     const [isEditing, setIsEditing] = useState(false); // HOD Edit Mode
 
+    const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+
     useEffect(() => {
         let mounted = true;
         const check = async () => {
@@ -117,7 +119,6 @@ export default function VisualInspection({
         return () => { mounted = false; };
     }, [user]);
 
-    // Fetch and Populate Data for HOD
     useEffect(() => {
         const fetchData = async () => {
             if (user?.role === 'HOD' && progressData?.trial_id) {
@@ -125,6 +126,7 @@ export default function VisualInspection({
                     const response = await inspectionService.getVisualInspection(progressData.trial_id);
                     if (response.success && response.data && response.data.length > 0) {
                         const data = response.data[0];
+                        if (data.inspection_date) setDate(new Date(data.inspection_date).toISOString().slice(0, 10));
 
                         // Restore Columns and Rows from stored JSON
                         if (data.inspections && Array.isArray(data.inspections)) {
@@ -308,8 +310,6 @@ export default function VisualInspection({
         setSaving(true);
         setMessage(null);
 
-        // HOD Approval Logic
-        // HOD Approval Logic
         if (user?.role === 'HOD' && progressData) {
             try {
                 // 1. Update Data if Edited
@@ -496,7 +496,7 @@ export default function VisualInspection({
                                 <Grid container spacing={2} sx={{ mb: 2 }}>
                                 </Grid>
 
-                                <AlertMessage alert={alert} />
+
 
                                 <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
                                     <Table size="small">
@@ -602,8 +602,8 @@ export default function VisualInspection({
                                                                     value={groupMeta.ok === null ? "" : String(groupMeta.ok)}
                                                                     onChange={(e) => setGroupMeta((g) => ({ ...g, ok: e.target.value === "true" }))}
                                                                 >
-                                                                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} />
-                                                                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} />
+                                                                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={user?.role === 'HOD' && !isEditing} />
+                                                                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={user?.role === 'HOD' && !isEditing} />
                                                                 </RadioGroup>
                                                             </TableCell>
 
@@ -623,6 +623,7 @@ export default function VisualInspection({
                                                                         onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
                                                                         variant="outlined"
                                                                         sx={{ bgcolor: 'white' }}
+                                                                        disabled={user?.role === 'HOD' && !isEditing}
                                                                     />
 
                                                                     <Box display="flex" alignItems="center" gap={1} mt="auto">
@@ -643,6 +644,7 @@ export default function VisualInspection({
                                                                                 }
                                                                                 setGroupMeta((g) => ({ ...g, attachment: file }));
                                                                             }}
+                                                                            disabled={user?.role === 'HOD' && !isEditing}
                                                                         />
                                                                         <label htmlFor="visual-group-file">
                                                                             <Button
@@ -651,6 +653,7 @@ export default function VisualInspection({
                                                                                 component="span"
                                                                                 startIcon={<UploadFileIcon />}
                                                                                 sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
+                                                                                disabled={user?.role === 'HOD' && !isEditing}
                                                                             >
                                                                                 Attach PDF
                                                                             </Button>
@@ -664,6 +667,7 @@ export default function VisualInspection({
                                                                                 size="small"
                                                                                 variant="outlined"
                                                                                 sx={{ maxWidth: 140 }}
+                                                                                disabled={user?.role === 'HOD' && !isEditing}
                                                                             />
                                                                         ) : (
                                                                             <Typography variant="caption" color="text.secondary">
@@ -701,6 +705,7 @@ export default function VisualInspection({
                                         onFileRemove={removeAttachedFile}
                                         showAlert={showAlert}
                                         label="Attach PDF"
+                                        disabled={user?.role === 'HOD' && !isEditing}
                                     />
                                 </Box>
 

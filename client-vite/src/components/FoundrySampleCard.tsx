@@ -214,7 +214,6 @@ function FoundrySampleCard() {
   const addMouldCorrectionRow = () => setMouldCorrections(prev => [...prev, { id: Date.now(), compressibility: "", squeezePressure: "", fillerSize: "" }]);
   const removeMouldCorrectionRow = (id: number) => setMouldCorrections(prev => prev.filter(r => r.id !== id));
 
-  // Form State
   const [chemState, setChemState] = useState({ c: "", si: "", mn: "", p: "", s: "", mg: "", cr: "", cu: "" });
   const [tensileState, setTensileState] = useState({ tensileStrength: "", yieldStrength: "", elongation: "", impactCold: "", impactRoom: "" });
   const [microState, setMicroState] = useState({ nodularity: "", pearlite: "", carbide: "" });
@@ -229,7 +228,6 @@ function FoundrySampleCard() {
   const [previewMessage, setPreviewMessage] = useState<string | null>(null);
   const [userIP, setUserIP] = useState<string>("");
 
-  // Visibility State
   const [openMetMechModal, setOpenMetMechModal] = useState(false);
 
   useEffect(() => {
@@ -873,6 +871,7 @@ function FoundrySampleCard() {
                       value={samplingDate}
                       onChange={(e) => setSamplingDate(e.target.value)}
                       size="small"
+                      disabled={user?.role === 'HOD'}
                     />
                   </TableCell>
                   <TableCell>

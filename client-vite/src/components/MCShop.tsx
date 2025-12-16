@@ -70,7 +70,7 @@ export default function McShopInspection({
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  /* useState HOOKS */
+
   const [assigned, setAssigned] = useState<boolean | null>(null);
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [userTime, setUserTime] = useState<string>("");
@@ -130,7 +130,6 @@ export default function McShopInspection({
     fetchUserIP();
   }, []);
 
-  // Fetch Logic for HOD
   useEffect(() => {
     const fetchData = async () => {
       if (user?.role === 'HOD' && progressData?.trial_id) {
@@ -139,23 +138,24 @@ export default function McShopInspection({
           if (response.success && response.data && response.data.length > 0) {
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
-            // Reconstruct Table
             if (data.inspections) {
-              const inspections = typeof data.inspections === 'string' ? JSON.parse(data.inspections) : data.inspections;
-              if (Array.isArray(inspections) && inspections.length > 0) {
-                // 1. Reconstruct Cavities
+              let inspections: any[] = [];
+              try {
+                inspections = typeof data.inspections === 'string' ? JSON.parse(data.inspections) : data.inspections;
+              } catch (e) {
+                console.warn("Failed to parse inspections JSON", e);
+                inspections = [];
+              }
+              if (!Array.isArray(inspections)) inspections = [];
+
+              if (inspections.length > 0) {
                 const newCavities = inspections.map((item: any) => item['Cavity Details'] || "");
                 setCavities(newCavities);
 
-                // 2. Reconstruct Rows
                 const getVals = (key: string) => inspections.map((item: any) => item[key] ?? "");
 
                 setRows(prevRows => {
-                  const newRows = [...prevRows]; // Assuming structure hasn't changed from initial
-                  // We need to map back to the correct IDs or indices. Since we reset structure, we can map by label or index.
-                  // Ideally we map by label.
-
-                  // Helper to update a row by label snippet
+                  const newRows = [...prevRows];
                   const updateRowVals = (labelSnippet: string, values: any[]) => {
                     const rIndex = newRows.findIndex(r => r.label.toLowerCase().includes(labelSnippet));
                     if (rIndex !== -1) {
@@ -181,7 +181,7 @@ export default function McShopInspection({
             }
 
             setGroupMeta(prev => ({ ...prev, remarks: data.remarks || "" }));
-            // Additional fields if mapped
+
           }
         } catch (error) {
           console.error("Failed to fetch machine shop data:", error);
@@ -192,10 +192,7 @@ export default function McShopInspection({
     if (progressData) fetchData();
   }, [user, progressData]);
 
-  // ✅ NOW conditional returns (after all hooks)
 
-
-  // ✅ Helper functions
   const addColumn = () => {
     setCavities((c) => [...c, ""]);
     setRows((r) => r.map((row) => ({ ...row, values: [...row.values, ""] })));
@@ -291,19 +288,19 @@ export default function McShopInspection({
     if (!previewPayload) return;
     setSaving(true);
 
-    // HOD Approval Logic
+    setSaving(true);
+
     if (user?.role === 'HOD' && progressData) {
       try {
-        // 1. Update Data if Edited
         if (isEditing) {
           const trialIdParam = progressData.trial_id;
           const payload = buildPayload();
-          const rowsByLabel = (labelSnippet: string) => rows.find(r => (r.label || '').toLowerCase().includes(labelSnippet));
-          const receivedRow = rowsByLabel('received');
-          const inspectedRow = rowsByLabel('inspected');
-          const acceptedRow = rowsByLabel('accepted');
-          const rejectedRow = rowsByLabel('rejected');
-          const reasonRow = rowsByLabel('reason');
+          // Direct row access assuming standard order (Cavity, Received, Inspected, Accepted, Rejected, Reason)
+          const receivedRow = rows[1];
+          const inspectedRow = rows[2];
+          const acceptedRow = rows[3];
+          const rejectedRow = rows[4];
+          const reasonRow = rows[5];
 
           const inspections: any[] = cavities.map((cav, idx) => {
             return {
@@ -319,19 +316,17 @@ export default function McShopInspection({
           const serverPayload = {
             trial_id: trialIdParam,
             inspection_date: payload.inspection_date,
-            inspections: JSON.stringify(inspections),
+            inspections: inspections,
             remarks: remarks || groupMeta.remarks || null,
           };
 
           await inspectionService.updateMachineShopInspection(serverPayload);
         }
 
-        // 2. Approve Department Progress
         await approve({
           trial_id: progressData.trial_id
         });
 
-        // 3. Update Trial Status to Closed
         await trialService.updateTrialStatus({
           trial_id: progressData.trial_id,
           status: "CLOSED"
@@ -353,12 +348,12 @@ export default function McShopInspection({
       const trialIdParam = progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || 'trial_id';
 
       const payload = buildPayload();
-      const rowsByLabel = (labelSnippet: string) => rows.find(r => (r.label || '').toLowerCase().includes(labelSnippet));
-      const receivedRow = rowsByLabel('received');
-      const inspectedRow = rowsByLabel('inspected');
-      const acceptedRow = rowsByLabel('accepted');
-      const rejectedRow = rowsByLabel('rejected');
-      const reasonRow = rowsByLabel('reason');
+      // Direct row access assuming standard order
+      const receivedRow = rows[1];
+      const inspectedRow = rows[2];
+      const acceptedRow = rows[3];
+      const rejectedRow = rows[4];
+      const reasonRow = rows[5];
 
       const inspections: any[] = cavities.map((cav, idx) => {
         return {
@@ -374,7 +369,7 @@ export default function McShopInspection({
       const serverPayload = {
         trial_id: trialIdParam,
         inspection_date: payload.inspection_date,
-        inspections: JSON.stringify(inspections),
+        inspections: inspections,
         remarks: remarks || groupMeta.remarks || null,
       };
 
@@ -384,7 +379,6 @@ export default function McShopInspection({
 
       if (attachedFiles.length > 0) {
         try {
-          // Uncomment when ready
           // const uploadResults = await uploadFiles(
           //   attachedFiles,
           //   trialIdParam,
@@ -459,7 +453,7 @@ export default function McShopInspection({
                 </Box>
                 <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
 
-                <AlertMessage alert={alert} />
+
 
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                   <Grid size={{ xs: 12, md: 3 }}>
@@ -471,7 +465,7 @@ export default function McShopInspection({
                       onChange={(e) => setDate(e.target.value)}
                       fullWidth
                       sx={{ bgcolor: 'white' }}
-                      disabled={user?.role === 'HOD' && !isEditing}
+                      disabled={user?.role === 'HOD'}
                     />
                   </Grid>
 
@@ -581,6 +575,7 @@ export default function McShopInspection({
                                         }
                                         setGroupMeta((g) => ({ ...g, attachment: file }));
                                       }}
+                                      disabled={user?.role === 'HOD' && !isEditing}
                                     />
                                     <label htmlFor="mcshop-attach-file">
                                       <Button
@@ -589,6 +584,7 @@ export default function McShopInspection({
                                         component="span"
                                         startIcon={<UploadFileIcon />}
                                         sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
+                                        disabled={user?.role === 'HOD' && !isEditing}
                                       >
                                         Attach
                                       </Button>
@@ -602,6 +598,7 @@ export default function McShopInspection({
                                         size="small"
                                         variant="outlined"
                                         sx={{ maxWidth: 140 }}
+                                        disabled={user?.role === 'HOD' && !isEditing}
                                       />
                                     ) : (
                                       <Typography variant="caption" color="text.secondary">
@@ -639,6 +636,7 @@ export default function McShopInspection({
                     onFileRemove={removeAttachedFile}
                     showAlert={showAlert}
                     label="Attach PDF"
+                    disabled={user?.role === 'HOD' && !isEditing}
                   />
                 </Box>
 
@@ -680,6 +678,8 @@ export default function McShopInspection({
                       <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
                     </Box>
                     <Divider sx={{ mb: 3 }} />
+
+                    <AlertMessage alert={alert} />
 
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                       <Grid size={{ xs: 12, md: 4 }}>

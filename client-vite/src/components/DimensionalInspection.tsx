@@ -111,7 +111,6 @@ export default function DimensionalInspection({
         return () => { mounted = false; };
     }, [user]);
 
-    // Fetch Logic for HOD
     useEffect(() => {
         const fetchData = async () => {
             if (user?.role === 'HOD' && progressData?.trial_id) {
@@ -253,7 +252,6 @@ export default function DimensionalInspection({
         if (!previewPayload) return;
         setSaving(true);
 
-        // HOD Approval Logic
         if (user?.role === 'HOD' && progressData) {
             try {
                 // 1. Update Data if Edited
@@ -414,7 +412,7 @@ export default function DimensionalInspection({
                                             value={date}
                                             onChange={(e) => setDate(e.target.value)}
                                             sx={{ bgcolor: 'white' }}
-                                            disabled={user?.role === 'HOD' && !isEditing}
+                                            disabled={user?.role === 'HOD'}
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 12, md: 3 }}>
