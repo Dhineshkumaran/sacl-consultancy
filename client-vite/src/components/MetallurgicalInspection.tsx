@@ -80,7 +80,7 @@ const initialRows = (labels: string[]): Row[] =>
     total: null,
   }));
 
-const MICRO_PARAMS = ["Cavity number", "Nodularity", "Matrix", "Carbide", "Inclusion"];
+const MICRO_PARAMS = ["Cavity Number", "Nodularity", "Matrix", "Carbide", "Inclusion"];
 
 function SectionTable({
   title,
@@ -184,8 +184,8 @@ function SectionTable({
     });
   };
 
-  const cavityRow = rows.find(r => r.label === "Cavity number");
-  const dataRows = rows.filter(r => r.label !== "Cavity number");
+  const cavityRow = rows.find(r => r.label === "Cavity Number");
+  const dataRows = rows.filter(r => r.label !== "Cavity Number");
 
   return (
     <Box mb={4}>
@@ -232,7 +232,7 @@ function SectionTable({
 
           <TableBody>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>Cavity number</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>Cavity Number</TableCell>
               {cols.map((c, ci) => (
                 <TableCell key={c.id} sx={{ bgcolor: '#f8fafc' }}>
                   <TextField
@@ -624,10 +624,10 @@ export default function MetallurgicalInspection() {
     return init;
   });
 
-  const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Cavity number", "Tensile strength", "Yield strength", "Elongation"]));
-  const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity number", "Cold Temp °C", "Room Temp °C"]));
-  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity number", "Surface", "Core"]));
-  const [ndtRows, setNdtRows] = useState<Row[]>(initialRows(["Cavity number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
+  const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Cavity Number", "Tensile strength", "Yield strength", "Elongation"]));
+  const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity Number", "Cold Temp °C", "Room Temp °C"]));
+  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core"]));
+  const [ndtRows, setNdtRows] = useState<Row[]>(initialRows(["Cavity Number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
   const [progressData, setProgressData] = useState<any>(null);
 
   const handleAttachFiles = (newFiles: File[]) => {

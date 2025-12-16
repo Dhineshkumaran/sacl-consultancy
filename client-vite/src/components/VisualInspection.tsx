@@ -65,7 +65,7 @@ const buildRows = (labels: string[], initialCols: string[]): Row[] =>
     }));
 
 export default function VisualInspection({
-    initialRows = ["Cavity number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage (%)", "Reason for rejection: cavity wise"],
+    initialRows = ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage (%)", "Reason for rejection: cavity wise"],
     initialCols = [""],
     onSave = async (payload: any) => {
         return new Promise(resolve => setTimeout(() => resolve({ ok: true }), 1000));
@@ -130,7 +130,7 @@ export default function VisualInspection({
 
                         // Restore Columns and Rows from stored JSON
                         if (data.inspections && Array.isArray(data.inspections)) {
-                            const loadedCols = data.inspections.map((item: any) => item['Cavity number'] || '');
+                            const loadedCols = data.inspections.map((item: any) => item['Cavity Number'] || '');
 
                             setCols(loadedCols);
                             setRows(prevRows => prevRows.map(row => ({
@@ -223,7 +223,7 @@ export default function VisualInspection({
 
 
                 let total: number | undefined = undefined;
-                if (r.label !== "Cavity number") {
+                if (r.label !== "Cavity Number") {
                     total = newValues.reduce((sum, val) => {
                         const n = parseFloat(String(val).trim());
                         return sum + (isNaN(n) ? 0 : n);
@@ -273,7 +273,7 @@ export default function VisualInspection({
                     label: r.label,
                     values: r.values,
 
-                    total: r.label === "Cavity number" ? null : r.values.reduce((acc, v) => {
+                    total: r.label === "Cavity Number" ? null : r.values.reduce((acc, v) => {
                         const n = parseFloat(String(v).trim());
                         return acc + (isNaN(n) ? 0 : n);
                     }, 0)
@@ -333,7 +333,7 @@ export default function VisualInspection({
                         })();
 
                         return {
-                            'Cavity number': cavityRow?.values?.[idx] ?? col ?? null,
+                            'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
                             'Inspected Quantity': inspected ?? null,
                             'Accepted Quantity': accepted ?? null,
                             'Rejected Quantity': rejected ?? null,
@@ -393,7 +393,7 @@ export default function VisualInspection({
                 })();
 
                 return {
-                    'Cavity number': cavityRow?.values?.[idx] ?? col ?? null,
+                    'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
                     'Inspected Quantity': inspected ?? null,
                     'Accepted Quantity': accepted ?? null,
                     'Rejected Quantity': rejected ?? null,
@@ -576,7 +576,7 @@ export default function VisualInspection({
                                                     })}
                                                     <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>
                                                         {(() => {
-                                                            if (r.label === "Cavity number") return "-";
+                                                            if (r.label === "Cavity Number") return "-";
                                                             const sum = r.values.reduce((acc, v) => {
                                                                 const n = parseFloat(String(v).trim());
                                                                 return acc + (isNaN(n) ? 0 : n);
