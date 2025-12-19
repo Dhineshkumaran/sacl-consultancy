@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { getProgress, updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
+import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { useNavigate } from "react-router-dom";
 import {
   Paper,
@@ -46,8 +46,6 @@ import { fileToMeta, validateFileSizes } from '../utils';
 import DepartmentHeader from "./common/DepartmentHeader";
 import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, Common } from './common';
 
-
-
 interface SandTableProps {
   submittedData?: {
     selectedPart?: any;
@@ -69,8 +67,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
   const navigate = useNavigate();
   const isMobile = useMediaQuery(appTheme.breakpoints.down('sm'));
 
-  // All state hooks declared up front to avoid conditional hook order issues
-  const [assigned, setAssigned] = useState<boolean | null>(null);
   const [sandDate, setSandDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [sandProps, setSandProps] = useState({
     tClay: "",
@@ -91,33 +87,15 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
   const { alert, showAlert } = useAlert();
   const [userIP, setUserIP] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [progressData, setProgressData] = useState<any>(null);
-  const [isEditing, setIsEditing] = useState(false); // New state for HOD edit mode
+  const [isEditing, setIsEditing] = useState(false);
+  const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
-  useEffect(() => {
-    let mounted = true;
-    const check = async () => {
-      try {
-        const uname = user?.username ?? "";
-        const res = await getProgress(uname);
-        if (mounted) {
-          setAssigned(res.length > 0);
-          if (res.length > 0) setProgressData(res[0]);
-        }
-      } catch {
-        if (mounted) setAssigned(false);
-      }
-    };
-    if (user) check();
-    return () => { mounted = false; };
-  }, [user]);
-
-  // Fetch data for HOD if progressData exists
   useEffect(() => {
     const fetchData = async () => {
-      if (user?.role === 'HOD' && progressData?.trial_id) {
+      const urlTrialId = new URLSearchParams(window.location.search).get('trial_id');
+      if (user?.role === 'HOD' && urlTrialId) {
         try {
-          const response = await inspectionService.getSandProperties(progressData.trial_id);
+          const response = await inspectionService.getSandProperties(urlTrialId);
           if (response.success && response.data && response.data.length > 0) {
             const data = response.data[0];
             setSandDate(data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
@@ -141,8 +119,8 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         }
       }
     };
-    if (progressData) fetchData();
-  }, [user, progressData]);
+    if (trialId) fetchData();
+  }, [user, trialId]);
 
   useEffect(() => {
     const fetchIP = async () => {
@@ -183,14 +161,14 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
     setLoading(true);
     try {
-      const trialId = progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || "trial_id";
+      const trialId = new URLSearchParams(window.location.search).get('trial_id') || "trial_id";
 
       // Check if user is HOD
-      if (user?.role === 'HOD' && progressData) {
+      if (user?.role === 'HOD' && trialId) {
         // HOD Approval flow
         // 1. Update data first (if edited)
         const payload = {
-          trial_id: progressData.trial_id, // Use trial_id from progressData
+          trial_id: trialId,
           date: sandDate,
           t_clay: Number((sandProps as any).tClay) || 0,
           a_clay: Number((sandProps as any).aClay) || 0,
@@ -210,7 +188,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
         // 2. Approve
         const approvalPayload = {
-          trial_id: progressData.trial_id,
+          trial_id: trialId,
           next_department_id: 6,
           username: user.username,
           role: user.role,
@@ -263,18 +241,18 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           }
         }
 
-        if (progressData) {
+        if (trialId) {
           try {
             await updateDepartmentRole({
-              trial_id: progressData.trial_id,
-              current_department_id: progressData.department_id,
+              trial_id: trialId,
+              current_department_id: 5, // Sand department ID
               username: user?.username || "user",
               role: "user",
               remarks: sandProps.remarks || "Completed by user"
             });
           } catch (roleError) {
             console.error("Failed to update role progress:", roleError);
-            // Optional: show a separate alert or just log it, as main submission succeeded
+            showAlert('error', 'Failed to update role progress. Please try again.');
           }
         }
 
@@ -309,250 +287,241 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
           <DepartmentHeader title="SAND PROPERTIES" userIP={userIP} user={user} />
 
-          {assigned === null ? (
-            <LoadingState />
-          ) : !assigned ? (
-            <EmptyState title="No pending works at the moment" severity="warning" />
-          ) : (
-            <>
-              <Common trialId={progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || ""} />
+          <Common trialId={trialId} />
 
+          <AlertMessage alert={alert} />
 
-              <AlertMessage alert={alert} />
+          {/* Main Content Card */}
+          <Paper sx={{ overflow: 'hidden', border: `2px solid ${COLORS.border}` }}>
 
-              {/* Main Content Card */}
-              <Paper sx={{ overflow: 'hidden', border: `2px solid ${COLORS.border}` }}>
+            <Box sx={{ overflowX: "auto" }}>
+              <Table size="small" sx={{ minWidth: 1000, borderCollapse: 'collapse' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell colSpan={10} sx={{ backgroundColor: COLORS.headerBg, textAlign: 'left', py: 1.5, borderBottom: `1px solid ${COLORS.border}` }}>
+                      <Typography variant="h6" sx={{ color: 'black', textTransform: 'uppercase', fontSize: '1rem' }}>SAND PROPERTIES</Typography>
+                    </TableCell>
+                  </TableRow>
 
-                <Box sx={{ overflowX: "auto" }}>
-                  <Table size="small" sx={{ minWidth: 1000, borderCollapse: 'collapse' }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell colSpan={10} sx={{ backgroundColor: COLORS.headerBg, textAlign: 'left', py: 1.5, borderBottom: `1px solid ${COLORS.border}` }}>
-                          <Typography variant="h6" sx={{ color: 'black', textTransform: 'uppercase', fontSize: '1rem' }}>SAND PROPERTIES</Typography>
-                        </TableCell>
-                      </TableRow>
-
-                      <TableRow>
-                        <TableCell colSpan={9} sx={{ borderRight: 'none', backgroundColor: '#fff' }}></TableCell>
-                        <TableCell
-                          colSpan={1}
-                          sx={{
-                            backgroundColor: '#f1f5f9',
-                            borderLeft: `1px solid ${COLORS.border}`,
-                            minWidth: 250,
-                            p: 1,
-                            borderBottom: `1px solid ${COLORS.headerBg}`
-                          }}
-                        >
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'black' }}>Date</Typography>
-                            <TextField
-                              type="date"
-                              size="small"
-                              fullWidth
-                              value={sandDate}
-                              onChange={(e) => setSandDate(e.target.value)}
-                              sx={{ bgcolor: 'white', borderRadius: 1 }}
-                            />
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-
-                      <TableRow>
-                        {["T.Clay", "A.Clay", "VCM", "LOI", "AFS", "G.C.S", "MOI", "Compactability", "Perm"].map((header) => (
-                          <TableCell
-                            key={header}
-                            width="9%"
-                            sx={{
-                              backgroundColor: '#f1f5f9',
-                              color: 'black',
-                              fontWeight: 600,
-                              textAlign: 'center',
-                              borderBottom: `1px solid ${COLORS.headerBg}`
-                            }}
-                          >
-                            {header}
-                          </TableCell>
-                        ))}
-                        <TableCell
-                          width="19%"
-                          sx={{
-                            backgroundColor: '#f1f5f9',
-                            color: 'black',
-                            fontWeight: 600,
-                            textAlign: 'center',
-                            borderBottom: `1px solid ${COLORS.headerBg}`
-                          }}
-                        >
-                          Remarks
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      <TableRow>
-                        {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((key) => (
-                          <TableCell key={key} sx={{ p: 2, verticalAlign: 'middle' }}>
-                            <SpecInput
-                              value={(sandProps as any)[key]}
-                              onChange={(e: any) => handleChange(key, e.target.value)}
-                              disabled={user?.role === 'HOD' && !isEditing}
-                            />
-                          </TableCell>
-                        ))}
-                        <TableCell sx={{ p: 1 }}>
-                          <TextField
-                            multiline
-                            rows={3}
-                            fullWidth
-                            variant="outlined"
-                            placeholder="Enter remarks..."
-                            value={sandProps.remarks}
-                            onChange={(e) => handleChange("remarks", e.target.value)}
-                            disabled={user?.role === 'HOD' && !isEditing}
-                            sx={{ bgcolor: '#fff' }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </Box>
-
-
-
-
-                {/* File Upload Section */}
-                <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                    Attach PDF / Image Files
-                  </Typography>
-                  <FileUploadSection
-                    files={attachedFiles}
-                    onFilesChange={handleAttachFiles}
-                    onFileRemove={removeAttachedFile}
-                    showAlert={showAlert}
-                    label="Attach PDF"
-                  />
-                </Box>
-
-
-
-
-                {/* Form Actions - Updated Styles */}
-                <Box sx={{ p: 3, display: "flex", justifyContent: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, flexDirection: { xs: 'column', sm: 'row' } }}>
-                  <Button
-                    variant="outlined"
-                    onClick={handleReset}
-                    fullWidth={isMobile}
-                    sx={{
-                      color: COLORS.primary,
-                      borderColor: COLORS.primary,
-                      borderWidth: '1.5px',
-                      '&:hover': {
-                        borderColor: COLORS.primary,
-                        borderWidth: '1.5px',
-                        bgcolor: '#f3f4f6'
-                      }
-                    }}
-                  >
-                    Reset Form
-                  </Button>
-
-                  {user?.role === 'HOD' && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => setIsEditing(!isEditing)}
-                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                  <TableRow>
+                    <TableCell colSpan={9} sx={{ borderRight: 'none', backgroundColor: '#fff' }}></TableCell>
+                    <TableCell
+                      colSpan={1}
+                      sx={{
+                        backgroundColor: '#f1f5f9',
+                        borderLeft: `1px solid ${COLORS.border}`,
+                        minWidth: 250,
+                        p: 1,
+                        borderBottom: `1px solid ${COLORS.headerBg}`
+                      }}
                     >
-                      {isEditing ? "Cancel Edit" : "Edit Details"}
-                    </Button>
-                  )}
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'black' }}>Date</Typography>
+                        <TextField
+                          type="date"
+                          size="small"
+                          fullWidth
+                          value={sandDate}
+                          onChange={(e) => setSandDate(e.target.value)}
+                          sx={{ bgcolor: 'white', borderRadius: 1 }}
+                        />
+                      </Box>
+                    </TableCell>
+                  </TableRow>
 
-                  <Button
-                    variant="contained"
-                    onClick={handleSaveAndContinue}
-                    fullWidth={isMobile}
-                    startIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
-                    sx={{
-                      bgcolor: COLORS.secondary,
-                      color: 'white',
-                      '&:hover': { bgcolor: '#c2410c' }
-                    }}
-                  >
-                    {user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-                  </Button>
-                </Box>
+                  <TableRow>
+                    {["T.Clay", "A.Clay", "VCM", "LOI", "AFS", "G.C.S", "MOI", "Compactability", "Perm"].map((header) => (
+                      <TableCell
+                        key={header}
+                        width="9%"
+                        sx={{
+                          backgroundColor: '#f1f5f9',
+                          color: 'black',
+                          fontWeight: 600,
+                          textAlign: 'center',
+                          borderBottom: `1px solid ${COLORS.headerBg}`
+                        }}
+                      >
+                        {header}
+                      </TableCell>
+                    ))}
+                    <TableCell
+                      width="19%"
+                      sx={{
+                        backgroundColor: '#f1f5f9',
+                        color: 'black',
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        borderBottom: `1px solid ${COLORS.headerBg}`
+                      }}
+                    >
+                      Remarks
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
 
-              </Paper>
+                <TableBody>
+                  <TableRow>
+                    {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((key) => (
+                      <TableCell key={key} sx={{ p: 2, verticalAlign: 'middle' }}>
+                        <SpecInput
+                          value={(sandProps as any)[key]}
+                          onChange={(e: any) => handleChange(key, e.target.value)}
+                          disabled={user?.role === 'HOD' && !isEditing}
+                        />
+                      </TableCell>
+                    ))}
+                    <TableCell sx={{ p: 1 }}>
+                      <TextField
+                        multiline
+                        rows={3}
+                        fullWidth
+                        variant="outlined"
+                        placeholder="Enter remarks..."
+                        value={sandProps.remarks}
+                        onChange={(e) => handleChange("remarks", e.target.value)}
+                        disabled={user?.role === 'HOD' && !isEditing}
+                        sx={{ bgcolor: '#fff' }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
 
 
-              <PreviewModal
-                open={previewMode}
-                onClose={() => setPreviewMode(false)}
-                onSubmit={handleFinalSave}
-                onExport={handleExportPDF}
-                title="Verify Sand Properties"
-                subtitle="Review your sand test data"
-                submitted={submitted}
-                isSubmitting={loading}
+
+
+            {/* File Upload Section */}
+            <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                Attach PDF / Image Files
+              </Typography>
+              <FileUploadSection
+                files={attachedFiles}
+                onFilesChange={handleAttachFiles}
+                onFileRemove={removeAttachedFile}
+                showAlert={showAlert}
+                label="Attach PDF"
+              />
+            </Box>
+
+
+
+
+            {/* Form Actions - Updated Styles */}
+            <Box sx={{ p: 3, display: "flex", justifyContent: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, flexDirection: { xs: 'column', sm: 'row' } }}>
+              <Button
+                variant="outlined"
+                onClick={handleReset}
+                fullWidth={isMobile}
+                sx={{
+                  color: COLORS.primary,
+                  borderColor: COLORS.primary,
+                  borderWidth: '1.5px',
+                  '&:hover': {
+                    borderColor: COLORS.primary,
+                    borderWidth: '1.5px',
+                    bgcolor: '#f3f4f6'
+                  }
+                }}
               >
-                <Box sx={{ p: 4 }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid black', fontFamily: appTheme.typography.fontFamily, fontSize: '14px' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: COLORS.headerBg }}>
-                        <th colSpan={10} style={{ textAlign: 'left', padding: '10px', border: '1px solid black' }}>SAND PROPERTIES:</th>
-                      </tr>
-                      <tr>
-                        <td colSpan={9} style={{ border: '1px solid black', borderRight: 'none', backgroundColor: '#fff' }}></td>
-                        <td style={{ border: '1px solid black', padding: '10px', backgroundColor: COLORS.headerBg }}>
-                          <strong>Date:</strong> {sandDate}
-                        </td>
-                      </tr>
-                      <tr style={{ backgroundColor: COLORS.headerBg, textAlign: 'center' }}>
-                        {["T.Clay", "A.Clay", "VCM", "LOI", "AFS", "G.C.S", "MOI", "Comp.", "Perm", "Remarks"].map((h, i) => (
-                          <th key={i} style={{ border: '1px solid black', padding: '8px' }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr style={{ textAlign: 'center' }}>
-                        {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((k) => (
-                          <td key={k} style={{ border: '1px solid black', padding: '12px' }}>
-                            {(sandProps as any)[k] || "-"}
-                          </td>
-                        ))}
-                        <td style={{ border: '1px solid black', padding: '12px', textAlign: 'left' }}>
-                          {sandProps.remarks || "-"}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  {/* Attached Files in Preview */}
-                  {attachedFiles.length > 0 && (
-                    <Box sx={{ mt: 3, p: 2, border: "1px solid #ccc", borderRadius: 1, bgcolor: "white" }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-                        ATTACHED FILES
-                      </Typography>
+                Reset Form
+              </Button>
 
-                      {attachedFiles.map((file, i) => (
-                        <Typography key={i} variant="body2">• {file.name}</Typography>
-                      ))}
-                    </Box>
-                  )}
+              {user?.role === 'HOD' && (
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsEditing(!isEditing)}
+                  sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                >
+                  {isEditing ? "Cancel Edit" : "Edit Details"}
+                </Button>
+              )}
+
+              <Button
+                variant="contained"
+                onClick={handleSaveAndContinue}
+                fullWidth={isMobile}
+                startIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+                sx={{
+                  bgcolor: COLORS.secondary,
+                  color: 'white',
+                  '&:hover': { bgcolor: '#c2410c' }
+                }}
+              >
+                {user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+              </Button>
+            </Box>
+
+          </Paper>
 
 
-                  {submitted && (
-                    <Box sx={{ mt: 3, p: 2, bgcolor: '#ecfdf5', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1.5, color: '#059669' }}>
-                      <CheckCircleIcon fontSize="small" />
-                      <Typography variant="body2" sx={{ fontFamily: 'Inter', fontWeight: 500 }}>Sand Properties Registered Successfully</Typography>
-                    </Box>
-                  )}
+          <PreviewModal
+            open={previewMode}
+            onClose={() => setPreviewMode(false)}
+            onSubmit={handleFinalSave}
+            onExport={handleExportPDF}
+            title="Verify Sand Properties"
+            subtitle="Review your sand test data"
+            submitted={submitted}
+            isSubmitting={loading}
+          >
+            <Box sx={{ p: 4 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid black', fontFamily: appTheme.typography.fontFamily, fontSize: '14px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: COLORS.headerBg }}>
+                    <th colSpan={10} style={{ textAlign: 'left', padding: '10px', border: '1px solid black' }}>SAND PROPERTIES:</th>
+                  </tr>
+                  <tr>
+                    <td colSpan={9} style={{ border: '1px solid black', borderRight: 'none', backgroundColor: '#fff' }}></td>
+                    <td style={{ border: '1px solid black', padding: '10px', backgroundColor: COLORS.headerBg }}>
+                      <strong>Date:</strong> {sandDate}
+                    </td>
+                  </tr>
+                  <tr style={{ backgroundColor: COLORS.headerBg, textAlign: 'center' }}>
+                    {["T.Clay", "A.Clay", "VCM", "LOI", "AFS", "G.C.S", "MOI", "Comp.", "Perm", "Remarks"].map((h, i) => (
+                      <th key={i} style={{ border: '1px solid black', padding: '8px' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ textAlign: 'center' }}>
+                    {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((k) => (
+                      <td key={k} style={{ border: '1px solid black', padding: '12px' }}>
+                        {(sandProps as any)[k] || "-"}
+                      </td>
+                    ))}
+                    <td style={{ border: '1px solid black', padding: '12px', textAlign: 'left' }}>
+                      {sandProps.remarks || "-"}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              {/* Attached Files in Preview */}
+              {attachedFiles.length > 0 && (
+                <Box sx={{ mt: 3, p: 2, border: "1px solid #ccc", borderRadius: 1, bgcolor: "white" }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                    ATTACHED FILES
+                  </Typography>
 
+                  {attachedFiles.map((file, i) => (
+                    <Typography key={i} variant="body2">• {file.name}</Typography>
+                  ))}
                 </Box>
+              )}
 
-              </PreviewModal>
-            </>
-          )}
+
+              {submitted && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: '#ecfdf5', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1.5, color: '#059669' }}>
+                  <CheckCircleIcon fontSize="small" />
+                  <Typography variant="body2" sx={{ fontFamily: 'Inter', fontWeight: 500 }}>Sand Properties Registered Successfully</Typography>
+                </Box>
+              )}
+
+            </Box>
+
+          </PreviewModal>
 
         </Container>
 
@@ -616,7 +585,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         </Box>
 
       </Box>
-    </ThemeProvider>
+    </ThemeProvider >
   );
 }
 

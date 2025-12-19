@@ -9,18 +9,25 @@ import QuickActions from '../components/dashboard/QuickActions';
 import WelcomeSection from '../components/dashboard/WelcomeSection';
 import { getDepartmentInfo, getPendingRoute } from '../utils/dashboardUtils';
 import { USER_DASHBOARD_STATS, USER_DASHBOARD_ACTIONS } from '../data/dashboardData';
+import PendingSampleCards from './PendingSampleCards';
 
 const UserDashboard: React.FC = () => {
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showPendingCards, setShowPendingCards] = useState(false);
   const navigate = useNavigate();
 
   const departmentInfo = getDepartmentInfo(user);
 
   const handlePendingClick = () => {
-    const route = getPendingRoute(user?.department_id);
-    navigate(route);
+    setShowPendingCards(true);
+  };
+
+  const handlePendingCardSelect = (trialId: string, departmentId: number) => {
+    const route = getPendingRoute(departmentId);
+    navigate(`${route}?trial_id=${trialId}`);
+    setShowPendingCards(false);
   };
 
   return (
@@ -75,9 +82,17 @@ const UserDashboard: React.FC = () => {
 
       {/* Notification Modal */}
       {showNotifications && <NotificationModal onClose={() => setShowNotifications(false)} />}
-      
+
       {/* Profile Modal */}
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+
+      {/* Pending Cards Overlay */}
+      <PendingSampleCards
+        open={showPendingCards}
+        onClose={() => setShowPendingCards(false)}
+        username={user?.username || ""}
+        onCardSelect={handlePendingCardSelect}
+      />
     </div>
   );
 };
