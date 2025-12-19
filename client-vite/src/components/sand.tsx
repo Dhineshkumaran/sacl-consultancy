@@ -111,7 +111,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
               perm: String(data.permeability || ""),
               remarks: data.remarks || ""
             });
-            // Note: Attached files fetching logic would be needed here if backend supports it
           }
         } catch (error) {
           console.error("Failed to fetch sand data:", error);
@@ -163,10 +162,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
     try {
       const trialId = new URLSearchParams(window.location.search).get('trial_id') || "trial_id";
 
-      // Check if user is HOD
       if (user?.role === 'HOD' && trialId) {
-        // HOD Approval flow
-        // 1. Update data first (if edited)
         const payload = {
           trial_id: trialId,
           date: sandDate,
@@ -186,7 +182,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           await inspectionService.updateSandProperties(payload);
         }
 
-        // 2. Approve
         const approvalPayload = {
           trial_id: trialId,
           next_department_id: 6,
@@ -200,7 +195,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         showAlert('success', 'Department progress approved successfully.');
         setTimeout(() => navigate('/dashboard'), 1500);
       } else {
-        // Regular user flow - submit inspection data
         const payload = {
           trial_id: trialId,
           date: sandDate,
@@ -220,7 +214,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         setSubmitted(true);
         showAlert('success', 'Sand properties created successfully.');
 
-        // Upload attached files after successful form submission
         if (attachedFiles.length > 0) {
           try {
             // const uploadResults = await uploadFiles(
@@ -237,7 +230,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
             // }
           } catch (uploadError) {
             console.error("File upload error:", uploadError);
-            // Non-blocking: form submission already succeeded
           }
         }
 
@@ -245,7 +237,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           try {
             await updateDepartmentRole({
               trial_id: trialId,
-              current_department_id: 5, // Sand department ID
+              current_department_id: 4,
               username: user?.username || "user",
               role: "user",
               remarks: sandProps.remarks || "Completed by user"
@@ -389,10 +381,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
               </Table>
             </Box>
 
-
-
-
-            {/* File Upload Section */}
             <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
                 Attach PDF / Image Files
@@ -406,10 +394,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
               />
             </Box>
 
-
-
-
-            {/* Form Actions - Updated Styles */}
             <Box sx={{ p: 3, display: "flex", justifyContent: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, flexDirection: { xs: 'column', sm: 'row' } }}>
               <Button
                 variant="outlined"
@@ -512,13 +496,9 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
               )}
 
 
-              {submitted && (
-                <Box sx={{ mt: 3, p: 2, bgcolor: '#ecfdf5', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1.5, color: '#059669' }}>
-                  <CheckCircleIcon fontSize="small" />
-                  <Typography variant="body2" sx={{ fontFamily: 'Inter', fontWeight: 500 }}>Sand Properties Registered Successfully</Typography>
-                </Box>
-              )}
-
+              <Box sx={{ mt: 3 }}>
+                <AlertMessage alert={alert} />
+              </Box>
             </Box>
 
           </PreviewModal>

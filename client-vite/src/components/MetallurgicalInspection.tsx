@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { getProgress, updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
+import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import type { Dispatch, SetStateAction } from "react";
 import {
   Paper,
@@ -31,7 +31,6 @@ import {
 import Autocomplete from "@mui/material/Autocomplete";
 import { useNavigate } from "react-router-dom";
 
-// Icons
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -102,7 +101,6 @@ function SectionTable({
   isEditing: boolean;
 }) {
   const [cols, setCols] = useState<MicroCol[]>(() => {
-    // Initialize columns based on max values length
     const maxLen = Math.max(...rows.map(r => (r.value ? r.value.split('|').length : 1)), 1);
     return Array.from({ length: maxLen }, (_, i) => ({ id: `c${i + 1}`, label: '' })); // Labels lost in string storage
   });
@@ -119,8 +117,6 @@ function SectionTable({
 
   useEffect(() => {
     if (rows.length > 0) {
-      // Logic: If ANY row has a non-null ok status, we take it. Or specifically look for a "group" marker if we had one.
-      // But here we rely on the rows preservation.
       const firstWithStatus = rows.find(r => r.ok !== null && r.ok !== undefined);
       if (firstWithStatus) {
         setGroupMeta(prev => ({
@@ -166,7 +162,7 @@ function SectionTable({
     setValues((prev) => {
       const arr = prev[rowId].map((v, i) => (i === colIndex ? val : v));
       const copy = { ...prev, [rowId]: arr };
-      const combined = arr.map(v => v || "").join(' | '); // Join with empty strings preserved
+      const combined = arr.map(v => v || "").join(' | ');
       const total = arr.reduce((acc, s) => {
         const n = parseFloat(String(s).trim());
         return acc + (isNaN(n) ? 0 : n);
@@ -178,7 +174,6 @@ function SectionTable({
 
   const updateGroupMeta = (patch: Partial<{ attachment: File | null; ok: boolean | null; remarks: string }>) => {
     setGroupMeta((prev) => ({ ...prev, ...patch }));
-    // Propagate meta changes to all rows (or just first/dummy) so it persists
     rows.forEach(r => {
       onChange(r.id, { ...patch });
     });
@@ -594,7 +589,6 @@ export default function MetallurgicalInspection() {
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement | null>(null);
 
-  const [assigned, setAssigned] = useState<boolean | null>(null);
   const { user } = useAuth();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
@@ -628,7 +622,8 @@ export default function MetallurgicalInspection() {
   const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity Number", "Cold Temp °C", "Room Temp °C"]));
   const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core"]));
   const [ndtRows, setNdtRows] = useState<Row[]>(initialRows(["Cavity Number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
-  const [progressData, setProgressData] = useState<any>(null);
+
+  const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
   const handleAttachFiles = (newFiles: File[]) => {
     setAttachedFiles(prev => [...prev, ...newFiles]);
@@ -646,29 +641,13 @@ export default function MetallurgicalInspection() {
     fetchIP();
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    const check = async () => {
-      try {
-        const uname = user?.username ?? "";
-        const res = await getProgress(uname);
-        if (mounted) {
-          setAssigned(res.length > 0);
-          if (res.length > 0) setProgressData(res[0]);
-        }
-      } catch {
-        if (mounted) setAssigned(false);
-      }
-    };
-    if (user) check();
-    return () => { mounted = false; };
-  }, [user]);
+
 
   useEffect(() => {
     const fetchData = async () => {
-      if (user?.role === 'HOD' && progressData?.trial_id) {
+      if (user?.role === 'HOD' && trialId) {
         try {
-          const response = await inspectionService.getMetallurgicalInspection(progressData.trial_id);
+          const response = await inspectionService.getMetallurgicalInspection(trialId);
           if (response.success && response.data && response.data.length > 0) {
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
@@ -694,7 +673,7 @@ export default function MetallurgicalInspection() {
                 setMicroMeta(prev => ({
                   ...prev,
                   'group': {
-                    ok: data.micro_structure_ok ?? null,
+                    ok: data.micro_structure_ok === null || data.micro_structure_ok === undefined ? null : (data.micro_structure_ok === true || data.micro_structure_ok === 1 || String(data.micro_structure_ok) === "1" || String(data.micro_structure_ok) === "true"),
                     remarks: data.micro_structure_remarks || "",
                     attachment: null
                   }
@@ -720,7 +699,7 @@ export default function MetallurgicalInspection() {
             if (data.hardness) setHardRows(restoreSection(data.hardness));
             if (data.ndt_inspection) setNdtRows(restoreSection(data.ndt_inspection));
 
-            setLoadKey(prev => prev + 1); // Force re-render of SectionTables
+            setLoadKey(prev => prev + 1);
           }
         } catch (error) {
           console.error("Failed to fetch metallurgical data:", error);
@@ -728,8 +707,8 @@ export default function MetallurgicalInspection() {
         }
       }
     };
-    if (progressData) fetchData();
-  }, [user, progressData]);
+    if (trialId) fetchData();
+  }, [user, trialId]);
 
 
 
@@ -767,7 +746,6 @@ export default function MetallurgicalInspection() {
       for (let i = 0; i < maxCols; i++) {
         const insN = parseFloat(insValues[i] ?? '');
         const rejN = parseFloat(rejValues[i] ?? '');
-        // Validate: rejected must be <= inspected quantity
         if (!isNaN(insN) && insN > 0 && !isNaN(rejN) && rejN <= insN) {
           percents.push(`${((rejN / insN) * 100).toFixed(2)}%`);
         } else {
@@ -801,10 +779,6 @@ export default function MetallurgicalInspection() {
     setPreviewMode(true);
     setPreviewSubmitted(false);
     setMessage(null);
-  };
-
-  const sendToServer = async (payload: any) => {
-    return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 1000));
   };
 
   const handleFinalSave = async () => {
@@ -842,14 +816,13 @@ export default function MetallurgicalInspection() {
         return hasOk ? true : null;
       };
 
-      // Collect remarks from rows
       const getMechRemarks = () => payload.mechRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
       const getImpactRemarks = () => payload.impactRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
       const getHardnessRemarks = () => payload.hardRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
       const getNdtRemarks = () => payload.ndtRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
 
       return {
-        trial_id: progressData?.trial_id,
+        trial_id: trialId,
         inspection_date: payload.inspection_date,
         micro_structure: payload.microRows || [],
         micro_structure_ok: microOk,
@@ -869,19 +842,16 @@ export default function MetallurgicalInspection() {
       };
     };
 
-    // HOD Approval Logic
-    if (user?.role === 'HOD' && progressData) {
+    if (user?.role === 'HOD' && trialId) {
       setSending(true);
       try {
-        // 1. Update Data if Edited
         if (isEditing) {
           const serverPayload = transformToServerPayload(previewPayload);
           await inspectionService.updateMetallurgicalInspection(serverPayload);
         }
 
-        // 2. Approve
         const approvalPayload = {
-          trial_id: progressData.trial_id,
+          trial_id: trialId,
           next_department_id: 5,
           username: user.username,
           role: user.role,
@@ -903,18 +873,17 @@ export default function MetallurgicalInspection() {
     try {
       setSending(true);
 
-      // Send to actual API instead of simulated call
       const serverPayload = transformToServerPayload(previewPayload);
       await inspectionService.submitMetallurgicalInspection(serverPayload);
 
       setPreviewSubmitted(true);
       showAlert('success', 'Metallurgical inspection created successfully.');
 
-      if (progressData) {
+      if (trialId) {
         try {
           await updateDepartmentRole({
-            trial_id: progressData.trial_id,
-            current_department_id: progressData.department_id,
+            trial_id: trialId,
+            current_department_id: 7,
             username: user?.username || "user",
             role: "user",
             remarks: previewPayload.ndtRows?.[0]?.remarks || "Completed by user"
@@ -924,22 +893,21 @@ export default function MetallurgicalInspection() {
         }
       }
 
-      // Handle File Uploads
       if (attachedFiles.length > 0) {
         try {
-          const uploadResults = await uploadFiles(
-            attachedFiles,
-            progressData?.trial_id || "trial_id",
-            "METALLURGICAL_INSPECTION",
-            user?.username || "system",
-            previewPayload.ndtRows?.[0]?.remarks || ""
-          );
+          // const uploadResults = await uploadFiles(
+          //   attachedFiles,
+          //   progressData?.trial_id || "trial_id",
+          //   "METALLURGICAL_INSPECTION",
+          //   user?.username || "system",
+          //   previewPayload.ndtRows?.[0]?.remarks || ""
+          // );
 
-          const failures = uploadResults.filter(r => !r.success);
-          if (failures.length > 0) {
-            console.error("Some files failed to upload:", failures);
-            showAlert('warning', 'Some files failed to upload, but inspection data was saved.');
-          }
+          // const failures = uploadResults.filter(r => !r.success);
+          // if (failures.length > 0) {
+          //   console.error("Some files failed to upload:", failures);
+          //   showAlert('warning', 'Some files failed to upload, but inspection data was saved.');
+          // }
         } catch (uploadError) {
           console.error("File upload error:", uploadError);
           showAlert('warning', 'File upload failed, but inspection data was saved.');
@@ -961,6 +929,10 @@ export default function MetallurgicalInspection() {
 
   const PreviewSectionTable = ({ title, rows }: { title: string, rows: any[] }) => {
     const hasTotal = rows.some(r => typeof r.total === 'number' && !isNaN(r.total));
+    const firstRow = rows[0];
+    const okValue = firstRow?.ok;
+    const remarksValue = firstRow?.remarks;
+
     return (
       <Box mt={2} mb={3}>
         <Typography variant="subtitle2" sx={{ bgcolor: '#f1f5f9', p: 1, borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
@@ -982,11 +954,15 @@ export default function MetallurgicalInspection() {
                 <TableCell sx={{ fontSize: '0.8rem' }}>{r.label}</TableCell>
                 <TableCell sx={{ fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>{r.value || '-'}</TableCell>
                 {hasTotal && <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>{(typeof r.total === 'number') ? r.total : '-'}</TableCell>}
-                <TableCell sx={{ fontSize: '0.8rem' }}>
-                  {r.ok === true ? <Chip label="OK" color="success" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> :
-                    r.ok === false ? <Chip label="NOT OK" color="error" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> : '-'}
-                </TableCell>
-                <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{r.remarks || '-'}</TableCell>
+                {i === 0 && (
+                  <>
+                    <TableCell rowSpan={rows.length} sx={{ fontSize: '0.8rem', textAlign: 'center', verticalAlign: 'middle' }}>
+                      {okValue === true ? <Chip label="OK" color="success" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> :
+                        okValue === false ? <Chip label="NOT OK" color="error" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> : '-'}
+                    </TableCell>
+                    <TableCell rowSpan={rows.length} sx={{ fontSize: '0.8rem', color: 'text.secondary', verticalAlign: 'top' }}>{remarksValue || '-'}</TableCell>
+                  </>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -997,6 +973,9 @@ export default function MetallurgicalInspection() {
 
   const PreviewMicroTable = ({ data }: { data: any[] }) => {
     const maxCols = Math.max(...data.map(d => d.values?.length || 0), 1);
+    const firstRow = data[0];
+    const okValue = firstRow?.ok;
+    const remarksValue = firstRow?.remarks;
 
     return (
       <Box mt={2} mb={3}>
@@ -1023,11 +1002,15 @@ export default function MetallurgicalInspection() {
                     {r.values?.[idx] || '-'}
                   </TableCell>
                 ))}
-                <TableCell sx={{ fontSize: '0.8rem' }}>
-                  {r.ok === true ? <span style={{ color: 'green', fontWeight: 'bold' }}>OK</span> :
-                    r.ok === false ? <span style={{ color: 'red', fontWeight: 'bold' }}>NOT OK</span> : '-'}
-                </TableCell>
-                <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{r.remarks || '-'}</TableCell>
+                {i === 0 && (
+                  <>
+                    <TableCell rowSpan={data.length} sx={{ fontSize: '0.8rem', textAlign: 'center', verticalAlign: 'middle' }}>
+                      {okValue === true ? <span style={{ color: 'green', fontWeight: 'bold' }}>OK</span> :
+                        okValue === false ? <span style={{ color: 'red', fontWeight: 'bold' }}>NOT OK</span> : '-'}
+                    </TableCell>
+                    <TableCell rowSpan={data.length} sx={{ fontSize: '0.8rem', color: 'text.secondary', verticalAlign: 'top' }}>{remarksValue || '-'}</TableCell>
+                  </>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -1036,7 +1019,6 @@ export default function MetallurgicalInspection() {
     );
   };
 
-  // Helper for print (no material styles, plain HTML table)
   const PrintSectionTable = ({ title, rows }: { title: string, rows: any[] }) => {
     const hasTotal = rows.some(r => typeof r.total === 'number' && !isNaN(r.total));
     return (
@@ -1123,197 +1105,185 @@ export default function MetallurgicalInspection() {
           <SaclHeader />
           <DepartmentHeader title="METALLURGICAL INSPECTION" userIP={userIP} user={user} />
 
-          {assigned === null ? (
-            <LoadingState />
-          ) : !assigned ? (
-            <EmptyState title="No pending works at the moment" severity="warning" />
-          ) : (
-            <>
-              <Common trialId={progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || ""} />
+          <Common trialId={trialId} />
 
-              <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+          <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="flex-end"
-                  mb={1}
-                  flexWrap="wrap"
-                  gap={2}
-                >
-                  <Box />
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="flex-end"
+              mb={1}
+              flexWrap="wrap"
+              gap={2}
+            >
+              <Box />
 
-                  <Box display="flex" gap={2}>
-                    <TextField
-                      size="small"
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      sx={{ width: 160 }}
-                      disabled={user?.role === 'HOD'}
-                    />
-                  </Box>
-                </Box>
+              <Box display="flex" gap={2}>
+                <TextField
+                  size="small"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  sx={{ width: 160 }}
+                  disabled={user?.role === 'HOD'}
+                />
+              </Box>
+            </Box>
 
 
+            <MicrostructureTable
+              params={MICRO_PARAMS}
+              cols={microCols}
+              values={microValues}
+              meta={microMeta}
+              setCols={setMicroCols}
+              setValues={setMicroValues}
+              setMeta={setMicroMeta}
+              showAlert={showAlert}
+              user={user}
+              isEditing={isEditing}
+            />
 
-                {/* Tables */}
-                <MicrostructureTable
-                  params={MICRO_PARAMS}
-                  cols={microCols}
-                  values={microValues}
-                  meta={microMeta}
-                  setCols={setMicroCols}
-                  setValues={setMicroValues}
-                  setMeta={setMicroMeta}
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <SectionTable
+                  key={`mech-${loadKey}`}
+                  title="MECHANICAL PROPERTIES"
+                  rows={mechRows}
+                  onChange={updateRow(setMechRows)}
                   showAlert={showAlert}
                   user={user}
                   isEditing={isEditing}
                 />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <SectionTable
+                  key={`impact-${loadKey}`}
+                  title="IMPACT STRENGTH"
+                  rows={impactRows}
+                  onChange={updateRow(setImpactRows)}
+                  showAlert={showAlert}
+                  user={user}
+                  isEditing={isEditing}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <SectionTable
+                  key={`hard-${loadKey}`}
+                  title="HARDNESS"
+                  rows={hardRows}
+                  onChange={updateRow(setHardRows)}
+                  showAlert={showAlert}
+                  user={user}
+                  isEditing={isEditing}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <SectionTable
+                  key={`ndt-${loadKey}`}
+                  title="NDT INSPECTION ANALYSIS"
+                  rows={ndtRows}
+                  onChange={updateRow(setNdtRows)}
+                  showTotal={true}
+                  onValidationError={setNdtValidationError}
+                  showAlert={showAlert}
+                  user={user}
+                  isEditing={isEditing}
+                />
+              </Grid>
+            </Grid>
 
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <SectionTable
-                      key={`mech-${loadKey}`}
-                      title="MECHANICAL PROPERTIES"
-                      rows={mechRows}
-                      onChange={updateRow(setMechRows)}
-                      showAlert={showAlert}
-                      user={user}
-                      isEditing={isEditing}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <SectionTable
-                      key={`impact-${loadKey}`}
-                      title="IMPACT STRENGTH"
-                      rows={impactRows}
-                      onChange={updateRow(setImpactRows)}
-                      showAlert={showAlert}
-                      user={user}
-                      isEditing={isEditing}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <SectionTable
-                      key={`hard-${loadKey}`}
-                      title="HARDNESS"
-                      rows={hardRows}
-                      onChange={updateRow(setHardRows)}
-                      showAlert={showAlert}
-                      user={user}
-                      isEditing={isEditing}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <SectionTable
-                      key={`ndt-${loadKey}`}
-                      title="NDT INSPECTION ANALYSIS"
-                      rows={ndtRows}
-                      onChange={updateRow(setNdtRows)}
-                      showTotal={true}
-                      onValidationError={setNdtValidationError}
-                      showAlert={showAlert}
-                      user={user}
-                      isEditing={isEditing}
-                    />
-                  </Grid>
-                </Grid>
+            <Box sx={{ mt: 3, p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                Attach PDF / Image Files
+              </Typography>
+              <FileUploadSection
+                files={attachedFiles}
+                onFilesChange={handleAttachFiles}
+                onFileRemove={removeAttachedFile}
+                showAlert={showAlert}
+                label="Attach PDF"
+                disabled={user?.role === 'HOD' && !isEditing}
+              />
+            </Box>
 
-                <Box sx={{ mt: 3, p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                    Attach PDF / Image Files
-                  </Typography>
-                  <FileUploadSection
-                    files={attachedFiles}
-                    onFilesChange={handleAttachFiles}
-                    onFileRemove={removeAttachedFile}
-                    showAlert={showAlert}
-                    label="Attach PDF"
-                    disabled={user?.role === 'HOD' && !isEditing}
-                  />
-                </Box>
-
-                <ActionButtons
-                  onReset={() => window.location.reload()}
-                  onSave={handleSaveAndContinue}
-                  loading={sending}
-                  showSubmit={false}
-                  saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-                  saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+            <ActionButtons
+              onReset={() => window.location.reload()}
+              onSave={handleSaveAndContinue}
+              loading={sending}
+              showSubmit={false}
+              saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+              saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+            >
+              {user?.role === 'HOD' && (
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsEditing(!isEditing)}
+                  sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
                 >
-                  {user?.role === 'HOD' && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => setIsEditing(!isEditing)}
-                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                    >
-                      {isEditing ? "Cancel Edit" : "Edit Details"}
-                    </Button>
-                  )}
-                </ActionButtons>
+                  {isEditing ? "Cancel Edit" : "Edit Details"}
+                </Button>
+              )}
+            </ActionButtons>
 
-              </Paper>
+          </Paper>
 
-              {/* Preview Overlay */}
-              <PreviewModal
-                open={previewMode && previewPayload}
-                onClose={() => setPreviewMode(false)}
-                onSubmit={handleFinalSave}
-                onExport={handleExportPDF}
-                title="Verify Inspection Data"
-                subtitle="Metallurgical Inspection Report"
-                submitted={previewSubmitted}
-                isSubmitting={sending}
-              >
-                <Box sx={{ p: 4 }} ref={printRef}>
-                  <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Metallurgical Inspection Report</Typography>
-                      <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
-                    </Box>
-                    <Divider sx={{ mb: 3 }} />
-
-                    <AlertMessage alert={alert} />
-
-                    {/* Render ALL sections */}
-                    <PreviewMicroTable data={previewPayload?.microRows} />
-                    <PreviewSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload?.mechRows} />
-                    <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} />
-                    <PreviewSectionTable title="HARDNESS" rows={previewPayload?.hardRows} />
-                    <PreviewSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload?.ndtRows} />
-                  </Box>
-
-                  {message && (
-                    <Alert severity={previewSubmitted ? "success" : "info"} sx={{ mt: 2 }}>{message}</Alert>
-                  )}
+          <PreviewModal
+            open={previewMode && previewPayload}
+            onClose={() => setPreviewMode(false)}
+            onSubmit={handleFinalSave}
+            onExport={handleExportPDF}
+            title="Verify Inspection Data"
+            subtitle="Metallurgical Inspection Report"
+            submitted={previewSubmitted}
+            isSubmitting={sending}
+          >
+            <Box sx={{ p: 4 }} ref={printRef}>
+              <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Metallurgical Inspection Report</Typography>
+                  <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
                 </Box>
-              </PreviewModal>
+                <Divider sx={{ mb: 3 }} />
 
-              {/* Hidden Print Section */}
-              <Box className="print-section" sx={{ display: 'none' }}>
-                <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-                  <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>METALLURGICAL INSPECTION REPORT</Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2">Date: {date}</Typography>
-                  </Box>
+                <PreviewMicroTable data={previewPayload?.microRows} />
+                <PreviewSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload?.mechRows} />
+                <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} />
+                <PreviewSectionTable title="HARDNESS" rows={previewPayload?.hardRows} />
+                <PreviewSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload?.ndtRows} />
+
+                <Box sx={{ mt: 3 }}>
+                  <AlertMessage alert={alert} />
                 </Box>
-
-                {/* Render Print-specific tables */}
-                {previewPayload && (
-                  <>
-                    <PrintMicroTable data={previewPayload.microRows} />
-                    <PrintSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload.mechRows} />
-                    <PrintSectionTable title="IMPACT STRENGTH" rows={previewPayload.impactRows} />
-                    <PrintSectionTable title="HARDNESS" rows={previewPayload.hardRows} />
-                    <PrintSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload.ndtRows} />
-                  </>
-                )}
               </Box>
-            </>
-          )}
+
+              {message && (
+                <Alert severity={previewSubmitted ? "success" : "info"} sx={{ mt: 2 }}>{message}</Alert>
+              )}
+            </Box>
+          </PreviewModal>
+
+          <Box className="print-section" sx={{ display: 'none' }}>
+            <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>METALLURGICAL INSPECTION REPORT</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="body2">Date: {date}</Typography>
+              </Box>
+            </Box>
+
+            {previewPayload && (
+              <>
+                <PrintMicroTable data={previewPayload.microRows} />
+                <PrintSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload.mechRows} />
+                <PrintSectionTable title="IMPACT STRENGTH" rows={previewPayload.impactRows} />
+                <PrintSectionTable title="HARDNESS" rows={previewPayload.hardRows} />
+                <PrintSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload.ndtRows} />
+              </>
+            )}
+          </Box>
 
         </Container>
       </Box>

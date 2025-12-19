@@ -24,10 +24,10 @@ const UserDashboard: React.FC = () => {
     setShowPendingCards(true);
   };
 
-  const handlePendingCardSelect = (trialId: string, departmentId: number) => {
-    const route = getPendingRoute(departmentId);
-    navigate(`${route}?trial_id=${trialId}`);
+  const handlePendingCardSelect = (card: any) => {
     setShowPendingCards(false);
+    const route = getPendingRoute(card.department_id);
+    navigate(`${route}?trial_id=${card.trial_id}`);
   };
 
   return (

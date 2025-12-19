@@ -43,8 +43,8 @@ import { useAuth } from "../context/AuthContext";
 import { ipService } from "../services/ipService";
 import { inspectionService } from "../services/inspectionService";
 import { uploadFiles } from "../services/fileUploadHelper";
-import { getProgress, updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
-import { ActionButtons, EmptyState } from "./common"; // Assuming ActionButtons and EmptyState are in common/index.ts. If not, I will fix.
+import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
+import { ActionButtons, EmptyState } from "./common";
 
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: string, color: string }) => (
@@ -72,36 +72,16 @@ export default function MaterialCorrection() {
     const [submitted, setSubmitted] = useState(false);
     const [alertMessage, setAlertMessage] = useState<{ severity: 'success' | 'error' | 'warning', message: string } | null>(null);
     const [userIP, setUserIP] = useState<string>("");
-
-    const [assigned, setAssigned] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(false);
-    const [progressData, setProgressData] = useState<any>(null);
     const [isEditing, setIsEditing] = useState(false);
 
-    useEffect(() => {
-        let mounted = true;
-        const check = async () => {
-            try {
-                const uname = user?.username ?? "";
-                const res = await getProgress(uname);
-                if (mounted) {
-                    setAssigned(res.length > 0);
-                    if (res.length > 0) setProgressData(res[0]);
-                }
-            } catch {
-                if (mounted) setAssigned(false);
-            }
-        };
-        if (user) check();
-        return () => { mounted = false; };
-    }, [user]);
+    const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
-    // Fetch existing data for HOD
     useEffect(() => {
         const fetchData = async () => {
-            if (user?.role === 'HOD' && progressData?.trial_id) {
+            if (user?.role === 'HOD' && trialId) {
                 try {
-                    const response = await inspectionService.getMaterialCorrection(progressData.trial_id);
+                    const response = await inspectionService.getMaterialCorrection(trialId);
                     if (response.success && response.data && response.data.length > 0) {
                         const data = response.data[0];
 
@@ -138,8 +118,8 @@ export default function MaterialCorrection() {
                 }
             }
         };
-        if (progressData) fetchData();
-    }, [user, progressData]);
+        if (trialId) fetchData();
+    }, [user, trialId]);
 
     useEffect(() => {
         if (alertMessage) { const t = setTimeout(() => setAlertMessage(null), 4000); return () => clearTimeout(t); }
@@ -168,7 +148,7 @@ export default function MaterialCorrection() {
 
     const handleSaveAndContinue = () => {
         const payload = {
-            trial_id: progressData?.trial_id,
+            trial_id: trialId,
             chemical_composition: chemState,
             process_parameters: processState,
             remarks,
@@ -183,12 +163,11 @@ export default function MaterialCorrection() {
         try {
             setLoading(true);
 
-            // HOD Approval Logic
-            if (user?.role === 'HOD' && progressData) {
+            if (user?.role === 'HOD' && trialId) {
                 try {
                     if (isEditing) {
                         const updatePayload = {
-                            trial_id: progressData.trial_id,
+                            trial_id: trialId,
                             chemical_composition: previewPayload.chemical_composition,
                             process_parameters: previewPayload.process_parameters,
                             remarks: previewPayload.remarks,
@@ -200,7 +179,7 @@ export default function MaterialCorrection() {
                     }
 
                     const approvalPayload = {
-                        trial_id: progressData.trial_id,
+                        trial_id: trialId,
                         next_department_id: 9,
                         username: user.username,
                         role: user.role,
@@ -228,25 +207,21 @@ export default function MaterialCorrection() {
 
             if (response.success) {
                 if (attachedFiles.length > 0) {
-                    // File upload logic here if needed separate from initial submit
-                    // For now assuming files handled or skipping as per previous comment
+                    
                 }
-
                 setSubmitted(true);
                 setAlertMessage({ severity: 'success', message: "Material Correction Details Submitted Successfully!" });
-
-                // Update User Progress - Route to HOD for approval
-                if (progressData) {
+                if (trialId) {
                     try {
                         await updateDepartmentRole({
-                            trial_id: progressData.trial_id,
-                            current_department_id: progressData.department_id,
+                            trial_id: trialId,
+                            current_department_id: 3,
                             username: user?.username || "user",
                             role: "HOD",
                             remarks: remarks || "Completed by user, pending HOD approval"
                         });
                         await trialService.updateTrialStatus({
-                            trial_id: progressData.trial_id,
+                            trial_id: trialId,
                             status: "IN PROGRESS"
                         });
                     } catch (roleError) {
@@ -287,154 +262,149 @@ export default function MaterialCorrection() {
 
                     <AlertMessage alert={alertMessage} />
 
-                    {assigned === null ? (
-                        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>Loading...</Box>
-                    ) : !assigned ? (
-                        <EmptyState title="No pending works at the moment" severity="warning" />
-                    ) : (
-                        <Grid container spacing={3}>
+                    <Grid container spacing={3}>
 
-                            <Grid size={{ xs: 12 }}>
-                                <Paper sx={{ p: { xs: 2, md: 3 } }}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                                        <SectionHeader icon={<ScienceIcon />} title="Material correction details" color={COLORS.accentBlue} />
-                                        {!isMobile && <Chip label="Input Required" size="small" variant="outlined" sx={{ opacity: 0.7 }} />}
-                                    </Box>
-
-                                    <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
-                                        <Table size="small" sx={{ minWidth: 1000, border: `1px solid ${COLORS.border}` }}>
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell
-                                                        colSpan={8}
-                                                        align="center"
-                                                        sx={{
-                                                            bgcolor: "#f0f9ff",
-                                                            color: COLORS.accentBlue,
-                                                            borderRight: `2px solid ${COLORS.border} !important`
-                                                        }}
-                                                    >
-                                                        Chemical Composition
-                                                    </TableCell>
-                                                    <TableCell
-                                                        colSpan={3}
-                                                        align="center"
-                                                        sx={{
-                                                            bgcolor: "#fff7ed",
-                                                            color: COLORS.secondary
-                                                        }}
-                                                    >
-                                                        Process parameters
-                                                    </TableCell>
-                                                </TableRow>
-                                                <TableRow>
-                                                    {["C%", "Si%", "Mn%", "P%", "S%", "Mg%", "Cu%", "Cr%"].map((h, index) => (
-                                                        <TableCell
-                                                            key={h}
-                                                            align="center"
-                                                            sx={{
-                                                                backgroundColor: '#f1f5f9',
-                                                                color: 'black',
-                                                                fontWeight: 600,
-                                                                borderBottom: `1px solid ${COLORS.headerBg}`
-                                                            }}
-                                                        >
-                                                            {h}
-                                                        </TableCell>
-                                                    ))}
-                                                    <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Pouring temp °C</TableCell>
-                                                    <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Inoculant per Sec</TableCell>
-                                                    <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Inoculant type</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                <TableRow>
-                                                    <TableCell><SpecInput value={chemState.c} onChange={(e: any) => setChemState({ ...chemState, c: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={chemState.si} onChange={(e: any) => setChemState({ ...chemState, si: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={chemState.mn} onChange={(e: any) => setChemState({ ...chemState, mn: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={chemState.p} onChange={(e: any) => setChemState({ ...chemState, p: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={chemState.s} onChange={(e: any) => setChemState({ ...chemState, s: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={chemState.mg} onChange={(e: any) => setChemState({ ...chemState, mg: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={chemState.cu} onChange={(e: any) => setChemState({ ...chemState, cu: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell sx={{ borderRight: `2px solid ${COLORS.border} !important` }}>
-                                                        <SpecInput value={chemState.cr} onChange={(e: any) => setChemState({ ...chemState, cr: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} />
-                                                    </TableCell>
-
-                                                    <TableCell><SpecInput value={processState.pouringTemp} onChange={(e: any) => setProcessState({ ...processState, pouringTemp: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={processState.inoculantPerSec} onChange={(e: any) => setProcessState({ ...processState, inoculantPerSec: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                    <TableCell><SpecInput value={processState.inoculantType} onChange={(e: any) => setProcessState({ ...processState, inoculantType: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                                                </TableRow>
-                                            </TableBody>
-                                        </Table>
-                                    </Box>
-                                    {isMobile && <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}>← Swipe to view more →</Typography>}
-                                </Paper>
-                            </Grid>
-
-                            <Grid size={{ xs: 12 }}>
-                                <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3 }}>
-                                    <SectionHeader
-                                        icon={<UploadFileIcon />}
-                                        title="Attach PDF / Image Files"
-                                        color={COLORS.accentBlue}
-                                    />
-
-                                    <FileUploadSection
-                                        files={attachedFiles}
-                                        onFilesChange={handleFileChange}
-                                        onFileRemove={removeAttachedFile}
-                                        label="Upload Files"
-                                        showAlert={(severity, message) => setAlertMessage({ severity, message })}
-                                    />
-                                </Paper>
-                            </Grid>
-
-                            <Grid size={{ xs: 12 }}>
-                                <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3 }}>
-                                    <SectionHeader
-                                        icon={<EditIcon />}
-                                        title="Remarks"
-                                        color={COLORS.primary}
-                                    />
-
-                                    <TextField
-                                        multiline
-                                        rows={3}
-                                        fullWidth
-                                        variant="outlined"
-                                        placeholder="Enter remarks..."
-                                        value={remarks}
-                                        onChange={(e) => setRemarks(e.target.value)}
-                                        sx={{ bgcolor: "#fff" }}
-                                        disabled={user?.role === 'HOD' && !isEditing}
-                                    />
-                                </Paper>
-                            </Grid>
-
-                            <Grid size={{ xs: 12 }} sx={{ mt: 2, mb: 4 }}>
-                                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" gap={2}>
-                                    <ActionButtons
-                                        onReset={() => window.location.reload()}
-                                        onSave={handleSaveAndContinue}
-                                        showSubmit={false}
-                                        saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-                                        saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
-                                    >
-                                        {user?.role === 'HOD' && (
-                                            <Button
-                                                variant="outlined"
-                                                onClick={() => setIsEditing(!isEditing)}
-                                                sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                                            >
-                                                {isEditing ? "Cancel Edit" : "Edit Details"}
-                                            </Button>
-                                        )}
-                                    </ActionButtons>
+                        <Grid size={{ xs: 12 }}>
+                            <Paper sx={{ p: { xs: 2, md: 3 } }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                                    <SectionHeader icon={<ScienceIcon />} title="Material correction details" color={COLORS.accentBlue} />
+                                    {!isMobile && <Chip label="Input Required" size="small" variant="outlined" sx={{ opacity: 0.7 }} />}
                                 </Box>
-                            </Grid>
 
+                                <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
+                                    <Table size="small" sx={{ minWidth: 1000, border: `1px solid ${COLORS.border}` }}>
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell
+                                                    colSpan={8}
+                                                    align="center"
+                                                    sx={{
+                                                        bgcolor: "#f0f9ff",
+                                                        color: COLORS.accentBlue,
+                                                        borderRight: `2px solid ${COLORS.border} !important`
+                                                    }}
+                                                >
+                                                    Chemical Composition
+                                                </TableCell>
+                                                <TableCell
+                                                    colSpan={3}
+                                                    align="center"
+                                                    sx={{
+                                                        bgcolor: "#fff7ed",
+                                                        color: COLORS.secondary
+                                                    }}
+                                                >
+                                                    Process parameters
+                                                </TableCell>
+                                            </TableRow>
+                                            <TableRow>
+                                                {["C%", "Si%", "Mn%", "P%", "S%", "Mg%", "Cu%", "Cr%"].map((h, index) => (
+                                                    <TableCell
+                                                        key={h}
+                                                        align="center"
+                                                        sx={{
+                                                            backgroundColor: '#f1f5f9',
+                                                            color: 'black',
+                                                            fontWeight: 600,
+                                                            borderBottom: `1px solid ${COLORS.headerBg}`
+                                                        }}
+                                                    >
+                                                        {h}
+                                                    </TableCell>
+                                                ))}
+                                                <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Pouring temp °C</TableCell>
+                                                <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Inoculant per Sec</TableCell>
+                                                <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Inoculant type</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            <TableRow>
+                                                <TableCell><SpecInput value={chemState.c} onChange={(e: any) => setChemState({ ...chemState, c: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={chemState.si} onChange={(e: any) => setChemState({ ...chemState, si: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={chemState.mn} onChange={(e: any) => setChemState({ ...chemState, mn: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={chemState.p} onChange={(e: any) => setChemState({ ...chemState, p: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={chemState.s} onChange={(e: any) => setChemState({ ...chemState, s: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={chemState.mg} onChange={(e: any) => setChemState({ ...chemState, mg: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={chemState.cu} onChange={(e: any) => setChemState({ ...chemState, cu: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell sx={{ borderRight: `2px solid ${COLORS.border} !important` }}>
+                                                    <SpecInput value={chemState.cr} onChange={(e: any) => setChemState({ ...chemState, cr: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} />
+                                                </TableCell>
+
+                                                <TableCell><SpecInput value={processState.pouringTemp} onChange={(e: any) => setProcessState({ ...processState, pouringTemp: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={processState.inoculantPerSec} onChange={(e: any) => setProcessState({ ...processState, inoculantPerSec: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                                <TableCell><SpecInput value={processState.inoculantType} onChange={(e: any) => setProcessState({ ...processState, inoculantType: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
+                                </Box>
+                                {isMobile && <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}>← Swipe to view more →</Typography>}
+                            </Paper>
                         </Grid>
-                    )} <PreviewModal
+
+                        <Grid size={{ xs: 12 }}>
+                            <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3 }}>
+                                <SectionHeader
+                                    icon={<UploadFileIcon />}
+                                    title="Attach PDF / Image Files"
+                                    color={COLORS.accentBlue}
+                                />
+
+                                <FileUploadSection
+                                    files={attachedFiles}
+                                    onFilesChange={handleFileChange}
+                                    onFileRemove={removeAttachedFile}
+                                    label="Upload Files"
+                                    showAlert={(severity, message) => setAlertMessage({ severity, message })}
+                                />
+                            </Paper>
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                            <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3 }}>
+                                <SectionHeader
+                                    icon={<EditIcon />}
+                                    title="Remarks"
+                                    color={COLORS.primary}
+                                />
+
+                                <TextField
+                                    multiline
+                                    rows={3}
+                                    fullWidth
+                                    variant="outlined"
+                                    placeholder="Enter remarks..."
+                                    value={remarks}
+                                    onChange={(e) => setRemarks(e.target.value)}
+                                    sx={{ bgcolor: "#fff" }}
+                                    disabled={user?.role === 'HOD' && !isEditing}
+                                />
+                            </Paper>
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }} sx={{ mt: 2, mb: 4 }}>
+                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" gap={2}>
+                                <ActionButtons
+                                    onReset={() => window.location.reload()}
+                                    onSave={handleSaveAndContinue}
+                                    showSubmit={false}
+                                    saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+                                    saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+                                >
+                                    {user?.role === 'HOD' && (
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => setIsEditing(!isEditing)}
+                                            sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                                        >
+                                            {isEditing ? "Cancel Edit" : "Edit Details"}
+                                        </Button>
+                                    )}
+                                </ActionButtons>
+                            </Box>
+                        </Grid>
+
+                    </Grid>
+                    <PreviewModal
                         open={previewOpen}
                         onClose={() => setPreviewOpen(false)}
                         onSubmit={handleFinalSave}

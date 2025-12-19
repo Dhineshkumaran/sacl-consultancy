@@ -50,9 +50,9 @@ import SaclHeader from "./common/SaclHeader";
 import { appTheme, COLORS } from "../theme/appTheme";
 import { trialService } from "../services/trialService";
 import { ipService } from "../services/ipService";
-import { documentService } from "../services/documentService";
+import { uploadFiles } from '../services/fileUploadHelper';
 import { specificationService } from "../services/specificationService";
-import departmentProgressService, { getProgress, updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
+import departmentProgressService, { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { validateFileSizes, fileToBase64 } from '../utils/fileHelpers';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
@@ -186,7 +186,7 @@ function FoundrySampleCard() {
   const { alert, showAlert } = useAlert();
 
   const MACHINES = ["DISA - 1", "DISA - 2", "DISA - 3", "DISA - 4", "DISA - 5"];
-  const SAMPLING_REASONS = ["First trial","Metallurgical Trial","Others"];
+  const SAMPLING_REASONS = ["First trial", "Metallurgical Trial", "Others"];
   const [samplingDate, setSamplingDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [mouldCount, setMouldCount] = useState("");
   const [machine, setMachine] = useState("");
@@ -223,10 +223,10 @@ function FoundrySampleCard() {
   const [submittedData, setSubmittedData] = useState<any>(null);
   const [editingOnlyMetallurgical, setEditingOnlyMetallurgical] = useState<boolean>(false);
 
-  // HOD Approval states
   const [isEditing, setIsEditing] = useState(false);
-  const [progressData, setProgressData] = useState<any>(null);
   const [assigned, setAssigned] = useState<boolean | null>(null);
+
+  const trialIdFromUrl = new URLSearchParams(window.location.search).get('trial_id') || "";
 
   const [previewMode, setPreviewMode] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any | null>(null);
@@ -234,39 +234,20 @@ function FoundrySampleCard() {
   const [previewMessage, setPreviewMessage] = useState<string | null>(null);
   const [userIP, setUserIP] = useState<string>("");
 
+
+
   useEffect(() => {
     if (previewMessage) { const t = setTimeout(() => setPreviewMessage(null), 4000); return () => clearTimeout(t); }
   }, [previewMessage]);
 
-  // Check if user has assigned work (for HOD approval flow)
-  useEffect(() => {
-    let mounted = true;
-    const checkProgress = async () => {
-      try {
-        const uname = user?.username ?? "";
-        const res = await getProgress(uname);
-        if (mounted) {
-          setAssigned(res.length > 0);
-          if (res.length > 0) setProgressData(res[0]);
-        }
-      } catch {
-        if (mounted) setAssigned(false);
-      }
-    };
-    if (user) checkProgress();
-    return () => { mounted = false; };
-  }, [user]);
-
-  // Fetch existing trial data for HOD
   useEffect(() => {
     const fetchTrialDataForHOD = async () => {
-      if (user?.role === 'HOD' && progressData?.trial_id) {
+      if (user?.role === 'HOD' && trialIdFromUrl) {
         try {
-          const response = await trialService.getTrialById(progressData.trial_id);
-          console.log("Fetched trial data for HOD:", response);
+          const response = await trialService.getTrialById(trialIdFromUrl);
           if (response && response.data) {
             const data = response.data;
-            setTrialId(data.trial_id || progressData.trial_id);
+            setTrialId(data.trial_id || trialIdFromUrl);
             setTrialNo(data.trial_id?.split('-').pop() || '');
             setSamplingDate(data.date_of_sampling || new Date().toISOString().split("T")[0]);
             setMouldCount(data.no_of_moulds || '');
@@ -276,7 +257,6 @@ function FoundrySampleCard() {
             setToolingModification(data.tooling_modification && data.tooling_modification !== 'null' ? data.tooling_modification : '');
             setRemarks(data.remarks && data.remarks !== 'null' ? data.remarks : '');
 
-            // Parse chemical composition
             const comp = typeof data.chemical_composition === 'string'
               ? JSON.parse(data.chemical_composition)
               : data.chemical_composition || {};
@@ -286,7 +266,6 @@ function FoundrySampleCard() {
               cr: comp.cr || "", cu: comp.cu || ""
             });
 
-            // Parse microstructure
             const micro = typeof data.micro_structure === 'string'
               ? JSON.parse(data.micro_structure)
               : data.micro_structure || {};
@@ -296,7 +275,6 @@ function FoundrySampleCard() {
               carbide: micro.carbide || ""
             });
 
-            // Parse tensile
             const tensile = typeof data.tensile === 'string'
               ? JSON.parse(data.tensile)
               : data.tensile || {};
@@ -308,7 +286,6 @@ function FoundrySampleCard() {
               impactRoom: tensile.impactRoom || ""
             });
 
-            // Parse hardness
             const hardness = typeof data.hardness === 'string'
               ? JSON.parse(data.hardness)
               : data.hardness || {};
@@ -317,7 +294,6 @@ function FoundrySampleCard() {
               core: hardness.core || ""
             });
 
-            // Parse mould corrections
             if (data.mould_correction) {
               const mouldCorr = typeof data.mould_correction === 'string'
                 ? JSON.parse(data.mould_correction)
@@ -327,21 +303,24 @@ function FoundrySampleCard() {
               }
             }
 
-            // Set selected part from master list
             const matchingPart = masterParts.find(p => p.part_name === data.part_name);
             if (matchingPart) {
               setSelectedPart(matchingPart);
               setSelectedPattern(matchingPart);
             }
+            setAssigned(true);
           }
         } catch (error) {
           console.error("Failed to fetch trial data for HOD:", error);
           showAlert("error", "Failed to load existing trial data.");
+          setAssigned(false);
         }
+      } else if (user?.role === 'HOD') {
+        setAssigned(false);
       }
     };
-    if (progressData && masterParts.length > 0) fetchTrialDataForHOD();
-  }, [user, progressData, masterParts]);
+    if (trialIdFromUrl && masterParts.length > 0) fetchTrialDataForHOD();
+  }, [user, trialIdFromUrl, masterParts]);
 
   useEffect(() => {
     const fetchIP = async () => {
@@ -438,23 +417,20 @@ function FoundrySampleCard() {
   const handleFinalSave = async () => {
     setIsSubmitting(true);
     try {
-      // HOD Approval Logic
-      if (user?.role === 'HOD' && progressData) {
+      if (user?.role === 'HOD' && trialIdFromUrl) {
         try {
           if (isEditing) {
-            // Update trial data if HOD made edits
             await trialService.updateTrial({
               ...previewPayload,
-              trial_id: progressData.trial_id,
+              trial_id: trialIdFromUrl,
               user_name: user?.username || 'Unknown',
               user_ip: userIP
             });
           }
 
-          // Approve and move to next department
           const approvalPayload = {
-            trial_id: progressData.trial_id,
-            next_department_id: 3, // NPD QC
+            trial_id: trialIdFromUrl,
+            next_department_id: 3,
             username: user.username,
             role: user.role,
             remarks: remarks || "Approved by HOD"
@@ -474,17 +450,14 @@ function FoundrySampleCard() {
         }
       }
 
-      // 1. Submit Trial Data (for regular users)
       await trialService.submitTrial(previewPayload);
 
-      // 1.1 Submit Metallurgical Specs
       await specificationService.submitMetallurgicalSpecs({
         trial_id: trialId,
         chemical_composition: chemState,
         microstructure: microState
       });
 
-      // 1.2 Submit Mechanical Properties
       await specificationService.submitMechanicalProperties({
         trial_id: trialId,
         tensile_strength: tensileState.tensileStrength,
@@ -498,41 +471,36 @@ function FoundrySampleCard() {
         mpi: selectedPart?.mpi || "N/A"
       });
 
-      // 2. Upload Files
-      const uploadFiles = async (files: File[], docType: string) => {
-        for (const file of files) {
-          try {
-            // const base64 = await fileToBase64(file);
-            // await documentService.uploadDocument(
-            //   trialId,
-            //   docType,
-            //   file.name,
-            //   base64,
-            //   user?.username || "Unknown",
-            //   new Date().toISOString(),
-            //   remarks
-            // );
-          } catch (uploadError) {
-            console.error(`Failed to upload file ${file.name}:`, uploadError);
-            showAlert("error", `Failed to upload ${file.name}`);
-          }
-        }
-      };
-
-      await uploadFiles(toolingFiles, "Tooling Modification");
-      await uploadFiles(patternDataSheetFiles, "Pattern Data Sheet");
+      try {
+        await uploadFiles(
+          toolingFiles,
+          trialId,
+          "TOOLING_MODIFICATION",
+          user?.username || "Unknown",
+          "Tooling Modification files"
+        );
+        await uploadFiles(
+          patternDataSheetFiles,
+          trialId,
+          "PATTERN_DATA_SHEET",
+          user?.username || "Unknown",
+          "Pattern Data Sheet files"
+        );
+      } catch (uploadError) {
+        console.error(`Failed to upload file:`, uploadError);
+        showAlert("error", `Failed to upload file`);
+      }
 
       try {
         await departmentProgressService.createDepartmentProgress({
           trial_id: trialId,
-          department_id: 3,
+          department_id: 2,
           username: user?.username || "Unknown",
           approval_status: "pending",
           remarks: "Trial Initiated",
           completed_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
         });
 
-        // Update role progress for user
         await updateDepartmentRole({
           trial_id: trialId,
           current_department_id: 2,
@@ -561,7 +529,6 @@ function FoundrySampleCard() {
 
   return (
     <ThemeProvider theme={appTheme}>
-      {/* GlobalStyles for Printing */}
       <GlobalStyles styles={{
         "@media print": {
           "html, body": {
@@ -955,246 +922,249 @@ function FoundrySampleCard() {
           {/* Show these sections only when not in empty state for HOD */}
           {!(user?.role === 'HOD' && !assigned) && !loading && (
             <>
-          <Paper sx={{ overflowX: "auto", mb: 3, p: 2 }}>
-            <Table size="small" sx={{ minWidth: 900 }}>
-              <TableHead>
-                <TableRow>
-                  {[
-                    "Date of Sampling",
-                    "No. of Moulds",
-                    "DISA / FOUNDRY-A",
-                    "Reason For Sampling",
-                    "Sample Traceability",
-                    "Pattern Data Sheet",
-                  ].map((head) => (
-                    <TableCell
-                      key={head}
-                      align="center"
-                      sx={{
-                        backgroundColor: '#f1f5f9',
-                        color: 'black',
-                        fontWeight: 600,
-                        borderBottom: `1px solid ${COLORS.headerBg}`
-                      }}
-                    >
-                      {head}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell>
-                    <TextField
-                      type="date"
-                      fullWidth
-                      value={samplingDate}
-                      onChange={(e) => setSamplingDate(e.target.value)}
-                      size="small"
-                      disabled={user?.role === 'HOD' && !isEditing}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="number"
-                      fullWidth
-                      value={mouldCount}
-                      onChange={(e) => setMouldCount(e.target.value)}
-                      size="small"
-                      placeholder="10"
-                      disabled={user?.role === 'HOD' && !isEditing}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <FormControl fullWidth size="small">
-                      <Select
-                        value={machine}
-                        onChange={(e) => setMachine(e.target.value)}
-                        displayEmpty
-                        disabled={user?.role === 'HOD' && !isEditing}
-                      >
-                        <MenuItem value="" disabled>
-                          Select
-                        </MenuItem>
-                        {MACHINES.map((m) => (
-                          <MenuItem key={m} value={m}>
-                            {m}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </TableCell>
-                  <TableCell>
-                    <FormControl fullWidth size="small">
-                      <Select
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        displayEmpty
-                        disabled={user?.role === 'HOD' && !isEditing}
-                      >
-                        <MenuItem value="" disabled>
-                          Select
-                        </MenuItem>
-                        {SAMPLING_REASONS.map((r) => (
-                          <MenuItem key={r} value={r}>
-                            {r}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      fullWidth
-                      value={sampleTraceability}
-                      onChange={(e) => setSampleTraceability(e.target.value)}
-                      size="small"
-                      placeholder="Enter option"
-                      disabled={user?.role === 'HOD' && !isEditing}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <FileUploadSection
-                      files={patternDataSheetFiles}
-                      onFilesChange={handlePatternDataSheetFilesChange}
-                      onFileRemove={removePatternDataSheetFile}
-                      showAlert={showAlert}
-                      label="Attach Pattern Data Sheet"
-                    />
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </Paper>
+              <Paper sx={{ overflowX: "auto", mb: 3, p: 2 }}>
+                <Table size="small" sx={{ minWidth: 900 }}>
+                  <TableHead>
+                    <TableRow>
+                      {[
+                        "Date of Sampling",
+                        "No. of Moulds",
+                        "DISA / FOUNDRY-A",
+                        "Reason For Sampling",
+                        "Sample Traceability",
+                        "Pattern Data Sheet",
+                      ].map((head) => (
+                        <TableCell
+                          key={head}
+                          align="center"
+                          sx={{
+                            backgroundColor: '#f1f5f9',
+                            color: 'black',
+                            fontWeight: 600,
+                            borderBottom: `1px solid ${COLORS.headerBg}`
+                          }}
+                        >
+                          {head}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>
+                        <TextField
+                          type="date"
+                          fullWidth
+                          value={samplingDate}
+                          onChange={(e) => setSamplingDate(e.target.value)}
+                          size="small"
+                          disabled={user?.role === 'HOD' && !isEditing}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          type="number"
+                          fullWidth
+                          value={mouldCount}
+                          onChange={(e) => setMouldCount(e.target.value)}
+                          size="small"
+                          placeholder="10"
+                          disabled={user?.role === 'HOD' && !isEditing}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormControl fullWidth size="small">
+                          <Select
+                            value={machine}
+                            onChange={(e) => setMachine(e.target.value)}
+                            displayEmpty
+                            disabled={user?.role === 'HOD' && !isEditing}
+                          >
+                            <MenuItem value="" disabled>
+                              Select
+                            </MenuItem>
+                            {MACHINES.map((m) => (
+                              <MenuItem key={m} value={m}>
+                                {m}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                      <TableCell>
+                        <FormControl fullWidth size="small">
+                          <Select
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            displayEmpty
+                            disabled={user?.role === 'HOD' && !isEditing}
+                          >
+                            <MenuItem value="" disabled>
+                              Select
+                            </MenuItem>
+                            {SAMPLING_REASONS.map((r) => (
+                              <MenuItem key={r} value={r}>
+                                {r}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          value={sampleTraceability}
+                          onChange={(e) => setSampleTraceability(e.target.value)}
+                          size="small"
+                          placeholder="Enter option"
+                          disabled={user?.role === 'HOD' && !isEditing}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FileUploadSection
+                          files={patternDataSheetFiles}
+                          onFilesChange={handlePatternDataSheetFilesChange}
+                          onFileRemove={removePatternDataSheetFile}
+                          showAlert={showAlert}
+                          label="Attach Pattern Data Sheet"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Paper>
 
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <SectionHeader
-              icon={<ConstructionIcon />}
-              title="Tooling Modification Done"
-              color={COLORS.secondary}
-            />
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
-                  Tooling Modification
-                </Typography>
+              <Paper sx={{ p: 3, mb: 3 }}>
+                <SectionHeader
+                  icon={<ConstructionIcon />}
+                  title="Tooling Modification Done"
+                  color={COLORS.secondary}
+                />
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
+                      Tooling Modification
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      variant="outlined"
+                      placeholder="Enter tooling modification details..."
+                      value={toolingModification}
+                      onChange={(e) => setToolingModification(e.target.value)}
+                      sx={{ bgcolor: '#fff' }}
+                      disabled={user?.role === 'HOD' && !isEditing}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
+                      Tooling Files
+                    </Typography>
+                    <FileUploadSection
+                      files={toolingFiles}
+                      onFilesChange={handleToolingFilesChange}
+                      onFileRemove={removeToolingFile}
+                      showAlert={showAlert}
+                      label="Attach Tooling PDF"
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+
+              <Paper sx={{ p: 3, mb: 3, overflowX: "auto" }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <SectionHeader icon={<EditIcon />} title="Mould Correction Details" color={COLORS.primary} />
+                </Box>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      {["Compressibility", "Squeeze Pressure", "Filler Size"].map(h => (
+                        <TableCell
+                          key={h}
+                          align="center"
+                          sx={{
+                            backgroundColor: '#f1f5f9',
+                            color: 'black',
+                            fontWeight: 600,
+                            borderBottom: `1px solid ${COLORS.headerBg}`
+                          }}
+                        >
+                          {h}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {mouldCorrections.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>
+                          <TextField fullWidth size="small" value={row.compressibility} onChange={(e) => handleMouldCorrectionChange(row.id, 'compressibility', e.target.value)} disabled={user?.role === 'HOD' && !isEditing} />
+                        </TableCell>
+                        <TableCell>
+                          <TextField fullWidth size="small" value={row.squeezePressure} onChange={(e) => handleMouldCorrectionChange(row.id, 'squeezePressure', e.target.value)} disabled={user?.role === 'HOD' && !isEditing} />
+                        </TableCell>
+                        <TableCell>
+                          <TextField fullWidth size="small" value={row.fillerSize} onChange={(e) => handleMouldCorrectionChange(row.id, 'fillerSize', e.target.value)} disabled={user?.role === 'HOD' && !isEditing} />
+                        </TableCell>
+                        <TableCell align="center">
+                          {mouldCorrections.length > 1 && !(user?.role === 'HOD' && !isEditing) && (
+                            <IconButton size="small" onClick={() => removeMouldCorrectionRow(row.id)} sx={{ color: '#DC2626' }}>
+                              <DeleteIcon />
+                            </IconButton>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+
+
+              <Paper sx={{ p: 3, mb: 3 }}>
+                <SectionHeader icon={<EditIcon />} title="Remarks" color={COLORS.primary} />
+
                 <TextField
-                  fullWidth
                   multiline
                   rows={3}
+                  fullWidth
                   variant="outlined"
-                  placeholder="Enter tooling modification details..."
-                  value={toolingModification}
-                  onChange={(e) => setToolingModification(e.target.value)}
-                  sx={{ bgcolor: '#fff' }}
+                  placeholder="Enter remarks..."
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  sx={{ bgcolor: "#fff" }}
                   disabled={user?.role === 'HOD' && !isEditing}
                 />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
-                  Tooling Files
-                </Typography>
-                <FileUploadSection
-                  files={toolingFiles}
-                  onFilesChange={handleToolingFilesChange}
-                  onFileRemove={removeToolingFile}
-                  showAlert={showAlert}
-                  label="Attach Tooling PDF"
-                />
-              </Grid>
-            </Grid>
-          </Paper>
+              </Paper>
 
-          <Paper sx={{ p: 3, mb: 3, overflowX: "auto" }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-              <SectionHeader icon={<EditIcon />} title="Mould Correction Details" color={COLORS.primary} />
-            </Box>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  {["Compressibility", "Squeeze Pressure", "Filler Size"].map(h => (
-                    <TableCell
-                      key={h}
-                      align="center"
-                      sx={{
-                        backgroundColor: '#f1f5f9',
-                        color: 'black',
-                        fontWeight: 600,
-                        borderBottom: `1px solid ${COLORS.headerBg}`
-                      }}
-                    >
-                      {h}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mouldCorrections.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <TextField fullWidth size="small" value={row.compressibility} onChange={(e) => handleMouldCorrectionChange(row.id, 'compressibility', e.target.value)} disabled={user?.role === 'HOD' && !isEditing} />
-                    </TableCell>
-                    <TableCell>
-                      <TextField fullWidth size="small" value={row.squeezePressure} onChange={(e) => handleMouldCorrectionChange(row.id, 'squeezePressure', e.target.value)} disabled={user?.role === 'HOD' && !isEditing} />
-                    </TableCell>
-                    <TableCell>
-                      <TextField fullWidth size="small" value={row.fillerSize} onChange={(e) => handleMouldCorrectionChange(row.id, 'fillerSize', e.target.value)} disabled={user?.role === 'HOD' && !isEditing} />
-                    </TableCell>
-                    <TableCell align="center">
-                      {mouldCorrections.length > 1 && !(user?.role === 'HOD' && !isEditing) && (
-                        <IconButton size="small" onClick={() => removeMouldCorrectionRow(row.id)} sx={{ color: '#DC2626' }}>
-                          <DeleteIcon />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
-
-
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <SectionHeader icon={<EditIcon />} title="Remarks" color={COLORS.primary} />
-
-            <TextField
-              multiline
-              rows={3}
-              fullWidth
-              variant="outlined"
-              placeholder="Enter remarks..."
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              sx={{ bgcolor: "#fff" }}
-              disabled={user?.role === 'HOD' && !isEditing}
-            />
-          </Paper>
-
-          <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-            <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
-              Reset Form
-            </Button>
-            {user?.role === 'HOD' && progressData && (
-              <Button
-                variant="outlined"
-                onClick={() => setIsEditing(!isEditing)}
-                sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-              >
-                {isEditing ? "Cancel Edit" : "Edit Details"}
-              </Button>
-            )}
-            <Button
-              variant="contained"
-              color={(user?.role === 'HOD' && progressData) ? 'success' : 'secondary'}
-              size="large"
-              fullWidth={isMobile}
-              onClick={handleSaveAndContinue}
-              startIcon={(user?.role === 'HOD' && progressData) ? <CheckCircleIcon /> : <SaveIcon />}
-            >
-              {(user?.role === 'HOD' && progressData) ? 'Approve' : 'Save & Continue'}
-            </Button>
-          </Box>
-          </>
+              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
+                  Reset Form
+                </Button>
+                {user?.role === 'HOD' && trialIdFromUrl && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => setIsEditing(!isEditing)}
+                    sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                  >
+                    {isEditing ? "Cancel Edit" : "Edit Details"}
+                  </Button>
+                )}
+                <Button
+                  variant="contained"
+                  onClick={handleSaveAndContinue}
+                  fullWidth={isMobile}
+                  startIcon={(user?.role === 'HOD' && trialIdFromUrl) ? <CheckCircleIcon /> : <SaveIcon />}
+                  sx={{
+                    bgcolor: COLORS.secondary,
+                    color: 'white',
+                    '&:hover': { bgcolor: '#c2410c' }
+                  }}
+                >
+                  {(user?.role === 'HOD' && trialIdFromUrl) ? 'Approve' : 'Save & Continue'}
+                </Button>
+              </Box>
+            </>
           )}
           {previewPayload && (
             <Box className="print-section" sx={{ display: 'none' }}>

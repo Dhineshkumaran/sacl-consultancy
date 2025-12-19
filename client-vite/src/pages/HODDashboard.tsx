@@ -18,6 +18,7 @@ import {
   type StatItem,
   type ActionItem
 } from '../data/dashboardData';
+import PendingSampleCards from './PendingSampleCards';
 
 const HODDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -25,9 +26,16 @@ const HODDashboard: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
+  const [showPendingCards, setShowPendingCards] = useState(false);
+
   const handlePendingClick = () => {
-    const route = getPendingRoute(user?.department_id);
-    navigate(route);
+    setShowPendingCards(true);
+  };
+
+  const handlePendingCardSelect = (card: any) => {
+    setShowPendingCards(false);
+    const route = getPendingRoute(card.department_id);
+    navigate(`${route}?trial_id=${card.trial_id}`);
   };
 
   const departmentInfo = getDepartmentInfo(user);
@@ -115,9 +123,17 @@ const HODDashboard: React.FC = () => {
 
       {/* Notification Modal */}
       {showNotifications && <NotificationModal onClose={() => setShowNotifications(false)} />}
-      
+
       {/* Profile Modal */}
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
+
+      {/* Pending Cards Overlay */}
+      <PendingSampleCards
+        open={showPendingCards}
+        onClose={() => setShowPendingCards(false)}
+        username={user?.username || ''}
+        onCardSelect={handlePendingCardSelect}
+      />
     </div>
   );
 };

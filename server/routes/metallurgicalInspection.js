@@ -70,9 +70,6 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         ndt_inspection_remarks || null
     ]);
 
-    // Update current_department_id to NDT QC (9) - Metallurgical is part of NDT
-    await Client.query('UPDATE trial_cards SET current_department_id = 9 WHERE trial_id = ?', [trial_id]);
-
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     await Client.query(audit_sql, [
         req.user.user_id,

@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { getProgress, updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
+import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { useNavigate } from "react-router-dom";
 import {
     Paper,
@@ -67,7 +67,6 @@ export default function DimensionalInspection({
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const [assigned, setAssigned] = useState<boolean | null>(null);
     const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
     const [weightTarget, setWeightTarget] = useState<string>("");
     const [cavities, setCavities] = useState<string[]>([...initialCavities]);
@@ -90,32 +89,17 @@ export default function DimensionalInspection({
     const [previewMode, setPreviewMode] = useState(false);
     const [previewPayload, setPreviewPayload] = useState<any | null>(null);
     const [previewSubmitted, setPreviewSubmitted] = useState(false);
-    const [progressData, setProgressData] = useState<any>(null);
-    const [isEditing, setIsEditing] = useState(false); // HOD Edit Mode
+    const [isEditing, setIsEditing] = useState(false);
 
-    useEffect(() => {
-        let mounted = true;
-        const check = async () => {
-            try {
-                const uname = user?.username ?? "";
-                const res = await getProgress(uname);
-                if (mounted) {
-                    setAssigned(res.length > 0);
-                    if (res.length > 0) setProgressData(res[0]);
-                }
-            } catch {
-                if (mounted) setAssigned(false);
-            }
-        };
-        if (user) check();
-        return () => { mounted = false; };
-    }, [user]);
+    const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+
+
 
     useEffect(() => {
         const fetchData = async () => {
-            if (user?.role === 'HOD' && progressData?.trial_id) {
+            if (user?.role === 'HOD' && trialId) {
                 try {
-                    const response = await inspectionService.getDimensionalInspection(progressData.trial_id);
+                    const response = await inspectionService.getDimensionalInspection(trialId);
                     if (response.success && response.data && response.data.length > 0) {
                         const data = response.data[0];
                         setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
@@ -139,7 +123,7 @@ export default function DimensionalInspection({
                                     }));
                                 }
                             } catch (e) {
-                                // Error parsing
+                                console.error("Error parsing inspections data:", e);
                             }
                         }
                     }
@@ -148,8 +132,8 @@ export default function DimensionalInspection({
                 }
             }
         };
-        if (progressData) fetchData();
-    }, [user, progressData]);
+        if (trialId) fetchData();
+    }, [user, trialId]);
 
 
 
@@ -252,9 +236,8 @@ export default function DimensionalInspection({
         if (!previewPayload) return;
         setSaving(true);
 
-        if (user?.role === 'HOD' && progressData) {
+        if (user?.role === 'HOD' && trialId) {
             try {
-                // 1. Update Data if Edited
                 if (isEditing) {
                     const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
                     const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
@@ -265,7 +248,7 @@ export default function DimensionalInspection({
                     }));
 
                     const updatePayload = {
-                        trial_id: progressData.trial_id,
+                        trial_id: trialId,
                         inspection_date: previewPayload.inspection_date || previewPayload.created_at || null,
                         casting_weight: parseFloat(previewPayload.weight_target) || 0,
                         bunch_weight: parseFloat(previewPayload.bunch_weight) || 0,
@@ -278,9 +261,8 @@ export default function DimensionalInspection({
                     await inspectionService.updateDimensionalInspection(updatePayload);
                 }
 
-                // 2. Approve
                 const approvalPayload = {
-                    trial_id: progressData.trial_id,
+                    trial_id: trialId,
                     next_department_id: 8,
                     username: user.username,
                     role: user.role || "HOD",
@@ -300,7 +282,7 @@ export default function DimensionalInspection({
         }
 
         try {
-            const trialId = progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || 'trial_id';
+            const trialId = new URLSearchParams(window.location.search).get('trial_id') || 'trial_id';
 
             const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
             const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
@@ -327,29 +309,31 @@ export default function DimensionalInspection({
 
             if (attachedFiles.length > 0) {
                 try {
-                    const uploadResults = await uploadFiles(
-                        attachedFiles,
-                        trialId,
-                        "DIMENSIONAL_INSPECTION",
-                        user?.username || "system",
-                        additionalRemarks || ""
-                    );
+                    // const uploadResults = await uploadFiles(
+                    //     attachedFiles,
+                    //     trialId,
+                    //     "DIMENSIONAL_INSPECTION",
+                    //     user?.username || "system",
+                    //     additionalRemarks || ""
+                    // );
                 } catch (uploadError) {
-                    // File upload error
+                    console.error("File upload error:", uploadError);
+                    showAlert('warning', 'File upload failed, but inspection data was saved.');
                 }
             }
 
-            if (progressData) {
+            if (trialId) {
                 try {
                     await updateDepartmentRole({
-                        trial_id: progressData.trial_id,
-                        current_department_id: progressData.department_id,
+                        trial_id: trialId,
+                        current_department_id: 10,
                         username: user?.username || "user",
                         role: "user",
                         remarks: previewPayload.dimensional_remarks || previewPayload.additionalRemarks || "Completed by user"
                     });
                 } catch (roleError) {
-                    // Failed to update role progress
+                    console.error("Failed to update role progress:", roleError);
+                    showAlert('warning', 'Failed to update role progress, but inspection data was saved.');
                 }
             }
 
@@ -384,129 +368,238 @@ export default function DimensionalInspection({
 
                     <DepartmentHeader title="DIMENSIONAL INSPECTION" userIP={userIP} user={user} />
 
-                    {assigned === null ? (
-                        <LoadingState />
-                    ) : !assigned ? (
-                        <EmptyState title="No pending works at the moment" severity="warning" />
-                    ) : (
-                        <>
-                            <Common trialId={progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || ""} />
+                    <Common trialId={trialId} />
 
-                            <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+                    <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 
-                                <Box display="flex" alignItems="center" gap={1} mb={1}>
-                                    <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-                                    <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>DIMENSIONAL DETAILS</Typography>
+                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                            <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
+                            <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>DIMENSIONAL DETAILS</Typography>
+                        </Box>
+                        <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
+
+                        <AlertMessage alert={alert} />
+
+                        <Grid container spacing={3} sx={{ mb: 3 }}>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
+                                <TextField
+                                    type="date"
+                                    size="small"
+                                    fullWidth
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    sx={{ bgcolor: 'white' }}
+                                    disabled={user?.role === 'HOD'}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Casting Weight (Kg)</Typography>
+                                <TextField
+                                    size="small"
+                                    fullWidth
+                                    placeholder="e.g. 12.5"
+                                    value={weightTarget}
+                                    onChange={(e) => setWeightTarget(e.target.value)}
+                                    sx={{ bgcolor: 'white' }}
+                                    disabled={user?.role === 'HOD' && !isEditing}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 2 }}>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Bunch Weight (Kg)</Typography>
+                                <TextField
+                                    size="small"
+                                    fullWidth
+                                    placeholder="Total Bunch Wt"
+                                    value={bunchWeight}
+                                    onChange={(e) => setBunchWeight(e.target.value)}
+                                    sx={{ bgcolor: 'white' }}
+                                    disabled={user?.role === 'HOD' && !isEditing}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 2 }}>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Number of Cavity</Typography>
+                                <TextField
+                                    size="small"
+                                    fullWidth
+                                    type="number"
+                                    placeholder="e.g. 4"
+                                    value={numberOfCavity}
+                                    onChange={(e) => setNumberOfCavity(e.target.value)}
+                                    sx={{ bgcolor: 'white' }}
+                                    disabled={user?.role === 'HOD' && !isEditing}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 2 }}>
+                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Yield (%)</Typography>
+                                <TextField
+                                    size="small"
+                                    fullWidth
+                                    value={calculateYield()}
+                                    InputProps={{ readOnly: true }}
+                                    sx={{ bgcolor: 'white', '& .MuiInputBase-input': { fontWeight: 700 } }}
+                                />
+                            </Grid>
+                        </Grid>
+
+                        <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow sx={{ bgcolor: COLORS.blueHeaderBg }}>
+                                        <TableCell sx={{ minWidth: 200, color: COLORS.blueHeaderText }}>Parameter</TableCell>
+                                        {cavities.map((c, ci) => (
+                                            <TableCell key={ci} sx={{ minWidth: 140 }}>
+                                                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                                    <TextField
+                                                        size="small"
+                                                        variant="standard"
+                                                        value={c}
+                                                        onChange={(e) => updateCavityLabel(ci, e.target.value)}
+                                                        InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
+                                                        sx={{ input: { textAlign: 'center' } }}
+                                                        disabled={user?.role === 'HOD' && !isEditing}
+                                                    />
+                                                    <IconButton size="small" onClick={() => removeCavity(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={user?.role === 'HOD' && !isEditing}>
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Box>
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                </TableHead>
+
+                                <TableBody>
+                                    {cavRows.map((r, ri) => (
+                                        <TableRow key={r.id}>
+                                            <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
+                                                {r.label}
+                                            </TableCell>
+                                            {r.values.map((val, ci) => (
+                                                <TableCell key={ci}>
+                                                    <TextField
+                                                        size="small"
+                                                        fullWidth
+                                                        value={val}
+                                                        onChange={(e) => updateCavCell(r.id, ci, e.target.value)}
+                                                        variant="outlined"
+                                                        sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                                                        disabled={user?.role === 'HOD' && !isEditing}
+                                                    />
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Box>
+
+                        <Button
+                            size="small"
+                            onClick={addCavity}
+                            startIcon={<AddCircleIcon />}
+                            sx={{ mt: 1, color: COLORS.secondary }}
+                            disabled={user?.role === 'HOD' && !isEditing}
+                        >
+                            Add Column
+                        </Button>
+
+                        <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, mt: 3 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                                Attach PDF / Image Files
+                            </Typography>
+                            <FileUploadSection
+                                files={attachedFiles}
+                                onFilesChange={handleAttachFiles}
+                                onFileRemove={removeAttachedFile}
+                                showAlert={showAlert}
+                                label="Attach PDF"
+                            />
+                        </Box>
+                    </Paper>
+
+                    <Paper sx={{ p: 3, mb: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${COLORS.primary}`, width: '100%' }}>
+                            <EditIcon sx={{ color: COLORS.primary }} />
+                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1 }}>
+                                Additional Remarks
+                            </Typography>
+                        </Box>
+                        <TextField
+                            multiline
+                            rows={3}
+                            fullWidth
+                            variant="outlined"
+                            placeholder="Enter additional remarks..."
+                            value={additionalRemarks}
+                            onChange={(e) => setAdditionalRemarks(e.target.value)}
+                            sx={{ bgcolor: '#fff' }}
+                            disabled={user?.role === 'HOD' && !isEditing}
+                        />
+                    </Paper>
+
+                    <ActionButtons
+                        onReset={resetAll}
+                        onSave={handleSaveAndContinue}
+                        showSubmit={false}
+                        saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+                        saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+                    >
+                        {user?.role === 'HOD' && (
+                            <Button
+                                variant="outlined"
+                                onClick={() => setIsEditing(!isEditing)}
+                                sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                            >
+                                {isEditing ? "Cancel Edit" : "Edit Details"}
+                            </Button>
+                        )}
+                    </ActionButtons>
+
+                    <PreviewModal
+                        open={previewMode && previewPayload}
+                        onClose={() => setPreviewMode(false)}
+                        onSubmit={handleFinalSave}
+                        onExport={handleExportPDF}
+                        title="Verify Inspection Data"
+                        submitted={previewSubmitted}
+                        isSubmitting={saving}
+                    >
+                        <Box sx={{ p: 4 }}>
+                            <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                                    <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Dimensional Inspection Report</Typography>
+                                    <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
                                 </Box>
-                                <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
+                                <Divider sx={{ mb: 3 }} />
 
-                                <AlertMessage alert={alert} />
-
-                                <Grid container spacing={3} sx={{ mb: 3 }}>
-                                    <Grid size={{ xs: 12, md: 3 }}>
-                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
-                                        <TextField
-                                            type="date"
-                                            size="small"
-                                            fullWidth
-                                            value={date}
-                                            onChange={(e) => setDate(e.target.value)}
-                                            sx={{ bgcolor: 'white' }}
-                                            disabled={user?.role === 'HOD'}
-                                        />
+                                <Grid container spacing={2} sx={{ mb: 3 }}>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                        <Typography variant="caption" color="textSecondary">TARGET WEIGHT</Typography>
+                                        <Typography variant="body1" fontWeight="bold">{previewPayload?.weight_target || "-"} Kg</Typography>
                                     </Grid>
-                                    <Grid size={{ xs: 12, md: 3 }}>
-                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Casting Weight (Kg)</Typography>
-                                        <TextField
-                                            size="small"
-                                            fullWidth
-                                            placeholder="e.g. 12.5"
-                                            value={weightTarget}
-                                            onChange={(e) => setWeightTarget(e.target.value)}
-                                            sx={{ bgcolor: 'white' }}
-                                            disabled={user?.role === 'HOD' && !isEditing}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 12, md: 2 }}>
-                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Bunch Weight (Kg)</Typography>
-                                        <TextField
-                                            size="small"
-                                            fullWidth
-                                            placeholder="Total Bunch Wt"
-                                            value={bunchWeight}
-                                            onChange={(e) => setBunchWeight(e.target.value)}
-                                            sx={{ bgcolor: 'white' }}
-                                            disabled={user?.role === 'HOD' && !isEditing}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 12, md: 2 }}>
-                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Number of Cavity</Typography>
-                                        <TextField
-                                            size="small"
-                                            fullWidth
-                                            type="number"
-                                            placeholder="e.g. 4"
-                                            value={numberOfCavity}
-                                            onChange={(e) => setNumberOfCavity(e.target.value)}
-                                            sx={{ bgcolor: 'white' }}
-                                            disabled={user?.role === 'HOD' && !isEditing}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 12, md: 2 }}>
-                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Yield (%)</Typography>
-                                        <TextField
-                                            size="small"
-                                            fullWidth
-                                            value={calculateYield()}
-                                            InputProps={{ readOnly: true }}
-                                            sx={{ bgcolor: 'white', '& .MuiInputBase-input': { fontWeight: 700 } }}
-                                        />
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                        <Typography variant="caption" color="textSecondary">BUNCH WEIGHT</Typography>
+                                        <Typography variant="body1" fontWeight="bold">{previewPayload?.bunch_weight || "-"} Kg</Typography>
                                     </Grid>
                                 </Grid>
 
-                                <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
+                                <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
                                     <Table size="small">
                                         <TableHead>
-                                            <TableRow sx={{ bgcolor: COLORS.blueHeaderBg }}>
-                                                <TableCell sx={{ minWidth: 200, color: COLORS.blueHeaderText }}>Parameter</TableCell>
-                                                {cavities.map((c, ci) => (
-                                                    <TableCell key={ci} sx={{ minWidth: 140 }}>
-                                                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                                            <TextField
-                                                                size="small"
-                                                                variant="standard"
-                                                                value={c}
-                                                                onChange={(e) => updateCavityLabel(ci, e.target.value)}
-                                                                InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
-                                                                sx={{ input: { textAlign: 'center' } }}
-                                                                disabled={user?.role === 'HOD' && !isEditing}
-                                                            />
-                                                            <IconButton size="small" onClick={() => removeCavity(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={user?.role === 'HOD' && !isEditing}>
-                                                                <DeleteIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Box>
-                                                    </TableCell>
+                                            <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                                                <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
+                                                {previewPayload?.cavities.map((c: string, i: number) => (
+                                                    <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
                                                 ))}
                                             </TableRow>
                                         </TableHead>
-
                                         <TableBody>
-                                            {cavRows.map((r, ri) => (
-                                                <TableRow key={r.id}>
-                                                    <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
-                                                        {r.label}
-                                                    </TableCell>
-                                                    {r.values.map((val, ci) => (
-                                                        <TableCell key={ci}>
-                                                            <TextField
-                                                                size="small"
-                                                                fullWidth
-                                                                value={val}
-                                                                onChange={(e) => updateCavCell(r.id, ci, e.target.value)}
-                                                                variant="outlined"
-                                                                sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
-                                                                disabled={user?.role === 'HOD' && !isEditing}
-                                                            />
+                                            {previewPayload?.cavity_rows.map((r: any, idx: number) => (
+                                                <TableRow key={idx}>
+                                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
+                                                    {r.values.map((v: any, j: number) => (
+                                                        <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
+                                                            {v === null ? "-" : String(v)}
                                                         </TableCell>
                                                     ))}
                                                 </TableRow>
@@ -515,212 +608,95 @@ export default function DimensionalInspection({
                                     </Table>
                                 </Box>
 
-                                <Button
-                                    size="small"
-                                    onClick={addCavity}
-                                    startIcon={<AddCircleIcon />}
-                                    sx={{ mt: 1, color: COLORS.secondary }}
-                                    disabled={user?.role === 'HOD' && !isEditing}
-                                >
-                                    Add Column
-                                </Button>
-
-                                <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, mt: 3 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                                        Attach PDF / Image Files
-                                    </Typography>
-                                    <FileUploadSection
-                                        files={attachedFiles}
-                                        onFilesChange={handleAttachFiles}
-                                        onFileRemove={removeAttachedFile}
-                                        showAlert={showAlert}
-                                        label="Attach PDF"
-                                    />
-                                </Box>
-                            </Paper>
-
-                            <Paper sx={{ p: 3, mb: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${COLORS.primary}`, width: '100%' }}>
-                                    <EditIcon sx={{ color: COLORS.primary }} />
-                                    <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1 }}>
-                                        Additional Remarks
-                                    </Typography>
-                                </Box>
-                                <TextField
-                                    multiline
-                                    rows={3}
-                                    fullWidth
-                                    variant="outlined"
-                                    placeholder="Enter additional remarks..."
-                                    value={additionalRemarks}
-                                    onChange={(e) => setAdditionalRemarks(e.target.value)}
-                                    sx={{ bgcolor: '#fff' }}
-                                    disabled={user?.role === 'HOD' && !isEditing}
-                                />
-                            </Paper>
-
-                            <ActionButtons
-                                onReset={resetAll}
-                                onSave={handleSaveAndContinue}
-                                showSubmit={false}
-                                saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-                                saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
-                            >
-                                {user?.role === 'HOD' && (
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => setIsEditing(!isEditing)}
-                                        sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                                    >
-                                        {isEditing ? "Cancel Edit" : "Edit Details"}
-                                    </Button>
-                                )}
-                            </ActionButtons>
-
-                            <PreviewModal
-                                open={previewMode && previewPayload}
-                                onClose={() => setPreviewMode(false)}
-                                onSubmit={handleFinalSave}
-                                onExport={handleExportPDF}
-                                title="Verify Inspection Data"
-                                submitted={previewSubmitted}
-                                isSubmitting={saving}
-                            >
-                                <Box sx={{ p: 4 }}>
-                                    <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                            <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Dimensional Inspection Report</Typography>
-                                            <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
-                                        </Box>
-                                        <Divider sx={{ mb: 3 }} />
-
-                                        <Grid container spacing={2} sx={{ mb: 3 }}>
-                                            <Grid size={{ xs: 12, md: 6 }}>
-                                                <Typography variant="caption" color="textSecondary">TARGET WEIGHT</Typography>
-                                                <Typography variant="body1" fontWeight="bold">{previewPayload?.weight_target || "-"} Kg</Typography>
-                                            </Grid>
-                                            <Grid size={{ xs: 12, md: 6 }}>
-                                                <Typography variant="caption" color="textSecondary">BUNCH WEIGHT</Typography>
-                                                <Typography variant="body1" fontWeight="bold">{previewPayload?.bunch_weight || "-"} Kg</Typography>
-                                            </Grid>
-                                        </Grid>
-
-                                        <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
-                                            <Table size="small">
-                                                <TableHead>
-                                                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                                                        {previewPayload?.cavities.map((c: string, i: number) => (
-                                                            <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
-                                                        ))}
-                                                    </TableRow>
-                                                </TableHead>
-                                                <TableBody>
-                                                    {previewPayload?.cavity_rows.map((r: any, idx: number) => (
-                                                        <TableRow key={idx}>
-                                                            <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
-                                                            {r.values.map((v: any, j: number) => (
-                                                                <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
-                                                                    {v === null ? "-" : String(v)}
-                                                                </TableCell>
-                                                            ))}
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                        </Box>
-
-                                        <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                            {previewPayload?.attachment && (
-                                                <Typography variant="caption" display="block" mt={1} color="primary">
-                                                    Attachment: {previewPayload.attachment.name}
-                                                </Typography>
-                                            )}
-                                        </Box>
-
-                                        {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
-                                            <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                                <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                    {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
-                                                        <Chip
-                                                            key={idx}
-                                                            icon={<InsertDriveFileIcon />}
-                                                            label={fileName}
-                                                            variant="outlined"
-                                                            sx={{ bgcolor: 'white' }}
-                                                        />
-                                                    ))}
-                                                </Box>
-                                            </Box>
-                                        )}
-
-                                        {previewPayload?.additionalRemarks && (
-                                            <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                                <Typography variant="subtitle2" mb={1} color="textSecondary">ADDITIONAL REMARKS</Typography>
-                                                <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-
-                                    {previewSubmitted && (
-                                        <Alert severity="success" sx={{ mt: 2 }}>Inspection data submitted successfully.</Alert>
+                                <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                    {previewPayload?.attachment && (
+                                        <Typography variant="caption" display="block" mt={1} color="primary">
+                                            Attachment: {previewPayload.attachment.name}
+                                        </Typography>
                                     )}
                                 </Box>
-                            </PreviewModal>
 
-                            <Box className="print-section" sx={{ display: 'none' }}>
-                                <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-                                    <Box>
-                                        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>DIMENSIONAL INSPECTION REPORT</Typography>
-                                    </Box>
-                                    <Box sx={{ textAlign: 'right' }}>
-                                        <Typography variant="body2">IP: {userIP}</Typography>
-                                        {previewPayload && <Typography variant="body2">Date: {previewPayload.inspection_date}</Typography>}
-                                    </Box>
-                                </Box>
-
-                                {previewPayload && (
-                                    <>
-                                        <Box sx={{ mb: 3, display: 'flex', gap: 4 }}>
-                                            <Typography><strong>Target Weight:</strong> {previewPayload.weight_target} Kg</Typography>
-                                            <Typography><strong>Bunch Weight:</strong> {previewPayload.bunch_weight} Kg</Typography>
+                                {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
+                                    <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                        <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
+                                                <Chip
+                                                    key={idx}
+                                                    icon={<InsertDriveFileIcon />}
+                                                    label={fileName}
+                                                    variant="outlined"
+                                                    sx={{ bgcolor: 'white' }}
+                                                />
+                                            ))}
                                         </Box>
+                                    </Box>
+                                )}
 
-                                        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black', fontSize: '12px' }}>
-                                            <thead>
-                                                <tr style={{ backgroundColor: '#f0f0f0' }}>
-                                                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>Parameter</th>
-                                                    {previewPayload.cavities.map((c: string, i: number) => (
-                                                        <th key={i} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{c}</th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {previewPayload.cavity_rows.map((r: any, idx: number) => (
-                                                    <tr key={idx}>
-                                                        <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{r.label}</td>
-                                                        {r.values.map((v: any, j: number) => (
-                                                            <td key={j} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
-                                                                {v === null ? "" : String(v)}
-                                                            </td>
-                                                        ))}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-
-                                        <div style={{ marginTop: "20px", padding: "10px", border: "1px solid black" }}>
-                                            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>General Remarks</div>
-                                            <div>{previewPayload.dimensional_remarks || '-'}</div>
-                                        </div>
-                                    </>
+                                {previewPayload?.additionalRemarks && (
+                                    <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                        <Typography variant="subtitle2" mb={1} color="textSecondary">ADDITIONAL REMARKS</Typography>
+                                        <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
+                                    </Box>
                                 )}
                             </Box>
-                        </>
-                    )}
+
+                            {previewSubmitted && (
+                                <Alert severity="success" sx={{ mt: 2 }}>Inspection data submitted successfully.</Alert>
+                            )}
+                        </Box>
+                    </PreviewModal>
+
+                    <Box className="print-section" sx={{ display: 'none' }}>
+                        <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>DIMENSIONAL INSPECTION REPORT</Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'right' }}>
+                                <Typography variant="body2">IP: {userIP}</Typography>
+                                {previewPayload && <Typography variant="body2">Date: {previewPayload.inspection_date}</Typography>}
+                            </Box>
+                        </Box>
+
+                        {previewPayload && (
+                            <>
+                                <Box sx={{ mb: 3, display: 'flex', gap: 4 }}>
+                                    <Typography><strong>Target Weight:</strong> {previewPayload.weight_target} Kg</Typography>
+                                    <Typography><strong>Bunch Weight:</strong> {previewPayload.bunch_weight} Kg</Typography>
+                                </Box>
+
+                                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black', fontSize: '12px' }}>
+                                    <thead>
+                                        <tr style={{ backgroundColor: '#f0f0f0' }}>
+                                            <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>Parameter</th>
+                                            {previewPayload.cavities.map((c: string, i: number) => (
+                                                <th key={i} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{c}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {previewPayload.cavity_rows.map((r: any, idx: number) => (
+                                            <tr key={idx}>
+                                                <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{r.label}</td>
+                                                {r.values.map((v: any, j: number) => (
+                                                    <td key={j} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
+                                                        {v === null ? "" : String(v)}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+
+                                <div style={{ marginTop: "20px", padding: "10px", border: "1px solid black" }}>
+                                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>General Remarks</div>
+                                    <div>{previewPayload.dimensional_remarks || '-'}</div>
+                                </div>
+                            </>
+                        )}
+                    </Box>
                 </Container>
             </Box>
-        </ThemeProvider >
+        </ThemeProvider>
     );
 };

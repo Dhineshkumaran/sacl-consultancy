@@ -22,30 +22,21 @@ import { COLORS } from '../theme/appTheme';
 import departmentProgressService from '../services/departmentProgressService';
 
 interface PendingCard {
-    id: string;
     trial_id: string;
-    trialNo: string;
-    partName: string;
-    patternCode: string;
-    machine: string;
-    samplingDate: string;
-    submittedAt: string;
-    status: 'pending' | 'in_progress' | 'completed';
+    part_name: string;
+    pattern_code: string;
+    disa: string;
+    date_of_sampling: string;
+    approval_status: 'pending' | 'in_progress' | 'completed';
+    department_name: string;
     department_id: number;
-    selectedPart?: any;
-    selectedPattern?: any;
-    reason?: string;
-    mouldCount?: string;
-    sampleTraceability?: string;
-    patternFiles?: File[];
-    stdFiles?: File[];
 }
 
 interface PendingSampleCardsProps {
     open: boolean;
     onClose: () => void;
     username: string;
-    onCardSelect?: (trialId: string, departmentId: number) => void;
+    onCardSelect?: (card: PendingCard) => void;
 }
 
 const PendingSampleCards: React.FC<PendingSampleCardsProps> = ({ open, onClose, username, onCardSelect }) => {
@@ -75,7 +66,7 @@ const PendingSampleCards: React.FC<PendingSampleCardsProps> = ({ open, onClose, 
 
     const handleCardClick = (card: PendingCard) => {
         if (onCardSelect) {
-            onCardSelect(card.trial_id, card.department_id);
+            onCardSelect(card);
         }
         onClose();
     };
@@ -120,9 +111,7 @@ const PendingSampleCards: React.FC<PendingSampleCardsProps> = ({ open, onClose, 
             }}
         >
             <DialogTitle sx={{ bgcolor: COLORS.blueHeaderBg, color: COLORS.blueHeaderText, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    📋 Pending Sample Cards
-                </Typography>
+                📋 Pending Sample Cards
                 <IconButton onClick={onClose} size="small">
                     <CloseIcon />
                 </IconButton>
@@ -149,75 +138,46 @@ const PendingSampleCards: React.FC<PendingSampleCardsProps> = ({ open, onClose, 
                             <Table>
                                 <TableHead>
                                     <TableRow sx={{ backgroundColor: COLORS.blueHeaderBg }}>
-                                        <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Trial No</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Trial ID</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Pattern Code</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Part Name</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Machine</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Sampling Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Submitted At</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Action</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: COLORS.blueHeaderText }}>Department</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {pendingCards.length > 0 ? (
                                         pendingCards.map((card) => (
-                                            <TableRow key={card.id} sx={{ '&:hover': { backgroundColor: COLORS.background } }}>
-                                                <TableCell sx={{ fontWeight: 600 }}>{card.trialNo}</TableCell>
-                                                <TableCell>{card.patternCode}</TableCell>
-                                                <TableCell>{card.partName}</TableCell>
-                                                <TableCell>{card.machine}</TableCell>
-                                                <TableCell>{card.samplingDate}</TableCell>
-                                                <TableCell sx={{ fontSize: '0.9rem' }}>{card.submittedAt}</TableCell>
+                                            <TableRow
+                                                key={card.trial_id}
+                                                onClick={() => handleCardClick(card)}
+                                                sx={{
+                                                    '&:hover': {
+                                                        backgroundColor: COLORS.background,
+                                                        cursor: 'pointer'
+                                                    }
+                                                }}
+                                            >
+                                                <TableCell sx={{ fontWeight: 600 }}>{card.trial_id}</TableCell>
+                                                <TableCell>{card.pattern_code}</TableCell>
+                                                <TableCell>{card.part_name}</TableCell>
+                                                <TableCell>{card.disa}</TableCell>
+                                                <TableCell>{card.date_of_sampling}</TableCell>
                                                 <TableCell>
                                                     <Chip
-                                                        label={getStatusLabel(card.status)}
+                                                        label={getStatusLabel(card.approval_status)}
                                                         size="small"
                                                         sx={{
-                                                            backgroundColor: getStatusColor(card.status),
-                                                            color: card.status === 'in_progress' || card.status === 'completed' ? '#FFFFFF' : COLORS.textPrimary,
+                                                            backgroundColor: getStatusColor(card.approval_status),
+                                                            color: card.approval_status == 'pending' || card.approval_status == 'completed' ? '#FFFFFF' : COLORS.textPrimary,
                                                             fontWeight: 600,
                                                         }}
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    {card.status === 'pending' && (
-                                                        <Button
-                                                            variant="contained"
-                                                            size="small"
-                                                            onClick={() => handleCardClick(card)}
-                                                            sx={{
-                                                                backgroundColor: COLORS.primary,
-                                                                '&:hover': { backgroundColor: COLORS.accentBlue },
-                                                            }}
-                                                        >
-                                                            Start Analysis
-                                                        </Button>
-                                                    )}
-                                                    {card.status === 'in_progress' && (
-                                                        <Button
-                                                            variant="contained"
-                                                            size="small"
-                                                            onClick={() => handleCardClick(card)}
-                                                            sx={{
-                                                                backgroundColor: COLORS.secondary,
-                                                                '&:hover': { backgroundColor: '#daa706' },
-                                                            }}
-                                                        >
-                                                            Continue
-                                                        </Button>
-                                                    )}
-                                                    {card.status === 'completed' && (
-                                                        <Chip
-                                                            label="✓ Completed"
-                                                            size="small"
-                                                            sx={{
-                                                                backgroundColor: COLORS.accentGreen,
-                                                                color: '#FFFFFF',
-                                                                fontWeight: 600,
-                                                            }}
-                                                        />
-                                                    )}
+                                                    {card.department_name}
                                                 </TableCell>
                                             </TableRow>
                                         ))

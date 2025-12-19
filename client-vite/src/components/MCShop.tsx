@@ -3,7 +3,7 @@ import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { getProgress, updateDepartment, updateDepartmentRole, approve } from "../services/departmentProgressService";
+import { updateDepartment, updateDepartmentRole, approve } from "../services/departmentProgressService";
 import { trialService } from "../services/trialService";
 import { useNavigate } from "react-router-dom";
 import {
@@ -27,7 +27,6 @@ import {
   GlobalStyles,
 } from "@mui/material";
 
-// Icons
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -71,11 +70,9 @@ export default function McShopInspection({
   const navigate = useNavigate();
 
 
-  const [assigned, setAssigned] = useState<boolean | null>(null);
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [userTime, setUserTime] = useState<string>("");
   const [userIP, setUserIP] = useState<string>("Loading...");
-  const [trialId, setTrialId] = useState<string>("");
   const [remarks, setRemarks] = useState<string>("");
   const [cavities, setCavities] = useState<string[]>([...initialCavities]);
 
@@ -99,27 +96,9 @@ export default function McShopInspection({
   const [previewMode, setPreviewMode] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any | null>(null);
   const [previewSubmitted, setPreviewSubmitted] = useState(false);
-  const [progressData, setProgressData] = useState<any>(null);
-  const [isEditing, setIsEditing] = useState(false); // HOD Edit Mode
+  const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    const check = async () => {
-      try {
-        const uname = user?.username ?? "";
-        const res = await getProgress(uname);
-        if (mounted) {
-          setAssigned(res.length > 0);
-          if (res.length > 0) setProgressData(res[0]);
-        }
-      } catch {
-        if (mounted) setAssigned(false);
-      }
-    };
-    if (user) check();
-    return () => { mounted = false; };
-  }, [user]);
-
+  const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
 
   useEffect(() => {
@@ -132,9 +111,9 @@ export default function McShopInspection({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (user?.role === 'HOD' && progressData?.trial_id) {
+      if (user?.role === 'HOD' && trialId) {
         try {
-          const response = await inspectionService.getMachineShopInspection(progressData.trial_id);
+          const response = await inspectionService.getMachineShopInspection(trialId);
           if (response.success && response.data && response.data.length > 0) {
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
@@ -162,7 +141,6 @@ export default function McShopInspection({
                       newRows[rIndex] = {
                         ...newRows[rIndex],
                         values: values.map(String),
-                        // Recalculate total if needed
                         total: labelSnippet === 'cavity details' ? null : values.reduce((acc, v) => acc + (parseFloat(String(v)) || 0), 0)
                       };
                     }
@@ -189,8 +167,8 @@ export default function McShopInspection({
         }
       }
     };
-    if (progressData) fetchData();
-  }, [user, progressData]);
+    if (trialId) fetchData();
+  }, [user, trialId]);
 
 
   const addColumn = () => {
@@ -290,12 +268,11 @@ export default function McShopInspection({
 
     setSaving(true);
 
-    if (user?.role === 'HOD' && progressData) {
+    if (user?.role === 'HOD' && trialId) {
       try {
         if (isEditing) {
-          const trialIdParam = progressData.trial_id;
+          const trialIdParam = trialId;
           const payload = buildPayload();
-          // Direct row access assuming standard order (Cavity, Received, Inspected, Accepted, Rejected, Reason)
           const receivedRow = rows[1];
           const inspectedRow = rows[2];
           const acceptedRow = rows[3];
@@ -324,11 +301,11 @@ export default function McShopInspection({
         }
 
         await approve({
-          trial_id: progressData.trial_id
+          trial_id: trialId
         });
 
         await trialService.updateTrialStatus({
-          trial_id: progressData.trial_id,
+          trial_id: trialId,
           status: "CLOSED"
         });
 
@@ -345,10 +322,9 @@ export default function McShopInspection({
     }
 
     try {
-      const trialIdParam = progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || 'trial_id';
+      const trialIdParam = trialId;
 
       const payload = buildPayload();
-      // Direct row access assuming standard order
       const receivedRow = rows[1];
       const inspectedRow = rows[2];
       const acceptedRow = rows[3];
@@ -391,11 +367,11 @@ export default function McShopInspection({
         }
       }
 
-      if (progressData) {
+      if (trialId) {
         try {
           await updateDepartmentRole({
-            trial_id: progressData.trial_id,
-            current_department_id: progressData.department_id,
+            trial_id: trialId,
+            current_department_id: 8,
             username: user?.username || "user",
             role: "user",
             remarks: remarks || groupMeta.remarks || "Completed by user"
@@ -437,391 +413,383 @@ export default function McShopInspection({
 
           <DepartmentHeader title="MACHINE SHOP INSPECTION" userIP={userIP} user={user} />
 
-          {assigned === null ? (
-            <LoadingState />
-          ) : !assigned ? (
-            <EmptyState title="No pending works at the moment" severity="warning" />
-          ) : (
-            <>
-              <Common trialId={progressData?.trial_id || new URLSearchParams(window.location.search).get('trial_id') || ""} />
+          <Common trialId={trialId} />
 
-              <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+          <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 
-                <Box display="flex" alignItems="center" gap={1} mb={1}>
-                  <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-                  <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
-                </Box>
-                <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
+            <Box display="flex" alignItems="center" gap={1} mb={1}>
+              <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
+              <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
+            </Box>
+            <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
 
 
 
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
-                    <TextField
-                      size="small"
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      fullWidth
-                      sx={{ bgcolor: 'white' }}
-                      disabled={user?.role === 'HOD'}
-                    />
-                  </Grid>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
+                <TextField
+                  size="small"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  fullWidth
+                  sx={{ bgcolor: 'white' }}
+                  disabled={user?.role === 'HOD'}
+                />
+              </Grid>
 
-                </Grid>
+            </Grid>
 
-                <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>Parameter</TableCell>
-                        {cavities.map((cav, i) => (
-                          <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>
-                            <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                              <TextField
-                                variant="standard"
-                                value={cav}
-                                onChange={(e) => updateCavityLabel(i, e.target.value)}
-                                InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
-                                size="small"
-                                sx={{ input: { textAlign: 'center' } }}
-                                disabled={user?.role === 'HOD' && !isEditing}
-                              />
-                              <IconButton size="small" onClick={() => removeColumn(i)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={user?.role === 'HOD' && !isEditing} >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
+            <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>Parameter</TableCell>
+                    {cavities.map((cav, i) => (
+                      <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>
+                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                          <TextField
+                            variant="standard"
+                            value={cav}
+                            onChange={(e) => updateCavityLabel(i, e.target.value)}
+                            InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
+                            size="small"
+                            sx={{ input: { textAlign: 'center' } }}
+                            disabled={user?.role === 'HOD' && !isEditing}
+                          />
+                          <IconButton size="small" onClick={() => removeColumn(i)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={user?.role === 'HOD' && !isEditing} >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    ))}
+                    <TableCell sx={{ width: 120, bgcolor: '#f1f5f9', fontWeight: 700, textAlign: 'center' }}>Total</TableCell>
+                    <TableCell sx={{ width: 240, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {rows.map((r, ri) => {
+                    const isReasonRow = r.label.toLowerCase().includes("reason");
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r.label}</TableCell>
+
+                        {isReasonRow ? (
+                          <TableCell colSpan={cavities.length + 1}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              multiline
+                              rows={2}
+                              placeholder="Cavity wise rejection reason..."
+                              value={r.freeText ?? ""}
+                              onChange={(e) => updateReasonFreeText(r.id, e.target.value)}
+                              variant="outlined"
+                              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: 'white' } }}
+                            />
                           </TableCell>
-                        ))}
-                        <TableCell sx={{ width: 120, bgcolor: '#f1f5f9', fontWeight: 700, textAlign: 'center' }}>Total</TableCell>
-                        <TableCell sx={{ width: 240, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {rows.map((r, ri) => {
-                        const isReasonRow = r.label.toLowerCase().includes("reason");
-                        return (
-                          <TableRow key={r.id}>
-                            <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r.label}</TableCell>
-
-                            {isReasonRow ? (
-                              <TableCell colSpan={cavities.length + 1}>
+                        ) : (
+                          <>
+                            {r.values.map((val, ci) => (
+                              <TableCell key={ci}>
                                 <TextField
                                   size="small"
                                   fullWidth
-                                  multiline
-                                  rows={2}
-                                  placeholder="Cavity wise rejection reason..."
-                                  value={r.freeText ?? ""}
-                                  onChange={(e) => updateReasonFreeText(r.id, e.target.value)}
+                                  value={val ?? ""}
+                                  onChange={(e) => updateCell(r.id, ci, e.target.value)}
                                   variant="outlined"
                                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: 'white' } }}
+                                  disabled={user?.role === 'HOD' && !isEditing}
                                 />
                               </TableCell>
-                            ) : (
-                              <>
-                                {r.values.map((val, ci) => (
-                                  <TableCell key={ci}>
-                                    <TextField
-                                      size="small"
-                                      fullWidth
-                                      value={val ?? ""}
-                                      onChange={(e) => updateCell(r.id, ci, e.target.value)}
-                                      variant="outlined"
-                                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: 'white' } }}
-                                      disabled={user?.role === 'HOD' && !isEditing}
-                                    />
-                                  </TableCell>
-                                ))}
-                                <TableCell sx={{ textAlign: 'center', fontWeight: 700, bgcolor: '#f1f5f9' }}>
-                                  {r.label.toLowerCase().includes("cavity details") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
-                                </TableCell>
-                              </>
-                            )}
+                            ))}
+                            <TableCell sx={{ textAlign: 'center', fontWeight: 700, bgcolor: '#f1f5f9' }}>
+                              {r.label.toLowerCase().includes("cavity details") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
+                            </TableCell>
+                          </>
+                        )}
 
-                            {ri === 0 && (
-                              <TableCell rowSpan={rows.length} sx={{ verticalAlign: "top", bgcolor: '#fff7ed', padding: 2, minWidth: 240 }}>
-                                <Box display="flex" flexDirection="column" height="100%" gap={2}>
-                                  <TextField
+                        {ri === 0 && (
+                          <TableCell rowSpan={rows.length} sx={{ verticalAlign: "top", bgcolor: '#fff7ed', padding: 2, minWidth: 240 }}>
+                            <Box display="flex" flexDirection="column" height="100%" gap={2}>
+                              <TextField
+                                size="small"
+                                fullWidth
+                                multiline
+                                rows={8}
+                                placeholder="General remarks..."
+                                value={groupMeta.remarks}
+                                onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
+                                variant="outlined"
+                                sx={{ bgcolor: 'white' }}
+                                disabled={user?.role === 'HOD' && !isEditing}
+                              />
+
+                              <Box display="flex" alignItems="center" gap={1} mt="auto">
+                                <input
+                                  accept="image/*,application/pdf"
+                                  id="mcshop-attach-file"
+                                  style={{ display: "none" }}
+                                  type="file"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] ?? null;
+                                    if (file) {
+                                      const validation = validateFileSizes([file]);
+                                      if (!validation.isValid) {
+                                        validation.errors.forEach((error: string) => showAlert('error', error));
+                                        e.target.value = '';
+                                        return;
+                                      }
+                                    }
+                                    setGroupMeta((g) => ({ ...g, attachment: file }));
+                                  }}
+                                  disabled={user?.role === 'HOD' && !isEditing}
+                                />
+                                <label htmlFor="mcshop-attach-file">
+                                  <Button
                                     size="small"
-                                    fullWidth
-                                    multiline
-                                    rows={8}
-                                    placeholder="General remarks..."
-                                    value={groupMeta.remarks}
-                                    onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
                                     variant="outlined"
-                                    sx={{ bgcolor: 'white' }}
+                                    component="span"
+                                    startIcon={<UploadFileIcon />}
+                                    sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
+                                    disabled={user?.role === 'HOD' && !isEditing}
+                                  >
+                                    Attach
+                                  </Button>
+                                </label>
+
+                                {groupMeta.attachment ? (
+                                  <Chip
+                                    icon={<InsertDriveFileIcon />}
+                                    label={groupMeta.attachment.name}
+                                    onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ maxWidth: 140 }}
                                     disabled={user?.role === 'HOD' && !isEditing}
                                   />
+                                ) : (
+                                  <Typography variant="caption" color="text.secondary">
+                                    No file attached
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Box>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
 
-                                  <Box display="flex" alignItems="center" gap={1} mt="auto">
-                                    <input
-                                      accept="image/*,application/pdf"
-                                      id="mcshop-attach-file"
-                                      style={{ display: "none" }}
-                                      type="file"
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0] ?? null;
-                                        if (file) {
-                                          const validation = validateFileSizes([file]);
-                                          if (!validation.isValid) {
-                                            validation.errors.forEach((error: string) => showAlert('error', error));
-                                            e.target.value = '';
-                                            return;
-                                          }
-                                        }
-                                        setGroupMeta((g) => ({ ...g, attachment: file }));
-                                      }}
-                                      disabled={user?.role === 'HOD' && !isEditing}
-                                    />
-                                    <label htmlFor="mcshop-attach-file">
-                                      <Button
-                                        size="small"
-                                        variant="outlined"
-                                        component="span"
-                                        startIcon={<UploadFileIcon />}
-                                        sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
-                                        disabled={user?.role === 'HOD' && !isEditing}
-                                      >
-                                        Attach
-                                      </Button>
-                                    </label>
+            <Button
+              size="small"
+              onClick={addColumn}
+              startIcon={<AddCircleIcon />}
+              sx={{ mt: 1, color: COLORS.secondary }}
+              disabled={user?.role === 'HOD' && !isEditing}
+            >
+              Add Column
+            </Button>
 
-                                    {groupMeta.attachment ? (
-                                      <Chip
-                                        icon={<InsertDriveFileIcon />}
-                                        label={groupMeta.attachment.name}
-                                        onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{ maxWidth: 140 }}
-                                        disabled={user?.role === 'HOD' && !isEditing}
-                                      />
-                                    ) : (
-                                      <Typography variant="caption" color="text.secondary">
-                                        No file attached
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                </Box>
+            <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                Attach PDF / Image Files
+              </Typography>
+              <FileUploadSection
+                files={attachedFiles}
+                onFilesChange={handleAttachFiles}
+                onFileRemove={removeAttachedFile}
+                showAlert={showAlert}
+                label="Attach PDF"
+                disabled={user?.role === 'HOD' && !isEditing}
+              />
+            </Box>
+
+            <ActionButtons
+              onReset={resetAll}
+              onSave={handleSaveAndContinue}
+              loading={saving}
+              showSubmit={false}
+              saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+              saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+            >
+              {user?.role === 'HOD' && (
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsEditing(!isEditing)}
+                  sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                >
+                  {isEditing ? "Cancel Edit" : "Edit Details"}
+                </Button>
+              )}
+            </ActionButtons>
+
+          </Paper>
+
+          <PreviewModal
+            open={previewMode && previewPayload}
+            onClose={() => setPreviewMode(false)}
+            onSubmit={handleFinalSave}
+            onExport={handleExportPDF}
+            title="Verify Inspection Data"
+            subtitle="Machine Shop Inspection Report"
+            submitted={previewSubmitted}
+            isSubmitting={saving}
+          >
+            <Box sx={{ p: 4 }}>
+              <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Machine Shop Inspection Report</Typography>
+                  <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+
+                <AlertMessage alert={alert} />
+
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Typography variant="caption" color="textSecondary">LOG TIME</Typography>
+                    <Typography variant="body1" fontWeight="bold">{previewPayload?.user_time || "-"}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Typography variant="caption" color="textSecondary">GENERAL NOTES</Typography>
+                    <Typography variant="body2">{previewPayload?.dimensional_report_remarks || "-"}</Typography>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
+                        {previewPayload?.cavities.map((c: string, i: number) => (
+                          <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
+                        ))}
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {previewPayload?.rows.map((r: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
+                          {r.freeText !== undefined && r.freeText !== null ? (
+                            <TableCell colSpan={previewPayload.cavities.length + 1} sx={{ textAlign: 'left', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                              {r.freeText}
+                            </TableCell>
+                          ) : (
+                            <>
+                              {r.values.map((v: any, j: number) => (
+                                <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
+                                  {v === null ? "-" : String(v)}
+                                </TableCell>
+                              ))}
+                              <TableCell sx={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 700 }}>
+                                {r.label.toLowerCase().includes("cavity details") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
                               </TableCell>
-                            )}
-                          </TableRow>
-                        );
-                      })}
+                            </>
+                          )}
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </Box>
 
-                <Button
-                  size="small"
-                  onClick={addColumn}
-                  startIcon={<AddCircleIcon />}
-                  sx={{ mt: 1, color: COLORS.secondary }}
-                  disabled={user?.role === 'HOD' && !isEditing}
-                >
-                  Add Column
-                </Button>
-
-                <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                    Attach PDF / Image Files
-                  </Typography>
-                  <FileUploadSection
-                    files={attachedFiles}
-                    onFilesChange={handleAttachFiles}
-                    onFileRemove={removeAttachedFile}
-                    showAlert={showAlert}
-                    label="Attach PDF"
-                    disabled={user?.role === 'HOD' && !isEditing}
-                  />
-                </Box>
-
-                <ActionButtons
-                  onReset={resetAll}
-                  onSave={handleSaveAndContinue}
-                  loading={saving}
-                  showSubmit={false}
-                  saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-                  saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
-                >
-                  {user?.role === 'HOD' && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => setIsEditing(!isEditing)}
-                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                    >
-                      {isEditing ? "Cancel Edit" : "Edit Details"}
-                    </Button>
-                  )}
-                </ActionButtons>
-
-              </Paper>
-
-              <PreviewModal
-                open={previewMode && previewPayload}
-                onClose={() => setPreviewMode(false)}
-                onSubmit={handleFinalSave}
-                onExport={handleExportPDF}
-                title="Verify Inspection Data"
-                subtitle="Machine Shop Inspection Report"
-                submitted={previewSubmitted}
-                isSubmitting={saving}
-              >
-                <Box sx={{ p: 4 }}>
-                  <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Machine Shop Inspection Report</Typography>
-                      <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
+                {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
+                  <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                    <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
+                        <Chip
+                          key={idx}
+                          icon={<InsertDriveFileIcon />}
+                          label={fileName}
+                          variant="outlined"
+                          sx={{ bgcolor: 'white' }}
+                        />
+                      ))}
                     </Box>
-                    <Divider sx={{ mb: 3 }} />
-
-                    <AlertMessage alert={alert} />
-
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <Typography variant="caption" color="textSecondary">LOG TIME</Typography>
-                        <Typography variant="body1" fontWeight="bold">{previewPayload?.user_time || "-"}</Typography>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <Typography variant="caption" color="textSecondary">GENERAL NOTES</Typography>
-                        <Typography variant="body2">{previewPayload?.dimensional_report_remarks || "-"}</Typography>
-                      </Grid>
-                    </Grid>
-
-                    <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                            {previewPayload?.cavities.map((c: string, i: number) => (
-                              <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
-                            ))}
-                            <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {previewPayload?.rows.map((r: any, idx: number) => (
-                            <TableRow key={idx}>
-                              <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
-                              {r.freeText !== undefined && r.freeText !== null ? (
-                                <TableCell colSpan={previewPayload.cavities.length + 1} sx={{ textAlign: 'left', fontSize: '0.8rem', fontStyle: 'italic' }}>
-                                  {r.freeText}
-                                </TableCell>
-                              ) : (
-                                <>
-                                  {r.values.map((v: any, j: number) => (
-                                    <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
-                                      {v === null ? "-" : String(v)}
-                                    </TableCell>
-                                  ))}
-                                  <TableCell sx={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 700 }}>
-                                    {r.label.toLowerCase().includes("cavity details") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
-                                  </TableCell>
-                                </>
-                              )}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </Box>
-
-                    {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
-                      <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                        <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
-                            <Chip
-                              key={idx}
-                              icon={<InsertDriveFileIcon />}
-                              label={fileName}
-                              variant="outlined"
-                              sx={{ bgcolor: 'white' }}
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
-
-                    {previewPayload?.additionalRemarks && (
-                      <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                        <Typography variant="subtitle2" mb={1} color="textSecondary">ADDITIONAL REMARKS</Typography>
-                        <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
-                      </Box>
-                    )}
                   </Box>
+                )}
 
-                  {previewSubmitted && (
-                    <Alert severity="success" sx={{ mt: 2 }}>Inspection data submitted successfully.</Alert>
-                  )}
-                </Box>
-              </PreviewModal>
-
-              <Box className="print-section" sx={{ display: 'none' }}>
-                <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-                  <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>MACHINE SHOP INSPECTION REPORT</Typography>
+                {previewPayload?.additionalRemarks && (
+                  <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                    <Typography variant="subtitle2" mb={1} color="textSecondary">ADDITIONAL REMARKS</Typography>
+                    <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2">IP: {userIP}</Typography>
-                    {previewPayload && <Typography variant="body2">Date: {previewPayload.inspection_date}</Typography>}
-                  </Box>
-                </Box>
-
-                {previewPayload && (
-                  <>
-                    <Box sx={{ mb: 3 }}>
-                      <Typography><strong>Inspector:</strong> {previewPayload.user_name}</Typography>
-                      <Typography><strong>Notes:</strong> {previewPayload.dimensional_report_remarks}</Typography>
-                    </Box>
-
-                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black', fontSize: '12px' }}>
-                      <thead>
-                        <tr style={{ backgroundColor: '#f0f0f0' }}>
-                          <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>Parameter</th>
-                          {previewPayload.cavities.map((c: string, i: number) => (
-                            <th key={i} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{c}</th>
-                          ))}
-                          <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {previewPayload.rows.map((r: any, idx: number) => (
-                          <tr key={idx}>
-                            <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{r.label}</td>
-                            {r.freeText !== undefined && r.freeText !== null ? (
-                              <td colSpan={previewPayload.cavities.length + 1} style={{ border: '1px solid black', padding: '8px' }}>
-                                {r.freeText}
-                              </td>
-                            ) : (
-                              <>
-                                {r.values.map((v: any, j: number) => (
-                                  <td key={j} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
-                                    {v === null ? "" : String(v)}
-                                  </td>
-                                ))}
-                                <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
-                                  {r.label.toLowerCase().includes("cavity details") ? "" : (r.total !== null && r.total !== undefined ? r.total : "")}
-                                </td>
-                              </>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    <div style={{ marginTop: '20px', padding: '10px', border: '1px solid black' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Side Remarks</div>
-                      <div>{previewPayload.right_remarks || '-'}</div>
-                    </div>
-                  </>
                 )}
               </Box>
-            </>
-          )}
+
+              {previewSubmitted && (
+                <Alert severity="success" sx={{ mt: 2 }}>Inspection data submitted successfully.</Alert>
+              )}
+            </Box>
+          </PreviewModal>
+
+          <Box className="print-section" sx={{ display: 'none' }}>
+            <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>MACHINE SHOP INSPECTION REPORT</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="body2">IP: {userIP}</Typography>
+                {previewPayload && <Typography variant="body2">Date: {previewPayload.inspection_date}</Typography>}
+              </Box>
+            </Box>
+
+            {previewPayload && (
+              <>
+                <Box sx={{ mb: 3 }}>
+                  <Typography><strong>Inspector:</strong> {previewPayload.user_name}</Typography>
+                  <Typography><strong>Notes:</strong> {previewPayload.dimensional_report_remarks}</Typography>
+                </Box>
+
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black', fontSize: '12px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f0f0f0' }}>
+                      <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>Parameter</th>
+                      {previewPayload.cavities.map((c: string, i: number) => (
+                        <th key={i} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{c}</th>
+                      ))}
+                      <th style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewPayload.rows.map((r: any, idx: number) => (
+                      <tr key={idx}>
+                        <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{r.label}</td>
+                        {r.freeText !== undefined && r.freeText !== null ? (
+                          <td colSpan={previewPayload.cavities.length + 1} style={{ border: '1px solid black', padding: '8px' }}>
+                            {r.freeText}
+                          </td>
+                        ) : (
+                          <>
+                            {r.values.map((v: any, j: number) => (
+                              <td key={j} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
+                                {v === null ? "" : String(v)}
+                              </td>
+                            ))}
+                            <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>
+                              {r.label.toLowerCase().includes("cavity details") ? "" : (r.total !== null && r.total !== undefined ? r.total : "")}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div style={{ marginTop: '20px', padding: '10px', border: '1px solid black' }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Side Remarks</div>
+                  <div>{previewPayload.right_remarks || '-'}</div>
+                </div>
+              </>
+            )}
+          </Box>
 
         </Container>
       </Box>

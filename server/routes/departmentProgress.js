@@ -42,13 +42,12 @@ router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res,
         `UPDATE department_progress SET department_id = ?, username = ?, remarks = ? WHERE trial_id = ?`,
         [next_department_id, next_department_username, remarks, trial_id]
     );
-    
-    // Update the current_department_id in trial_cards table to keep it in sync
+
     await Client.query(
         `UPDATE trial_cards SET current_department_id = ? WHERE trial_id = ?`,
         [next_department_id, trial_id]
     );
-    
+
     const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result_assignment] = await Client.query(audit_sql_assignment, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress for trial ${trial_id} updated by ${req.user.username} to department ${next_department_id} for ${role}`]);
 
@@ -144,7 +143,10 @@ router.put('/approve', verifyToken, asyncErrorHandler(async (req, res, next) => 
 router.get('/get-progress', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const username = req.query.username;
     const [result] = await Client.query(
-        `SELECT * FROM department_progress WHERE username = ? AND approval_status = 'pending' LIMIT 1`,
+        `SELECT department_progress.*, departments.department_name, t.trial_id, t.part_name, t.pattern_code, t.disa, t.date_of_sampling FROM department_progress 
+         JOIN departments ON department_progress.department_id = departments.department_id 
+         JOIN trial_cards t ON department_progress.trial_id = t.trial_id 
+         WHERE department_progress.username = ? AND department_progress.approval_status = 'pending'`,
         [username]
     );
     res.status(200).json({

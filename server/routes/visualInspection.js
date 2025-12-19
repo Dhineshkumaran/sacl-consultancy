@@ -14,9 +14,6 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const sql = 'INSERT INTO visual_inspection (trial_id, inspections, visual_ok, remarks) VALUES (?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, inspectionsJson, visual_ok, remarks]);
     
-    // Update current_department_id to Visual Inspection (5)
-    await Client.query('UPDATE trial_cards SET current_department_id = 5 WHERE trial_id = ?', [trial_id]);
-    
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Visual inspection created', `Visual inspection ${trial_id} created by ${req.user.username}`]);
     res.status(201).json({ success: true, message: 'Visual inspection created successfully.' });

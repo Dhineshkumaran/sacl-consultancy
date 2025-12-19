@@ -14,9 +14,6 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const sql = 'INSERT INTO mould_correction (trial_id, mould_thickness, compressability, squeeze_pressure, mould_hardness, remarks, date) VALUES (?, ?, ?, ?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, mould_thickness, compressability, squeeze_pressure, mould_hardness, remarks, date]);
     
-    // Update current_department_id to MOULDING (6)
-    await Client.query('UPDATE trial_cards SET current_department_id = 6 WHERE trial_id = ?', [trial_id]);
-    
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
     const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Mould correction created', `Mould correction ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({ success: true, message: 'Mould correction created successfully.' });
