@@ -13,8 +13,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const mouldJson = JSON.stringify(mould_correction);
     const sql = 'INSERT INTO trial_cards (trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status || 'CREATED', current_department_id, disa, sample_traceability, mouldJson]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Trial created', `Trial ${trial_id} created by ${req.user.username} with part name ${part_name}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Trial created', `Trial ${trial_id} created by ${req.user.username} with part name ${part_name}`]);
     res.status(201).json({ success: true, message: 'Trial created successfully.' });
 }));
 
@@ -52,6 +52,8 @@ router.put('/update-status', verifyToken, asyncErrorHandler(async (req, res, nex
         return res.status(400).json({ success: false, message: 'trial_id is required to approve the status' });
     }
     const [result] = await Client.query("UPDATE trial_cards SET status = ? WHERE trial_id = ?", [status, trial_id]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Trial updated', `Trial ${trial_id} updated by ${req.user.username} as ${status}`]);
     res.status(200).json({ success: true, message: 'Trial status updated successfully.' });
 }));
 
@@ -114,8 +116,8 @@ router.put('/update', verifyToken, asyncErrorHandler(async (req, res, next) => {
         trial_id
     ]);
     
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Trial updated', `Trial ${trial_id} updated by ${req.user.username}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Trial updated', `Trial ${trial_id} updated by ${req.user.username}`]);
     
     res.status(200).json({ success: true, message: 'Trial updated successfully.' });
 }));

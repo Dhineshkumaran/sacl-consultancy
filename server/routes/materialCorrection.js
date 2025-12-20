@@ -14,8 +14,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const chemicalCompositionJson = JSON.stringify(chemical_composition);
     const processParametersJson = JSON.stringify(process_parameters);
     const [result] = await Client.query(sql, [trial_id, chemicalCompositionJson, processParametersJson, remarks]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Material correction created', `Material correction ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Material correction created', `Material correction ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     const insertId = result.insertId;
     res.status(201).json({
         success: true,
@@ -33,8 +33,8 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const chemicalCompositionJson = JSON.stringify(chemical_composition);
     const processParametersJson = JSON.stringify(process_parameters);
     const [result] = await Client.query(sql, [chemicalCompositionJson, processParametersJson, remarks, trial_id]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Material correction updated', `Material correction ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Material correction updated', `Material correction ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
     const insertId = result.insertId;
     res.status(201).json({
         success: true,

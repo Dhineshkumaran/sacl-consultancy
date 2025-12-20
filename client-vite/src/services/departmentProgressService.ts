@@ -5,6 +5,12 @@ export interface ProgressItem {
   completed_at?: string | null;
   approval_status?: string | null;
   remarks?: string | null;
+  part_name?: string;
+  pattern_code?: string;
+  disa?: string;
+  date_of_sampling?: string;
+  department_name?: string;
+  status?: string;
 }
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string) || "http://localhost:3000/api";
@@ -96,4 +102,11 @@ export async function approve(payload: {
   return handleResponse(res);
 }
 
-export default { getProgress, updateDepartment, updateDepartmentRole, createDepartmentProgress, approve };
+export async function getCompletedTrials(username: string): Promise<ProgressItem[]> {
+  const url = `${API_BASE}/department-progress/get-completed-trials?username=${encodeURIComponent(username || "")}`;
+  const res = await fetch(url, { method: "GET", headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' }, credentials: "include" });
+  const json = await handleResponse(res);
+  return Array.isArray(json.data) ? json.data as ProgressItem[] : [];
+}
+
+export default { getProgress, updateDepartment, updateDepartmentRole, createDepartmentProgress, approve, getCompletedTrials };

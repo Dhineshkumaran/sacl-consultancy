@@ -70,10 +70,11 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         ndt_inspection_remarks || null
     ]);
 
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
     await Client.query(audit_sql, [
         req.user.user_id,
         req.user.department_id,
+        trial_id,
         'Metallurgical inspection created',
         `Metallurgical inspection for trial ${trial_id} created by ${req.user.username}`
     ]);
@@ -145,10 +146,11 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         trial_id
     ]);
 
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
     await Client.query(audit_sql, [
         req.user.user_id,
         req.user.department_id,
+        trial_id,
         'Metallurgical inspection updated',
         `Metallurgical inspection for trial ${trial_id} updated by ${req.user.username}`
     ]);

@@ -24,8 +24,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         [trial_id, tensile_strength, yield_strength, elongation, impact_strength_cold, impact_strength_room, hardness_surface, hardness_core, x_ray_inspection, mpi]
     );
 
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Mechanical properties created', `Mechanical properties ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Mechanical properties created', `Mechanical properties ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
 
     res.status(201).json({
         success: true,

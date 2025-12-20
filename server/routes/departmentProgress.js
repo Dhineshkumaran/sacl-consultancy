@@ -17,8 +17,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         `INSERT INTO department_progress (trial_id, department_id, completed_at, approval_status, remarks, username) VALUES (?, ?, ?, ?, ?, ?)`,
         [trial_id, department_id, completed_at, approval_status, remarks, username]
     );
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress added', `Department progress for trial ${trial_id} added by ${username} to department ${department_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Department progress added', `Department progress for trial ${trial_id} added by ${username} to department ${department_id}`]);
     res.status(201).json({
         success: true,
         data: "Department progress added successfully"
@@ -27,8 +27,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
 
 router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, next_department_id, username, role, remarks } = req.body;
-    const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result_completion] = await Client.query(audit_sql_completion, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress for trial ${trial_id} updated by ${username} as completed at ${req.user.department}`]);
+    const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result_completion] = await Client.query(audit_sql_completion, [req.user.user_id, req.user.department_id, trial_id, 'Department progress updated', `Department progress for trial ${trial_id} updated by ${username} as completed at ${req.user.department}`]);
 
     const next_department_user = await Client.query(
         `SELECT * FROM users WHERE department_id = ? AND role = 'User' LIMIT 1`,
@@ -48,8 +48,8 @@ router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res,
         [next_department_id, trial_id]
     );
 
-    const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result_assignment] = await Client.query(audit_sql_assignment, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress for trial ${trial_id} updated by ${req.user.username} to department ${next_department_id} for ${role}`]);
+    const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result_assignment] = await Client.query(audit_sql_assignment, [req.user.user_id, req.user.department_id, trial_id, 'Department progress approved', `Department progress for trial ${trial_id} approved by ${req.user.username} to department ${next_department_id} for ${role}`]);
 
     const mailOptions = {
         to: next_department_user[0][0].email,
@@ -73,19 +73,18 @@ router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res,
     await transporter.sendMail(mailOptions);
     res.status(200).json({
         success: true,
-        data: "Department progress updated successfully"
+        data: "Department progress approved successfully"
     });
 }));
 
 router.put('/update-role', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, current_department_id, username, role, remarks } = req.body;
-    const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result_completion] = await Client.query(audit_sql_completion, [req.user.user_id, req.user.department_id, 'Department progress completed', `Department progress for trial ${trial_id} marked as completed by ${req.user.username}`]);
+    const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result_completion] = await Client.query(audit_sql_completion, [req.user.user_id, req.user.department_id, trial_id, 'Department progress completed', `Department progress for trial ${trial_id} marked as completed by ${req.user.username}`]);
     const current_department_hod = await Client.query(
         `SELECT * FROM users WHERE department_id = ? AND role = 'HOD' LIMIT 1`,
         [current_department_id]
     );
-    console.log(current_department_id);
     if (current_department_hod.length === 0) {
         throw new CustomError("No HOD found for the department.");
     }
@@ -94,8 +93,8 @@ router.put('/update-role', verifyToken, asyncErrorHandler(async (req, res, next)
         `UPDATE department_progress SET username = ?, remarks = ?, approval_status = 'pending' WHERE trial_id = ?`,
         [current_department_hod_username, remarks, trial_id]
     );
-    const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result_assignment] = await Client.query(audit_sql_assignment, [req.user.user_id, req.user.department_id, 'Department progress updated', `Department progress for trial ${trial_id} assigned to HOD ${current_department_hod_username} by ${req.user.username}`]);
+    const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result_assignment] = await Client.query(audit_sql_assignment, [req.user.user_id, req.user.department_id, trial_id, 'Department progress updated', `Department progress for trial ${trial_id} assigned to HOD ${current_department_hod_username} by ${req.user.username}`]);
     const user = await Client.query(
         `SELECT * FROM users WHERE username = ?`,
         [current_department_hod_username]
@@ -132,8 +131,8 @@ router.put('/approve', verifyToken, asyncErrorHandler(async (req, res, next) => 
         `UPDATE department_progress SET approval_status = 'approved' WHERE trial_id = ?`,
         [trial_id]
     );
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Department progress approved', `Department progress for trial ${trial_id} approved by ${req.user.username}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Department progress approved', `Department progress for trial ${trial_id} approved by ${req.user.username}`]);
     res.status(200).json({
         success: true,
         data: "Department progress approved successfully"
@@ -149,6 +148,37 @@ router.get('/get-progress', verifyToken, asyncErrorHandler(async (req, res, next
          WHERE department_progress.username = ? AND department_progress.approval_status = 'pending'`,
         [username]
     );
+    res.status(200).json({
+        success: true,
+        data: result
+    });
+}));
+
+router.get('/get-completed-trials', verifyToken, asyncErrorHandler(async (req, res, next) => {
+    const username = req.query.username;
+
+    const [result] = await Client.query(
+        `SELECT DISTINCT 
+            a.trial_id,
+            a.department_id,
+            a.action_timestamp as completed_at,
+            a.remarks,
+            d.department_name,
+            t.part_name,
+            t.pattern_code,
+            t.disa,
+            t.date_of_sampling,
+            t.status
+         FROM audit_log a
+         JOIN trial_cards t ON a.trial_id = t.trial_id
+         JOIN departments d ON a.department_id = d.department_id
+         WHERE a.department_id = ? 
+         AND (a.action = 'Department progress approved')
+         AND a.trial_id IS NOT NULL
+         ORDER BY a.action_timestamp DESC`,
+        [req.user.department_id]
+    );
+
     res.status(200).json({
         success: true,
         data: result

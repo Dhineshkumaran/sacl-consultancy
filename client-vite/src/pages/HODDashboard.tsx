@@ -19,6 +19,7 @@ import {
   type ActionItem
 } from '../data/dashboardData';
 import PendingSampleCards from './PendingSampleCards';
+import CompletedTrialsModal from './CompletedTrialsModal';
 
 const HODDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ const HODDashboard: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
 
   const [showPendingCards, setShowPendingCards] = useState(false);
+  const [showCompletedTrials, setShowCompletedTrials] = useState(false);
 
   const handlePendingClick = () => {
     setShowPendingCards(true);
@@ -83,25 +85,46 @@ const HODDashboard: React.FC = () => {
             title={getDashboardTitle()}
             description={getDashboardDescription()}
           >
-            <button
-              className="btn-pending-cards"
-              onClick={() => handlePendingClick()}
-              style={{
-                backgroundColor: '#ffc107',
-                color: '#333',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: '500',
-                fontSize: '14px',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0ac06'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffc107'}
-            >
-              ⏳ Pending Cards
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                className="btn-pending-cards"
+                onClick={() => handlePendingClick()}
+                style={{
+                  backgroundColor: '#ffc107',
+                  color: '#333',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  fontSize: '14px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0ac06'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffc107'}
+              >
+                ⏳ Pending Cards
+              </button>
+              <button
+                className="btn-completed-trials"
+                onClick={() => setShowCompletedTrials(true)}
+                style={{
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  fontSize: '14px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+              >
+                ✅ Completed Trials
+              </button>
+            </div>
           </WelcomeSection>
 
           {/* Role Specific Stats Grid */}
@@ -133,6 +156,13 @@ const HODDashboard: React.FC = () => {
         onClose={() => setShowPendingCards(false)}
         username={user?.username || ''}
         onCardSelect={handlePendingCardSelect}
+      />
+
+      {/* Completed Trials Modal */}
+      <CompletedTrialsModal
+        open={showCompletedTrials}
+        onClose={() => setShowCompletedTrials(false)}
+        username={user?.username || ""}
       />
     </div>
   );

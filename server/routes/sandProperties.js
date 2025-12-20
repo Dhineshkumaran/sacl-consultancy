@@ -15,8 +15,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const sql = 'INSERT INTO sand_properties (trial_id, date, t_clay, a_clay, vcm, loi, afs, gcs, moi, compactability, permeability,remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, date, t_clay, a_clay, vcm, loi, afs, gcs, moi, compactability, permeability, remarks]);
     
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Sand properties created', `Sand properties ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Sand properties created', `Sand properties ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({ success: true, message: 'Sand properties created successfully.' });
 }));
 
@@ -27,8 +27,8 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     }
     const sql = 'UPDATE sand_properties SET date = ?, t_clay = ?, a_clay = ?, vcm = ?, loi = ?, afs = ?, gcs = ?, moi = ?, compactability = ?, permeability = ?, remarks = ? WHERE trial_id = ?';
     const [result] = await Client.query(sql, [date, t_clay, a_clay, vcm, loi, afs, gcs, moi, compactability, permeability, remarks, trial_id]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Sand properties updated', `Sand properties ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Sand properties updated', `Sand properties ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({
         success: true,
         message: "Sand properties updated successfully."

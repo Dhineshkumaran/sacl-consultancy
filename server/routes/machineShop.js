@@ -14,8 +14,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const sql = 'INSERT INTO machine_shop (trial_id, inspection_date, inspections, remarks) VALUES (?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, inspection_date, inspectionsJson, remarks]);
     
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Machine shop created', `Machine shop ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Machine shop created', `Machine shop ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({
         success: true,
         message: "Machine shop created successfully."
@@ -30,8 +30,8 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const inspectionsJson = JSON.stringify(inspections);
     const sql = 'UPDATE machine_shop SET inspection_date = ?, inspections = ?, remarks = ? WHERE trial_id = ?';
     const [result] = await Client.query(sql, [inspection_date, inspectionsJson, remarks, trial_id]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Machine shop updated', `Machine shop ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Machine shop updated', `Machine shop ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({
         success: true,
         message: "Machine shop updated successfully."

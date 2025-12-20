@@ -14,8 +14,8 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const sql = 'INSERT INTO visual_inspection (trial_id, inspections, visual_ok, remarks) VALUES (?, ?, ?, ?)';
     const [result] = await Client.query(sql, [trial_id, inspectionsJson, visual_ok, remarks]);
     
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Visual inspection created', `Visual inspection ${trial_id} created by ${req.user.username}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Visual inspection created', `Visual inspection ${trial_id} created by ${req.user.username}`]);
     res.status(201).json({ success: true, message: 'Visual inspection created successfully.' });
 }));
 
@@ -27,8 +27,8 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const inspectionsJson = JSON.stringify(inspections);
     const sql = 'UPDATE visual_inspection SET inspections = ?, visual_ok = ?, remarks = ? WHERE trial_id = ?';
     const [result] = await Client.query(sql, [inspectionsJson, visual_ok, remarks, trial_id]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Visual inspection updated', `Visual inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
+    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Visual inspection updated', `Visual inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
     res.status(201).json({
         success: true,
         message: "Visual inspection updated successfully."
