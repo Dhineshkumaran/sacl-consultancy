@@ -52,6 +52,23 @@ const DashboardPage: React.FC = () => {
     <div className="dashboard" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
       {/* Load Poppins Font Global */}
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <style>
+        {`
+          .dashboard-content {
+            padding: 20px;
+          }
+          @media (max-width: 768px) {
+            .dashboard-content {
+              padding: 15px;
+            }
+          }
+          @media (max-width: 480px) {
+            .dashboard-content {
+              padding: 10px;
+            }
+          }
+        `}
+      </style>
 
       <Header
         setShowNotifications={setShowNotifications}
@@ -62,7 +79,7 @@ const DashboardPage: React.FC = () => {
         logoTextColors={{ title: '#000000', subtitle: '#666' }}
       />
 
-      <main className="dashboard-content" style={{ padding: '20px' }}>
+      <main className="dashboard-content">
         {showUserDetails ? (
           <UserManagement />
         ) : (
