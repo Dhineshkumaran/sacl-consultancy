@@ -13,9 +13,19 @@ router.get('/', verifyToken, asyncErrorHandler(async(req, res, next)=>{
 
 router.post('/', verifyToken, asyncErrorHandler(async(req, res, next)=>{
     const {pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray} = req.body || {};
-    if(!pattern_code || !part_name || !material_grade || !chemical_composition, micro_structure, tensile, impact, hardness, xray){
+    if(
+      !pattern_code ||
+      !part_name ||
+      !material_grade ||
+      !chemical_composition ||
+      !micro_structure ||
+      !tensile ||
+      !impact ||
+      !hardness ||
+      !xray
+    ) {
         return res.status(400).json({success: false, message: 'Missing required fields'});
-    }   
+    }
     const sql = `INSERT INTO master_card (pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const [result] = await Client.query(sql, [pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray]);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
