@@ -406,8 +406,6 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
             };
 
             await inspectionService.submitPouringDetails(apiPayload);
-            setSubmitted(true);
-            showAlert('success', 'Pouring Details Registered Successfully');
 
             if (trialId) {
                 try {
@@ -441,7 +439,8 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                     console.error("File upload error:", uploadError);
                 }
             }
-
+            setSubmitted(true);
+            showAlert('success', 'Pouring Details Registered and department progress updated Successfully');
             navigate('/dashboard');
         } catch (error) {
             console.error("Error saving pouring details:", error);

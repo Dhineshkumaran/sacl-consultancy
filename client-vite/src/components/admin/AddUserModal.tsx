@@ -13,7 +13,7 @@ interface Department {
   department_name: string;
 }
 
-const ROLES = ['Admin', 'HOD', 'User', 'Methods'];
+const ROLES = ['Admin', 'HOD', 'User'];
 
 const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCreated }) => {
   const [formData, setFormData] = useState({

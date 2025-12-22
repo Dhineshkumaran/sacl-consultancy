@@ -221,8 +221,6 @@ function MouldingTable() {
         };
 
         await inspectionService.submitMouldingCorrection(payload);
-        showAlert('success', 'Moulding details created successfully.');
-        setSubmitted(true);
 
         if (attachedFiles.length > 0) {
           try {
@@ -251,6 +249,8 @@ function MouldingTable() {
             role: "user",
             remarks: mouldState.remarks || "Completed by user"
           });
+          showAlert('success', 'Moulding details created and department progress updated successfully.');
+          setSubmitted(true);
         }
         navigate('/dashboard');
       }

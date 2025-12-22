@@ -35,7 +35,7 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
       const matchesRole = !roleFilter || user.role === roleFilter;
-      const matchesDepartment = !departmentFilter || 
+      const matchesDepartment = !departmentFilter ||
         user.department_id?.toString() === departmentFilter;
       return matchesRole && matchesDepartment;
     });
@@ -148,7 +148,7 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => {
                   {user.role}
                 </span>
               </td>
-              <td>{user.role?.toLowerCase() === 'methods' ? 'Methods' : (getDepartmentName(user.department_id) || 'N/A')}</td>
+              <td>{getDepartmentName(user.department_id) || 'N/A'}</td>
               <td>
                 <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
                   {user.is_active ? 'Active' : 'Inactive'}

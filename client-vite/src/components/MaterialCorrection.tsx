@@ -209,8 +209,6 @@ export default function MaterialCorrection() {
                 if (attachedFiles.length > 0) {
                     
                 }
-                setSubmitted(true);
-                setAlertMessage({ severity: 'success', message: "Material Correction Details Submitted Successfully!" });
                 if (trialId) {
                     try {
                         await updateDepartmentRole({
@@ -224,6 +222,8 @@ export default function MaterialCorrection() {
                             trial_id: trialId,
                             status: "IN PROGRESS"
                         });
+                        setSubmitted(true);
+                        setAlertMessage({ severity: 'success', message: "Material correction created and department progress updated successfully!" });
                     } catch (roleError) {
                         console.error("Failed to update role progress or trial status:", roleError);
                     }

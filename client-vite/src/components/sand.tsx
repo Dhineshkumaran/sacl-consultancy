@@ -211,8 +211,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         };
 
         await inspectionService.submitSandProperties(payload);
-        setSubmitted(true);
-        showAlert('success', 'Sand properties created successfully.');
 
         if (attachedFiles.length > 0) {
           try {
@@ -247,6 +245,8 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
             showAlert('error', 'Failed to update role progress. Please try again.');
           }
         }
+        setSubmitted(true);
+        showAlert('success', 'Sand properties created and department progress updated successfully.');
 
         navigate('/dashboard');
       }

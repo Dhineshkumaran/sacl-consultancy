@@ -968,9 +968,6 @@ export default function MetallurgicalInspection() {
       const serverPayload = transformToServerPayload(previewPayload);
       await inspectionService.submitMetallurgicalInspection(serverPayload);
 
-      setPreviewSubmitted(true);
-      showAlert('success', 'Metallurgical inspection created successfully.');
-
       if (trialId) {
         try {
           await updateDepartmentRole({
@@ -1000,6 +997,8 @@ export default function MetallurgicalInspection() {
           //   console.error("Some files failed to upload:", failures);
           //   showAlert('warning', 'Some files failed to upload, but inspection data was saved.');
           // }
+          setPreviewSubmitted(true);
+          showAlert('success', 'Metallurgical inspection created and department progress updated successfully.');
         } catch (uploadError) {
           console.error("File upload error:", uploadError);
           showAlert('warning', 'File upload failed, but inspection data was saved.');
@@ -1303,7 +1302,6 @@ export default function MetallurgicalInspection() {
             <ActionButtons
               onReset={() => window.location.reload()}
               onSave={handleSaveAndContinue}
-              loading={sending}
               showSubmit={false}
               saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
               saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}

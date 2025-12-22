@@ -55,7 +55,7 @@ type CavRow = InspectionRow;
 type GroupMeta = GroupMetadata;
 
 export default function DimensionalInspection({
-    initialCavities = ["Value 1"],
+    initialCavities = [""],
     onSave = async (payload: any) => {
 
         return { ok: true };
@@ -166,7 +166,7 @@ export default function DimensionalInspection({
     };
 
     const addCavity = () => {
-        const next = `Value ${cavities.length + 1}`;
+        const next = "";
         setCavities((c) => [...c, next]);
         setCavRows((rows) => rows.map((r) => ({ ...r, values: [...r.values, ""] })));
     };
@@ -304,8 +304,6 @@ export default function DimensionalInspection({
             };
 
             await inspectionService.submitDimensionalInspection(apiPayload);
-            setPreviewSubmitted(true);
-            showAlert('success', 'Dimensional inspection created successfully.');
 
             if (attachedFiles.length > 0) {
                 try {
@@ -336,7 +334,8 @@ export default function DimensionalInspection({
                     showAlert('warning', 'Failed to update role progress, but inspection data was saved.');
                 }
             }
-
+            setPreviewSubmitted(true);
+            showAlert('success', 'Dimensional inspection created and department progress updated successfully.');
             navigate('/dashboard');
         } catch (err: any) {
             showAlert('error', 'Failed to save dimensional inspection. Please try again.');

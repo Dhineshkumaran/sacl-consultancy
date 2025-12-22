@@ -61,13 +61,13 @@ const HODDashboard: React.FC = () => {
   // Determine dashboard title
   const getDashboardTitle = () => {
     if (user?.role === 'Admin') return 'Admin Dashboard';
-    if (user?.role === 'Methods') return 'Methods Dashboard';
+    if (user?.role === 'User' && user?.department_id === 2) return 'Methods Dashboard';
     return 'HOD Dashboard';
   };
 
   const getDashboardDescription = () => {
     if (user?.role === 'Admin') return `Welcome back, ${user?.username}! Manage system-wide operations.`;
-    if (user?.role === 'Methods') return `Welcome back, ${user?.username}! Oversee methods and processes.`;
+    if (user?.role === 'User' && user?.department_id === 2) return `Welcome back, ${user?.username}! Oversee methods and processes.`;
     return `Welcome back, ${user?.username}! Manage your department efficiently.`;
   };
 

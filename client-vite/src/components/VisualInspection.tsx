@@ -429,8 +429,6 @@ export default function VisualInspection({
             };
 
             await inspectionService.submitVisualInspection(serverPayload);
-            setSubmitted(true);
-            showAlert('success', 'Visual inspection created successfully.');
 
             if (attachedFiles.length > 0) {
                 try {
@@ -465,6 +463,8 @@ export default function VisualInspection({
                 }
             }
 
+            setSubmitted(true);
+            showAlert('success', 'Visual inspection created and department progress updated successfully.');
             navigate('/dashboard');
         } catch (err: any) {
             showAlert('error', err?.message || 'Failed to save visual inspection. Please try again.');
@@ -770,7 +770,6 @@ export default function VisualInspection({
                         <ActionButtons
                             onReset={reset}
                             onSave={handleSaveAndContinue}
-                            loading={saving}
                             showSubmit={false}
                             saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
                             saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}

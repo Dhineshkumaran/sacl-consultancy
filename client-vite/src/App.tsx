@@ -38,7 +38,9 @@ const AppRoutes: React.FC = () => {
     switch (user?.role) {
       case 'HOD': return <HODDashboard />;
       case 'Methods': return <MethodsDashboard />;
-      case 'User': return <UserDashboard />;
+      case 'User':
+        if (user?.department_id === 2) return <MethodsDashboard />;
+        return <UserDashboard />;
       default: return <DashboardPage />;
     }
   };

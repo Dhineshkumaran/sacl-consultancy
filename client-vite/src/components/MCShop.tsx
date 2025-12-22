@@ -349,10 +349,6 @@ export default function McShopInspection({
         remarks: remarks || groupMeta.remarks || null,
       };
 
-      await inspectionService.submitMachineShopInspection(serverPayload);
-      setPreviewSubmitted(true);
-      showAlert('success', 'Machine shop inspection created successfully.');
-
       if (attachedFiles.length > 0) {
         try {
           // const uploadResults = await uploadFiles(
@@ -376,11 +372,14 @@ export default function McShopInspection({
             role: "user",
             remarks: remarks || groupMeta.remarks || "Completed by user"
           });
+          await inspectionService.submitMachineShopInspection(serverPayload);
         } catch (roleError) {
           console.error("Failed to update role progress:", roleError);
         }
       }
 
+      setPreviewSubmitted(true);
+      showAlert('success', 'Machine shop inspection created and department progress updated successfully.');
       navigate('/dashboard');
     } catch (err: any) {
       console.error("Error saving machine shop inspection:", err);
@@ -613,7 +612,6 @@ export default function McShopInspection({
             <ActionButtons
               onReset={resetAll}
               onSave={handleSaveAndContinue}
-              loading={saving}
               showSubmit={false}
               saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
               saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
@@ -648,8 +646,6 @@ export default function McShopInspection({
                   <Typography variant="body2" color="textSecondary">Date: {previewPayload?.inspection_date}</Typography>
                 </Box>
                 <Divider sx={{ mb: 3 }} />
-
-                <AlertMessage alert={alert} />
 
                 <Grid container spacing={2} sx={{ mb: 3 }}>
                   <Grid size={{ xs: 12, md: 4 }}>
@@ -722,11 +718,11 @@ export default function McShopInspection({
                     <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
                   </Box>
                 )}
-              </Box>
 
-              {previewSubmitted && (
-                <Alert severity="success" sx={{ mt: 2 }}>Inspection data submitted successfully.</Alert>
-              )}
+                <Box sx={{ mt: 3 }}>
+                  <AlertMessage alert={alert} />
+                </Box>
+              </Box>
             </Box>
           </PreviewModal>
 

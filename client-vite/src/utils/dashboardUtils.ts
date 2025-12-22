@@ -20,7 +20,7 @@ export const getDepartmentName = (departmentId: number | string | undefined): st
 };
 
 export const getDepartmentInfo = (user: any) => {
-    if (user?.role === 'Admin' || user?.role === 'Methods') {
+    if (user?.role === 'Admin') {
         return { displayText: user.role, showDepartment: false };
     } else {
         const department = user?.department_name ||
