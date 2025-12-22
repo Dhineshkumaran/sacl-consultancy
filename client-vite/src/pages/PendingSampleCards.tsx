@@ -23,12 +23,12 @@ import departmentProgressService from '../services/departmentProgressService';
 
 interface PendingCard {
     trial_id: string;
-    part_name: string;
-    pattern_code: string;
-    disa: string;
-    date_of_sampling: string;
-    approval_status: 'pending' | 'in_progress' | 'completed';
-    department_name: string;
+    part_name?: string;
+    pattern_code?: string;
+    disa?: string;
+    date_of_sampling?: string;
+    approval_status?: string | null;
+    department_name?: string;
     department_id: number;
 }
 
@@ -167,10 +167,10 @@ const PendingSampleCards: React.FC<PendingSampleCardsProps> = ({ open, onClose, 
                                                 <TableCell>{card.date_of_sampling}</TableCell>
                                                 <TableCell>
                                                     <Chip
-                                                        label={getStatusLabel(card.approval_status)}
+                                                        label={getStatusLabel(card.approval_status || 'pending')}
                                                         size="small"
                                                         sx={{
-                                                            backgroundColor: getStatusColor(card.approval_status),
+                                                            backgroundColor: getStatusColor(card.approval_status || 'pending'),
                                                             color: card.approval_status == 'pending' || card.approval_status == 'completed' ? '#FFFFFF' : COLORS.textPrimary,
                                                             fontWeight: 600,
                                                         }}
