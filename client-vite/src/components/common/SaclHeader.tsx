@@ -20,20 +20,29 @@ const SaclHeader: React.FC = () => {
           mb: { xs: 2, md: 3 },
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          justifyContent: 'space-between',
+          alignItems: { xs: 'center', sm: 'center' },
+          justifyContent: { xs: 'center', sm: 'space-between' },
           gap: { xs: 1.5, sm: 2 },
           borderTop: `4px solid ${COLORS.secondary}`,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden'
         }}
       >
-        <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }}>
+        <Box 
+          display="flex" 
+          alignItems="center" 
+          gap={{ xs: 1, sm: 2 }}
+          sx={{
+            flexWrap: 'wrap',
+            justifyContent: { xs: 'center', sm: 'flex-start' }
+          }}
+        >
           <Box
             component="img"
             src="/assets/SACL-LOGO-01.jpg"
             alt="Sakthi Auto"
             sx={{
-              height: { xs: 35, sm: 45, md: 55 },
+              height: { xs: 40, sm: 45, md: 55 },
               width: 'auto',
               objectFit: 'contain',
             }}
@@ -43,7 +52,8 @@ const SaclHeader: React.FC = () => {
             sx={{
               fontWeight: 700,
               color: COLORS.primary,
-              fontSize: { xs: '0.85rem', sm: '1rem', md: '1.25rem' },
+              fontSize: { xs: '0.8rem', sm: '1rem', md: '1.25rem' },
+              textAlign: { xs: 'center', sm: 'left' }
             }}
           >
             Sakthi Auto Component Limited
@@ -56,13 +66,15 @@ const SaclHeader: React.FC = () => {
             backgroundColor: '#FCD34D',
             color: COLORS.primary,
             fontWeight: 700,
-            fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' },
+            fontSize: { xs: '0.6rem', sm: '0.75rem', md: '0.875rem' },
             borderRadius: '12px',
-            alignSelf: { xs: 'flex-end', sm: 'auto' },
+            height: 'auto',
+            flexShrink: 0,
             "& .MuiChip-label": {
-              padding: { xs: '8px 12px', sm: '10px 16px', md: '12px 20px' },
+              padding: { xs: '6px 10px', sm: '10px 16px', md: '12px 20px' },
               display: 'block',
               textAlign: 'center',
+              whiteSpace: 'nowrap'
             }
           }}
         />
