@@ -13,7 +13,9 @@ import {
     ThemeProvider,
     CircularProgress,
     TextField,
-    InputAdornment
+    InputAdornment,
+    useMediaQuery,
+    useTheme
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
@@ -30,6 +32,9 @@ export default function AllTrialsPage() {
     const [trials, setTrials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
     useEffect(() => {
         const fetchTrials = async () => {
@@ -54,12 +59,20 @@ export default function AllTrialsPage() {
 
     return (
         <ThemeProvider theme={appTheme}>
-            <Box sx={{ minHeight: '100vh', bgcolor: COLORS.background, py: 4 }}>
-                <Container maxWidth="xl">
+            <Box sx={{ minHeight: '100vh', bgcolor: COLORS.background, py: { xs: 2, sm: 3, md: 4 } }}>
+                <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
                     <SaclHeader />
 
-                    <Box sx={{ mt: 4, mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h4" fontWeight="bold" color="primary">
+                    <Box sx={{ 
+                        mt: { xs: 2, sm: 3, md: 4 }, 
+                        mb: { xs: 2, md: 3 }, 
+                        display: 'flex', 
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 2,
+                        justifyContent: 'space-between', 
+                        alignItems: { xs: 'stretch', sm: 'center' } 
+                    }}>
+                        <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}>
                             All Trials Repository
                         </Typography>
                         <TextField
@@ -67,7 +80,7 @@ export default function AllTrialsPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             size="small"
-                            sx={{ bgcolor: 'white', minWidth: 300 }}
+                            sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 250, md: 300 } }}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
@@ -85,29 +98,29 @@ export default function AllTrialsPage() {
                             </Box>
                         ) : (
                             <Box sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-                                <Table stickyHeader>
+                                <Table stickyHeader size={isMobile ? "small" : "medium"}>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Trial ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Part Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Pattern Code</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Grade</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Date</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Current Department</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', textAlign: 'center' }}>Actions</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Trial ID</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Part Name</TableCell>
+                                            {!isMobile && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Pattern Code</TableCell>}
+                                            {!isMobile && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Grade</TableCell>}
+                                            {!isTablet && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Date</TableCell>}
+                                            {!isTablet && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Current Department</TableCell>}
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {filteredTrials.length > 0 ? (
                                             filteredTrials.map((trial) => (
                                                 <TableRow key={trial.trial_id} hover>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>{trial.trial_id}</TableCell>
-                                                    <TableCell>{trial.part_name}</TableCell>
-                                                    <TableCell>{trial.pattern_code}</TableCell>
-                                                    <TableCell>{trial.material_grade}</TableCell>
-                                                    <TableCell>{new Date(trial.date_of_sampling).toLocaleDateString()}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{trial.trial_id}</TableCell>
+                                                    <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{trial.part_name}</TableCell>
+                                                    {!isMobile && <TableCell>{trial.pattern_code}</TableCell>}
+                                                    {!isMobile && <TableCell>{trial.material_grade}</TableCell>}
+                                                    {!isTablet && <TableCell>{new Date(trial.date_of_sampling).toLocaleDateString()}</TableCell>}
+                                                    {!isTablet && <TableCell>
                                                         <Box sx={{
                                                             display: 'inline-block',
                                                             px: 1.5, py: 0.5,
@@ -119,13 +132,14 @@ export default function AllTrialsPage() {
                                                         }}>
                                                             {getDepartmentName(trial.current_department_id) || 'N/A'}
                                                         </Box>
-                                                    </TableCell>
+                                                    </TableCell>}
                                                     <TableCell>
                                                         <Box sx={{
                                                             display: 'inline-block',
-                                                            px: 1.5, py: 0.5,
+                                                            px: { xs: 1, sm: 1.5 }, 
+                                                            py: 0.5,
                                                             borderRadius: 5,
-                                                            fontSize: '0.75rem',
+                                                            fontSize: { xs: '0.65rem', sm: '0.75rem' },
                                                             bgcolor: trial.status === 'Completed' ? '#dcfce7' : '#fff7ed',
                                                             color: trial.status === 'Completed' ? '#166534' : '#9a3412'
                                                         }}>
@@ -136,18 +150,18 @@ export default function AllTrialsPage() {
                                                         <Button
                                                             variant="outlined"
                                                             size="small"
-                                                            startIcon={<DescriptionIcon />}
+                                                            startIcon={!isMobile && <DescriptionIcon />}
                                                             onClick={() => navigate(`/full-report?trial_id=${trial.trial_id}`)}
-                                                            sx={{ borderRadius: 2, textTransform: 'none' }}
+                                                            sx={{ borderRadius: 2, textTransform: 'none', fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, px: { xs: 1, sm: 2 } }}
                                                         >
-                                                            View Report
+                                                            {isMobile ? 'View' : 'View Report'}
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                                                <TableCell colSpan={isMobile ? 4 : isTablet ? 6 : 8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                                                     No trials found.
                                                 </TableCell>
                                             </TableRow>
