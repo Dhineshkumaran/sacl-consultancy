@@ -36,18 +36,65 @@ const Header: React.FC<HeaderProps> = ({
     const currentTextColor = textColor || defaultTextColor;
 
     return (
-        <header style={{
-            backgroundColor: 'white',
-            padding: '15px 30px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid #e0e0e0',
-            ...customStyle // Apply custom styles
-        }}>
+        <>
+            <style>
+                {`
+                    .dashboard-header {
+                        background-color: white;
+                        padding: 15px 30px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-bottom: 1px solid #e0e0e0;
+                        flex-wrap: wrap;
+                        gap: 15px;
+                    }
+                    .header-left {
+                        display: flex;
+                        align-items: center;
+                        gap: 24px;
+                        flex-wrap: wrap;
+                    }
+                    .header-right {
+                        display: flex;
+                        align-items: center;
+                        gap: 20px;
+                    }
+                    .company-name-text {
+                        font-weight: 700;
+                        letter-spacing: 1px;
+                    }
+                    @media (max-width: 900px) {
+                        .dashboard-header {
+                            padding: 12px 20px;
+                        }
+                        .company-name-text {
+                            font-size: 14px !important;
+                        }
+                        .header-dept-info {
+                            display: none !important;
+                        }
+                    }
+                    @media (max-width: 600px) {
+                        .dashboard-header {
+                            padding: 10px 15px;
+                        }
+                        .company-name-text {
+                            display: none !important;
+                        }
+                        .header-logo {
+                            height: 32px !important;
+                        }
+                        .profile-username {
+                            display: none !important;
+                        }
+                    }
+                `}
+            </style>
+            <header className="dashboard-header" style={customStyle}>
             {/* Left side - Logo/Brand and Department Info */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Box className="header-left">
                 {/* SACL Logo Section */}
                 <Box
                     sx={{
@@ -60,6 +107,7 @@ const Header: React.FC<HeaderProps> = ({
                         component="img"
                         src="/assets/SACL-LOGO-01.jpg"
                         alt="SACL Logo"
+                        className="header-logo"
                         sx={{
                             height: 40,
                             width: "auto",
@@ -68,6 +116,7 @@ const Header: React.FC<HeaderProps> = ({
                     />
                     <Typography
                         variant="h6"
+                        className="company-name-text"
                         sx={{
                             fontWeight: 700,
                             color: COLORS.primary,
@@ -81,6 +130,7 @@ const Header: React.FC<HeaderProps> = ({
                 {/* Department and Role Info */}
                 <Paper
                     elevation={1}
+                    className="header-dept-info"
                     sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -121,11 +171,7 @@ const Header: React.FC<HeaderProps> = ({
             </Box>
 
             {/* Right side - Icons and Profile */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '20px'
-            }}>
+            <div className="header-right">
                 {/* Profile Section */}
                 <div style={{ position: 'relative' }}>
                     <div
@@ -156,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({
                         }}>
                             {user?.username?.charAt(0).toUpperCase() || 'U'}
                         </div>
-                        <div style={{ textAlign: 'left' }}>
+                        <div className="profile-username" style={{ textAlign: 'left' }}>
                             <div style={{
                                 fontSize: '14px',
                                 fontWeight: '500',
@@ -259,6 +305,7 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
             </div>
         </header>
+        </>
     );
 };
 
