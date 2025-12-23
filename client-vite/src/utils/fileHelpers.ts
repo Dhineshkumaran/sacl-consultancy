@@ -1,5 +1,5 @@
 import type { FileMetadata } from '../types/inspection';
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 
 /**
  * Converts a File object to metadata object
@@ -59,7 +59,7 @@ export const isFileTypeAllowed = (file: File, allowedTypes: string[]): boolean =
 /**
  * Validates if file size is within allowed limit
  * @param file - File to validate
- * @param maxSize - Maximum allowed size in bytes (default: 5MB)
+ * @param maxSize - Maximum allowed size in bytes (default: 1MB)
  * @returns Object with isValid boolean and error message if invalid
  */
 export const validateFileSize = (
@@ -78,7 +78,7 @@ export const validateFileSize = (
 /**
  * Validates multiple files for size limit
  * @param files - Array of files to validate
- * @param maxSize - Maximum allowed size in bytes (default: 5MB)
+ * @param maxSize - Maximum allowed size in bytes (default: 1MB)
  * @returns Object with isValid boolean and array of error messages
  */
 export const validateFileSizes = (

@@ -170,23 +170,9 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
             </Box>
           ) : (
             <>
-              {/* Show/Hide Specifications Button */}
+              {/* Part Identification - Always Visible */}
               {data && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, mt: showSpecifications ? 0 : 2 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={showSpecifications ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    onClick={() => setShowSpecifications(!showSpecifications  )}
-                    sx={{ textTransform: 'none' }}
-                  >
-                    {showSpecifications ? 'Hide' : 'Show'} Basic Information
-                  </Button>
-                </Box>
-              )}
-
-              <Collapse in={showSpecifications} timeout="auto" unmountOnExit>
-                <Grid container spacing={3} sx={{ mb: 3, mt: 0 }}>
-                  {/* Part Identification */}
+                <Grid container spacing={3} sx={{ mb: 3, mt: 2 }}>
                   <Grid size={12}>
                     <Card elevation={0} sx={{ border: `1px solid ${COLORS.border}` }}>
                       <CardContent>
@@ -223,155 +209,174 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
                       </CardContent>
                     </Card>
                   </Grid>
+                </Grid>
+              )}
+
+              {/* Show/Hide Specifications Button */}
+              {data && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={showSpecifications ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    onClick={() => setShowSpecifications(!showSpecifications)}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {showSpecifications ? 'Hide' : 'Show'} Basic Information
+                  </Button>
+                </Box>
+              )}
+
+              <Collapse in={showSpecifications} timeout="auto" unmountOnExit>
+                <Grid container spacing={3} sx={{ mb: 3, mt: 0 }}>
 
                   {/* Metallurgical Composition */}
                   {data && (
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
                         <SectionHeader icon={<ScienceIcon />} title="Metallurgical Composition" color={COLORS.accentBlue} />
-                      <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
-                        <Table size="small" sx={{ minWidth: 800, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd' } }}>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell colSpan={8} align="center" sx={{ bgcolor: "#f0f9ff", color: COLORS.accentBlue, border: '1px solid #ddd' }}>Chemical Elements (%)</TableCell>
-                              <TableCell sx={{ width: 20, border: 'none', bgcolor: 'transparent' }}></TableCell>
-                              <TableCell colSpan={3} align="center" sx={{ bgcolor: "#fff7ed", color: COLORS.secondary, border: '1px solid #ddd' }}>Microstructure</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              {["C", "Si", "Mn", "P", "S", "Mg", "Cr", "Cu"].map(h => (
-                                <TableCell
-                                  key={h}
-                                  align="center"
-                                  sx={{
-                                    backgroundColor: '#f1f5f9',
-                                    color: 'black',
-                                    fontWeight: 600,
-                                    border: '1px solid #ddd'
-                                  }}
-                                >
-                                  {h}
-                                </TableCell>
-                              ))}
-                              <TableCell sx={{ border: 'none' }}></TableCell>
-                              {["Nodularity", "Pearlite", "Carbide"].map(h => (
-                                <TableCell
-                                  key={h}
-                                  align="center"
-                                  sx={{
-                                    backgroundColor: '#f1f5f9',
-                                    color: 'black',
-                                    fontWeight: 600,
-                                    border: '1px solid #ddd'
-                                  }}
-                                >
-                                  {h}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            <TableRow>
-                              {["c", "si", "mn", "p", "s", "mg", "cr", "cu"].map((key) => (
-                                <TableCell key={key} align="center">
-                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                    {data?.chemical_composition?.[key] || data?.chemical_composition?.[key.toUpperCase()] || '-'}
-                                  </Typography>
-                                </TableCell>
-                              ))}
-                              <TableCell sx={{ border: 'none' }}></TableCell>
-                              {["nodularity", "pearlite", "carbide"].map((key) => (
-                                <TableCell key={key} align="center">
-                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                    {data?.micro_structure?.[key] || '-'}
-                                  </Typography>
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </Box>
-                    </Paper>
-                  </Grid>
+                        <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
+                          <Table size="small" sx={{ minWidth: 800, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd' } }}>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell colSpan={8} align="center" sx={{ bgcolor: "#f0f9ff", color: COLORS.accentBlue, border: '1px solid #ddd' }}>Chemical Elements (%)</TableCell>
+                                <TableCell sx={{ width: 20, border: 'none', bgcolor: 'transparent' }}></TableCell>
+                                <TableCell colSpan={3} align="center" sx={{ bgcolor: "#fff7ed", color: COLORS.secondary, border: '1px solid #ddd' }}>Microstructure</TableCell>
+                              </TableRow>
+                              <TableRow>
+                                {["C", "Si", "Mn", "P", "S", "Mg", "Cr", "Cu"].map(h => (
+                                  <TableCell
+                                    key={h}
+                                    align="center"
+                                    sx={{
+                                      backgroundColor: '#f1f5f9',
+                                      color: 'black',
+                                      fontWeight: 600,
+                                      border: '1px solid #ddd'
+                                    }}
+                                  >
+                                    {h}
+                                  </TableCell>
+                                ))}
+                                <TableCell sx={{ border: 'none' }}></TableCell>
+                                {["Nodularity", "Pearlite", "Carbide"].map(h => (
+                                  <TableCell
+                                    key={h}
+                                    align="center"
+                                    sx={{
+                                      backgroundColor: '#f1f5f9',
+                                      color: 'black',
+                                      fontWeight: 600,
+                                      border: '1px solid #ddd'
+                                    }}
+                                  >
+                                    {h}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              <TableRow>
+                                {["c", "si", "mn", "p", "s", "mg", "cr", "cu"].map((key) => (
+                                  <TableCell key={key} align="center">
+                                    <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                      {data?.chemical_composition?.[key] || data?.chemical_composition?.[key.toUpperCase()] || '-'}
+                                    </Typography>
+                                  </TableCell>
+                                ))}
+                                <TableCell sx={{ border: 'none' }}></TableCell>
+                                {["nodularity", "pearlite", "carbide"].map((key) => (
+                                  <TableCell key={key} align="center">
+                                    <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                      {data?.micro_structure?.[key] || '-'}
+                                    </Typography>
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Paper>
+                    </Grid>
                   )}
 
                   {/* Mechanical Properties & NDT */}
                   {data && (
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
-                      <SectionHeader icon={<ConstructionIcon />} title="Mechanical Properties & NDT" color={COLORS.secondary} />
-                      <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
-                        <Table size="small" sx={{ minWidth: 900, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd' } }}>
-                          <TableHead>
-                            <TableRow>
-                              {["Tensile (MPa)", "Yield (MPa)", "Elongation (%)", "Impact Cold", "Impact Room", "Hardness (Surf)", "Hardness (Core)", "X-Ray Grade", "MPI"].map(h => (
-                                <TableCell
-                                  key={h}
-                                  align="center"
-                                  sx={{
-                                    backgroundColor: '#f1f5f9',
-                                    color: 'black',
-                                    fontWeight: 600,
-                                    border: '1px solid #ddd'
-                                  }}
-                                >
-                                  {h}
+                        <SectionHeader icon={<ConstructionIcon />} title="Mechanical Properties & NDT" color={COLORS.secondary} />
+                        <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
+                          <Table size="small" sx={{ minWidth: 900, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd' } }}>
+                            <TableHead>
+                              <TableRow>
+                                {["Tensile (MPa)", "Yield (MPa)", "Elongation (%)", "Impact Cold", "Impact Room", "Hardness (Surf)", "Hardness (Core)", "X-Ray Grade", "MPI"].map(h => (
+                                  <TableCell
+                                    key={h}
+                                    align="center"
+                                    sx={{
+                                      backgroundColor: '#f1f5f9',
+                                      color: 'black',
+                                      fontWeight: 600,
+                                      border: '1px solid #ddd'
+                                    }}
+                                  >
+                                    {h}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              <TableRow>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.tensile?.tensileStrength || '-'}
+                                  </Typography>
                                 </TableCell>
-                              ))}
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.tensile?.tensileStrength || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.tensile?.yieldStrength || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.tensile?.elongation || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.tensile?.impactCold || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.tensile?.impactRoom || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.hardness?.surface || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.hardness?.core || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.xray || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align="center">
-                                <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
-                                  {data?.mpi || '-'}
-                                </Typography>
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </Box>
-                    </Paper>
-                  </Grid>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.tensile?.yieldStrength || '-'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.tensile?.elongation || '-'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.tensile?.impactCold || '-'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.tensile?.impactRoom || '-'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.hardness?.surface || '-'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.hardness?.core || '-'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.xray || '-'}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="body2" fontWeight="500" sx={{ fontFamily: 'Roboto Mono' }}>
+                                    {data?.mpi || '-'}
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Paper>
+                    </Grid>
                   )}
                 </Grid>
 
@@ -379,207 +384,207 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
                   <>
                     {/* Sampling Details Table */}
                     <Paper sx={{ overflowX: "auto", p: 2, mb: 3 }}>
-                    <Table size="small" sx={{ minWidth: 900 }}>
-                      <TableHead>
-                        <TableRow>
-                          {[
-                            "Date of Sampling",
-                            "No. of Moulds",
-                            "DISA / FOUNDRY-A",
-                            "Reason For Sampling",
-                            "Sample Traceability",
-                            "Pattern Data Sheet",
-                          ].map((head) => (
-                            <TableCell
-                              key={head}
-                              align="center"
-                              sx={{
-                                backgroundColor: '#f1f5f9',
-                                color: 'black',
-                                fontWeight: 600,
-                                borderBottom: `1px solid ${COLORS.headerBg}`
-                              }}
-                            >
-                              {head}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell align="center">
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={data.date_of_sampling || '-'}
-                              InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={data.no_of_moulds || '-'}
-                              InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={data.disa || '-'}
-                              InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={data.reason_for_sampling || '-'}
-                              InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <TextField
-                              fullWidth
-                              size="small"
-                              value={data.sample_traceability || '-'}
-                              InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-                              {(data.pattern_data_sheet_files || []).length > 0 ? (
-                                (data.pattern_data_sheet_files || []).map((f, i) => (
-                                  <Chip key={i} label={f.name} size="small" />
-                                ))
-                              ) : (
-                                <Typography variant="body2" sx={{ color: COLORS.textSecondary, fontStyle: 'italic' }}>
-                                  No files
-                                </Typography>
-                              )}
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </Paper>
-
-                  {/* Tooling Modification */}
-                  <Paper sx={{ p: 3, mb: 3 }}>
-                    <SectionHeader
-                      icon={<ConstructionIcon />}
-                      title="Tooling Modification Done"
-                      color={COLORS.secondary}
-                    />
-                    <Grid container spacing={3}>
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
-                          Tooling Modification
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={3}
-                          variant="outlined"
-                          value={data.tooling_modification || '-'}
-                          InputProps={{ readOnly: true, sx: { bgcolor: '#f8fafc' } }}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
-                          Tooling Files
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', p: 2, border: `1px solid ${COLORS.border}`, borderRadius: 1, bgcolor: '#f8fafc', minHeight: 100 }}>
-                          {(data.tooling_files || []).length > 0 ? (
-                            (data.tooling_files || []).map((f, i) => (
-                              <Chip key={i} label={f.name} size="small" />
-                            ))
-                          ) : (
-                            <Typography variant="body2" sx={{ color: COLORS.textSecondary, fontStyle: 'italic' }}>
-                              No files attached
-                            </Typography>
-                          )}
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-
-                  {/* Mould Correction Details */}
-                  <Paper sx={{ p: 3, overflowX: "auto", mb: 3 }}>
-                    <SectionHeader icon={<EditIcon />} title="Mould Correction Details" color={COLORS.primary} />
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          {["Compressibility", "Squeeze Pressure", "Filler Size"].map(h => (
-                            <TableCell
-                              key={h}
-                              align="center"
-                              sx={{
-                                backgroundColor: '#f1f5f9',
-                                color: 'black',
-                                fontWeight: 600,
-                                borderBottom: `1px solid ${COLORS.headerBg}`
-                              }}
-                            >
-                              {h}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {(data.mould_correction || []).length > 0 ? (
-                          (data.mould_correction || []).map((row, i) => (
-                            <TableRow key={i}>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  value={row.compressibility || '-'}
-                                  InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  value={row.squeezePressure || '-'}
-                                  InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  value={row.fillerSize || '-'}
-                                  InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
+                      <Table size="small" sx={{ minWidth: 900 }}>
+                        <TableHead>
                           <TableRow>
-                            <TableCell colSpan={3} align="center" sx={{ color: COLORS.textSecondary, py: 3, fontStyle: 'italic' }}>
-                              No mould correction data available
+                            {[
+                              "Date of Sampling",
+                              "No. of Moulds",
+                              "DISA / FOUNDRY-A",
+                              "Reason For Sampling",
+                              "Sample Traceability",
+                              "Pattern Data Sheet",
+                            ].map((head) => (
+                              <TableCell
+                                key={head}
+                                align="center"
+                                sx={{
+                                  backgroundColor: '#f1f5f9',
+                                  color: 'black',
+                                  fontWeight: 600,
+                                  borderBottom: `1px solid ${COLORS.headerBg}`
+                                }}
+                              >
+                                {head}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell align="center">
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={data.date_of_sampling || '-'}
+                                InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={data.no_of_moulds || '-'}
+                                InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={data.disa || '-'}
+                                InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={data.reason_for_sampling || '-'}
+                                InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={data.sample_traceability || '-'}
+                                InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+                                {(data.pattern_data_sheet_files || []).length > 0 ? (
+                                  (data.pattern_data_sheet_files || []).map((f, i) => (
+                                    <Chip key={i} label={f.name} size="small" />
+                                  ))
+                                ) : (
+                                  <Typography variant="body2" sx={{ color: COLORS.textSecondary, fontStyle: 'italic' }}>
+                                    No files
+                                  </Typography>
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </Paper>
+                        </TableBody>
+                      </Table>
+                    </Paper>
 
-                  {/* Remarks */}
-                  <Paper sx={{ p: 3, mb: 3 }}>
-                    <SectionHeader icon={<EditIcon />} title="Remarks" color={COLORS.primary} />
-                    <TextField
-                      multiline
-                      rows={3}
-                      fullWidth
-                      variant="outlined"
-                      value={data.remarks || '-'}
-                      InputProps={{ readOnly: true, sx: { bgcolor: '#f8fafc' } }}
-                    />
-                  </Paper>
+                    {/* Tooling Modification */}
+                    <Paper sx={{ p: 3, mb: 3 }}>
+                      <SectionHeader
+                        icon={<ConstructionIcon />}
+                        title="Tooling Modification Done"
+                        color={COLORS.secondary}
+                      />
+                      <Grid container spacing={3}>
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
+                            Tooling Modification
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            multiline
+                            rows={3}
+                            variant="outlined"
+                            value={data.tooling_modification || '-'}
+                            InputProps={{ readOnly: true, sx: { bgcolor: '#f8fafc' } }}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
+                            Tooling Files
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', p: 2, border: `1px solid ${COLORS.border}`, borderRadius: 1, bgcolor: '#f8fafc', minHeight: 100 }}>
+                            {(data.tooling_files || []).length > 0 ? (
+                              (data.tooling_files || []).map((f, i) => (
+                                <Chip key={i} label={f.name} size="small" />
+                              ))
+                            ) : (
+                              <Typography variant="body2" sx={{ color: COLORS.textSecondary, fontStyle: 'italic' }}>
+                                No files attached
+                              </Typography>
+                            )}
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+
+                    {/* Mould Correction Details */}
+                    <Paper sx={{ p: 3, overflowX: "auto", mb: 3 }}>
+                      <SectionHeader icon={<EditIcon />} title="Mould Correction Details" color={COLORS.primary} />
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            {["Compressibility", "Squeeze Pressure", "Filler Size"].map(h => (
+                              <TableCell
+                                key={h}
+                                align="center"
+                                sx={{
+                                  backgroundColor: '#f1f5f9',
+                                  color: 'black',
+                                  fontWeight: 600,
+                                  borderBottom: `1px solid ${COLORS.headerBg}`
+                                }}
+                              >
+                                {h}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {(data.mould_correction || []).length > 0 ? (
+                            (data.mould_correction || []).map((row, i) => (
+                              <TableRow key={i}>
+                                <TableCell>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    value={row.compressibility || '-'}
+                                    InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    value={row.squeezePressure || '-'}
+                                    InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    value={row.fillerSize || '-'}
+                                    InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={3} align="center" sx={{ color: COLORS.textSecondary, py: 3, fontStyle: 'italic' }}>
+                                No mould correction data available
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </Paper>
+
+                    {/* Remarks */}
+                    <Paper sx={{ p: 3, mb: 3 }}>
+                      <SectionHeader icon={<EditIcon />} title="Remarks" color={COLORS.primary} />
+                      <TextField
+                        multiline
+                        rows={3}
+                        fullWidth
+                        variant="outlined"
+                        value={data.remarks || '-'}
+                        InputProps={{ readOnly: true, sx: { bgcolor: '#f8fafc' } }}
+                      />
+                    </Paper>
                   </>
                 )}
               </Collapse>

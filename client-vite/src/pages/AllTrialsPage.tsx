@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     Box,
     Paper,
@@ -15,7 +15,11 @@ import {
     TextField,
     InputAdornment,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
@@ -32,6 +36,7 @@ export default function AllTrialsPage() {
     const [trials, setTrials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedPatternCode, setSelectedPatternCode] = useState<string>('all');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -51,11 +56,22 @@ export default function AllTrialsPage() {
         fetchTrials();
     }, []);
 
-    const filteredTrials = trials.filter(trial =>
-        trial.trial_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        trial.part_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        trial.pattern_code?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const uniquePatternCodes = useMemo(() => {
+        const patternCodes = trials
+            .map(trial => trial.pattern_code)
+            .filter(Boolean);
+        return [...new Set(patternCodes)].sort();
+    }, [trials]);
+
+    const filteredTrials = trials.filter(trial => {
+        const matchesSearch = trial.trial_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            trial.part_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            trial.pattern_code?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesPatternCode = selectedPatternCode === 'all' || trial.pattern_code === selectedPatternCode;
+
+        return matchesSearch && matchesPatternCode;
+    });
 
     return (
         <ThemeProvider theme={appTheme}>
@@ -63,32 +79,50 @@ export default function AllTrialsPage() {
                 <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
                     <SaclHeader />
 
-                    <Box sx={{ 
-                        mt: { xs: 2, sm: 3, md: 4 }, 
-                        mb: { xs: 2, md: 3 }, 
-                        display: 'flex', 
+                    <Box sx={{
+                        mt: { xs: 2, sm: 3, md: 4 },
+                        mb: { xs: 2, md: 3 },
+                        display: 'flex',
                         flexDirection: { xs: 'column', sm: 'row' },
                         gap: 2,
-                        justifyContent: 'space-between', 
-                        alignItems: { xs: 'stretch', sm: 'center' } 
+                        justifyContent: 'space-between',
+                        alignItems: { xs: 'stretch', sm: 'center' }
                     }}>
                         <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}>
                             All Trials Repository
                         </Typography>
-                        <TextField
-                            placeholder="Search Trial ID, Part Name..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            size="small"
-                            sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 250, md: 300 } }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon color="action" />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+
+                            <FormControl size="small" sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 200 } }}>
+                                <InputLabel>Pattern Code</InputLabel>
+                                <Select
+                                    value={selectedPatternCode}
+                                    onChange={(e) => setSelectedPatternCode(e.target.value)}
+                                    label="Pattern Code"
+                                >
+                                    <MenuItem value="all">All Patterns</MenuItem>
+                                    {uniquePatternCodes.map((patternCode) => (
+                                        <MenuItem key={patternCode} value={patternCode}>
+                                            {patternCode}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <TextField
+                                placeholder="Search Trial ID, Part Name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                size="small"
+                                sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 250, md: 300 } }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon color="action" />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        </Box>
                     </Box>
 
                     <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 3, borderRadius: 2 }}>
@@ -136,7 +170,7 @@ export default function AllTrialsPage() {
                                                     <TableCell>
                                                         <Box sx={{
                                                             display: 'inline-block',
-                                                            px: { xs: 1, sm: 1.5 }, 
+                                                            px: { xs: 1, sm: 1.5 },
                                                             py: 0.5,
                                                             borderRadius: 5,
                                                             fontSize: { xs: '0.65rem', sm: '0.75rem' },

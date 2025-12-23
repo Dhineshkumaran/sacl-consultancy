@@ -1,5 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Grid,
+    Box,
+    Typography,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Collapse,
+    IconButton,
+    Alert,
+    Button
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CloseIcon from '@mui/icons-material/Close';
 import { masterListService } from '../../services/masterListService';
+import { useAlert } from '../../hooks/useAlert';
+import FileUploadSection from '../common/FileUploadSection';
+import ActionButtons from '../common/ActionButtons';
 
 interface AddMasterModalProps {
     isOpen: boolean;
@@ -7,12 +34,11 @@ interface AddMasterModalProps {
 }
 
 const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
+    const { alert, showAlert } = useAlert();
     const [formData, setFormData] = useState<any>({
         pattern_code: '',
         part_name: '',
         material_grade: '',
-
-        // Chemical Composition (JSON)
         chemical_composition: {
             C: '',
             Si: '',
@@ -26,24 +52,16 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
             Pearlite: '',
             Carbide: ''
         },
-
-        // Microstructure
         micro_structure: '',
-
-        // Mechanical Properties
         tensile_strength_min: '',
         yield_strength_min: '',
         elongation: '',
         impact_cold: '',
         impact_room: '',
-
-        // NDT Inspection
         hardness_surface: '',
         hardness_core: '',
         xray: '',
         mpi: '',
-
-        // Tooling / Pattern Data Sheet (added fields)
         tooling: {
             number_of_cavity_sp: '',
             number_of_cavity_pp: '',
@@ -73,18 +91,12 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
             estimated_casting_weight_pp: '',
             estimated_bunch_weight_sp: '',
             estimated_bunch_weight_pp: '',
-            yield_label: '', // for any special small cell "Yield :" text if needed
+            yield_label: '',
             remarks: ''
         }
     });
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState(false);
-
-    // New: attachments state to hold selected files
     const [attachments, setAttachments] = useState<File[]>([]);
-    
-    // State for toggling Tooling Data Sheet visibility
     const [showToolingTable, setShowToolingTable] = useState(false);
 
     const handleInputChange = (field: string, value: string) => {
@@ -114,74 +126,70 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
         }));
     };
 
-    // New: file selection handler (multiple)
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
-        if (files.length === 0) return;
+    const handleFilesChange = (files: File[]) => {
         setAttachments(prev => [...prev, ...files]);
-        // clear the input value so same file can be re-selected if needed
-        e.currentTarget.value = '';
     };
 
-    const removeAttachment = (index: number) => {
+    const handleFileRemove = (index: number) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
-    const testExactSQLPayload = async () => {
-        // This is the EXACT same structure as your working SQL insert
-        const exactSQLPayload = {
-            pattern_code: 'PC-' + Date.now(), // Make it unique
-            part_name: 'Gear Wheel',
-            material_grade: 'EN8',
-            chemical_composition: {
-                C: '0.40',
-                Mn: '0.70',
-                Nodularity: 'N/A'
-            },
-            micro_structure: 'Fine pearlite with ferrite',
-            tensile_strength_min: '550 MPa',
-            yield_strength_min: '420 MPa',
-            elongation: '12%',
-            impact_room: '20 J',
-            impact_cold: '18 J',
-            hardness_surface: '62 HRC',
-            hardness_core: '58 HRC',
-            xray: 'No internal defects',
-            mpi: 'No indications'
-        };
-
-        try {
-            const response = await masterListService.submitMasterListJson(exactSQLPayload);
-            const responseText = await response.text();
-
-            if (response.ok) {
-                return true;
-            } else {
-                return false;
+    const resetForm = () => {
+        setFormData({
+            pattern_code: '',
+            part_name: '',
+            material_grade: '',
+            chemical_composition: { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' },
+            micro_structure: '',
+            tensile_strength_min: '',
+            yield_strength_min: '',
+            elongation: '',
+            impact_cold: '',
+            impact_room: '',
+            hardness_surface: '',
+            hardness_core: '',
+            xray: '',
+            mpi: '',
+            tooling: {
+                number_of_cavity_sp: '',
+                number_of_cavity_pp: '',
+                pattern_plate_thickness_sp: '',
+                pattern_plate_thickness_pp: '',
+                cavity_identification_sp: '',
+                cavity_identification_pp: '',
+                pattern_plate_weight_sp: '',
+                pattern_plate_weight_pp: '',
+                pattern_material_sp: '',
+                pattern_material_pp: '',
+                crush_pin_height_sp: '',
+                crush_pin_height_pp: '',
+                core_weight_sp: '',
+                core_weight_pp: '',
+                calculated_casting_weight_sp: '',
+                calculated_casting_weight_pp: '',
+                core_mask_weight_sp: '',
+                core_mask_weight_pp: '',
+                calculated_punch_weight_sp: '',
+                calculated_punch_weight_pp: '',
+                core_mask_thickness_sp: '',
+                core_mask_thickness_pp: '',
+                calculated_yield_sp: '',
+                calculated_yield_pp: '',
+                estimated_casting_weight_sp: '',
+                estimated_casting_weight_pp: '',
+                estimated_bunch_weight_sp: '',
+                estimated_bunch_weight_pp: '',
+                yield_label: '',
+                remarks: ''
             }
-        } catch (err) {
-            console.error('❌ Error with exact SQL payload:', err);
-            return false;
-        }
+        });
+        setAttachments([]);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
         setLoading(true);
-        setError(null);
 
         try {
-            // First, test with the exact SQL payload to see if it works
-
-            const sqlTestSuccess = await testExactSQLPayload();
-
-            if (!sqlTestSuccess) {
-                throw new Error('Even the exact SQL payload fails! The issue is in the backend API validation.');
-            }
-
-
-
-            // Validate required fields
             if (!formData.pattern_code.trim()) {
                 throw new Error('Pattern Code is required');
             }
@@ -189,7 +197,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                 throw new Error('Part Name is required');
             }
 
-            // Prepare chemical composition - only include non-empty values
             const chemicalComposition: Record<string, string> = {};
             Object.entries(formData.chemical_composition).forEach(([element, value]) => {
                 if (typeof value === 'string' && value.trim() !== '') {
@@ -197,38 +204,51 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                 }
             });
 
-            // Create payload object (plain JS object)
+            const tensileFields = [
+                formData.tensile_strength_min.trim(),
+                formData.yield_strength_min.trim(),
+                formData.elongation.trim()
+            ].filter(v => v !== '');
+            const tensile = tensileFields.length > 0 ? tensileFields.join(' ') : null;
+
+            const impactFields = [
+                formData.impact_cold.trim() ? `Cold: ${formData.impact_cold.trim()}` : '',
+                formData.impact_room.trim() ? `Room: ${formData.impact_room.trim()}` : ''
+            ].filter(v => v !== '');
+            const impact = impactFields.length > 0 ? impactFields.join(' ') : null;
+
+            const hardnessFields = [
+                formData.hardness_surface.trim() ? `Surface: ${formData.hardness_surface.trim()}` : '',
+                formData.hardness_core.trim() ? `Core: ${formData.hardness_core.trim()}` : ''
+            ].filter(v => v !== '');
+            const hardness = hardnessFields.length > 0 ? hardnessFields.join(' ') : null;
+
+            const xrayFields = [
+                formData.xray.trim() ? `X-Ray: ${formData.xray.trim()}` : '',
+                formData.mpi.trim() ? `MPI: ${formData.mpi.trim()}` : ''
+            ].filter(v => v !== '');
+            const xray = xrayFields.length > 0 ? xrayFields.join(' • ') : null;
+
             const payloadObj: Record<string, any> = {
                 pattern_code: formData.pattern_code.trim(),
                 part_name: formData.part_name.trim(),
                 material_grade: formData.material_grade.trim() || null,
                 chemical_composition: Object.keys(chemicalComposition).length > 0 ? chemicalComposition : null,
                 micro_structure: formData.micro_structure.trim() || null,
-                tensile_strength_min: formData.tensile_strength_min.trim() || null,
-                yield_strength_min: formData.yield_strength_min.trim() || null,
-                elongation: formData.elongation.trim() || null,
-                impact_cold: formData.impact_cold.trim() || null,
-                impact_room: formData.impact_room.trim() || null,
-                hardness_surface: formData.hardness_surface.trim() || null,
-                hardness_core: formData.hardness_core.trim() || null,
-                xray: formData.xray.trim() || null,
-                mpi: formData.mpi.trim() || null,
-                tooling: formData.tooling || null // include tooling block
+                tensile: tensile,
+                impact: impact,
+                hardness: hardness,
+                xray: xray
             };
 
-
-
             let response: Response;
-            // If attachments present, send as FormData
             if (attachments.length > 0) {
                 response = await masterListService.submitMasterListFormData(payloadObj, attachments);
             } else {
-                // No attachments -> send JSON as before
                 response = await masterListService.submitMasterListJson(payloadObj);
             }
 
             const responseText = await response.text();
-
 
             if (!response.ok) {
                 let errorMessage = `Server error: ${response.status}`;
@@ -239,891 +259,420 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                     errorMessage = responseText || errorMessage;
                 }
 
-                if (errorMessage.includes('Missing required fields') && sqlTestSuccess) {
-                    errorMessage += '\n\n💡 The exact SQL payload works but form data fails. Check backend validation rules.';
-                }
-
                 throw new Error(errorMessage);
             }
 
-            setSuccess(true);
+            showAlert('success', 'Successfully added to master list!');
             setTimeout(() => {
                 onClose();
-                setSuccess(false);
-                // Reset form and attachments
-                setFormData({
-                    pattern_code: '',
-                    part_name: '',
-                    material_grade: '',
-                    chemical_composition: { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' },
-                    micro_structure: '',
-                    tensile_strength_min: '',
-                    yield_strength_min: '',
-                    elongation: '',
-                    impact_cold: '',
-                    impact_room: '',
-                    hardness_surface: '',
-                    hardness_core: '',
-                    xray: '',
-                    mpi: '',
-                    tooling: {
-                        number_of_cavity_sp: '',
-                        number_of_cavity_pp: '',
-                        pattern_plate_thickness_sp: '',
-                        pattern_plate_thickness_pp: '',
-                        cavity_identification_sp: '',
-                        cavity_identification_pp: '',
-                        pattern_plate_weight_sp: '',
-                        pattern_plate_weight_pp: '',
-                        pattern_material_sp: '',
-                        pattern_material_pp: '',
-                        crush_pin_height_sp: '',
-                        crush_pin_height_pp: '',
-                        core_weight_sp: '',
-                        core_weight_pp: '',
-                        calculated_casting_weight_sp: '',
-                        calculated_casting_weight_pp: '',
-                        core_mask_weight_sp: '',
-                        core_mask_weight_pp: '',
-                        calculated_punch_weight_sp: '',
-                        calculated_punch_weight_pp: '',
-                        core_mask_thickness_sp: '',
-                        core_mask_thickness_pp: '',
-                        calculated_yield_sp: '',
-                        calculated_yield_pp: '',
-                        estimated_casting_weight_sp: '',
-                        estimated_casting_weight_pp: '',
-                        estimated_bunch_weight_sp: '',
-                        estimated_bunch_weight_pp: '',
-                        yield_label: '',
-                        remarks: ''
-                    }
-                });
-                setAttachments([]);
+                resetForm();
             }, 2000);
 
         } catch (err) {
-            console.error('❌ Error submitting form:', err);
-            setError(err instanceof Error ? err.message : 'An error occurred while submitting the form');
+            console.error('Error submitting form:', err);
+            showAlert('error', err instanceof Error ? err.message : 'An error occurred while submitting the form');
         } finally {
             setLoading(false);
         }
     };
 
-    // Reset form when modal opens
     useEffect(() => {
         if (isOpen) {
-            setFormData({
-                pattern_code: '',
-                part_name: '',
-                material_grade: '',
-                chemical_composition: { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' },
-                micro_structure: '',
-                tensile_strength_min: '',
-                yield_strength_min: '',
-                elongation: '',
-                impact_cold: '',
-                impact_room: '',
-                hardness_surface: '',
-                hardness_core: '',
-                xray: '',
-                mpi: '',
-                tooling: {
-                    number_of_cavity_sp: '',
-                    number_of_cavity_pp: '',
-                    pattern_plate_thickness_sp: '',
-                    pattern_plate_thickness_pp: '',
-                    cavity_identification_sp: '',
-                    cavity_identification_pp: '',
-                    pattern_plate_weight_sp: '',
-                    pattern_plate_weight_pp: '',
-                    pattern_material_sp: '',
-                    pattern_material_pp: '',
-                    crush_pin_height_sp: '',
-                    crush_pin_height_pp: '',
-                    core_weight_sp: '',
-                    core_weight_pp: '',
-                    calculated_casting_weight_sp: '',
-                    calculated_casting_weight_pp: '',
-                    core_mask_weight_sp: '',
-                    core_mask_weight_pp: '',
-                    calculated_punch_weight_sp: '',
-                    calculated_punch_weight_pp: '',
-                    core_mask_thickness_sp: '',
-                    core_mask_thickness_pp: '',
-                    calculated_yield_sp: '',
-                    calculated_yield_pp: '',
-                    estimated_casting_weight_sp: '',
-                    estimated_casting_weight_pp: '',
-                    estimated_bunch_weight_sp: '',
-                    estimated_bunch_weight_pp: '',
-                    yield_label: '',
-                    remarks: ''
-                }
-            });
-            setError(null);
-            setSuccess(false);
-            // Reset attachments as well
-            setAttachments([]);
+            resetForm();
         }
     }, [isOpen]);
 
-    if (!isOpen) return null;
+    const chemicalElements = ['C', 'Si', 'Mn', 'P', 'S', 'Mg', 'Cr', 'Cu', 'Nodularity', 'Pearlite', 'Carbide'];
+
+    const toolingRows = [
+        {
+            left: "Number of cavity in pattern",
+            right: "Pattern plate thickness in mm",
+            fieldLeft: "number_of_cavity",
+            sp: "number_of_cavity_sp",
+            pp: "number_of_cavity_pp"
+        },
+        {
+            left: "Cavity identification number",
+            right: "Pattern plate weight in kgs",
+            fieldLeft: "cavity_identification",
+            sp: "cavity_identification_sp",
+            pp: "cavity_identification_pp"
+        },
+        {
+            left: "Pattern material",
+            right: "Crush pin height in mm",
+            fieldLeft: "pattern_material",
+            sp: "pattern_material_sp",
+            pp: "pattern_material_pp"
+        },
+        {
+            left: "Core weight in kgs",
+            right: "Calculated casting weight in kgs",
+            fieldLeft: "core_weight",
+            sp: "core_weight_sp",
+            pp: "core_weight_pp"
+        },
+        {
+            left: "Core mask weight in kgs",
+            right: "Calculated punch weight in kgs",
+            fieldLeft: "core_mask_weight",
+            sp: "core_mask_weight_sp",
+            pp: "core_mask_weight_pp"
+        },
+        {
+            left: "Core mask thickness in mm",
+            right: "Calculated Yield in percentage",
+            fieldLeft: "core_mask_thickness",
+            sp: "core_mask_thickness_sp",
+            pp: "core_mask_thickness_pp"
+        },
+        {
+            left: "Estimated casting weight",
+            right: "Estimated Bunch weight",
+            fieldLeft: "estimated_casting_weight",
+            sp: "estimated_casting_weight_sp",
+            pp: "estimated_casting_weight_pp",
+            isYieldRow: true
+        }
+    ];
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000
-        }} onClick={onClose}>
-            <div style={{
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                padding: '20px',
-                width: '95%',
-                maxWidth: '1200px',
-                maxHeight: '90vh',
-                overflow: 'auto',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-            }} onClick={(e) => e.stopPropagation()}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px',
-                    borderBottom: '1px solid #e0e0e0',
-                    paddingBottom: '15px'
-                }}>
-                    <h3 style={{ margin: 0, color: '#333', fontWeight: 700 }}>Add to Master List</h3>
-                    <button
-                        onClick={onClose}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '18px',
-                            cursor: 'pointer',
-                            color: '#666'
-                        }}
-                    >
-                        ×
-                    </button>
-                </div>
+        <Dialog
+            open={isOpen}
+            onClose={onClose}
+            maxWidth="lg"
+            fullWidth
+            PaperProps={{ sx: { maxHeight: '90vh' } }}
+        >
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+                <Typography variant="h6" fontWeight={700}>Add to Master List</Typography>
+                <IconButton onClick={onClose} size="small">
+                    <CloseIcon />
+                </IconButton>
+            </DialogTitle>
 
-                {error && (
-                    <div style={{
-                        padding: '12px',
-                        backgroundColor: '#f8d7da',
-                        color: '#721c24',
-                        borderRadius: '4px',
-                        marginBottom: '15px',
-                        fontWeight: 500,
-                        border: '1px solid #f5c6cb',
-                        fontSize: '14px',
-                        whiteSpace: 'pre-wrap'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>❌</span>
-                            <span style={{ flex: 1 }}>{error}</span>
-                        </div>
-                    </div>
+            <DialogContent dividers>
+                {alert && (
+                    <Alert severity={alert.severity} sx={{ mb: 2 }}>
+                        {alert.message}
+                    </Alert>
                 )}
 
-                {success && (
-                    <div style={{
-                        padding: '12px',
-                        backgroundColor: '#d4edda',
-                        color: '#155724',
-                        borderRadius: '4px',
-                        marginBottom: '15px',
-                        fontWeight: 500,
-                        border: '1px solid #c3e6cb',
-                        fontSize: '14px'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>✅</span>
-                            <span>Successfully added to master list!</span>
-                        </div>
-                    </div>
-                )}
+                <Box component="form" noValidate>
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mt: 1 }}>
+                        Basic Information
+                    </Typography>
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                required
+                                label="Pattern Code"
+                                value={formData.pattern_code}
+                                onChange={(e) => handleInputChange('pattern_code', e.target.value)}
+                                placeholder="e.g., PC-001"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                required
+                                label="Part Name"
+                                value={formData.part_name}
+                                onChange={(e) => handleInputChange('part_name', e.target.value)}
+                                placeholder="e.g., Gear Wheel"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Material Grade"
+                                value={formData.material_grade}
+                                onChange={(e) => handleInputChange('material_grade', e.target.value)}
+                                placeholder="e.g., EN8"
+                                size="small"
+                            />
+                        </Grid>
+                    </Grid>
 
-                <form onSubmit={handleSubmit}>
-                    {/* Basic Information */}
-                    <div style={{ marginBottom: '20px' }}>
-                        <h4 style={{ marginBottom: '15px', color: '#333' }}>Basic Information</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>
-                                    Pattern Code *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.pattern_code}
-                                    onChange={(e) => handleInputChange('pattern_code', e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        backgroundColor: '#fafafa'
-                                    }}
-                                    placeholder="e.g., PC-001"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>
-                                    Part Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.part_name}
-                                    onChange={(e) => handleInputChange('part_name', e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        backgroundColor: '#fafafa'
-                                    }}
-                                    placeholder="e.g., Gear Wheel"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>
-                                    Material Grade
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.material_grade}
-                                    onChange={(e) => handleInputChange('material_grade', e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        backgroundColor: '#fafafa'
-                                    }}
-                                    placeholder="e.g., EN8"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                        Chemical Composition
+                    </Typography>
+                    <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow sx={{ bgcolor: 'primary.main' }}>
+                                    {chemicalElements.map((element) => (
+                                        <TableCell key={element} align="center" sx={{ color: 'white', fontWeight: 700 }}>
+                                            {element}%
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                <TableRow>
+                                    {chemicalElements.map((element) => (
+                                        <TableCell key={element} align="center" sx={{ p: 0.5 }}>
+                                            <TextField
+                                                value={formData.chemical_composition[element]}
+                                                onChange={(e) => handleChemicalChange(element, e.target.value)}
+                                                placeholder="--"
+                                                size="small"
+                                                sx={{ '& .MuiInputBase-input': { textAlign: 'center', p: 1 } }}
+                                            />
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-                    {/* Chemical Composition Table */}
-                    <div style={{ marginBottom: '20px' }}>
-                        <h4 style={{ marginBottom: '15px', color: '#333' }}>Chemical Composition</h4>
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: '#f8f9fa' }}>
-                                <thead>
-                                    <tr style={{ backgroundColor: '#2950bbff', color: 'white' }}>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>C%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Si%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Mn%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>P%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>S%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Mg%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Cr%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Cu%</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Nodularity</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Pearlite</th>
-                                        <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>Carbide</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        {['C', 'Si', 'Mn', 'P', 'S', 'Mg', 'Cr', 'Cu', 'Nodularity', 'Pearlite', 'Carbide'].map((element) => (
-                                            <td key={element} style={{ padding: '8px', textAlign: 'center' }}>
-                                                <input
-                                                    type="text"
-                                                    value={formData.chemical_composition[element as keyof typeof formData.chemical_composition]}
-                                                    onChange={(e) => handleChemicalChange(element, e.target.value)}
-                                                    style={{
-                                                        width: '80%',
-                                                        padding: '8px',
-                                                        border: '1px solid #ddd',
-                                                        borderRadius: '4px',
-                                                        textAlign: 'center',
-                                                        backgroundColor: 'white'
-                                                    }}
-                                                    placeholder="--"
-                                                />
-                                            </td>
-                                        ))}
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Additional Properties */}
-                    <div style={{ marginBottom: '20px' }}>
-                        <h4 style={{ marginBottom: '15px', color: '#333' }}>Material Properties</h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Micro Structure</label>
-                                <textarea
-                                    value={formData.micro_structure}
-                                    onChange={(e) => handleInputChange('micro_structure', e.target.value)}
-                                    rows={3}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid #ddd',
-                                        borderRadius: '4px',
-                                        fontSize: '14px',
-                                        resize: 'vertical',
-                                        backgroundColor: '#fafafa'
-                                    }}
-                                    placeholder="e.g., Fine pearlite with ferrite"
-                                />
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Tensile Strength (Min)</label>
-                                    <input
-                                        type="text"
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                        Material Properties
+                    </Typography>
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                multiline
+                                rows={3}
+                                label="Micro Structure"
+                                value={formData.micro_structure}
+                                onChange={(e) => handleInputChange('micro_structure', e.target.value)}
+                                placeholder="e.g., Fine pearlite with ferrite"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <Grid container spacing={1}>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        label="Tensile Strength (Min)"
                                         value={formData.tensile_strength_min}
                                         onChange={(e) => handleInputChange('tensile_strength_min', e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
                                         placeholder="e.g., 550 MPa"
+                                        size="small"
                                     />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Yield Strength (Min)</label>
-                                    <input
-                                        type="text"
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        label="Yield Strength (Min)"
                                         value={formData.yield_strength_min}
                                         onChange={(e) => handleInputChange('yield_strength_min', e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
                                         placeholder="e.g., 420 MPa"
+                                        size="small"
                                     />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Elongation</label>
-                                    <input
-                                        type="text"
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        label="Elongation"
                                         value={formData.elongation}
                                         onChange={(e) => handleInputChange('elongation', e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
                                         placeholder="e.g., 12%"
+                                        size="small"
                                     />
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Impact (Cold)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.impact_cold}
-                                        onChange={(e) => handleInputChange('impact_cold', e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
-                                        placeholder="e.g., 18 J"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Impact (Room)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.impact_room}
-                                        onChange={(e) => handleInputChange('impact_room', e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
-                                        placeholder="e.g., 20 J"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Hardness (Surface)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.hardness_surface}
-                                        onChange={(e) => handleInputChange('hardness_surface', e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
-                                        placeholder="e.g., 62 HRC"
-                                    />
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>Hardness (Core)</label>
-                                    <input
-                                        type="text"
-                                        value={formData.hardness_core}
-                                        onChange={(e) => handleInputChange('hardness_core', e.target.value)}
-                                        style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', backgroundColor: '#fafafa' }}
-                                        placeholder="e.g., 58 HRC"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>X-Ray</label>
-                                    <input
-                                        type="text"
-                                        value={formData.xray}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            // Check if MPI is included
-                                            const mpiMatch = value.match(/MPI\s*[:\-]\s*(.*)$/i);
-
-                                            if (mpiMatch) {
-                                                // Extract MPI value
-                                                const mpi = mpiMatch[1].trim();
-
-                                                // Extract X-Ray part before MPI
-                                                const xrayValue = value
-                                                    .replace(mpiMatch[0], "")  // remove "MPI: ..."
-                                                    .replace(/•$/, "")         // remove trailing dot if exists
-                                                    .trim();
-
-                                                // Update both fields
-                                                handleInputChange("xray", xrayValue);
-                                                handleInputChange("mpi", mpi);
-                                            } else {
-                                                // Standard X-ray update
-                                                handleInputChange("xray", value);
-                                            }
-                                        }}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '4px',
-                                            fontSize: '14px',
-                                            backgroundColor: '#fafafa'
-                                        }}
-                                        placeholder="e.g., No internal defects"
-                                    />
-                                </div>
-
-
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontWeight: 500 }}>MPI</label>
-                                    <input
-                                        type="text"
-                                        value={formData.mpi}
-                                        onChange={(e) => handleInputChange('mpi', e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '4px',
-                                            fontSize: '14px',
-                                            backgroundColor: '#fafafa'
-                                        }}
-                                        placeholder="e.g., No indications"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* New: Attachments Section */}
-                    <div style={{
-                        marginBottom: '20px',
-                        backgroundColor: '#f0f0f0',
-                        padding: '20px',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}>
-                        <h4 style={{ marginBottom: '15px', color: '#333', fontWeight: 600 }}>
-                            Attachment
-                        </h4>
-
-                        {/* Custom Styled File Upload Button */}
-                        <label
-                            style={{
-                                display: 'inline-block',
-                                padding: '12px 18px',
-                                backgroundColor: '#007bff',
-                                color: 'white',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: 500,
-                                marginBottom: '15px',
-                                transition: 'background-color 0.2s',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0069d9'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#007bff'; }}
-                        >
-                            📎 Choose Files
-
-                            <input
-                                type="file"
-                                accept=".pdf,image/*"
-                                multiple
-                                onChange={handleFileChange}
-                                style={{ display: 'none' }}
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Impact (Cold)"
+                                value={formData.impact_cold}
+                                onChange={(e) => handleInputChange('impact_cold', e.target.value)}
+                                placeholder="e.g., 18 J"
+                                size="small"
                             />
-                        </label>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Impact (Room)"
+                                value={formData.impact_room}
+                                onChange={(e) => handleInputChange('impact_room', e.target.value)}
+                                placeholder="e.g., 20 J"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Hardness (Surface)"
+                                value={formData.hardness_surface}
+                                onChange={(e) => handleInputChange('hardness_surface', e.target.value)}
+                                placeholder="e.g., 62 HRC"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Hardness (Core)"
+                                value={formData.hardness_core}
+                                onChange={(e) => handleInputChange('hardness_core', e.target.value)}
+                                placeholder="e.g., 58 HRC"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="X-Ray"
+                                value={formData.xray}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    const mpiMatch = value.match(/MPI\s*[:\-]\s*(.*)$/i);
 
-                        {/* File Preview */}
-                        {attachments.length > 0 && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                {attachments.map((file, idx) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            backgroundColor: '#ffffff',
-                                            padding: '12px 15px',
-                                            borderRadius: '6px',
-                                            border: '1px solid #e0e0e0',
-                                            transition: 'background-color 0.2s, box-shadow 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            const el = e.currentTarget;
-                                            el.style.backgroundColor = '#f7faff';
-                                            el.style.boxShadow = '0 3px 6px rgba(0,0,0,0.08)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            const el = e.currentTarget;
-                                            el.style.backgroundColor = '#ffffff';
-                                            el.style.boxShadow = 'none';
-                                        }}
-                                    >
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>
-                                                {file.name}
-                                            </div>
-                                            <div style={{ fontSize: 12, color: '#666' }}>
-                                                {Math.round(file.size / 1024)} KB
-                                            </div>
-                                        </div>
+                                    if (mpiMatch) {
+                                        const mpi = mpiMatch[1].trim();
+                                        const xrayValue = value
+                                            .replace(mpiMatch[0], "")
+                                            .replace(/•$/, "")
+                                            .trim();
 
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAttachment(idx)}
-                                            style={{
-                                                padding: '8px 14px',
-                                                backgroundColor: '#ff4d4d',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '6px',
-                                                cursor: 'pointer',
-                                                fontSize: '12px',
-                                                fontWeight: 500,
-                                                transition: 'background-color 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e63939'; }}
-                                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ff4d4d'; }}
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                        handleInputChange("xray", xrayValue);
+                                        handleInputChange("mpi", mpi);
+                                    } else {
+                                        handleInputChange("xray", value);
+                                    }
+                                }}
+                                placeholder="e.g., No internal defects"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="MPI"
+                                value={formData.mpi}
+                                onChange={(e) => handleInputChange('mpi', e.target.value)}
+                                placeholder="e.g., No indications"
+                                size="small"
+                            />
+                        </Grid>
+                    </Grid>
 
-                    {/* Tooling (Pattern) Data Sheet Table – FINAL FIX */}
-                    <div style={{
-                        marginBottom: '20px',
-                        backgroundColor: '#fff',
-                        padding: '12px',
-                        borderRadius: '6px',
-                        border: '1px solid #ddd',
-                        fontFamily: "'Poppins', sans-serif"
-                    }}>
-                        <button
-                            type="button"
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                        Attachments
+                    </Typography>
+                    <Box sx={{ mb: 3 }}>
+                        <FileUploadSection
+                            files={attachments}
+                            onFilesChange={handleFilesChange}
+                            onFileRemove={handleFileRemove}
+                            accept=".pdf,image/*"
+                            multiple
+                            label="Choose Files"
+                            showAlert={showAlert}
+                        />
+                    </Box>
+
+                    <Box sx={{ mb: 2 }}>
+                        <Button
+                            fullWidth
+                            variant="outlined"
                             onClick={() => setShowToolingTable(!showToolingTable)}
-                            style={{ 
-                                width: '100%',
-                                textAlign: 'center', 
-                                fontWeight: 600, 
-                                marginBottom: showToolingTable ? '12px' : '0', 
-                                fontSize: '14px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '10px',
-                                padding: '12px 20px',
-                                backgroundColor: '#2950bb',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '6px',
-                                transition: 'background-color 0.2s'
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#1e3a8a'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#2950bb'; }}
+                            endIcon={showToolingTable ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                         >
-                            <span style={{
-                                display: 'inline-block',
-                                transform: showToolingTable ? 'rotate(90deg)' : 'rotate(0deg)',
-                                transition: 'transform 0.2s'
-                            }}>▶</span>
-                            {showToolingTable ? 'Hide' : 'Show'} TOOLING ( PATTERN ) DATA SHEET Table
-                        </button>
+                            {showToolingTable ? 'Hide' : 'Show'} Tooling (Pattern) Data Sheet
+                        </Button>
+                    </Box>
 
-                        {showToolingTable && (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                                <thead>
-                                    <tr>
-                                        <th style={{ border: '1px solid #333', padding: '10px' }}>DESCRIPTION</th>
-                                        <th style={{ border: '1px solid #333', padding: '10px' }}>Value</th>
-                                        <th style={{ border: '1px solid #333', padding: '10px' }}> Description</th>
-                                        <th style={{ border: '1px solid #333', padding: '10px' }}>SP side pattern</th>
-                                        <th style={{ border: '1px solid #333', padding: '10px' }}>PP side pattern</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {[
-                                        {
-                                            left: "Number of cavity in pattern",
-                                            right: "Pattern plate thickness in mm",
-                                            fieldLeft: "number_of_cavity",
-                                            sp: "number_of_cavity_sp",
-                                            pp: "number_of_cavity_pp"
-                                        },
-                                        {
-                                            left: "Cavity identification number",
-                                            right: "Pattern plate weight in kgs",
-                                            fieldLeft: "cavity_identification",
-                                            sp: "cavity_identification_sp",
-                                            pp: "cavity_identification_pp"
-                                        },
-                                        {
-                                            left: "Pattern material",
-                                            right: "Crush pin height in mm",
-                                            fieldLeft: "pattern_material",
-                                            sp: "pattern_material_sp",
-                                            pp: "pattern_material_pp"
-                                        },
-                                        {
-                                            left: "Core weight in kgs",
-                                            right: "Calculated casting weight in kgs",
-                                            fieldLeft: "core_weight",
-                                            sp: "core_weight_sp",
-                                            pp: "core_weight_pp"
-                                        },
-                                        {
-                                            left: "Core mask weight in kgs",
-                                            right: "Calculated punch weight in kgs",
-                                            fieldLeft: "core_mask_weight",
-                                            sp: "core_mask_weight_sp",
-                                            pp: "core_mask_weight_pp"
-                                        },
-                                        {
-                                            left: "Core mask thickness in mm",
-                                            right: "Calculated Yield in percentage",
-                                            fieldLeft: "core_mask_thickness",
-                                            sp: "core_mask_thickness_sp",
-                                            pp: "core_mask_thickness_pp"
-                                        },
-                                        {
-                                            left: "Estimated casting weight",
-                                            right: "Estimated Bunch weight",
-                                            fieldLeft: "estimated_casting_weight",
-                                            sp: "estimated_casting_weight_sp",
-                                            pp: "estimated_casting_weight_pp",
-                                            isYieldRow: true
-                                        }
-                                    ].map((row: any, idx) => (
-                                        <tr key={idx}>
-
-                                            {/* LEFT label */}
-                                            <td style={{ border: "1px solid #333", padding: "10px" }}>
-                                                {row.left}
-                                            </td>
-
-                                            {/* Editable LEFT input */}
-                                            <td style={{ border: "1px solid #333", padding: "8px" }}>
-                                                <input
-                                                    type="text"
+                    <Collapse in={showToolingTable}>
+                        <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Value</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>SP Side Pattern</TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>PP Side Pattern</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {toolingRows.map((row, idx) => (
+                                        <TableRow key={idx}>
+                                            <TableCell>{row.left}</TableCell>
+                                            <TableCell sx={{ p: 0.5 }}>
+                                                <TextField
+                                                    fullWidth
                                                     value={formData.tooling[row.fieldLeft] || ""}
                                                     onChange={(e) => handleToolingChange(row.fieldLeft, e.target.value)}
-                                                    style={{
-                                                        width: "100%",
-                                                        padding: "8px",
-                                                        border: "1px solid #ddd",
-                                                        borderRadius: "4px",
-                                                        backgroundColor: "#fafafa"
-                                                    }}
+                                                    size="small"
                                                 />
-                                            </td>
-
-                                            {/* RIGHT LABEL */}
-                                            <td style={{ border: "1px solid #333", padding: "10px" }}>
-                                                {row.right}
-                                            </td>
-
-                                            {/* SP field */}
-                                            <td style={{ border: "1px solid #333", padding: "8px" }}>
-                                                <input
-                                                    type="text"
+                                            </TableCell>
+                                            <TableCell>{row.right}</TableCell>
+                                            <TableCell sx={{ p: 0.5 }}>
+                                                <TextField
+                                                    fullWidth
                                                     value={formData.tooling[row.sp] || ""}
                                                     onChange={(e) => handleToolingChange(row.sp, e.target.value)}
-                                                    style={{
-                                                        width: "100%",
-                                                        padding: "8px",
-                                                        border: "1px solid #ddd",
-                                                        borderRadius: "4px",
-                                                        backgroundColor: "#fafafa"
-                                                    }}
+                                                    size="small"
                                                 />
-                                            </td>
-
-                                            {/* PP field */}
-                                            <td style={{ border: "1px solid #333", padding: "8px" }}>
-                                                {/* If this is the special Yield row → show yield input */}
+                                            </TableCell>
+                                            <TableCell sx={{ p: 0.5 }}>
                                                 {row.isYieldRow ? (
-                                                    <div style={{ display: "flex", flexDirection: "column" }}>
-
-
-                                                        {/* Yield label + input */}
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                            <span style={{ fontWeight: 600 }}>Yield :</span>
-
-                                                            <input
-                                                                type="text"
-                                                                value={formData.tooling.yield_label || ""}
-                                                                onChange={(e) => handleToolingChange("yield_label", e.target.value)}
-                                                                placeholder="Enter yield"
-                                                                style={{
-                                                                    flex: 1,
-                                                                    padding: "8px",
-                                                                    border: "1px solid #ddd",
-                                                                    borderRadius: "4px",
-                                                                    backgroundColor: "#fafafa"
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    <Box display="flex" alignItems="center" gap={1}>
+                                                        <Typography variant="body2" fontWeight={600}>Yield:</Typography>
+                                                        <TextField
+                                                            fullWidth
+                                                            value={formData.tooling.yield_label || ""}
+                                                            onChange={(e) => handleToolingChange("yield_label", e.target.value)}
+                                                            placeholder="Enter yield"
+                                                            size="small"
+                                                        />
+                                                    </Box>
                                                 ) : (
-                                                    /* Normal PP input for all other rows */
-                                                    <input
-                                                        type="text"
+                                                    <TextField
+                                                        fullWidth
                                                         value={formData.tooling[row.pp] || ""}
                                                         onChange={(e) => handleToolingChange(row.pp, e.target.value)}
-                                                        style={{
-                                                            width: "100%",
-                                                            padding: "8px",
-                                                            border: "1px solid #ddd",
-                                                            borderRadius: "4px",
-                                                            backgroundColor: "#fafafa"
-                                                        }}
+                                                        size="small"
                                                     />
                                                 )}
-                                            </td>
-
-
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ))}
-
-                                    {/* Remarks */}
-                                    <tr>
-                                        <td colSpan={5} style={{ border: "1px solid #333", padding: "10px" }}>
-                                            <label style={{ fontWeight: 600 }}>Remarks:</label>
-                                            <textarea
+                                    <TableRow>
+                                        <TableCell colSpan={5}>
+                                            <Typography variant="body2" fontWeight={600} gutterBottom>Remarks:</Typography>
+                                            <TextField
+                                                fullWidth
+                                                multiline
+                                                rows={4}
                                                 value={formData.tooling.remarks || ""}
                                                 onChange={(e) => handleToolingChange("remarks", e.target.value)}
-                                                rows={4}
-                                                style={{
-                                                    width: "100%",
-                                                    marginTop: "6px",
-                                                    padding: "10px",
-                                                    border: "1px solid #ddd",
-                                                    borderRadius: "4px",
-                                                    backgroundColor: "#fafafa"
-                                                }}
+                                                size="small"
                                             />
-                                        </td>
-                                    </tr>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Collapse>
+                </Box>
+            </DialogContent>
 
-                                </tbody>
-                            </table>
-                        </div>
-                        )}
-                    </div>
-                    {/* Action Buttons */}
-                    <div
-                        style={{
-                            display: "flex",
-                            gap: "10px",
-                            justifyContent: "flex-end",
-                            marginTop: "20px",
-                            paddingTop: "20px",
-                            borderTop: "1px solid #ddd",
-                        }}
-                    >
-                        {/* Cancel Button */}
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            style={{
-                                padding: "12px 24px",
-                                backgroundColor: "#6c757d",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                transition: "background-color 0.2s",
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "#545b62";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "#6c757d";
-                            }}
-                        >
-                            Cancel
-                        </button>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            style={{
-                                padding: "12px 24px",
-                                backgroundColor: loading ? "#6c757d" : "#28a745",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "4px",
-                                cursor: loading ? "not-allowed" : "pointer",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                            }}
-                            onMouseEnter={(e) => {
-                                const target = e.currentTarget as HTMLButtonElement;
-                                if (!loading) target.style.backgroundColor = "#218838";
-                            }}
-                            onMouseLeave={(e) => {
-                                const target = e.currentTarget as HTMLButtonElement;
-                                target.style.backgroundColor = loading ? "#6c757d" : "#28a745";
-                            }}
-                        >
-                            {loading ? "Testing..." : "Debug & Submit"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={onClose} variant="outlined" disabled={loading}>
+                    Cancel
+                </Button>
+                <ActionButtons
+                    onSubmit={handleSubmit}
+                    loading={loading}
+                    submitLabel="Add to Master List"
+                    showReset={false}
+                    showSave={false}
+                />
+            </DialogActions>
+        </Dialog>
     );
 };
 
