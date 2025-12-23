@@ -364,7 +364,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                         Basic Information
                     </Typography>
                     <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 required
@@ -375,7 +375,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 required
@@ -386,7 +386,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 label="Material Grade"
@@ -434,7 +434,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                         Material Properties
                     </Typography>
                     <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 fullWidth
                                 multiline
@@ -446,9 +446,9 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Grid container spacing={1}>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <TextField
                                         fullWidth
                                         label="Tensile Strength (Min)"
@@ -458,7 +458,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                         size="small"
                                     />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <TextField
                                         fullWidth
                                         label="Yield Strength (Min)"
@@ -468,7 +468,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                         size="small"
                                     />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <TextField
                                         fullWidth
                                         label="Elongation"
@@ -480,7 +480,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 </Grid>
                             </Grid>
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 label="Impact (Cold)"
@@ -490,7 +490,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 label="Impact (Room)"
@@ -500,7 +500,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 label="Hardness (Surface)"
@@ -510,7 +510,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 label="Hardness (Core)"
@@ -520,7 +520,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 label="X-Ray"
@@ -546,7 +546,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <TextField
                                 fullWidth
                                 label="MPI"
