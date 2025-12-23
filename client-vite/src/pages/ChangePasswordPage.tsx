@@ -34,6 +34,9 @@ const validatePassword = (password: string): { isValid: boolean; errors: string[
   if (!/[0-9]/.test(password)) {
     errors.push('Password must contain digits');
   }
+  if (!/[^a-zA-Z0-9]/.test(password)) {
+    errors.push('Password must contain at least one special character');
+  }
 
   return { isValid: errors.length === 0, errors };
 };
@@ -41,12 +44,12 @@ const validatePassword = (password: string): { isValid: boolean; errors: string[
 // Password strength calculator
 const calculatePasswordStrength = (password: string): { strength: number; color: string; label: string } => {
   let strength = 0;
-  if (password.length >= 6) strength += 20;
-  if (password.length >= 8) strength += 20;
-  if (/[a-z]/.test(password)) strength += 15;
-  if (/[A-Z]/.test(password)) strength += 15;
-  if (/[0-9]/.test(password)) strength += 15;
-  if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
+  if (password.length >= 6) strength += 16;
+  if (password.length >= 8) strength += 17;
+  if (/[a-z]/.test(password)) strength += 17;
+  if (/[A-Z]/.test(password)) strength += 17;
+  if (/[0-9]/.test(password)) strength += 17;
+  if (/[^a-zA-Z0-9]/.test(password)) strength += 16;
 
   let color: string = COLORS.secondary;
   let label = 'Weak';
@@ -287,6 +290,19 @@ const ChangePasswordPage: React.FC = () => {
                       }}
                     >
                       {/[0-9]/.test(newPassword) ? '✓' : '○'} Contains digits
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: /[^a-zA-Z0-9]/.test(newPassword) ? COLORS.successText : COLORS.secondary,
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {/[^a-zA-Z0-9]/.test(newPassword) ? '✓' : '○'} Contains at least one special character
                     </Typography>
                   </Box>
                 </Box>
