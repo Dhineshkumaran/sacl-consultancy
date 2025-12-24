@@ -31,26 +31,18 @@ import ActionButtons from '../common/ActionButtons';
 interface AddMasterModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialData?: any;
+    onSuccess?: () => void;
 }
 
-const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
+const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initialData, onSuccess }) => {
     const { alert, showAlert } = useAlert();
     const [formData, setFormData] = useState<any>({
         pattern_code: '',
         part_name: '',
         material_grade: '',
         chemical_composition: {
-            C: '',
-            Si: '',
-            Mn: '',
-            P: '',
-            S: '',
-            Mg: '',
-            Cr: '',
-            Cu: '',
-            Nodularity: '',
-            Pearlite: '',
-            Carbide: ''
+            C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: ''
         },
         micro_structure: '',
         tensile_strength_min: '',
@@ -135,67 +127,124 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
     };
 
     const resetForm = () => {
-        setFormData({
-            pattern_code: '',
-            part_name: '',
-            material_grade: '',
-            chemical_composition: { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' },
-            micro_structure: '',
-            tensile_strength_min: '',
-            yield_strength_min: '',
-            elongation: '',
-            impact_cold: '',
-            impact_room: '',
-            hardness_surface: '',
-            hardness_core: '',
-            xray: '',
-            mpi: '',
-            tooling: {
-                number_of_cavity_sp: '',
-                number_of_cavity_pp: '',
-                pattern_plate_thickness_sp: '',
-                pattern_plate_thickness_pp: '',
-                cavity_identification_sp: '',
-                cavity_identification_pp: '',
-                pattern_plate_weight_sp: '',
-                pattern_plate_weight_pp: '',
-                pattern_material_sp: '',
-                pattern_material_pp: '',
-                crush_pin_height_sp: '',
-                crush_pin_height_pp: '',
-                core_weight_sp: '',
-                core_weight_pp: '',
-                calculated_casting_weight_sp: '',
-                calculated_casting_weight_pp: '',
-                core_mask_weight_sp: '',
-                core_mask_weight_pp: '',
-                calculated_punch_weight_sp: '',
-                calculated_punch_weight_pp: '',
-                core_mask_thickness_sp: '',
-                core_mask_thickness_pp: '',
-                calculated_yield_sp: '',
-                calculated_yield_pp: '',
-                estimated_casting_weight_sp: '',
-                estimated_casting_weight_pp: '',
-                estimated_bunch_weight_sp: '',
-                estimated_bunch_weight_pp: '',
-                yield_label: '',
-                remarks: ''
+        if (initialData) {
+            // Parse Logic
+            let chemComp = { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' };
+            try {
+                if (typeof initialData.chemical_composition === 'string') {
+                    chemComp = { ...chemComp, ...JSON.parse(initialData.chemical_composition) };
+                } else if (typeof initialData.chemical_composition === 'object') {
+                    chemComp = { ...chemComp, ...initialData.chemical_composition };
+                }
+            } catch (e) {
+                console.error("Error parsing chemical composition", e);
             }
-        });
-        setAttachments([]);
+
+            // Impact Parsing
+            let impactCold = '', impactRoom = '';
+            if (initialData.impact) {
+                const coldMatch = initialData.impact.match(/Cold:\s*(.*?)(?=\s*Room:|$)/i);
+                if (coldMatch) impactCold = coldMatch[1].trim();
+                const roomMatch = initialData.impact.match(/Room:\s*(.*?)$/i);
+                if (roomMatch) impactRoom = roomMatch[1].trim();
+            }
+
+            // Hardness Parsing
+            let hardSurf = '', hardCore = '';
+            if (initialData.hardness) {
+                const surfMatch = initialData.hardness.match(/Surface:\s*(.*?)(?=\s*Core:|$)/i);
+                if (surfMatch) hardSurf = surfMatch[1].trim();
+                const coreMatch = initialData.hardness.match(/Core:\s*(.*?)$/i);
+                if (coreMatch) hardCore = coreMatch[1].trim();
+            }
+
+            // Xray Parsing
+            let xrayVal = '', mpiVal = '';
+            if (initialData.xray) {
+                const parts = initialData.xray.split('•');
+                const xrayPart = parts.find((p: string) => p.trim().startsWith('X-Ray:'));
+                const mpiPart = parts.find((p: string) => p.trim().startsWith('MPI:'));
+                if (xrayPart) xrayVal = xrayPart.replace('X-Ray:', '').trim();
+                if (mpiPart) mpiVal = mpiPart.replace('MPI:', '').trim();
+                if (!xrayPart && !mpiPart && parts.length === 1) xrayVal = initialData.xray; // Fallback
+            }
+
+            setFormData({
+                pattern_code: initialData.pattern_code || '',
+                part_name: initialData.part_name || '',
+                material_grade: initialData.material_grade || '',
+                chemical_composition: chemComp,
+                micro_structure: initialData.micro_structure || '',
+                tensile_strength_min: initialData.tensile || '', // Fallback: put full string here
+                yield_strength_min: '',
+                elongation: '',
+                impact_cold: impactCold,
+                impact_room: impactRoom,
+                hardness_surface: hardSurf,
+                hardness_core: hardCore,
+                xray: xrayVal,
+                mpi: mpiVal,
+                tooling: initialData.tooling || { ...formData.tooling }
+            });
+        } else {
+            setFormData({
+                pattern_code: '',
+                part_name: '',
+                material_grade: '',
+                chemical_composition: { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' },
+                micro_structure: '',
+                tensile_strength_min: '',
+                yield_strength_min: '',
+                elongation: '',
+                impact_cold: '',
+                impact_room: '',
+                hardness_surface: '',
+                hardness_core: '',
+                xray: '',
+                mpi: '',
+                tooling: {
+                    number_of_cavity_sp: '',
+                    number_of_cavity_pp: '',
+                    pattern_plate_thickness_sp: '',
+                    pattern_plate_thickness_pp: '',
+                    cavity_identification_sp: '',
+                    cavity_identification_pp: '',
+                    pattern_plate_weight_sp: '',
+                    pattern_plate_weight_pp: '',
+                    pattern_material_sp: '',
+                    pattern_material_pp: '',
+                    crush_pin_height_sp: '',
+                    crush_pin_height_pp: '',
+                    core_weight_sp: '',
+                    core_weight_pp: '',
+                    calculated_casting_weight_sp: '',
+                    calculated_casting_weight_pp: '',
+                    core_mask_weight_sp: '',
+                    core_mask_weight_pp: '',
+                    calculated_punch_weight_sp: '',
+                    calculated_punch_weight_pp: '',
+                    core_mask_thickness_sp: '',
+                    core_mask_thickness_pp: '',
+                    calculated_yield_sp: '',
+                    calculated_yield_pp: '',
+                    estimated_casting_weight_sp: '',
+                    estimated_casting_weight_pp: '',
+                    estimated_bunch_weight_sp: '',
+                    estimated_bunch_weight_pp: '',
+                    yield_label: '',
+                    remarks: ''
+                }
+            });
+            setAttachments([]);
+        }
     };
 
     const handleSubmit = async () => {
         setLoading(true);
 
         try {
-            if (!formData.pattern_code.trim()) {
-                throw new Error('Pattern Code is required');
-            }
-            if (!formData.part_name.trim()) {
-                throw new Error('Part Name is required');
-            }
+            if (!formData.pattern_code.trim()) throw new Error('Pattern Code is required');
+            if (!formData.part_name.trim()) throw new Error('Part Name is required');
 
             const chemicalComposition: Record<string, string> = {};
             Object.entries(formData.chemical_composition).forEach(([element, value]) => {
@@ -242,10 +291,17 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
             };
 
             let response: Response;
-            if (attachments.length > 0) {
-                response = await masterListService.submitMasterListFormData(payloadObj, attachments);
+
+            if (initialData && initialData.id) {
+                // UPDATE MODE
+                response = await masterListService.updateMasterList(initialData.id, payloadObj);
             } else {
-                response = await masterListService.submitMasterListJson(payloadObj);
+                // CREATE MODE
+                if (attachments.length > 0) {
+                    response = await masterListService.submitMasterListFormData(payloadObj, attachments);
+                } else {
+                    response = await masterListService.submitMasterListJson(payloadObj);
+                }
             }
 
             const responseText = await response.text();
@@ -258,14 +314,14 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
                 } catch {
                     errorMessage = responseText || errorMessage;
                 }
-
                 throw new Error(errorMessage);
             }
 
-            showAlert('success', 'Successfully added to master list!');
+            showAlert('success', initialData ? 'Master list updated successfully!' : 'Successfully added to master list!');
             setTimeout(() => {
                 onClose();
                 resetForm();
+                if (onSuccess) onSuccess();
             }, 2000);
 
         } catch (err) {
@@ -280,7 +336,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose }) => {
         if (isOpen) {
             resetForm();
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     const chemicalElements = ['C', 'Si', 'Mn', 'P', 'S', 'Mg', 'Cr', 'Cu', 'Nodularity', 'Pearlite', 'Carbide'];
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AddUserModal from '../components/admin/AddUserModal';
 import AddMasterModal from '../components/admin/AddMasterModal';
 import UserManagement from '../components/admin/UserManagement';
+import MasterListTable from '../components/admin/MasterListTable';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/dashboard/Header';
 import NotificationModal from '../components/dashboard/NotificationModal';
@@ -17,8 +18,11 @@ const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [showUserDetails, setShowUserDetails] = useState(false);
+  const [showMasterList, setShowMasterList] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isAddMasterModalOpen, setIsAddMasterModalOpen] = useState(false);
+  const [editingMasterItem, setEditingMasterItem] = useState<any>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [stats, setStats] = useState<StatItem[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -82,6 +86,14 @@ const DashboardPage: React.FC = () => {
       <main className="dashboard-content">
         {showUserDetails ? (
           <UserManagement />
+        ) : showMasterList ? (
+          <MasterListTable
+            key={refreshKey}
+            onEdit={(item) => {
+              setEditingMasterItem(item);
+              setIsAddMasterModalOpen(true);
+            }}
+          />
         ) : (
           <>
             <WelcomeSection
@@ -94,7 +106,10 @@ const DashboardPage: React.FC = () => {
                 <>
                   <button
                     className="btn-add-master"
-                    onClick={() => setIsAddMasterModalOpen(true)}
+                    onClick={() => {
+                      setEditingMasterItem(null);
+                      setIsAddMasterModalOpen(true);
+                    }}
                     style={{
                       backgroundImage: 'none',
                       backgroundColor: '#28a745',
@@ -114,6 +129,28 @@ const DashboardPage: React.FC = () => {
                     Add to Master List
                   </button>
                   <button
+                    className="btn-view-master"
+                    onClick={() => setShowMasterList(true)}
+                    style={{
+                      backgroundImage: 'none',
+                      backgroundColor: '#17a2b8',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      fontSize: '14px',
+                      marginLeft: '10px',
+                      transition: 'background-color 0.2s',
+                      boxShadow: '0 2px 4px rgba(23, 162, 184, 0.2)'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#138496')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#17a2b8')}
+                  >
+                    View details in Master List
+                  </button>
+                  <button
                     className="btn-add-user"
                     onClick={() => setIsAddUserModalOpen(true)}
                     style={{
@@ -126,11 +163,9 @@ const DashboardPage: React.FC = () => {
                       cursor: 'pointer',
                       fontWeight: 500,
                       fontSize: '14px',
+                      marginLeft: '10px',
                       transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
                   >
                     Add User Profiles
                   </button>
@@ -160,7 +195,7 @@ const DashboardPage: React.FC = () => {
 
               <button
                 className="btn-view-trials"
-                onClick={() => window.location.href = '/trials'} // Using href for simpler nav outside current context if needed, or better use navigate() if possible but this is a quick edit
+                onClick={() => window.location.href = '/trials'}
                 style={{
                   backgroundImage: 'none',
                   backgroundColor: '#6f42c1',
@@ -192,10 +227,13 @@ const DashboardPage: React.FC = () => {
             )}
           </>
         )}
-        {showUserDetails && (
+        {(showUserDetails || showMasterList) && (
           <button
             className="btn-back"
-            onClick={() => setShowUserDetails(false)}
+            onClick={() => {
+              setShowUserDetails(false);
+              setShowMasterList(false);
+            }}
             style={{
               marginTop: '20px',
               backgroundColor: '#6c757d',
@@ -221,14 +259,20 @@ const DashboardPage: React.FC = () => {
         onClose={() => setIsAddUserModalOpen(false)}
         onUserCreated={() => {
           setShowUserDetails(true);
-
         }}
       />
 
       {/* Add Master List Modal */}
       <AddMasterModal
         isOpen={isAddMasterModalOpen}
-        onClose={() => setIsAddMasterModalOpen(false)}
+        onClose={() => {
+          setIsAddMasterModalOpen(false);
+          setEditingMasterItem(null);
+        }}
+        initialData={editingMasterItem}
+        onSuccess={() => {
+          setRefreshKey(prev => prev + 1);
+        }}
       />
 
       {/* Notification Modal */}

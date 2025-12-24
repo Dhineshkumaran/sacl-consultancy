@@ -19,11 +19,31 @@ export const masterListService = {
     return fetch(`${API_BASE}/master-list`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'multipart/form-data',
         'Authorization': localStorage.getItem('authToken') || ''
       },
       body: formData,
     });
   },
+
+  getAllMasterLists() {
+    return fetch(`${API_BASE}/master-list`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || ''
+      }
+    });
+  },
+
+  updateMasterList(id: string | number, payload: Record<string, unknown>) {
+    return fetch(`${API_BASE}/master-list/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || ''
+      },
+      body: JSON.stringify(payload)
+    });
+  }
 };
 
