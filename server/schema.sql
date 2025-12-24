@@ -221,6 +221,7 @@ CREATE TABLE department_progress (
     department_id INT NOT NULL,
     username VARCHAR(50) NOT NULL,
     completed_at DATETIME2 DEFAULT GETDATE(),
+    current_form TEXT,
     approval_status VARCHAR(20) NOT NULL DEFAULT 'pending',
     remarks NVARCHAR(MAX),
     CONSTRAINT chk_approval_status CHECK (approval_status IN ('pending', 'approved', 'rejected')),

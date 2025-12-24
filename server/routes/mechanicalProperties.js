@@ -5,12 +5,19 @@ import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
 import verifyToken from '../utils/verifyToken.js';
 
-router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
-    const response = await Client.query(
-        `SELECT * FROM mechanical_properties_final`
+router.get('/by-trial', verifyToken, asyncErrorHandler(async (req, res, next) => {
+    const { trial_id } = req.query;
+    if (!trial_id) {
+        throw new CustomError("Trial id is required.", 400);
+    }
+    const [rows] = await Client.query(
+        `SELECT * FROM mechanical_properties WHERE trial_id = ?`,
+        [trial_id]
     )
-    console.log(response[0]);
-    res.status(200).json({success:true, data:response[0]});
+    if (rows.length === 0) {
+        throw new CustomError("No mechanical properties found for the specified trial id.", 404);
+    }
+    res.status(200).json({ success: true, data: rows[0] });
 }))
 
 router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {

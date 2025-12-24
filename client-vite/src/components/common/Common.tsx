@@ -30,6 +30,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { trialService } from "../../services/trialService";
+import { specificationService } from "../../services/specificationService";
 
 // Helper component for consistent input styling
 const SpecInput = (props: any) => (
@@ -228,18 +229,56 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
           }
         });
 
-        // Fetch master specifications by part_name
-        if (parsedTrial.part_name) {
-          const masterData = await trialService.getMasterByPart(parsedTrial.part_name);
-          if (masterData) {
-            // Parse and apply master specifications
-            parsedTrial.chemical_composition = parseChemicalComposition(masterData.chemical_composition);
-            parsedTrial.micro_structure = parseMicrostructureData(masterData.micro_structure);
-            parsedTrial.tensile = parseTensileData(masterData.tensile);
-            parsedTrial.hardness = parseHardnessData(masterData.hardness);
-            parsedTrial.xray = masterData.xray || parsedTrial.xray;
-            parsedTrial.mpi = masterData.mpi || parsedTrial.mpi;
+
+        try {
+          const metallurgicalSpecs = await specificationService.getMetallurgicalSpecs(id);
+          if (metallurgicalSpecs) {
+            if (metallurgicalSpecs.chemical_composition) {
+              parsedTrial.chemical_composition = parseChemicalComposition(metallurgicalSpecs.chemical_composition);
+            }
+            if (metallurgicalSpecs.microstructure) {
+              try {
+                const parsedMicro = typeof metallurgicalSpecs.microstructure === 'string'
+                  ? JSON.parse(metallurgicalSpecs.microstructure)
+                  : metallurgicalSpecs.microstructure;
+
+                if (parsedMicro && (parsedMicro.nodularity || parsedMicro.pearlite || parsedMicro.carbide)) {
+                  parsedTrial.micro_structure = {
+                    nodularity: parsedMicro.nodularity || "--",
+                    pearlite: parsedMicro.pearlite || "--",
+                    carbide: parsedMicro.carbide || "--"
+                  };
+                } else {
+                  parsedTrial.micro_structure = parseMicrostructureData(metallurgicalSpecs.microstructure);
+                }
+              } catch (e) {
+                parsedTrial.micro_structure = parseMicrostructureData(metallurgicalSpecs.microstructure);
+              }
+            }
           }
+        } catch (specError) {
+          console.error("Failed to fetch specific metallurgical specs:", specError);
+        }
+
+        try {
+          const mechanicalProps = await specificationService.getMechanicalProperties(id);
+          if (mechanicalProps) {
+            parsedTrial.tensile = {
+              tensileStrength: mechanicalProps.tensile_strength,
+              yieldStrength: mechanicalProps.yield_strength,
+              elongation: mechanicalProps.elongation,
+              impactCold: mechanicalProps.impact_strength_cold,
+              impactRoom: mechanicalProps.impact_strength_room
+            };
+            parsedTrial.hardness = {
+              surface: mechanicalProps.hardness_surface,
+              core: mechanicalProps.hardness_core
+            };
+            parsedTrial.xray = mechanicalProps.x_ray_inspection;
+            parsedTrial.mpi = mechanicalProps.mpi;
+          }
+        } catch (mechError) {
+          console.error("Failed to fetch specific mechanical properties:", mechError);
         }
 
         setData(parsedTrial);

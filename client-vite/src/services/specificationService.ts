@@ -66,5 +66,56 @@ export const specificationService = {
             console.error('Error submitting mechanical properties:', error);
             throw error;
         }
+    },
+
+    /**
+     * Get metallurgical specifications by trial ID
+     * @param trialId - The trial ID to fetch specs for
+     */
+    async getMetallurgicalSpecs(trialId: string) {
+        try {
+            const response = await fetch(`${API_BASE}/metallurgical-specs/by-trial?trial_id=${trialId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                }
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                if (response.status === 404) return null;
+                throw new Error(data.message || 'Failed to fetch metallurgical specifications');
+            }
+            return data.data;
+        } catch (error) {
+            console.error('Error fetching metallurgical specifications:', error);
+            throw error;
+        }
+    },
+    /**
+     * Get mechanical properties by trial ID
+     * @param trialId - The trial ID to fetch properties for
+     */
+    async getMechanicalProperties(trialId: string) {
+        try {
+            const response = await fetch(`${API_BASE}/mechanical-properties/by-trial?trial_id=${trialId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                }
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                if (response.status === 404) return null;
+                throw new Error(data.message || 'Failed to fetch mechanical properties');
+            }
+            return data.data;
+        } catch (error) {
+            console.error('Error fetching mechanical properties:', error);
+            throw error;
+        }
     }
 };

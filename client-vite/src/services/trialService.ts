@@ -243,40 +243,4 @@ export const trialService = {
             throw error;
         }
     },
-
-    /**
-     * Fetches master specifications by part name or pattern code
-     * @param partName - Name of the part
-     * @param patternCode - Pattern code
-     * @returns Promise resolving to master specifications
-     */
-    async getMasterByPart(partName?: string, patternCode?: string): Promise<any> {
-        try {
-            const params = new URLSearchParams();
-            if (partName) params.append('part_name', partName);
-            if (patternCode) params.append('pattern_code', patternCode);
-
-            const response = await fetch(`${API_BASE}/master-list/by-part?${params}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': localStorage.getItem('authToken') || ''
-                },
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    console.warn('No master data found for part');
-                    return null;
-                }
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            return data.success ? data.data : null;
-        } catch (error) {
-            console.error('Failed to fetch master by part:', error);
-            return null;
-        }
-    }
 };
