@@ -382,16 +382,17 @@
 /* Mobile Portrait (up to 575px) */
 @media (max-width: 575px) {
   .login-container {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 
   .login-image-panel {
-    min-height: 25vh;
+    order: -1;
+    min-height: 28vh;
   }
 
   .login-form-panel {
     min-height: auto;
-    padding: 20px 20px;
+    padding: 20px 10px;
   }
 
   .login-card {
