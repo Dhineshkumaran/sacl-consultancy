@@ -27,10 +27,15 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
   }
   const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
   const hash = await bcrypt.hash(password, saltRounds);
-  const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role) VALUES (?, ?, ?, ?, ?)';
-  const [result] = await Client.execute(sql, [username, full_name, hash, department_id, role]);
-  const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-  const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'User created', `User ${username} created by ${req.user.username}`]);
+  const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role) VALUES (@username, @full_name, @password_hash, @department_id, @role)';
+  const [result] = await Client.query(sql, { username, full_name, password_hash: hash, department_id, role });
+  const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+  const [audit_result] = await Client.query(audit_sql, {
+    user_id: req.user.user_id,
+    department_id: req.user.department_id,
+    action: 'User created',
+    remarks: `User ${username} created by ${req.user.username}`
+  });
   res.status(201).json({ success: true, message: 'User created successfully.' });
 }));
 
@@ -39,16 +44,16 @@ router.post('/send-otp', verifyToken, asyncErrorHandler(async (req, res, next) =
   const user = req.user;
   if (!email) throw new CustomError('Email is required', 400);
 
-  const [existing] = await Client.execute('SELECT TOP 1 user_id FROM users WHERE email = ?', [email]);
+  const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE email = @email', { email });
   if (existing && existing.length > 0) {
     throw new CustomError('Email already in use', 409);
   }
 
   const otp = crypto.randomInt(100000, 1000000).toString();
 
-  const sql = `INSERT INTO email_otps (user_id, email, otp_code, expires_at) VALUES (?, ?, ?, DATEADD(minute, 5, GETDATE()))`;
+  const sql = `INSERT INTO email_otps (user_id, email, otp_code, expires_at) VALUES (@user_id, @email, @otp_code, DATEADD(minute, 5, GETDATE()))`;
   try {
-    await Client.execute(sql, [user.user_id || null, email, otp]);
+    await Client.query(sql, { user_id: user.user_id || null, email, otp_code: otp });
   } catch (err) {
     throw new CustomError('Server error storing OTP', 500);
   }
@@ -71,9 +76,9 @@ router.post('/verify-otp', verifyToken, asyncErrorHandler(async (req, res, next)
   const user = req.user;
   if (!email || !otp) throw new CustomError('Email and OTP are required', 400);
   const selectSql = `SELECT TOP 1 otp_id, otp_code, attempts, expires_at FROM email_otps
-    WHERE user_id = ? AND email = ? AND used = 0 AND expires_at > GETDATE()
+    WHERE user_id = @user_id AND email = @email AND used = 0 AND expires_at > GETDATE()
     ORDER BY created_at DESC`;
-  const [rows] = await Client.execute(selectSql, [user.user_id || null, email]);
+  const [rows] = await Client.query(selectSql, { user_id: user.user_id || null, email });
   if (!rows || rows.length === 0) {
     throw new CustomError('OTP not found or expired', 400);
   }
@@ -82,22 +87,22 @@ router.post('/verify-otp', verifyToken, asyncErrorHandler(async (req, res, next)
   const otpId = record.otp_id;
 
   if (String(record.otp_code) !== String(otp)) {
-    await Client.execute('UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = ?', [otpId]);
+    await Client.query('UPDATE email_otps SET attempts = attempts + 1 WHERE otp_id = @otp_id', { otp_id: otpId });
     const attempts = (record.attempts || 0) + 1;
     if (attempts >= 5) {
-      await Client.execute('UPDATE email_otps SET used = 1 WHERE otp_id = ?', [otpId]);
+      await Client.query('UPDATE email_otps SET used = 1 WHERE otp_id = @otp_id', { otp_id: otpId });
     }
     throw new CustomError('Invalid OTP', 400);
   }
 
   try {
-    await Client.execute('UPDATE users SET email = ? WHERE user_id = ?', [email, user.user_id]);
+    await Client.query('UPDATE users SET email = @email WHERE user_id = @user_id', { email, user_id: user.user_id });
   } catch (err) {
-    await Client.execute('UPDATE email_otps SET used = 1 WHERE otp_id = ?', [otpId]);
+    await Client.query('UPDATE email_otps SET used = 1 WHERE otp_id = @otp_id', { otp_id: otpId });
     return next(new CustomError('Email already in use', 409));
   }
 
-  await Client.execute('UPDATE email_otps SET used = 1 WHERE otp_id = ?', [otpId]);
+  await Client.query('UPDATE email_otps SET used = 1 WHERE otp_id = @otp_id', { otp_id: otpId });
 
   return res.json({ success: true, message: 'Email verified and updated' });
 }));
@@ -114,7 +119,7 @@ router.post('/change-password', verifyToken, asyncErrorHandler(async (req, res, 
   const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
   const hash = await bcrypt.hash(newPassword, saltRounds);
 
-  await Client.execute('UPDATE users SET password_hash = ? WHERE user_id = ?', [hash, user.user_id]);
+  await Client.query('UPDATE users SET password_hash = @password_hash WHERE user_id = @user_id', { password_hash: hash, user_id: user.user_id });
 
   return res.json({ success: true, message: 'Password updated' });
 }));

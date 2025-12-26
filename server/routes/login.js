@@ -35,16 +35,16 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
     }
 
     try {
-        const [rows] = await Client.query('SELECT TOP 1 * FROM users WHERE username = ?', [username]);
+        const [rows] = await Client.query('SELECT TOP 1 * FROM users WHERE username = @username', { username });
 
         if (!rows || rows.length === 0) {
             return next(new CustomError('Invalid credentials', 401));
         }
 
         let user = rows[0];
-        const departmentQuery = `SELECT TOP 1 department_name FROM departments WHERE department_id = ?`;
+        const departmentQuery = `SELECT TOP 1 department_name FROM departments WHERE department_id = @department_id`;
         if (user.department_id) {
-            const [deptRows] = await Client.query(departmentQuery, [user.department_id]);
+            const [deptRows] = await Client.query(departmentQuery, { department_id: user.department_id });
             if (deptRows && deptRows.length > 0) {
                 user.department = deptRows[0].department_name;
             } else {
@@ -65,8 +65,13 @@ router.post('/', asyncErrorHandler(async (req, res, next) => {
         const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'sacl123';
         const needsPasswordChange = await bcrypt.compare(DEFAULT_PASSWORD, user.password_hash);
 
-        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-        const [audit_result] = await Client.query(audit_sql, [user.user_id, user.department_id, 'Login', `User ${user.username} logged in with IP ${req.ip}`]);
+        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+        const [audit_result] = await Client.query(audit_sql, {
+            user_id: user.user_id,
+            department_id: user.department_id,
+            action: 'Login',
+            remarks: `User ${user.username} logged in with IP ${req.ip}`
+        });
 
         return res.status(200).json({
             success: true,

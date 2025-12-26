@@ -48,36 +48,54 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         ndt_inspection,
         ndt_inspection_ok,
         ndt_inspection_remarks
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    ) VALUES (
+        @trial_id, 
+        @inspection_date,
+        @micro_structure,
+        @micro_structure_ok,
+        @micro_structure_remarks,
+        @mech_properties,
+        @mech_properties_ok,
+        @mech_properties_remarks,
+        @impact_strength,
+        @impact_strength_ok,
+        @impact_strength_remarks,
+        @hardness,
+        @hardness_ok,
+        @hardness_remarks,
+        @ndt_inspection,
+        @ndt_inspection_ok,
+        @ndt_inspection_remarks
+    )`;
 
-    const [result] = await Client.query(sql, [
+    const [result] = await Client.query(sql, {
         trial_id,
         inspection_date,
-        JSON.stringify(micro_structure || []),
+        micro_structure: JSON.stringify(micro_structure || []),
         micro_structure_ok,
-        micro_structure_remarks || null,
-        JSON.stringify(mech_properties || []),
+        micro_structure_remarks: micro_structure_remarks || null,
+        mech_properties: JSON.stringify(mech_properties || []),
         mech_properties_ok,
-        mech_properties_remarks || null,
-        JSON.stringify(impact_strength || []),
+        mech_properties_remarks: mech_properties_remarks || null,
+        impact_strength: JSON.stringify(impact_strength || []),
         impact_strength_ok,
-        impact_strength_remarks || null,
-        JSON.stringify(hardness || []),
+        impact_strength_remarks: impact_strength_remarks || null,
+        hardness: JSON.stringify(hardness || []),
         hardness_ok,
-        hardness_remarks || null,
-        JSON.stringify(ndt_inspection || []),
+        hardness_remarks: hardness_remarks || null,
+        ndt_inspection: JSON.stringify(ndt_inspection || []),
         ndt_inspection_ok,
-        ndt_inspection_remarks || null
-    ]);
+        ndt_inspection_remarks: ndt_inspection_remarks || null
+    });
 
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
-    await Client.query(audit_sql, [
-        req.user.user_id,
-        req.user.department_id,
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
+    await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
         trial_id,
-        'Metallurgical inspection created',
-        `Metallurgical inspection for trial ${trial_id} created by ${req.user.username}`
-    ]);
+        action: 'Metallurgical inspection created',
+        remarks: `Metallurgical inspection for trial ${trial_id} created by ${req.user.username}`
+    });
 
     res.status(201).json({ success: true, message: 'Metallurgical inspection created successfully.' });
 }));
@@ -108,52 +126,52 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     }
 
     const sql = `UPDATE metallurgical_inspection SET 
-        inspection_date = ?,
-        micro_structure = ?,
-        micro_structure_ok = ?,
-        micro_structure_remarks = ?,
-        mech_properties = ?,
-        mech_properties_ok = ?,
-        mech_properties_remarks = ?,
-        impact_strength = ?,
-        impact_strength_ok = ?,
-        impact_strength_remarks = ?,
-        hardness = ?,
-        hardness_ok = ?,
-        hardness_remarks = ?,
-        ndt_inspection = ?,
-        ndt_inspection_ok = ?,
-        ndt_inspection_remarks = ?
-    WHERE trial_id = ?`;
+        inspection_date = @inspection_date,
+        micro_structure = @micro_structure,
+        micro_structure_ok = @micro_structure_ok,
+        micro_structure_remarks = @micro_structure_remarks,
+        mech_properties = @mech_properties,
+        mech_properties_ok = @mech_properties_ok,
+        mech_properties_remarks = @mech_properties_remarks,
+        impact_strength = @impact_strength,
+        impact_strength_ok = @impact_strength_ok,
+        impact_strength_remarks = @impact_strength_remarks,
+        hardness = @hardness,
+        hardness_ok = @hardness_ok,
+        hardness_remarks = @hardness_remarks,
+        ndt_inspection = @ndt_inspection,
+        ndt_inspection_ok = @ndt_inspection_ok,
+        ndt_inspection_remarks = @ndt_inspection_remarks
+    WHERE trial_id = @trial_id`;
 
-    const [result] = await Client.query(sql, [
+    const [result] = await Client.query(sql, {
         inspection_date,
-        JSON.stringify(micro_structure || []),
+        micro_structure: JSON.stringify(micro_structure || []),
         micro_structure_ok,
-        micro_structure_remarks || null,
-        JSON.stringify(mech_properties || []),
+        micro_structure_remarks: micro_structure_remarks || null,
+        mech_properties: JSON.stringify(mech_properties || []),
         mech_properties_ok,
-        mech_properties_remarks || null,
-        JSON.stringify(impact_strength || []),
+        mech_properties_remarks: mech_properties_remarks || null,
+        impact_strength: JSON.stringify(impact_strength || []),
         impact_strength_ok,
-        impact_strength_remarks || null,
-        JSON.stringify(hardness || []),
+        impact_strength_remarks: impact_strength_remarks || null,
+        hardness: JSON.stringify(hardness || []),
         hardness_ok,
-        hardness_remarks || null,
-        JSON.stringify(ndt_inspection || []),
+        hardness_remarks: hardness_remarks || null,
+        ndt_inspection: JSON.stringify(ndt_inspection || []),
         ndt_inspection_ok,
-        ndt_inspection_remarks || null,
+        ndt_inspection_remarks: ndt_inspection_remarks || null,
         trial_id
-    ]);
+    });
 
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
-    await Client.query(audit_sql, [
-        req.user.user_id,
-        req.user.department_id,
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
+    await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
         trial_id,
-        'Metallurgical inspection updated',
-        `Metallurgical inspection for trial ${trial_id} updated by ${req.user.username}`
-    ]);
+        action: 'Metallurgical inspection updated',
+        remarks: `Metallurgical inspection for trial ${trial_id} updated by ${req.user.username}`
+    });
 
     res.status(200).json({
         success: true,
@@ -172,7 +190,7 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) =>
         return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });
     }
     trial_id = trial_id.replace(/['"]+/g, '');
-    const [rows] = await Client.query('SELECT * FROM metallurgical_inspection WHERE trial_id = ?', [trial_id]);
+    const [rows] = await Client.query('SELECT * FROM metallurgical_inspection WHERE trial_id = @trial_id', { trial_id });
     res.status(200).json({ success: true, data: rows });
 }));
 

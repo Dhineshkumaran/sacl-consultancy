@@ -15,29 +15,29 @@ router.get('/dashboard', verifyToken, asyncErrorHandler(async (req, res, next) =
         const [completedLastYearResult] = await Client.query(
             `SELECT COUNT(DISTINCT al.trial_id) as count 
              FROM audit_log al
-             WHERE al.department_id = ?
+             WHERE al.department_id = @department_id
              AND al.action = 'Department progress approved' 
              AND al.action_timestamp >= DATEADD(year, -1, GETDATE())`,
-            [userDepartmentId]
+            { department_id: userDepartmentId }
         );
         const completedLastYear = completedLastYearResult[0].count;
 
         const [completedLastMonthResult] = await Client.query(
             `SELECT COUNT(DISTINCT al.trial_id) as count 
              FROM audit_log al
-             WHERE al.department_id = ?
+             WHERE al.department_id = @department_id
              AND al.action = 'Department progress approved' 
              AND al.action_timestamp >= DATEADD(month, -1, GETDATE())`,
-            [userDepartmentId]
+            { department_id: userDepartmentId }
         );
         const completedLastMonth = completedLastMonthResult[0].count;
 
         const [pendingCardsResult] = await Client.query(
             `SELECT COUNT(*) as count 
              FROM department_progress 
-             WHERE username = ? 
+             WHERE username = @username 
              AND approval_status = 'pending'`,
-            [username]
+            { username }
         );
         const pendingCards = pendingCardsResult[0].count;
 
@@ -51,29 +51,29 @@ router.get('/dashboard', verifyToken, asyncErrorHandler(async (req, res, next) =
         const [completedLastYearResult] = await Client.query(
             `SELECT COUNT(DISTINCT al.trial_id) as count 
              FROM audit_log al
-             WHERE al.department_id = ?
+             WHERE al.department_id = @department_id
              AND al.action = 'Department progress completed' 
              AND al.action_timestamp >= DATEADD(year, -1, GETDATE())`,
-            [userDepartmentId]
+            { department_id: userDepartmentId }
         );
         const completedLastYear = completedLastYearResult[0].count;
 
         const [completedLastMonthResult] = await Client.query(
             `SELECT COUNT(DISTINCT al.trial_id) as count 
              FROM audit_log al
-             WHERE al.department_id = ?
+             WHERE al.department_id = @department_id
              AND al.action = 'Department progress completed' 
              AND al.action_timestamp >= DATEADD(month, -1, GETDATE())`,
-            [userDepartmentId]
+            { department_id: userDepartmentId }
         );
         const completedLastMonth = completedLastMonthResult[0].count;
 
         const [pendingCardsResult] = await Client.query(
             `SELECT COUNT(*) as count 
              FROM department_progress 
-             WHERE username = ? 
+             WHERE username = @username 
              AND approval_status = 'pending'`,
-            [username]
+            { username }
         );
         const pendingCards = pendingCardsResult[0].count;
 
@@ -115,20 +115,20 @@ router.get('/dashboard', verifyToken, asyncErrorHandler(async (req, res, next) =
         const [initiatedLastYearResult] = await Client.query(
             `SELECT COUNT(DISTINCT al.trial_id) as count 
              FROM audit_log al
-             WHERE al.department_id = ?
+             WHERE al.department_id = @department_id
              AND al.action = 'Department progress added' 
              AND al.action_timestamp >= DATEADD(year, -1, GETDATE())`,
-            [userDepartmentId]
+            { department_id: userDepartmentId }
         );
         const initiatedLastYear = initiatedLastYearResult[0].count;
 
         const [initiatedLastMonthResult] = await Client.query(
             `SELECT COUNT(DISTINCT al.trial_id) as count 
              FROM audit_log al
-             WHERE al.department_id = ?
+             WHERE al.department_id = @department_id
              AND al.action = 'Department progress added' 
              AND al.action_timestamp >= DATEADD(month, -1, GETDATE())`,
-            [userDepartmentId]
+            { department_id: userDepartmentId }
         );
         const initiatedLastMonth = initiatedLastMonthResult[0].count;
 

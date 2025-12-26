@@ -12,37 +12,37 @@ router.get('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         trial_id = trial_id.replace(/['"]+/g, '');
     }
     const [trial_cards] = await Client.query(
-        `SELECT * FROM trial_cards WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM trial_cards WHERE trial_id = @trial_id`,
+        { trial_id }
     );
 
     const [pouring_details] = await Client.query(
-        `SELECT * FROM pouring_details WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM pouring_details WHERE trial_id = @trial_id`,
+        { trial_id }
     );
     const [sand_properties] = await Client.query(
-        `SELECT * FROM sand_properties WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM sand_properties WHERE trial_id = @trial_id`,
+        { trial_id }
     );
     const [mould_correction] = await Client.query(
-        `SELECT * FROM mould_correction WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM mould_correction WHERE trial_id = @trial_id`,
+        { trial_id }
     );
     const [metallurgical_inspection] = await Client.query(
-        `SELECT * FROM metallurgical_inspection WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM metallurgical_inspection WHERE trial_id = @trial_id`,
+        { trial_id }
     );
     const [visual_inspection] = await Client.query(
-        `SELECT * FROM visual_inspection WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM visual_inspection WHERE trial_id = @trial_id`,
+        { trial_id }
     );
     const [dimensional_inspection] = await Client.query(
-        `SELECT * FROM dimensional_inspection WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM dimensional_inspection WHERE trial_id = @trial_id`,
+        { trial_id }
     );
     const [machine_shop] = await Client.query(
-        `SELECT * FROM machine_shop WHERE trial_id = ?`,
-        [trial_id]
+        `SELECT * FROM machine_shop WHERE trial_id = @trial_id`,
+        { trial_id }
     );
 
     res.status(200).json({

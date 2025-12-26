@@ -33,15 +33,28 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
         ? JSON.stringify(chemical_composition)
         : chemical_composition;
 
-    const sql = `INSERT INTO master_card (pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    const [result] = await Client.query(sql, [pattern_code, part_name, material_grade, chemicalCompositionStr, micro_structure, tensile, impact, hardness, xray]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Master list created', `Master list ${pattern_code} created by ${req.user.username} with part name ${part_name}`]);
-    const insertId = result.insertId;
+    const sql = `INSERT INTO master_card (pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray) VALUES (@pattern_code, @part_name, @material_grade, @chemical_composition, @micro_structure, @tensile, @impact, @hardness, @xray)`;
+    const [result] = await Client.query(sql, {
+        pattern_code,
+        part_name,
+        material_grade,
+        chemical_composition: chemicalCompositionStr,
+        micro_structure,
+        tensile,
+        impact,
+        hardness,
+        xray
+    });
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+    const [audit_result] = await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        action: 'Master list created',
+        remarks: `Master list ${pattern_code} created by ${req.user.username} with part name ${part_name}`
+    });
     res.status(201).json({
         success: true,
-        message: "Master list created successfully.",
-        id: insertId
+        message: "Master list created successfully."
     });
 }));
 
@@ -57,15 +70,27 @@ router.put('/:id', verifyToken, asyncErrorHandler(async (req, res, next) => {
         ? JSON.stringify(chemical_composition)
         : chemical_composition;
 
-    const sql = `UPDATE master_card SET pattern_code=?, part_name=?, material_grade=?, chemical_composition=?, micro_structure=?, tensile=?, impact=?, hardness=?, xray=? WHERE id=?`;
-    const [result] = await Client.query(sql, [pattern_code, part_name, material_grade, chemicalCompositionStr, micro_structure, tensile, impact, hardness, xray, id]);
+    const sql = `UPDATE master_card SET pattern_code=@pattern_code, part_name=@part_name, material_grade=@material_grade, chemical_composition=@chemical_composition, micro_structure=@micro_structure, tensile=@tensile, impact=@impact, hardness=@hardness, xray=@xray WHERE id=@id`;
+    const [result] = await Client.query(sql, {
+        pattern_code,
+        part_name,
+        material_grade,
+        chemical_composition: chemicalCompositionStr,
+        micro_structure,
+        tensile,
+        impact,
+        hardness,
+        xray,
+        id
+    });
 
-    if (result.affectedRows === 0) {
-        throw new CustomError('Master list not found', 404);
-    }
-
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (?, ?, ?, ?)';
-    await Client.query(audit_sql, [req.user.user_id, req.user.department_id, 'Master list updated', `Master list ${pattern_code} updated by ${req.user.username}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+    await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        action: 'Master list updated',
+        remarks: `Master list ${pattern_code} updated by ${req.user.username}`
+    });
 
     res.status(200).json({
         success: true,

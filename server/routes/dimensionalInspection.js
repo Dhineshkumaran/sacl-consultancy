@@ -11,11 +11,17 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     if (!trial_id || !inspection_date || !casting_weight || !bunch_weight || !no_of_cavities || !yields || !inspections || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
-    const sql = 'INSERT INTO dimensional_inspection (trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    const [result] = await Client.query(sql, [trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks]);
+    const sql = 'INSERT INTO dimensional_inspection (trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks) VALUES (@trial_id, @inspection_date, @casting_weight, @bunch_weight, @no_of_cavities, @yields, @inspections, @remarks)';
+    const [result] = await Client.query(sql, { trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks });
 
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Dimensional inspection created', `Dimensional inspection ${trial_id} created by ${req.user.username} with trial id ${trial_id}`]);
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
+    const [audit_result] = await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        trial_id,
+        action: 'Dimensional inspection created',
+        remarks: `Dimensional inspection ${trial_id} created by ${req.user.username} with trial id ${trial_id}`
+    });
     res.status(201).json({
         message: "Dimensional inspection created successfully.",
         success: true
@@ -28,10 +34,16 @@ router.put('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     if (!trial_id || !inspection_date || !casting_weight || !bunch_weight || !no_of_cavities || !yields || !inspections || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
-    const sql = 'INSERT INTO dimensional_inspection (trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    const [result] = await Client.query(sql, [trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks]);
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (?, ?, ?, ?, ?)';
-    const [audit_result] = await Client.query(audit_sql, [req.user.user_id, req.user.department_id, trial_id, 'Dimensional inspection updated', `Dimensional inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`]);
+    const sql = 'UPDATE dimensional_inspection SET inspection_date = @inspection_date, casting_weight = @casting_weight, bunch_weight = @bunch_weight, no_of_cavities = @no_of_cavities, yields = @yields, inspections = @inspections, remarks = @remarks WHERE trial_id = @trial_id';
+    const [result] = await Client.query(sql, { trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks });
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
+    const [audit_result] = await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        trial_id,
+        action: 'Dimensional inspection updated',
+        remarks: `Dimensional inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`
+    });
     res.status(201).json({
         message: "Dimensional inspection updated successfully.",
         success: true
@@ -52,7 +64,7 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) =>
         return res.status(400).json({ success: false, message: 'trial_id query parameter is required' });
     }
     trial_id = trial_id.replace(/['"]+/g, '');
-    const [rows] = await Client.query('SELECT TOP 1 * FROM dimensional_inspection WHERE trial_id = ?', [trial_id]);
+    const [rows] = await Client.query('SELECT TOP 1 * FROM dimensional_inspection WHERE trial_id = @trial_id', { trial_id });
     res.status(200).json({
         success: true,
         data: rows

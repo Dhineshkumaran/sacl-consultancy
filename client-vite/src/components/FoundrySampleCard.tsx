@@ -886,20 +886,85 @@ function FoundrySampleCard() {
                 </Grid>
               </Grid>
 
-              <Typography variant="subtitle2" sx={{ mb: 2, color: COLORS.primary }}>Tooling Modification</Typography>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">Modification Details</Typography>
-                    <Typography variant="subtitle1">{previewPayload?.tooling_modification || previewPayload?.toolingModification || "-"}</Typography>
+              <Typography variant="subtitle2" sx={{ mb: 2, color: COLORS.primary }}>Tooling Modification Done</Typography>
+              <Paper elevation={0} sx={{ p: 2, mb: 3,bgcolor: "white", border: `1px solid ${COLORS.border}`, }}>
+                
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>MODIFICATION DETAILS</Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#333', mt: 0.5 }}>{previewPayload?.tooling_modification || previewPayload?.toolingModification || "-"}</Typography>
+                </Box>
+                {previewPayload?.toolingFiles && previewPayload.toolingFiles.length > 0 && (
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>TOOLING FILES</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 0.5 }}>
+                      {previewPayload.toolingFiles.map((file: any, idx: number) => {
+                        const fileUrl = file.url || file.path || '#';
+                        const fileName = file.name || file.fileName || `File ${idx + 1}`;
+                        const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+                        return (
+                          <Box key={idx}>
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: COLORS.primary, textDecoration: 'underline', fontSize: '0.95em', display: 'inline-block', marginBottom: 4 }}
+                            >
+                              {fileName}
+                            </a>
+                            {isPdf && fileUrl !== '#' && (
+                              <Box sx={{ mt: 1, mb: 1, border: '1px solid #eee', borderRadius: 1, overflow: 'hidden', background: '#fafafa' }}>
+                                <iframe
+                                  src={fileUrl}
+                                  title={fileName}
+                                  width="100%"
+                                  height="320px"
+                                  style={{ border: 'none' }}
+                                />
+                              </Box>
+                            )}
+                          </Box>
+                        );
+                      })}
+                    </Box>
                   </Box>
-                </Grid>
-              </Grid>
-
-              <Typography variant="subtitle2" sx={{ mb: 1, color: COLORS.primary }}>Remarks</Typography>
-              <Paper elevation={0} sx={{ p: 2, border: `1px solid ${COLORS.border}`, mb: 3 }}>
-                <Typography variant="body2">{previewPayload?.remarks || "-"}</Typography>
+                )}
               </Paper>
+
+              {previewPayload?.patternDataSheetFiles && previewPayload.patternDataSheetFiles.length > 0 && (
+                <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: '#e3f2fd', border: `1.5px solid ${COLORS.accentBlue}` }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: COLORS.accentBlue, fontWeight: 700, letterSpacing: 0.5 }}>PATTERN DATA SHEET FILES</Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 0.5 }}>
+                    {previewPayload.patternDataSheetFiles.map((file: any, idx: number) => {
+                      const fileUrl = file.url || file.path || '#';
+                      const fileName = file.name || file.fileName || `File ${idx + 1}`;
+                      const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
+                      return (
+                        <Box key={idx}>
+                          <a
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: COLORS.accentBlue, textDecoration: 'underline', fontSize: '0.95em', display: 'inline-block', marginBottom: 4 }}
+                          >
+                            {fileName}
+                          </a>
+                          {isPdf && fileUrl !== '#' && (
+                            <Box sx={{ mt: 1, mb: 1, border: '1px solid #eee', borderRadius: 1, overflow: 'hidden', background: '#fafafa' }}>
+                              <iframe
+                                src={fileUrl}
+                                title={fileName}
+                                width="100%"
+                                height="320px"
+                                style={{ border: 'none' }}
+                              />
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Paper>
+              )}
 
               <Typography variant="subtitle2" sx={{ mb: 2, color: COLORS.primary }}>Mould Corrections</Typography>
               <Table size="small" sx={{ bgcolor: "white", border: `1px solid ${COLORS.border}`, borderRadius: 1, mb: 3 }}>
@@ -920,6 +985,11 @@ function FoundrySampleCard() {
                   ))}
                 </TableBody>
               </Table>
+
+              <Typography variant="subtitle2" sx={{ mb: 1, color: COLORS.primary }}>Remarks</Typography>
+              <Paper elevation={0} sx={{ p: 2, border: `1px solid ${COLORS.border}`, mb: 3 }}>
+                <Typography variant="body2">{previewPayload?.remarks || "-"}</Typography>
+              </Paper>
 
               {previewMessage && <Alert severity="success" sx={{ mt: 2 }}>{previewMessage}</Alert>}
             </Box>
