@@ -97,10 +97,6 @@ router.put('/update', verifyToken, asyncErrorHandler(async (req, res, next) => {
         mould_correction,
         tooling_modification,
         remarks,
-        chemical_composition,
-        tensile,
-        micro_structure,
-        hardness
     } = req.body || {};
 
     if (!trial_id) {
@@ -108,10 +104,6 @@ router.put('/update', verifyToken, asyncErrorHandler(async (req, res, next) => {
     }
 
     const mouldJson = mould_correction ? JSON.stringify(mould_correction) : null;
-    const chemJson = chemical_composition ? JSON.stringify(chemical_composition) : null;
-    const tensileJson = tensile ? JSON.stringify(tensile) : null;
-    const microJson = micro_structure ? JSON.stringify(micro_structure) : null;
-    const hardnessJson = hardness ? JSON.stringify(hardness) : null;
 
     const sql = `UPDATE trial_cards SET 
         part_name = COALESCE(@part_name, part_name),
