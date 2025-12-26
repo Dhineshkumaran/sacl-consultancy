@@ -131,16 +131,16 @@ export default function AllTrialsPage() {
                                 <CircularProgress />
                             </Box>
                         ) : (
-                            <Box sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-                                <Table stickyHeader size={isMobile ? "small" : "medium"}>
+                            <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                                <Table stickyHeader size={isMobile ? "small" : "medium"} sx={{ minWidth: 900 }}>
                                     <TableHead>
                                         <TableRow>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Trial ID</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Part Name</TableCell>
-                                            {!isMobile && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Pattern Code</TableCell>}
-                                            {!isMobile && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Grade</TableCell>}
-                                            {!isTablet && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Date</TableCell>}
-                                            {!isTablet && <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Current Department</TableCell>}
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Pattern Code</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Grade</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Date</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Current Department</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Status</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Actions</TableCell>
                                         </TableRow>
@@ -151,10 +151,10 @@ export default function AllTrialsPage() {
                                                 <TableRow key={trial.trial_id} hover>
                                                     <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{trial.trial_id}</TableCell>
                                                     <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{trial.part_name}</TableCell>
-                                                    {!isMobile && <TableCell>{trial.pattern_code}</TableCell>}
-                                                    {!isMobile && <TableCell>{trial.material_grade}</TableCell>}
-                                                    {!isTablet && <TableCell>{new Date(trial.date_of_sampling).toLocaleDateString()}</TableCell>}
-                                                    {!isTablet && <TableCell>
+                                                    <TableCell>{trial.pattern_code}</TableCell>
+                                                    <TableCell>{trial.material_grade}</TableCell>
+                                                    <TableCell>{new Date(trial.date_of_sampling).toLocaleDateString()}</TableCell>
+                                                    <TableCell>
                                                         <Box sx={{
                                                             display: 'inline-block',
                                                             px: 1.5, py: 0.5,
@@ -166,7 +166,7 @@ export default function AllTrialsPage() {
                                                         }}>
                                                             {getDepartmentName(trial.current_department_id) || 'N/A'}
                                                         </Box>
-                                                    </TableCell>}
+                                                    </TableCell>
                                                     <TableCell>
                                                         <Box sx={{
                                                             display: 'inline-block',
@@ -195,7 +195,7 @@ export default function AllTrialsPage() {
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={isMobile ? 4 : isTablet ? 6 : 8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                                                <TableCell colSpan={8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                                                     No trials found.
                                                 </TableCell>
                                             </TableRow>
