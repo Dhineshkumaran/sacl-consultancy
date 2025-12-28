@@ -610,7 +610,7 @@ export default function McShopInspection({
             </Box>
 
             <ActionButtons
-              onReset={resetAll}
+              {...(user?.role !== 'HOD' ? { onReset: resetAll } : {})}
               onSave={handleSaveAndContinue}
               showSubmit={false}
               saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
