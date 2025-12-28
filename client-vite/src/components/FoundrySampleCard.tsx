@@ -1228,9 +1228,11 @@ function FoundrySampleCard() {
               </Paper>
 
               <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
-                  Reset Form
-                </Button>
+                {user?.role !== 'HOD' && (
+                  <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
+                    Reset Form
+                  </Button>
+                )}
                 {user?.role === 'HOD' && trialIdFromUrl && (
                   <Button
                     variant="outlined"
