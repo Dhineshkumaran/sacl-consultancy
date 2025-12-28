@@ -768,7 +768,7 @@ export default function VisualInspection({
                         </Box>
 
                         <ActionButtons
-                            onReset={reset}
+                            {...(user?.role !== 'HOD' ? { onReset: reset } : {})}
                             onSave={handleSaveAndContinue}
                             showSubmit={false}
                             saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
