@@ -1300,7 +1300,7 @@ export default function MetallurgicalInspection() {
             </Box>
 
             <ActionButtons
-              onReset={() => window.location.reload()}
+              {...(user?.role !== 'HOD' ? { onReset: () => window.location.reload() } : {})}
               onSave={handleSaveAndContinue}
               showSubmit={false}
               saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
