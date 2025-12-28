@@ -700,7 +700,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                         <Grid size={{ xs: 12 }} sx={{ mt: 2, mb: 4 }}>
                             <Box display="flex" justifyContent="flex-end" gap={2}>
                                 <ActionButtons
-                                    onReset={() => window.location.reload()}
+                                    {...(user?.role !== 'HOD' ? { onReset: () => window.location.reload() } : {})}
                                     onSave={handleSaveAndContinue}
                                     showSubmit={false}
                                     saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
