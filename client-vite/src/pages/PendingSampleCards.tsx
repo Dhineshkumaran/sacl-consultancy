@@ -40,6 +40,15 @@ interface PendingSampleCardsProps {
     username: string;
     onCardSelect?: (card: PendingCard) => void;
 }
+// Format date as dd/mm/yyyy
+function formatDate(dateString: string): string {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+}
 
 const PendingSampleCards: React.FC<PendingSampleCardsProps> = ({ open, onClose, username, onCardSelect }) => {
     const [pendingCards, setPendingCards] = useState<PendingCard[]>([]);
@@ -170,7 +179,7 @@ const PendingSampleCards: React.FC<PendingSampleCardsProps> = ({ open, onClose, 
                                                 {!isMobile && <TableCell>{card.pattern_code}</TableCell>}
                                                 <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{card.part_name}</TableCell>
                                                 {!isTablet && <TableCell>{card.disa}</TableCell>}
-                                                {!isTablet && <TableCell>{card.date_of_sampling}</TableCell>}
+                                                {!isTablet && <TableCell>{card.date_of_sampling ? formatDate(card.date_of_sampling) : ''}</TableCell>}
                                                 <TableCell>
                                                     <Chip
                                                         label={getStatusLabel(card.approval_status || 'pending')}

@@ -394,48 +394,60 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
               />
             </Box>
 
-            <Box sx={{ p: 3, display: "flex", justifyContent: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, flexDirection: { xs: 'column', sm: 'row' } }}>
+            <Box sx={{ p: 3, display: "flex", flexDirection: { xs: 'column', sm: 'row' }, justifyContent: "space-between", alignItems: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
               <Button
                 variant="outlined"
-                onClick={handleReset}
-                fullWidth={isMobile}
-                sx={{
-                  color: COLORS.primary,
-                  borderColor: COLORS.primary,
-                  borderWidth: '1.5px',
-                  '&:hover': {
-                    borderColor: COLORS.primary,
-                    borderWidth: '1.5px',
-                    bgcolor: '#f3f4f6'
-                  }
-                }}
+                color="primary"
+                onClick={() => navigate('/dashboard')}
+                sx={{ minWidth: 180, fontWeight: 600 }}
               >
-                Reset Form
+                Back to Dashboard
               </Button>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                {user?.role !== 'HOD' && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleReset}
+                    fullWidth={isMobile}
+                    sx={{
+                      color: COLORS.primary,
+                      borderColor: COLORS.primary,
+                      borderWidth: '1.5px',
+                      '&:hover': {
+                        borderColor: COLORS.primary,
+                        borderWidth: '1.5px',
+                        bgcolor: '#f3f4f6'
+                      }
+                    }}
+                  >
+                    Reset Form
+                  </Button>
+                )}
 
-              {user?.role === 'HOD' && (
+                {user?.role === 'HOD' && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => setIsEditing(!isEditing)}
+                    sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                  >
+                    {isEditing ? "Cancel Edit" : "Edit Details"}
+                  </Button>
+                )}
+
                 <Button
-                  variant="outlined"
-                  onClick={() => setIsEditing(!isEditing)}
-                  sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                  variant="contained"
+                  onClick={handleSaveAndContinue}
+                  fullWidth={isMobile}
+                  startIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+                  sx={{
+                    bgcolor: COLORS.secondary,
+                    color: 'white',
+                    '&:hover': { bgcolor: '#c2410c' }
+                  }}
                 >
-                  {isEditing ? "Cancel Edit" : "Edit Details"}
+                  {user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
                 </Button>
-              )}
-
-              <Button
-                variant="contained"
-                onClick={handleSaveAndContinue}
-                fullWidth={isMobile}
-                startIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
-                sx={{
-                  bgcolor: COLORS.secondary,
-                  color: 'white',
-                  '&:hover': { bgcolor: '#c2410c' }
-                }}
-              >
-                {user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-              </Button>
+              </Box>
             </Box>
 
           </Paper>

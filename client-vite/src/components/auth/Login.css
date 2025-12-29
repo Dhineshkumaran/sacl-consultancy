@@ -1,3 +1,43 @@
+/* Custom Responsive Layout for Login (Tab/Mobile: Image Top, Login Bottom) */
+.responsive-login-layout {
+  display: flex;
+  flex-direction: row;
+}
+
+.responsive-image-panel {
+  order: 1;
+}
+.responsive-form-panel {
+  order: 2;
+}
+
+@media (max-width: 1023px) {
+  .responsive-login-layout {
+    flex-direction: column;
+  }
+  .responsive-image-panel {
+    order: 1;
+    min-height: 30vh;
+  }
+  .responsive-form-panel {
+    order: 2;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 575px) {
+  .responsive-login-layout {
+    flex-direction: column;
+  }
+  .responsive-image-panel {
+    order: 1;
+    min-height: 28vh;
+  }
+  .responsive-form-panel {
+    order: 2;
+    min-height: auto;
+  }
+}
 /* ============================================
    Material Design 3 - Login Styles (Split Layout)
    ============================================ */
@@ -320,15 +360,18 @@
 
 /* Tablet (768px to 1023px) */
 @media (max-width: 1023px) and (min-width: 768px) {
-  .login-container {
-    flex-direction: column-reverse;
+  .login-container,
+  .responsive-login-layout {
+    flex-direction: column;
   }
 
-  .login-image-panel {
+  .login-image-panel,
+  .responsive-image-panel {
     min-height: 35vh;
   }
 
-  .login-form-panel {
+  .login-form-panel,
+  .responsive-form-panel {
     min-height: 65vh;
     padding: 30px 20px;
   }
@@ -340,15 +383,18 @@
 
 /* Mobile Landscape and Small Tablet (576px to 767px) */
 @media (max-width: 767px) and (min-width: 576px) {
-  .login-container {
-    flex-direction: column-reverse;
+  .login-container,
+  .responsive-login-layout {
+    flex-direction: column;
   }
 
-  .login-image-panel {
+  .login-image-panel,
+  .responsive-image-panel {
     min-height: 30vh;
   }
 
-  .login-form-panel {
+  .login-form-panel,
+  .responsive-form-panel {
     min-height: auto;
     padding: 25px 20px;
   }

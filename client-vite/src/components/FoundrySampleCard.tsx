@@ -1254,32 +1254,44 @@ function FoundrySampleCard() {
                 />
               </Paper>
 
-              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
-                  Reset Form
-                </Button>
-                {user?.role === 'HOD' && trialIdFromUrl && (
-                  <Button
-                    variant="outlined"
-                    onClick={() => setIsEditing(!isEditing)}
-                    sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                  >
-                    {isEditing ? "Cancel Edit" : "Edit Details"}
-                  </Button>
-                )}
+              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
                 <Button
-                  variant="contained"
-                  onClick={handleSaveAndContinue}
-                  fullWidth={isMobile}
-                  startIcon={(user?.role === 'HOD' && trialIdFromUrl) ? <CheckCircleIcon /> : <SaveIcon />}
-                  sx={{
-                    bgcolor: COLORS.secondary,
-                    color: 'white',
-                    '&:hover': { bgcolor: '#c2410c' }
-                  }}
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => navigate('/dashboard')}
+                  sx={{ minWidth: 180, fontWeight: 600 }}
                 >
-                  {(user?.role === 'HOD' && trialIdFromUrl) ? 'Approve' : 'Save & Continue'}
+                  Back to Dashboard
                 </Button>
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  {user?.role !== 'HOD' && (
+                    <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
+                      Reset Form
+                    </Button>
+                  )}
+                  {user?.role === 'HOD' && trialIdFromUrl && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => setIsEditing(!isEditing)}
+                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                    >
+                      {isEditing ? "Cancel Edit" : "Edit Details"}
+                    </Button>
+                  )}
+                  <Button
+                    variant="contained"
+                    onClick={handleSaveAndContinue}
+                    fullWidth={isMobile}
+                    startIcon={(user?.role === 'HOD' && trialIdFromUrl) ? <CheckCircleIcon /> : <SaveIcon />}
+                    sx={{
+                      bgcolor: COLORS.secondary,
+                      color: 'white',
+                      '&:hover': { bgcolor: '#c2410c' }
+                    }}
+                  >
+                    {(user?.role === 'HOD' && trialIdFromUrl) ? 'Approve' : 'Save & Continue'}
+                  </Button>
+                </Box>
               </Box>
             </>
           )}

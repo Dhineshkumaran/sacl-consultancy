@@ -348,6 +348,7 @@ export default function DimensionalInspection({
         window.print();
     };
 
+
     return (
         <ThemeProvider theme={appTheme}>
             <GlobalStyles styles={{
@@ -362,6 +363,17 @@ export default function DimensionalInspection({
 
             <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Container maxWidth="xl" disableGutters>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 2 }}>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={() => navigate('/dashboard')}
+                            sx={{ minWidth: 180, fontWeight: 600 }}
+                        >
+                            Back to Dashboard
+                        </Button>
+                    </Box>
 
                     <SaclHeader />
 
@@ -536,23 +548,36 @@ export default function DimensionalInspection({
                         />
                     </Paper>
 
-                    <ActionButtons
-                        onReset={resetAll}
-                        onSave={handleSaveAndContinue}
-                        showSubmit={false}
-                        saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-                        saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
-                    >
-                        {user?.role === 'HOD' && (
-                            <Button
-                                variant="outlined"
-                                onClick={() => setIsEditing(!isEditing)}
-                                sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+
+                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => navigate('/dashboard')}
+                            sx={{ minWidth: 180, fontWeight: 600 }}
+                        >
+                            Back to Dashboard
+                        </Button>
+                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                            <ActionButtons
+                                {...(user?.role !== 'HOD' ? { onReset: resetAll } : {})}
+                                onSave={handleSaveAndContinue}
+                                showSubmit={false}
+                                saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+                                saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
                             >
-                                {isEditing ? "Cancel Edit" : "Edit Details"}
-                            </Button>
-                        )}
-                    </ActionButtons>
+                                {user?.role === 'HOD' && (
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => setIsEditing(!isEditing)}
+                                        sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                                    >
+                                        {isEditing ? "Cancel Edit" : "Edit Details"}
+                                    </Button>
+                                )}
+                            </ActionButtons>
+                        </Box>
+                    </Box>
 
                     <PreviewModal
                         open={previewMode && previewPayload}

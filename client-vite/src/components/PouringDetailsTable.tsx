@@ -698,24 +698,34 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
 
 
                         <Grid size={{ xs: 12 }} sx={{ mt: 2, mb: 4 }}>
-                            <Box display="flex" justifyContent="flex-end" gap={2}>
-                                <ActionButtons
-                                    onReset={() => window.location.reload()}
-                                    onSave={handleSaveAndContinue}
-                                    showSubmit={false}
-                                    saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-                                    saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2}>
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    onClick={() => navigate('/dashboard')}
+                                    sx={{ minWidth: 180, fontWeight: 600 }}
                                 >
-                                    {user?.role === 'HOD' && (
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() => setIsEditing(!isEditing)}
-                                            sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                                        >
-                                            {isEditing ? "Cancel Edit" : "Edit Details"}
-                                        </Button>
-                                    )}
-                                </ActionButtons>
+                                    Back to Dashboard
+                                </Button>
+                                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                                    <ActionButtons
+                                        {...(user?.role !== 'HOD' ? { onReset: () => window.location.reload() } : {})}
+                                        onSave={handleSaveAndContinue}
+                                        showSubmit={false}
+                                        saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+                                        saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
+                                    >
+                                        {user?.role === 'HOD' && (
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => setIsEditing(!isEditing)}
+                                                sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                                            >
+                                                {isEditing ? "Cancel Edit" : "Edit Details"}
+                                            </Button>
+                                        )}
+                                    </ActionButtons>
+                                </Box>
                             </Box>
                         </Grid>
                     </Grid>

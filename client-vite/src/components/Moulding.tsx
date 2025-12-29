@@ -388,23 +388,36 @@ function MouldingTable() {
               </Box>
             </Box>
 
-            <ActionButtons
-              onReset={handleReset}
-              onSave={handleSaveAndContinue}
-              showSubmit={false}
-              saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
-              saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
-            >
-              {user?.role === 'HOD' && (
-                <Button
-                  variant="outlined"
-                  onClick={() => setIsEditing(!isEditing)}
-                  sx={{ color: COLORS.secondary, borderColor: COLORS.secondary, mr: 2 }}
+
+            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => navigate('/dashboard')}
+                sx={{ minWidth: 180, fontWeight: 600 }}
+              >
+                Back to Dashboard
+              </Button>
+              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                <ActionButtons
+                  {...(user?.role !== 'HOD' ? { onReset: handleReset } : {})}
+                  onSave={handleSaveAndContinue}
+                  showSubmit={false}
+                  saveLabel={user?.role === 'HOD' ? 'Approve' : 'Save & Continue'}
+                  saveIcon={user?.role === 'HOD' ? <CheckCircleIcon /> : <SaveIcon />}
                 >
-                  {isEditing ? "Cancel Edit" : "Edit Details"}
-                </Button>
-              )}
-            </ActionButtons>
+                  {user?.role === 'HOD' && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => setIsEditing(!isEditing)}
+                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary, mr: 2 }}
+                    >
+                      {isEditing ? "Cancel Edit" : "Edit Details"}
+                    </Button>
+                  )}
+                </ActionButtons>
+              </Box>
+            </Box>
 
           </Paper>
 
