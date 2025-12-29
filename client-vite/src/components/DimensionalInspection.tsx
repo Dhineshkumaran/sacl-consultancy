@@ -265,6 +265,7 @@ export default function DimensionalInspection({
                     trial_id: trialId,
                     next_department_id: 8,
                     username: user.username,
+                    current_form: "MC_SHOP",
                     role: user.role || "HOD",
                     remarks: "Approved by HOD"
                 };

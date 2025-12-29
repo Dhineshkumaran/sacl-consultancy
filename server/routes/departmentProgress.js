@@ -12,10 +12,10 @@ import transporter from '../utils/mailSender.js';
 import verifyToken from '../utils/verifyToken.js';
 
 router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
-    const { trial_id, department_id, completed_at, approval_status, remarks, username } = req.body;
+    const { trial_id, department_id, completed_at, approval_status, current_form, remarks, username } = req.body;
     const [result] = await Client.query(
-        `INSERT INTO department_progress (trial_id, department_id, completed_at, approval_status, remarks, username) VALUES (@trial_id, @department_id, @completed_at, @approval_status, @remarks, @username)`,
-        { trial_id, department_id, completed_at, approval_status, remarks, username }
+        `INSERT INTO department_progress (trial_id, department_id, completed_at, approval_status, current_form, remarks, username) VALUES (@trial_id, @department_id, @completed_at, @approval_status, @current_form, @remarks, @username)`,
+        { trial_id, department_id, completed_at, approval_status, current_form, remarks, username }
     );
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     const [audit_result] = await Client.query(audit_sql, {
@@ -32,7 +32,7 @@ router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
 }));
 
 router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res, next) => {
-    const { trial_id, next_department_id, username, role, remarks } = req.body;
+    const { trial_id, next_department_id, username, current_form, role, remarks } = req.body;
     const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     const [audit_result_completion] = await Client.query(audit_sql_completion, {
         user_id: req.user.user_id,
@@ -52,8 +52,8 @@ router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res,
     }
     const next_department_username = next_department_user[0].username;
     const [result] = await Client.query(
-        `UPDATE department_progress SET department_id = @next_department_id, username = @next_department_username, remarks = @remarks WHERE trial_id = @trial_id`,
-        { next_department_id, next_department_username, remarks, trial_id }
+        `UPDATE department_progress SET department_id = @next_department_id, username = @next_department_username, remarks = @remarks, current_form = @current_form WHERE trial_id = @trial_id`,
+        { next_department_id, next_department_username, remarks, trial_id, current_form }
     );
 
     await Client.query(
@@ -97,6 +97,7 @@ router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res,
 }));
 
 router.put('/update-role', verifyToken, asyncErrorHandler(async (req, res, next) => {
+    console.log(req.body);
     const { trial_id, current_department_id, username, role, remarks } = req.body;
     const audit_sql_completion = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     const [audit_result_completion] = await Client.query(audit_sql_completion, {

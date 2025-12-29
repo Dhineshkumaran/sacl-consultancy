@@ -34,24 +34,22 @@ export const getDepartmentInfo = (user: any) => {
     }
 };
 
-export const getPendingRoute = (departmentIdRaw: number | string | undefined): string => {
-    const departmentId = typeof departmentIdRaw === 'string' ? Number(departmentIdRaw) : departmentIdRaw;
+export const getPendingRoute = (currentForm: string | undefined): string => {
+    if (!currentForm) return '/dashboard';
 
-    if (!departmentId) return '/dashboard';
-
-    const departmentRoutes: Record<number, string> = {
-        10: '/dimensional-inspection',
-        7: '/metallurgical-inspection',
-        8: '/mc-shop',
-        6: '/moulding',
-        9: '/pouring',
-        3: '/material-correction',
-        4: '/sand',
-        5: '/visual-inspection',
-        2: '/foundry-sample-card'
+    const departmentRoutes: Record<string, string> = {
+        'DIMENSIONAL_INSPECTION': '/dimensional-inspection',
+        'METALLURGICAL_INSPECTION': '/metallurgical-inspection',
+        'MC_SHOP': '/mc-shop',
+        'MOULDING': '/moulding',
+        'POURING': '/pouring',
+        'MATERIAL_CORRECTION': '/material-correction',
+        'SANDPLANT': '/sand',
+        'VISUAL_INSPECTION': '/visual-inspection',
+        'METALLURGICAL_SPECIFICATION': '/foundry-sample-card'
     };
 
-    // 3, 9, 4, 6, 7, 5, 10, 8
+    // METALLURGICAL_SPECIFICATION, MATERIAL_CORRECTION, POURING, SANDPLANT, MOULDING, METALLURGICAL_INSPECTION, VISUAL_INSPECTION, DIMENSIONAL_INSPECTION, MC_SHOP
 
-    return departmentRoutes[departmentId] || '/dashboard';
+    return departmentRoutes[currentForm] || '/dashboard';
 };

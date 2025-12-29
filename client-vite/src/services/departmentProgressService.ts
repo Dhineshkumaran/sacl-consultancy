@@ -41,6 +41,7 @@ export async function createDepartmentProgress(payload: {
   trial_id: string;
   department_id: number;
   username: string;
+  current_form: string;
   completed_at?: string;
   approval_status?: string;
   remarks?: string;
@@ -59,6 +60,7 @@ export async function updateDepartment(payload: {
   trial_id: string;
   next_department_id: number;
   username: string;
+  current_form: string;
   role: string;
   remarks: string;
 }) {

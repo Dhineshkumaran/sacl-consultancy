@@ -946,6 +946,7 @@ export default function MetallurgicalInspection() {
           trial_id: trialId,
           next_department_id: 5,
           username: user.username,
+          current_form: "VISUAL_INSPECTION",
           role: user.role,
           remarks: "Approved by HOD"
         };

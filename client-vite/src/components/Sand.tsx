@@ -186,6 +186,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           trial_id: trialId,
           next_department_id: 6,
           username: user.username,
+          current_form: "MOULDING",
           role: user.role,
           remarks: "Approved by HOD"
         };

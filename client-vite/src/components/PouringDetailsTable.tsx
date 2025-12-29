@@ -361,6 +361,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                         trial_id: trialId,
                         next_department_id: 4,
                         username: user.username,
+                        current_form: "SANDPLANT",
                         role: user.role,
                         remarks: "Approved by HOD"
                     };
@@ -411,7 +412,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                 try {
                     await updateDepartmentRole({
                         trial_id: trialId,
-                        current_department_id: 9,
+                        current_department_id: 7,
                         username: user?.username || "user",
                         role: "user",
                         remarks: "Completed by user"

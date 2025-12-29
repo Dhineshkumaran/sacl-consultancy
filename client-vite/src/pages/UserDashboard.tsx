@@ -53,7 +53,7 @@ const UserDashboard: React.FC = () => {
 
   const handlePendingCardSelect = (card: any) => {
     setShowPendingCards(false);
-    const route = getPendingRoute(card.department_id);
+    const route = getPendingRoute(card.current_form);
     navigate(`${route}?trial_id=${card.trial_id}`);
   };
 

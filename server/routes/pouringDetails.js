@@ -7,7 +7,6 @@ import verifyToken from '../utils/verifyToken.js';
 
 router.post('/', verifyToken, asyncErrorHandler(async (req, res, next) => {
     const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks } = req.body || {};
-    console.log('req.body:', req.body);
     if (!trial_id || !pour_date || !heat_code || !composition || !pouring_temp_c || !pouring_time_sec || !inoculation || !other_remarks || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }

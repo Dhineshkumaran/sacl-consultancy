@@ -375,6 +375,7 @@ export default function VisualInspection({
                     trial_id: urlTrialId,
                     next_department_id: 10,
                     username: user.username,
+                    current_form: "DIMENSIONAL_INSPECTION",
                     role: user.role,
                     remarks: "Approved by HOD"
                 };
