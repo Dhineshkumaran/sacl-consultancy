@@ -62,6 +62,7 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(async (req, res, next) =>
     }
     trial_id = trial_id.replace(/['"]+/g, '');
     const [rows] = await Client.query('SELECT * FROM machine_shop WHERE trial_id = @trial_id', { trial_id });
+    console.log(rows);
     res.status(200).json({ success: true, data: rows });
 }));
 

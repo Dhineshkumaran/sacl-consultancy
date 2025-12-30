@@ -85,7 +85,7 @@ export default function DimensionalInspection({
     const { alert, showAlert } = useAlert();
     const [userIP, setUserIP] = useState<string>("Loading...");
     const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-    const [additionalRemarks, setAdditionalRemarks] = useState<string>("");
+    const [remarks, setRemarks] = useState<string>("");
     const [previewMode, setPreviewMode] = useState(false);
     const [previewPayload, setPreviewPayload] = useState<any | null>(null);
     const [previewSubmitted, setPreviewSubmitted] = useState(false);
@@ -107,24 +107,29 @@ export default function DimensionalInspection({
                         setBunchWeight(String(data.bunch_weight || ""));
                         setNumberOfCavity(String(data.no_of_cavities || ""));
                         setGroupMeta({ remarks: data.remarks || "", attachment: null });
-                        setAdditionalRemarks(data.remarks || "");
-                        if (data.inspections) {
+                        setRemarks(data.remarks || "");
+
+                        let inspections = data.inspections;
+                        if (typeof inspections === 'string') {
                             try {
-                                if (Array.isArray(data.inspections)) {
-                                    setCavities(data.inspections.map((_: any, i: number) => `Cavity ${i + 1}`));
-                                    setCavRows(prev => prev.map(row => {
-                                        if (row.label === "Cavity Number") {
-                                            return { ...row, values: data.inspections.map((p: any) => String(p["Cavity Number"] || "")) };
-                                        }
-                                        if (row.label === "Casting Weight") {
-                                            return { ...row, values: data.inspections.map((p: any) => String(p["Casting Weight"] || "")) };
-                                        }
-                                        return row;
-                                    }));
-                                }
-                            } catch (e) {
-                                console.error("Error parsing inspections data:", e);
+                                inspections = JSON.parse(inspections);
+                            } catch (parseError) {
+                                console.error("Failed to parse inspections JSON:", parseError);
+                                inspections = [];
                             }
+                        }
+
+                        if (inspections && Array.isArray(inspections)) {
+                            setCavities(inspections.map((_: any, i: number) => `Cavity ${i + 1}`));
+                            setCavRows(prev => prev.map(row => {
+                                if (row.label === "Cavity Number") {
+                                    return { ...row, values: inspections.map((p: any) => String(p["Cavity Number"] || "")) };
+                                }
+                                if (row.label === "Casting Weight") {
+                                    return { ...row, values: inspections.map((p: any) => String(p["Casting Weight"] || "")) };
+                                }
+                                return row;
+                            }));
                         }
                     }
                 } catch (error) {
@@ -202,7 +207,7 @@ export default function DimensionalInspection({
         setNumberOfCavity("");
         setGroupMeta({ remarks: "", attachment: null });
         setAttachedFiles([]);
-        setAdditionalRemarks("");
+        setRemarks("");
         setMessage(null);
         setPreviewSubmitted(false);
     };
@@ -219,7 +224,7 @@ export default function DimensionalInspection({
             dimensional_remarks: groupMeta.remarks || null,
             attachment: fileToMeta(groupMeta.attachment),
             attachedFiles: attachedFiles.map(f => f.name),
-            additionalRemarks: additionalRemarks,
+            remarks: remarks,
             created_at: new Date().toISOString(),
         };
     };
@@ -255,7 +260,7 @@ export default function DimensionalInspection({
                         no_of_cavities: parseInt(previewPayload.number_of_cavity) || (previewPayload.cavities ? previewPayload.cavities.length : 0),
                         yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
                         inspections: JSON.stringify(inspections),
-                        remarks: previewPayload.dimensional_remarks || ""
+                        remarks: previewPayload.remarks || ""
                     };
 
                     await inspectionService.updateDimensionalInspection(updatePayload);
@@ -301,7 +306,7 @@ export default function DimensionalInspection({
                 no_of_cavities: parseInt(previewPayload.number_of_cavity) || (previewPayload.cavities ? previewPayload.cavities.length : 0),
                 yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
                 inspections: JSON.stringify(inspections),
-                remarks: previewPayload.dimensional_remarks || ""
+                remarks: previewPayload.remarks || ""
             };
 
             await inspectionService.submitDimensionalInspection(apiPayload);
@@ -364,17 +369,6 @@ export default function DimensionalInspection({
 
             <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Container maxWidth="xl" disableGutters>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            onClick={() => navigate('/dashboard')}
-                            sx={{ minWidth: 180, fontWeight: 600 }}
-                        >
-                            Back to Dashboard
-                        </Button>
-                    </Box>
 
                     <SaclHeader />
 
@@ -533,7 +527,7 @@ export default function DimensionalInspection({
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${COLORS.primary}`, width: '100%' }}>
                             <EditIcon sx={{ color: COLORS.primary }} />
                             <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1 }}>
-                                Additional Remarks
+                                Remarks
                             </Typography>
                         </Box>
                         <TextField
@@ -541,9 +535,9 @@ export default function DimensionalInspection({
                             rows={3}
                             fullWidth
                             variant="outlined"
-                            placeholder="Enter additional remarks..."
-                            value={additionalRemarks}
-                            onChange={(e) => setAdditionalRemarks(e.target.value)}
+                            placeholder="Enter remarks..."
+                            value={remarks}
+                            onChange={(e) => setRemarks(e.target.value)}
                             sx={{ bgcolor: '#fff' }}
                             disabled={user?.role === 'HOD' && !isEditing}
                         />
@@ -658,10 +652,10 @@ export default function DimensionalInspection({
                                     </Box>
                                 )}
 
-                                {previewPayload?.additionalRemarks && (
+                                {previewPayload?.remarks && (
                                     <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                        <Typography variant="subtitle2" mb={1} color="textSecondary">ADDITIONAL REMARKS</Typography>
-                                        <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
+                                        <Typography variant="subtitle2" mb={1} color="textSecondary">REMARKS</Typography>
+                                        <Typography variant="body2">{previewPayload.remarks}</Typography>
                                     </Box>
                                 )}
                             </Box>
