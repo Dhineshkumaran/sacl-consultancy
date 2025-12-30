@@ -223,18 +223,18 @@ function MouldingTable() {
 
         if (attachedFiles.length > 0) {
           try {
-            // const uploadResults = await uploadFiles(
-            //     attachedFiles,
-            //     trialId || "trial_id",
-            //     "MOULDING",
-            //     user?.username || "system",
-            //     "MOULDING"
-            // );
+            const uploadResults = await uploadFiles(
+                attachedFiles,
+                trialId || "trial_id",
+                "MOULDING",
+                user?.username || "system",
+                "MOULDING"
+            );
 
-            // const failures = uploadResults.filter(r => !r.success);
-            // if (failures.length > 0) {
-            //     console.error("Some files failed to upload:", failures);
-            // }
+            const failures = uploadResults.filter(r => !r.success);
+            if (failures.length > 0) {
+                console.error("Some files failed to upload:", failures);
+            }
           } catch (uploadError) {
             console.error("File upload error:", uploadError);
           }

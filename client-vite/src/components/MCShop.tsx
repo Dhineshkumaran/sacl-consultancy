@@ -351,13 +351,13 @@ export default function McShopInspection({
 
       if (attachedFiles.length > 0) {
         try {
-          // const uploadResults = await uploadFiles(
-          //   attachedFiles,
-          //   trialIdParam,
-          //   "MC_SHOP_INSPECTION",
-          //   user?.username || "system",
-          //   "MC_SHOP_INSPECTION"
-          // );
+          const uploadResults = await uploadFiles(
+            attachedFiles,
+            trialIdParam,
+            "MC_SHOP_INSPECTION",
+            user?.username || "system",
+            "MC_SHOP_INSPECTION"
+          );
         } catch (uploadError) {
           console.error("File upload error:", uploadError);
         }

@@ -573,25 +573,25 @@ function FoundrySampleCard() {
         mpi: selectedPart?.mpi || "N/A"
       });
 
-      // try {
-      //   await uploadFiles(
-      //     toolingFiles,
-      //     trialId,
-      //     "TOOLING_MODIFICATION",
-      //     user?.username || "Unknown",
-      //     "Tooling Modification files"
-      //   );
-      //   await uploadFiles(
-      //     patternDataSheetFiles,
-      //     trialId,
-      //     "PATTERN_DATA_SHEET",
-      //     user?.username || "Unknown",
-      //     "Pattern Data Sheet files"
-      //   );
-      // } catch (uploadError) {
-      //   console.error(`Failed to upload file:`, uploadError);
-      //   showAlert("error", `Failed to upload file`);
-      // }
+      try {
+        await uploadFiles(
+          toolingFiles,
+          trialId,
+          "TOOLING_MODIFICATION",
+          user?.username || "Unknown",
+          "Tooling Modification files"
+        );
+        await uploadFiles(
+          patternDataSheetFiles,
+          trialId,
+          "PATTERN_DATA_SHEET",
+          user?.username || "Unknown",
+          "Pattern Data Sheet files"
+        );
+      } catch (uploadError) {
+        console.error(`Failed to upload file:`, uploadError);
+        showAlert("error", `Failed to upload file`);
+      }
 
       try {
         await departmentProgressService.createDepartmentProgress({

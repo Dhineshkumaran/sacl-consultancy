@@ -985,19 +985,19 @@ export default function MetallurgicalInspection() {
 
       if (attachedFiles.length > 0) {
         try {
-          // const uploadResults = await uploadFiles(
-          //   attachedFiles,
-          //   progressData?.trial_id || "trial_id",
-          //   "METALLURGICAL_INSPECTION",
-          //   user?.username || "system",
-          //   "METALLURGICAL_INSPECTION"
-          // );
+          const uploadResults = await uploadFiles(
+            attachedFiles,
+            trialId,
+            "METALLURGICAL_INSPECTION",
+            user?.username || "system",
+            "METALLURGICAL_INSPECTION"
+          );
 
-          // const failures = uploadResults.filter(r => !r.success);
-          // if (failures.length > 0) {
-          //   console.error("Some files failed to upload:", failures);
-          //   showAlert('warning', 'Some files failed to upload, but inspection data was saved.');
-          // }
+          const failures = uploadResults.filter(r => !r.success);
+          if (failures.length > 0) {
+            console.error("Some files failed to upload:", failures);
+            showAlert('warning', 'Some files failed to upload, but inspection data was saved.');
+          }
           setPreviewSubmitted(true);
           showAlert('success', 'Metallurgical inspection created and department progress updated successfully.');
         } catch (uploadError) {

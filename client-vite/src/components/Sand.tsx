@@ -215,18 +215,18 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
         if (attachedFiles.length > 0) {
           try {
-            // const uploadResults = await uploadFiles(
-            //   attachedFiles,
-            //   trialId,
-            //   "SAND_PROPERTIES",
-            //   user?.username || "system",
-            //   "SAND_PROPERTIES"
-            // );
+            const uploadResults = await uploadFiles(
+              attachedFiles,
+              trialId,
+              "SAND_PROPERTIES",
+              user?.username || "system",
+              "SAND_PROPERTIES"
+            );
 
-            // const failures = uploadResults.filter(r => !r.success);
-            // if (failures.length > 0) {
-            //   console.error("Some files failed to upload:", failures);
-            // }
+            const failures = uploadResults.filter(r => !r.success);
+            if (failures.length > 0) {
+              console.error("Some files failed to upload:", failures);
+            }
           } catch (uploadError) {
             console.error("File upload error:", uploadError);
           }

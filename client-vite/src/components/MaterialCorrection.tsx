@@ -208,13 +208,13 @@ export default function MaterialCorrection() {
 
             if (response.success) {
                 if (attachedFiles.length > 0) {
-                    // const uploadResults = await uploadFiles(
-                    //   attachedFiles,
-                    //   trialId,
-                    //   "MATERIAL_CORRECTION",
-                    //   user?.username || "system",
-                    //   "MATERIAL_CORRECTION"
-                    // );
+                    const uploadResults = await uploadFiles(
+                      attachedFiles,
+                      trialId,
+                      "MATERIAL_CORRECTION",
+                      user?.username || "system",
+                      "MATERIAL_CORRECTION"
+                    );
                 }
                 if (trialId) {
                     try {

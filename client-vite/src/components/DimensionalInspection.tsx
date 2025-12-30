@@ -308,13 +308,13 @@ export default function DimensionalInspection({
 
             if (attachedFiles.length > 0) {
                 try {
-                    // const uploadResults = await uploadFiles(
-                    //     attachedFiles,
-                    //     trialId,
-                    //     "DIMENSIONAL_INSPECTION",
-                    //     user?.username || "system",
-                    //     "DIMENSIONAL_INSPECTION"
-                    // );
+                    const uploadResults = await uploadFiles(
+                        attachedFiles,
+                        trialId,
+                        "DIMENSIONAL_INSPECTION",
+                        user?.username || "system",
+                        "DIMENSIONAL_INSPECTION"
+                    );
                 } catch (uploadError) {
                     console.error("File upload error:", uploadError);
                     showAlert('warning', 'File upload failed, but inspection data was saved.');

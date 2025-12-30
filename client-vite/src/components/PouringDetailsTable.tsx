@@ -5,6 +5,7 @@ import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
 import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { useNavigate } from 'react-router-dom';
+import { uploadFiles } from '../services/fileUploadHelper';
 import {
     Paper,
     Typography,
@@ -424,18 +425,18 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
 
             if (attachedFiles.length > 0) {
                 try {
-                    // const uploadResults = await uploadFiles(
-                    //     attachedFiles,
-                    //     trialId || "trial_id",
-                    //     "POURING_DETAILS",
-                    //     user?.username || "system",
-                    //     "POURING_DETAILS"
-                    // );
+                    const uploadResults = await uploadFiles(
+                        attachedFiles,
+                        trialId || "trial_id",
+                        "POURING_DETAILS",
+                        user?.username || "system",
+                        "POURING_DETAILS"
+                    );
 
-                    // const failures = uploadResults.filter(r => !r.success);
-                    // if (failures.length > 0) {
-                    //     console.error("Some files failed to upload:", failures);
-                    // }
+                    const failures = uploadResults.filter(r => !r.success);
+                    if (failures.length > 0) {
+                        console.error("Some files failed to upload:", failures);
+                    }
                 } catch (uploadError) {
                     console.error("File upload error:", uploadError);
                 }
