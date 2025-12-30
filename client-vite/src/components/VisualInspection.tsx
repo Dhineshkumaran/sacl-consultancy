@@ -110,15 +110,25 @@ export default function VisualInspection({
                         const data = response.data[0];
                         if (data.inspection_date) setDate(new Date(data.inspection_date).toISOString().slice(0, 10));
 
-                        if (data.inspections && Array.isArray(data.inspections)) {
-                            const loadedCols = data.inspections.map((item: any) => item['Cavity Number'] || '');
+                        let inspections = data.inspections;
+                        if (typeof inspections === 'string') {
+                            try {
+                                inspections = JSON.parse(inspections);
+                            } catch (parseError) {
+                                console.error("Failed to parse inspections JSON:", parseError);
+                                inspections = [];
+                            }
+                        }
+
+                        if (inspections && Array.isArray(inspections)) {
+                            const loadedCols = inspections.map((item: any) => item['Cavity Number'] || '');
 
                             setCols(loadedCols);
                             setRows(prevRows => prevRows.map(row => {
                                 const fieldName = row.label === "Reason for rejection: cavity wise" ? "Reason for rejection" : row.label;
                                 return {
                                     ...row,
-                                    values: data.inspections.map((item: any) => String(item[fieldName] || ''))
+                                    values: inspections.map((item: any) => String(item[fieldName] || ''))
                                 };
                             }));
                         }
