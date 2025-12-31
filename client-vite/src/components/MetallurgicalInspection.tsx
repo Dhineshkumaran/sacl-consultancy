@@ -51,7 +51,7 @@ import { AlertMessage } from './common/AlertMessage';
 import { fileToMeta, generateUid, validateFileSizes } from '../utils';
 import SaclHeader from "./common/SaclHeader";
 import DepartmentHeader from "./common/DepartmentHeader";
-import { LoadingState, EmptyState, ActionButtons, PreviewModal, Common, FileUploadSection } from './common';
+import { LoadingState, EmptyState, ActionButtons, PreviewModal, Common, FileUploadSection, DocumentViewer } from './common';
 import { ipService } from "../services/ipService";
 
 interface Row {
@@ -1298,18 +1298,11 @@ export default function MetallurgicalInspection() {
                 label="Attach PDF"
                 disabled={user?.role === 'HOD' && !isEditing}
               />
+              <DocumentViewer trialId={trialId || ""} category="METALLURGICAL_INSPECTION" />
             </Box>
 
 
-            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => navigate('/dashboard')}
-                sx={{ minWidth: 180, fontWeight: 600 }}
-              >
-                Back to Dashboard
-              </Button>
+            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
               <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                 <ActionButtons
                   {...(user?.role !== 'HOD' ? { onReset: () => window.location.reload() } : {})}

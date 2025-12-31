@@ -51,7 +51,7 @@ import { AlertMessage } from './common/AlertMessage';
 import { fileToMeta, generateUid, validateFileSizes } from '../utils';
 import type { InspectionRow, GroupMetadata } from '../types/inspection';
 import DepartmentHeader from "./common/DepartmentHeader";
-import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, Common } from './common';
+import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, Common, DocumentViewer } from './common';
 
 type Row = InspectionRow;
 type GroupMeta = { ok: boolean | null; remarks: string; attachment: File | null };
@@ -776,18 +776,11 @@ export default function VisualInspection({
                                 label="Attach PDF"
                                 disabled={user?.role === 'HOD' && !isEditing}
                             />
+                            <DocumentViewer trialId={urlTrialId} category="VISUAL_INSPECTION" />
                         </Box>
 
 
-                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() => navigate('/dashboard')}
-                                sx={{ minWidth: 180, fontWeight: 600 }}
-                            >
-                                Back to Dashboard
-                            </Button>
+                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
                             <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                                 <ActionButtons
                                     {...(user?.role !== 'HOD' ? { onReset: reset } : {})}

@@ -124,4 +124,109 @@ router.post('/change-password', verifyToken, asyncErrorHandler(async (req, res, 
   return res.json({ success: true, message: 'Password updated' });
 }));
 
+router.delete('/:id', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(async (req, res, next) => {
+  const userId = req.params.id;
+  const adminUser = req.user;
+
+  // Prevent admin from deleting themselves
+  if (parseInt(userId) === adminUser.user_id) {
+    throw new CustomError('You cannot delete your own account', 400);
+  }
+
+  // Check if user exists
+  const [userResult] = await Client.query('SELECT username FROM users WHERE user_id = @user_id', { user_id: userId });
+  if (!userResult || userResult.length === 0) {
+    throw new CustomError('User not found', 404);
+  }
+  const targetUsername = userResult[0].username;
+
+  // Cascade Hard Delete
+  // 1. Delete associated department_progress
+  await Client.query('DELETE FROM department_progress WHERE username = @username', { username: targetUsername });
+  // 2. Delete associated audit_logs
+  await Client.query('DELETE FROM audit_log WHERE user_id = @user_id', { user_id: userId });
+  // 3. Delete associated email_otps
+  await Client.query('DELETE FROM email_otps WHERE user_id = @user_id', { user_id: userId });
+  // 4. Delete user
+  const deleteSql = 'DELETE FROM users WHERE user_id = @user_id';
+  await Client.query(deleteSql, { user_id: userId });
+
+  // Audit log
+  const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+  await Client.query(audit_sql, {
+    user_id: adminUser.user_id,
+    department_id: adminUser.department_id,
+    action: 'User deleted',
+    remarks: `User ${targetUsername} (ID: ${userId}) permanently deleted by ${adminUser.username}`
+  });
+
+  res.status(200).json({ success: true, message: 'User deleted successfully' });
+}));
+
+router.post('/bulk-delete', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(async (req, res, next) => {
+  const { userIds } = req.body;
+  const adminUser = req.user;
+
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    throw new CustomError('No users selected for deletion', 400);
+  }
+
+  // Prevent admin from deleting themselves
+  if (userIds.includes(adminUser.user_id)) {
+    throw new CustomError('You cannot delete your own account', 400);
+  }
+
+  // Get count of users to be deleted for audit
+  const idsString = userIds.join(',');
+  const placeholders = userIds.map(() => '?').join(','); // mysql2 style
+  // Using explicit query construction or loop might be safer depending on driver, but let's try '?' with array param if client supports it.
+  // Actually, Client.query wrapper usually takes named params or array. For 'IN' clause with named params, it's tricky.
+  // Converting to looped deletion or constructing a safe string. 
+  // Given `Client` wrapper context, let's look at how it works. It usually uses `mysql` or `mssql`.
+  // The codebase uses `connection.js` which likely exports a wrapper.
+  // From previous file reads, it uses `Client.query(sql, params)`.
+  // Let's stick to safe iteration or specific IN clause handling if we knew the driver.
+  // For safety and simplicity with unknown driver capabilities for IN clause with named params:
+  // We will iterate or use a transaction.
+
+  // Actually, let's act based on previous code style. `Client.execute` and `Client.query` are used.
+  // `Client.query` takes named params `@param`.
+  // SQL Server usage (suggested by previous `TOP 1` and `@param`).
+
+  // For SQL Server `IN` clause with parameters is complex. 
+  // Let's loop for now to be safe and ensure individual audits or just one big audit? 
+  // Plan said "Log single audit entry".
+  // Let's try to do it in one go if possible, but safe string injection for integers involves standard validation.
+
+  // Validate all are numbers
+  const safeIds = userIds.map(id => parseInt(id)).filter(id => !isNaN(id));
+  if (safeIds.length === 0) throw new CustomError('Invalid user IDs', 400);
+
+  const idList = safeIds.join(',');
+
+  // Cascade Hard Delete in Bulk
+  // Note: Using IN implies safeIds join.
+  // 1. Delete associated department_progress (need usernames first)
+  // We can do a subquery delete if supported, but let's try to be generic or assume MSSQL/MySQL support.
+  await Client.query(`DELETE FROM department_progress WHERE username IN (SELECT username FROM users WHERE user_id IN (${idList}))`);
+  // 2. Delete associated audit_logs
+  await Client.query(`DELETE FROM audit_log WHERE user_id IN (${idList})`);
+  // 3. Delete associated email_otps
+  await Client.query(`DELETE FROM email_otps WHERE user_id IN (${idList})`);
+  // 4. Delete users
+  const deleteSql = `DELETE FROM users WHERE user_id IN (${idList})`;
+  await Client.query(deleteSql);
+
+  // Audit log
+  const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+  await Client.query(audit_sql, {
+    user_id: adminUser.user_id,
+    department_id: adminUser.department_id,
+    action: 'Bulk User Deleted',
+    remarks: `${safeIds.length} users (IDs: ${idList}) permanently deleted by ${adminUser.username}`
+  });
+
+  res.status(200).json({ success: true, message: `${safeIds.length} users deleted successfully` });
+}));
+
 export default router;

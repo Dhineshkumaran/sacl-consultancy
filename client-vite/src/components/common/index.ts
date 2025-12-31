@@ -12,3 +12,4 @@ export { default as EmptyState } from './EmptyState';
 export { default as SpecInput } from './SpecInput';
 export { default as Common } from './Common';
 export { PreviewModal } from './PreviewModal';
+export { default as DocumentViewer } from './DocumentViewer';

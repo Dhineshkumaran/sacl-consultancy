@@ -25,8 +25,10 @@ import machineShop from './routes/machineShop.js';
 import document from './routes/documents.js';
 import getAllDepartmentData from './routes/getAllDepartmentData.js';
 import stats from './routes/stats.js';
+import forgotPasswordRoutes from './routes/forgotPassword.js';
 
-const app = express();
+const app = express(); // <-- this must come first
+
 // Increase body size limits to support file uploads (base64 encoded files can be large)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -60,6 +62,7 @@ app.use('/api/machine-shop', machineShop);
 app.use('/api/documents', document);
 app.use('/api/get-all-department-data', getAllDepartmentData);
 app.use('/api/stats', stats);
+app.use('/api/forgot-password', forgotPasswordRoutes);
 
 app.use('/health', (req, res) => {
     res.status(200).json({ status: 'OK' });

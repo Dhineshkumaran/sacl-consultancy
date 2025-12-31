@@ -100,11 +100,26 @@ export default function AllTrialsPage() {
                         flexDirection: { xs: 'column', sm: 'row' },
                         gap: 2,
                         justifyContent: 'space-between',
-                        alignItems: { xs: 'stretch', sm: 'center' }
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 1100,
+                        backgroundColor: COLORS.background,
+                        pb: 2
                     }}>
-                        <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}>
-                            All Trials Repository
-                        </Typography>
+                        <Box display="flex" alignItems="center" gap={2}>
+                            <Button
+                                variant="outlined"
+                                onClick={() => navigate('/dashboard')}
+                                startIcon={<SearchIcon sx={{ transform: 'rotate(90deg)' }} />} // Using SearchIcon generic, but arrow likely better if available
+                                sx={{ mr: 2 }}
+                            >
+                                Back
+                            </Button>
+                            <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}>
+                                All Trials Repository
+                            </Typography>
+                        </Box>
                         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
 
                             <FormControl size="small" sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 200 } }}>
@@ -219,16 +234,6 @@ export default function AllTrialsPage() {
                             </Box>
                         )}
                     </Paper>
-
-                    <Box sx={{ mt: 3, textAlign: 'right' }}>
-                        <Button
-                            variant="text"
-                            color="secondary"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Back to Dashboard
-                        </Button>
-                    </Box>
                 </Container>
             </Box>
         </ThemeProvider>

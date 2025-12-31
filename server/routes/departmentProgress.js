@@ -43,7 +43,7 @@ router.put('/update-department', verifyToken, asyncErrorHandler(async (req, res,
     });
 
     const next_department_user_result = await Client.query(
-        `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User'`,
+        `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1`,
         { next_department_id }
     );
     const next_department_user = next_department_user_result[0];
@@ -108,7 +108,7 @@ router.put('/update-role', verifyToken, asyncErrorHandler(async (req, res, next)
         remarks: `Department progress for trial ${trial_id} marked as completed by ${req.user.username}`
     });
     const current_department_hod_result = await Client.query(
-        `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD'`,
+        `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1`,
         { current_department_id }
     );
     const current_department_hod = current_department_hod_result[0];

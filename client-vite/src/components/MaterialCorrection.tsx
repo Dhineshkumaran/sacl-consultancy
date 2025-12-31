@@ -37,7 +37,8 @@ import {
     PreviewModal,
     AlertMessage,
     SpecInput,
-    FileUploadSection
+    FileUploadSection,
+    DocumentViewer
 } from "./common";
 import { useAuth } from "../context/AuthContext";
 import { ipService } from "../services/ipService";
@@ -209,11 +210,11 @@ export default function MaterialCorrection() {
             if (response.success) {
                 if (attachedFiles.length > 0) {
                     const uploadResults = await uploadFiles(
-                      attachedFiles,
-                      trialId,
-                      "MATERIAL_CORRECTION",
-                      user?.username || "system",
-                      "MATERIAL_CORRECTION"
+                        attachedFiles,
+                        trialId,
+                        "MATERIAL_CORRECTION",
+                        user?.username || "system",
+                        "MATERIAL_CORRECTION"
                     );
                 }
                 if (trialId) {
@@ -363,6 +364,7 @@ export default function MaterialCorrection() {
                                     label="Upload Files"
                                     showAlert={(severity, message) => setAlertMessage({ severity, message })}
                                 />
+                                <DocumentViewer trialId={trialId} category="MATERIAL_CORRECTION" />
                             </Paper>
                         </Grid>
 
@@ -389,15 +391,7 @@ export default function MaterialCorrection() {
                         </Grid>
 
                         <Grid size={{ xs: 12 }} sx={{ mt: 2, mb: 4 }}>
-                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2}>
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    onClick={() => navigate('/dashboard')}
-                                    sx={{ minWidth: 180, fontWeight: 600 }}
-                                >
-                                    Back to Dashboard
-                                </Button>
+                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2}>
                                 <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                                     <ActionButtons
                                         {...(user?.role !== 'HOD' ? { onReset: () => window.location.reload() } : {})}

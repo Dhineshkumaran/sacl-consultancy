@@ -43,7 +43,7 @@ import { inspectionService } from '../services/inspectionService';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
 import DepartmentHeader from "./common/DepartmentHeader";
-import { FileUploadSection, PreviewModal, SpecInput, FormSection, ActionButtons, Common, EmptyState, LoadingState } from './common';
+import { FileUploadSection, PreviewModal, SpecInput, FormSection, ActionButtons, Common, EmptyState, LoadingState, DocumentViewer } from './common';
 
 
 
@@ -216,6 +216,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
     });
     const [pouringTemp, setPouringTemp] = useState<string>(pouringDetails?.pouringTempDegC || "");
     const [pouringTime, setPouringTime] = useState<string>(pouringDetails?.pouringTimeSec || "");
+    const [inoculationText, setInoculationText] = useState<string>("");
     const [inoculationStream, setInoculationStream] = useState<string>("");
     const [inoculationInmould, setInoculationInmould] = useState<string>("");
 
@@ -262,6 +263,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                         setPouringTime(String(data.pouring_time_sec || ""));
 
                         const inoc = typeof data.inoculation === 'string' ? JSON.parse(data.inoculation) : data.inoculation || {};
+                        setInoculationText(inoc.Text || "");
                         setInoculationStream(inoc.Stream || "");
                         setInoculationInmould(inoc.Inmould || "");
 
@@ -310,7 +312,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
             chemical_composition: chemState,
             pouringTemp,
             pouringTime,
-            inoculation: { stream: inoculationStream, inmould: inoculationInmould },
+            inoculation: { text: inoculationText, stream: inoculationStream, inmould: inoculationInmould },
             remarks: { ficHeatNo, ppCode, followedBy, userName },
             remarksText,
             attachedFiles
@@ -343,6 +345,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                             pouring_temp_c: parseFloat(previewPayload.pouringTemp) || 0,
                             pouring_time_sec: parseInt(previewPayload.pouringTime) || 0,
                             inoculation: {
+                                Text: inoculationText,
                                 Stream: inoculationStream,
                                 Inmould: inoculationInmould
                             },
@@ -395,6 +398,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                 pouring_temp_c: parseFloat(pouringTemp) || 0,
                 pouring_time_sec: parseInt(pouringTime) || 0,
                 inoculation: {
+                    Text: inoculationText,
                     Stream: inoculationStream,
                     Inmould: inoculationInmould
                 },
@@ -588,7 +592,16 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                                                         </Box>
                                                         <Divider sx={{ borderStyle: 'dashed' }} />
                                                         <Box>
-                                                            <Typography variant="caption" fontWeight="bold" sx={{ textDecoration: "underline" }}>Inoculation :</Typography>
+                                                            <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1 }}>
+                                                                <Typography variant="caption" fontWeight="bold" sx={{ textDecoration: "underline" }}>Inoculation</Typography>
+                                                                <SpecInput
+                                                                    placeholder="Type"
+                                                                    value={inoculationText}
+                                                                    onChange={(e: any) => setInoculationText(e.target.value)}
+                                                                    sx={{ width: 80 }}
+                                                                    disabled={user?.role === 'HOD' && !isEditing}
+                                                                />
+                                                            </Box>
                                                             <Grid container spacing={1} sx={{ mt: 0.5 }}>
                                                                 <Grid size={{ xs: 12 }}>
                                                                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -679,6 +692,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                                     label="Upload Files"
                                     disabled={user?.role === 'HOD' && !isEditing}
                                 />
+                                <DocumentViewer trialId={trialId || ""} category="POURING_DETAILS" />
                             </Paper>
                         </Grid>
 
@@ -700,15 +714,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
 
 
                         <Grid size={{ xs: 12 }} sx={{ mt: 2, mb: 4 }}>
-                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2}>
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    onClick={() => navigate('/dashboard')}
-                                    sx={{ minWidth: 180, fontWeight: 600 }}
-                                >
-                                    Back to Dashboard
-                                </Button>
+                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2}>
                                 <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                                     <ActionButtons
                                         {...(user?.role !== 'HOD' ? { onReset: () => window.location.reload() } : {})}
@@ -771,7 +777,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                                                 <span style={dataFontStyle}>{previewPayload?.pouringTemp}°C</span>
                                             </div>
                                             <div style={{ borderTop: '1px dashed black', paddingTop: '10px' }}>
-                                                <u style={{ fontWeight: 'bold' }}>Inoculation:</u><br />
+                                                <u style={{ fontWeight: 'bold' }}>Inoculation: <span style={{ ...dataFontStyle, fontWeight: 'normal' }}>{previewPayload?.inoculation?.text}</span></u><br />
                                                 Stream: <span style={dataFontStyle}>{previewPayload?.inoculation.stream}</span> gms<br />
                                                 Inmould: <span style={dataFontStyle}>{previewPayload?.inoculation.inmould}</span> gms
                                             </div>

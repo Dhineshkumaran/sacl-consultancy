@@ -286,6 +286,7 @@ export default function FullReportPage() {
                                             { label: "Pouring Temp (°C)", value: pouring.pouring_temp_c },
                                             { label: "Pouring Time (sec)", value: pouring.pouring_time_sec },
                                             { label: "F/C Heat No.", value: pRem["F/C & Heat No."] },
+                                            { label: "Inoculation Type", value: pInoc.Text },
                                             { label: "Stream Inoc.", value: pInoc.Stream },
                                             { label: "Inmould Inoc.", value: pInoc.Inmould }
                                         ]} />

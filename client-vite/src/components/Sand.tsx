@@ -44,7 +44,7 @@ import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
 import { fileToMeta, validateFileSizes } from '../utils';
 import DepartmentHeader from "./common/DepartmentHeader";
-import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, Common } from './common';
+import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, Common, DocumentViewer } from './common';
 
 interface SandTableProps {
   submittedData?: {
@@ -393,17 +393,10 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                 showAlert={showAlert}
                 label="Attach PDF"
               />
+              <DocumentViewer trialId={trialId} category="SAND_PROPERTIES" />
             </Box>
 
-            <Box sx={{ p: 3, display: "flex", flexDirection: { xs: 'column', sm: 'row' }, justifyContent: "space-between", alignItems: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => navigate('/dashboard')}
-                sx={{ minWidth: 180, fontWeight: 600 }}
-              >
-                Back to Dashboard
-              </Button>
+            <Box sx={{ p: 3, display: "flex", flexDirection: { xs: 'column', sm: 'row' }, justifyContent: "flex-end", alignItems: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                 {user?.role !== 'HOD' && (
                   <Button

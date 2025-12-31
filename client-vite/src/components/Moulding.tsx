@@ -46,7 +46,7 @@ import { AlertMessage } from './common/AlertMessage';
 import { fileToMeta, validateFileSizes } from '../utils';
 import type { InspectionRow, GroupMetadata } from '../types/inspection';
 import DepartmentHeader from "./common/DepartmentHeader";
-import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, Common } from './common';
+import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, Common, DocumentViewer } from './common';
 
 function MouldingTable() {
   const { user } = useAuth();
@@ -224,16 +224,16 @@ function MouldingTable() {
         if (attachedFiles.length > 0) {
           try {
             const uploadResults = await uploadFiles(
-                attachedFiles,
-                trialId || "trial_id",
-                "MOULDING",
-                user?.username || "system",
-                "MOULDING"
+              attachedFiles,
+              trialId || "trial_id",
+              "MOULDING",
+              user?.username || "system",
+              "MOULDING"
             );
 
             const failures = uploadResults.filter(r => !r.success);
             if (failures.length > 0) {
-                console.error("Some files failed to upload:", failures);
+              console.error("Some files failed to upload:", failures);
             }
           } catch (uploadError) {
             console.error("File upload error:", uploadError);
@@ -387,18 +387,11 @@ function MouldingTable() {
                   />
                 ))}
               </Box>
+              <DocumentViewer trialId={trialId || ""} category="MOULDING" />
             </Box>
 
 
-            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => navigate('/dashboard')}
-                sx={{ minWidth: 180, fontWeight: 600 }}
-              >
-                Back to Dashboard
-              </Button>
+            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
               <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                 <ActionButtons
                   {...(user?.role !== 'HOD' ? { onReset: handleReset } : {})}

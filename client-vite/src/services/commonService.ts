@@ -87,6 +87,19 @@ class ApiService {
     });
   }
 
+  async deleteUser(userId: number): Promise<void> {
+    return this.request(`/users/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteUsersBulk(userIds: number[]): Promise<void> {
+    return this.request('/users/bulk-delete', {
+      method: 'POST',
+      body: JSON.stringify({ userIds })
+    });
+  }
+
   async sendEmailOtp(email: string) {
     return this.request('/users/send-otp', {
       method: 'POST',
@@ -111,7 +124,7 @@ class ApiService {
   async getMasterList(): Promise<any[]> {
     const response = await this.request('/master-list', {
       method: 'GET',
-        headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
     });
     return response.data || [];
   }

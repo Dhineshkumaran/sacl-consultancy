@@ -26,7 +26,10 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
     showAlert,
     disabled = false
 }) => {
+    const [fileError, setFileError] = React.useState<string | null>(null);
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFileError(null);
         const selectedFiles = Array.from(e.target.files ?? []);
 
         if (selectedFiles.length === 0) return;
@@ -34,13 +37,15 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
         const validation = validateFileSizes(selectedFiles);
 
         if (!validation.isValid) {
-            validation.errors.forEach((error: string) => {
-                if (showAlert) {
-                    showAlert('error', error);
-                } else {
-                    alert(error);
-                }
-            });
+            const errorMessage = validation.errors[0];
+            setFileError(errorMessage);
+
+            if (showAlert) {
+                showAlert('error', errorMessage);
+            } else {
+                alert(errorMessage);
+            }
+
             e.target.value = '';
             return;
         }
@@ -68,6 +73,12 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                     disabled={disabled}
                 />
             </Button>
+
+            {fileError && (
+                <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1, mb: 1 }}>
+                    {fileError}
+                </Typography>
+            )}
 
             {files.length > 0 && (
                 <List dense>

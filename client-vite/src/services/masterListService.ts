@@ -44,6 +44,17 @@ export const masterListService = {
       },
       body: JSON.stringify(payload)
     });
+  },
+
+  deleteMasterLists(ids: number[]) {
+    return fetch(`${API_BASE}/master-list/bulk`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || ''
+      },
+      body: JSON.stringify({ ids })
+    });
   }
 };
 

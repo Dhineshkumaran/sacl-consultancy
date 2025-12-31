@@ -58,7 +58,7 @@ import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
 import { useAuth } from '../context/AuthContext';
 import DepartmentHeader from "./common/DepartmentHeader";
-import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal } from './common';
+import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from './common';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 interface PartData {
@@ -1094,7 +1094,7 @@ function FoundrySampleCard() {
 
           {/* Show these sections only when not in empty state for HOD */}
           {!(user?.role === 'HOD' && !assigned) && !loading && (
-            <>
+            <React.Fragment>
               <Paper sx={{ overflowX: "auto", mb: 3, p: 2 }}>
                 <Table size="small" sx={{ minWidth: 900 }}>
                   <TableHead>
@@ -1215,6 +1215,7 @@ function FoundrySampleCard() {
                           showAlert={showAlert}
                           label="Attach Pattern Data Sheet"
                         />
+                        <DocumentViewer trialId={trialId || ""} category="PATTERN_DATA_SHEET" label="Attached Sheets" />
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -1255,6 +1256,7 @@ function FoundrySampleCard() {
                       showAlert={showAlert}
                       label="Attach Tooling PDF"
                     />
+                    <DocumentViewer trialId={trialId || ""} category="TOOLING_MODIFICATION" label="Attached Tooling Files" />
                   </Grid>
                 </Grid>
               </Paper>
@@ -1324,46 +1326,37 @@ function FoundrySampleCard() {
                 />
               </Paper>
 
-              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => navigate('/dashboard')}
-                  sx={{ minWidth: 180, fontWeight: 600 }}
-                >
-                  Back to Dashboard
-                </Button>
-                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                  {user?.role !== 'HOD' && (
-                    <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
-                      Reset Form
-                    </Button>
-                  )}
-                  {user?.role === 'HOD' && trialIdFromUrl && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => setIsEditing(!isEditing)}
-                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                    >
-                      {isEditing ? "Cancel Edit" : "Edit Details"}
-                    </Button>
-                  )}
-                  <Button
-                    variant="contained"
-                    onClick={handleSaveAndContinue}
-                    fullWidth={isMobile}
-                    startIcon={(user?.role === 'HOD' && trialIdFromUrl) ? <CheckCircleIcon /> : <SaveIcon />}
-                    sx={{
-                      bgcolor: COLORS.secondary,
-                      color: 'white',
-                      '&:hover': { bgcolor: '#c2410c' }
-                    }}
-                  >
-                    {(user?.role === 'HOD' && trialIdFromUrl) ? 'Approve' : 'Save & Continue'}
+              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} sx={{ mt: 2, mb: 4, justifyContent: 'flex-end' }}>
+                {user?.role !== 'HOD' && (
+                  <Button variant="outlined" color="inherit" fullWidth={isMobile} onClick={() => window.location.reload()}>
+                    Reset Form
                   </Button>
-                </Box>
+                )}
+                {user?.role === 'HOD' && trialIdFromUrl && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => setIsEditing(!isEditing)}
+                    sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                  >
+                    {isEditing ? "Cancel Edit" : "Edit Details"}
+                  </Button>
+                )}
+                <Button
+                  variant="contained"
+                  onClick={handleSaveAndContinue}
+                  fullWidth={isMobile}
+                  startIcon={(user?.role === 'HOD' && trialIdFromUrl) ? <CheckCircleIcon /> : <SaveIcon />}
+                  sx={{
+                    bgcolor: COLORS.secondary,
+                    color: 'white',
+                    '&:hover': { bgcolor: '#c2410c' }
+                  }}
+                >
+                  {(user?.role === 'HOD' && trialIdFromUrl) ? 'Approve' : 'Save & Continue'}
+                </Button>
               </Box>
-            </>
+
+            </React.Fragment>
           )}
           {previewPayload && (
             <Box className="print-section" sx={{ display: 'none' }}>

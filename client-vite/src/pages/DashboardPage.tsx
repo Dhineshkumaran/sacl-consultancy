@@ -84,6 +84,44 @@ const DashboardPage: React.FC = () => {
       />
 
       <main className="dashboard-content">
+        {(showUserDetails || showMasterList) && (
+          <div style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 1100,
+            backgroundColor: '#f8f9fa',
+            padding: '10px 0',
+            width: '100%',
+            marginBottom: '10px'
+          }}>
+            <button
+              className="btn-back"
+              onClick={() => {
+                setShowUserDetails(false);
+                setShowMasterList(false);
+              }}
+              style={{
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+        )}
+
         {showUserDetails ? (
           <UserManagement />
         ) : showMasterList ? (
@@ -227,30 +265,7 @@ const DashboardPage: React.FC = () => {
             )}
           </>
         )}
-        {(showUserDetails || showMasterList) && (
-          <button
-            className="btn-back"
-            onClick={() => {
-              setShowUserDetails(false);
-              setShowMasterList(false);
-            }}
-            style={{
-              marginTop: '20px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s',
-              fontWeight: 500
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
-          >
-            ← Back to Dashboard
-          </button>
-        )}
+
       </main>
 
       {/* Add User Modal */}

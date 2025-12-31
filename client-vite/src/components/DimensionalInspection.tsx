@@ -49,7 +49,7 @@ import { AlertMessage } from './common/AlertMessage';
 import { fileToMeta, generateUid, validateFileSizes } from '../utils';
 import type { InspectionRow, GroupMetadata } from '../types/inspection';
 import DepartmentHeader from "./common/DepartmentHeader";
-import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, Common } from './common';
+import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, Common, DocumentViewer } from './common';
 
 type CavRow = InspectionRow;
 type GroupMeta = GroupMetadata;
@@ -365,16 +365,7 @@ export default function DimensionalInspection({
             <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Container maxWidth="xl" disableGutters>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 2 }}>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            onClick={() => navigate('/dashboard')}
-                            sx={{ minWidth: 180, fontWeight: 600 }}
-                        >
-                            Back to Dashboard
-                        </Button>
-                    </Box>
+
 
                     <SaclHeader />
 
@@ -526,6 +517,7 @@ export default function DimensionalInspection({
                                 showAlert={showAlert}
                                 label="Attach PDF"
                             />
+                            <DocumentViewer trialId={trialId || ""} category="DIMENSIONAL_INSPECTION" />
                         </Box>
                     </Paper>
 
@@ -550,15 +542,7 @@ export default function DimensionalInspection({
                     </Paper>
 
 
-                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                        <Button
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => navigate('/dashboard')}
-                            sx={{ minWidth: 180, fontWeight: 600 }}
-                        >
-                            Back to Dashboard
-                        </Button>
+                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
                         <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                             <ActionButtons
                                 {...(user?.role !== 'HOD' ? { onReset: resetAll } : {})}
