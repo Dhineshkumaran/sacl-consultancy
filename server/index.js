@@ -32,7 +32,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://sacl-consultancy.vercel.app', 'https://sacl-consultancy.onrender.com'],
+    origin: ['http://localhost:5173', 'https://sacl-consultancy-proj.vercel.app', 'https://sacl-consultancy-proj.onrender.com'],
     credentials: true
 }))
 
