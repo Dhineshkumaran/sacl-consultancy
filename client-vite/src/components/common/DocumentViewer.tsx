@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, List, ListItem, ListItemText, ListItemIcon, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, ListItemIcon, Button, CircularProgress, Paper } from '@mui/material';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ImageIcon from '@mui/icons-material/Image';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -19,6 +19,7 @@ interface Document {
     document_type: string;
     file_base64: string;
     uploaded_by: string;
+    uploaded_by_username?: string;
     uploaded_at: string;
     remarks: string;
 }
@@ -46,6 +47,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
                     }
                 } else {
                     console.error("Failed to fetch documents");
+                    setError("Failed to fetch documents");
                 }
             } catch (err) {
                 console.error("Error fetching documents:", err);
@@ -61,8 +63,18 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
     const handleViewFile = (file: Document) => {
         const win = window.open();
         if (win) {
+            let src = file.file_base64;
+            const ext = file.file_name.split('.').pop()?.toLowerCase();
+
+            // Ensure proper data URI prefix for PDFs
+            if (ext === 'pdf' && !src.startsWith('data:application/pdf;base64,')) {
+                src = `data:application/pdf;base64,${src}`;
+            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '') && !src.startsWith('data:image')) {
+                src = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${src}`;
+            }
+
             win.document.write(
-                `<html><head><title>${file.file_name}</title></head><body style="margin:0"><iframe src="${file.file_base64}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe></body></html>`
+                `<html><head><title>${file.file_name}</title></head><body style="margin:0"><iframe src="${src}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe></body></html>`
             );
         }
     };
@@ -75,6 +87,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
     };
 
     if (loading) return <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}><CircularProgress size={20} /><Typography variant="body2">Loading documents...</Typography></Box>;
+
+    if (error) return <Box sx={{ p: 2 }}><Typography variant="body2" color="error">{error}</Typography></Box>;
 
     if (documents.length === 0) return null;
 
@@ -104,7 +118,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
                         </ListItemIcon>
                         <ListItemText
                             primary={doc.file_name}
-                            secondary={`Uploaded by ${doc.uploaded_by} on ${new Date(doc.uploaded_at).toLocaleDateString()}`}
+                            secondary={`Uploaded by ${doc.uploaded_by_username || doc.uploaded_by} on ${new Date(doc.uploaded_at).toLocaleDateString()}`}
                             primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
                             secondaryTypographyProps={{ variant: 'caption' }}
                         />
