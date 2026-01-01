@@ -21,7 +21,7 @@ import {
     FormControl,
     InputLabel
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SaclHeader from '../components/common/SaclHeader';
@@ -33,15 +33,17 @@ import { getDepartmentName } from '../utils/dashboardUtils';
 export default function AllTrialsPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [searchParams] = useSearchParams();
     const [trials, setTrials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPatternCode, setSelectedPatternCode] = useState<string>('all');
-    const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-    const [selectedStatus, setSelectedStatus] = useState<string>('all');
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
+    // Check if we should filter by current user
+    const filterByUser = searchParams.get('myTrials') === 'true';
 
     useEffect(() => {
         const fetchTrials = async () => {
@@ -59,25 +61,16 @@ export default function AllTrialsPage() {
     }, []);
 
     const uniquePatternCodes = useMemo(() => {
-        const patternCodes = trials
+        // Filter trials by user first if filterByUser is true
+        const trialsToCheck = filterByUser 
+            ? trials.filter(trial => trial.created_by === user?.username || trial.initiated_by === user?.username)
+            : trials;
+        
+        const patternCodes = trialsToCheck
             .map(trial => trial.pattern_code)
             .filter(Boolean);
         return [...new Set(patternCodes)].sort();
-    }, [trials]);
-
-    const uniqueDepartments = useMemo(() => {
-        const departments = trials
-            .map(trial => trial.current_department_id)
-            .filter(Boolean);
-        return [...new Set(departments)].sort((a, b) => a - b);
-    }, [trials]);
-
-    const uniqueStatuses = useMemo(() => {
-        const statuses = trials
-            .map(trial => trial.status || 'CREATED')
-            .filter(Boolean);
-        return [...new Set(statuses)].sort();
-    }, [trials]);
+    }, [trials, filterByUser, user?.username]);
 
     const filteredTrials = trials.filter(trial => {
         const matchesSearch = trial.trial_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,11 +79,10 @@ export default function AllTrialsPage() {
 
         const matchesPatternCode = selectedPatternCode === 'all' || trial.pattern_code === selectedPatternCode;
 
-        const matchesDepartment = selectedDepartment === 'all' || trial.current_department_id === parseInt(selectedDepartment);
+        // Filter by current user if filterByUser is true
+        const matchesUser = !filterByUser || trial.created_by === user?.username || trial.initiated_by === user?.username;
 
-        const matchesStatus = selectedStatus === 'all' || (trial.status || 'CREATED') === selectedStatus;
-
-        return matchesSearch && matchesPatternCode && matchesDepartment && matchesStatus;
+        return matchesSearch && matchesPatternCode && matchesUser;
     });
 
     const getStatusStyle = (status: string) => {
@@ -137,7 +129,7 @@ export default function AllTrialsPage() {
                                 Back
                             </Button>
                             <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}>
-                                All Trials Repository
+                                {filterByUser ? 'My Initiated Trials' : 'All Trials Repository'}
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
@@ -153,38 +145,6 @@ export default function AllTrialsPage() {
                                     {uniquePatternCodes.map((patternCode) => (
                                         <MenuItem key={patternCode} value={patternCode}>
                                             {patternCode}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <FormControl size="small" sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 200 } }}>
-                                <InputLabel>Current Department</InputLabel>
-                                <Select
-                                    value={selectedDepartment}
-                                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                                    label="Current Department"
-                                >
-                                    <MenuItem value="all">All Departments</MenuItem>
-                                    {uniqueDepartments.map((deptId) => (
-                                        <MenuItem key={deptId} value={deptId.toString()}>
-                                            {getDepartmentName(deptId)}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <FormControl size="small" sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 200 } }}>
-                                <InputLabel>Status</InputLabel>
-                                <Select
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    label="Status"
-                                >
-                                    <MenuItem value="all">All Status</MenuItem>
-                                    {uniqueStatuses.map((status) => (
-                                        <MenuItem key={status} value={status}>
-                                            {status}
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -222,9 +182,6 @@ export default function AllTrialsPage() {
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Pattern Code</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Grade</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Date</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Current Department</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -236,48 +193,11 @@ export default function AllTrialsPage() {
                                                     <TableCell>{trial.pattern_code}</TableCell>
                                                     <TableCell>{trial.material_grade}</TableCell>
                                                     <TableCell>{new Date(trial.date_of_sampling).toLocaleDateString()}</TableCell>
-                                                    <TableCell>
-                                                        <Box sx={{
-                                                            display: 'inline-block',
-                                                            px: 1.5, py: 0.5,
-                                                            borderRadius: 5,
-                                                            fontSize: '0.75rem',
-                                                            bgcolor: '#e0f2fe',
-                                                            color: '#0369a1',
-                                                            fontWeight: 500
-                                                        }}>
-                                                            {getDepartmentName(trial.current_department_id) || 'N/A'}
-                                                        </Box>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Box sx={{
-                                                            display: 'inline-block',
-                                                            px: { xs: 1, sm: 1.5 },
-                                                            py: 0.5,
-                                                            borderRadius: 5,
-                                                            fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                                                            ...getStatusStyle(trial.status),
-                                                            fontWeight: 600
-                                                        }}>
-                                                            {trial.status || 'CREATED'}
-                                                        </Box>
-                                                    </TableCell>
-                                                    <TableCell align="center">
-                                                        <Button
-                                                            variant="outlined"
-                                                            size="small"
-                                                            startIcon={!isMobile && <DescriptionIcon />}
-                                                            onClick={() => navigate(`/full-report?trial_id=${trial.trial_id}`)}
-                                                            sx={{ borderRadius: 2, textTransform: 'none', fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, px: { xs: 1, sm: 2 } }}
-                                                        >
-                                                            {isMobile ? 'View' : 'View Report'}
-                                                        </Button>
-                                                    </TableCell>
                                                 </TableRow>
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                                                <TableCell colSpan={5} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                                                     No trials found.
                                                 </TableCell>
                                             </TableRow>
