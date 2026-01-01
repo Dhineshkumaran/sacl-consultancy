@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SaclHeader from '../components/common/SaclHeader';
 import { appTheme, COLORS } from '../theme/appTheme';
@@ -128,7 +129,7 @@ export default function AllTrialsPage() {
                             <Button
                                 variant="outlined"
                                 onClick={() => navigate('/dashboard')}
-                                startIcon={<SearchIcon sx={{ transform: 'rotate(90deg)' }} />} // Using SearchIcon generic, but arrow likely better if available
+                                startIcon={<ArrowBackIcon />}
                                 sx={{ mr: 2 }}
                             >
                                 Back
