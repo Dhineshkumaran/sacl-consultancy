@@ -83,6 +83,11 @@ export default function AllTrialsPage() {
         const matchesUser = !filterByUser || trial.created_by === user?.username || trial.initiated_by === user?.username;
 
         return matchesSearch && matchesPatternCode && matchesUser;
+    }).sort((a, b) => {
+        // Sort by date in descending order (newest first)
+        const dateA = new Date(a.date_of_sampling).getTime();
+        const dateB = new Date(b.date_of_sampling).getTime();
+        return dateB - dateA;
     });
 
     const getStatusStyle = (status: string) => {
