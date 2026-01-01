@@ -57,25 +57,46 @@ const MethodsDashboard: React.FC = () => {
             title="Methods Dashboard"
             description={`Welcome back, ${user?.username}! Manage methodologies and processes.`}
           >
-            <button
-              className="btn-view-users"
-              onClick={() => navigate('/foundry-sample-card')}
-              style={{
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: '500',
-                fontSize: '14px',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0056b3')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#007bff')}
-            >
-              📋 Initiate Card
-            </button>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                className="btn-view-users"
+                onClick={() => navigate('/foundry-sample-card')}
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  fontSize: '14px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0056b3')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#007bff')}
+              >
+                📋 Initiate Card
+              </button>
+              <button
+                className="btn-view-history"
+                onClick={() => navigate('/trials?myTrials=true')}
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  fontSize: '14px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
+              >
+                📜 View History
+              </button>
+            </div>
           </WelcomeSection>
 
           {/* Methods Specific Stats Grid */}
