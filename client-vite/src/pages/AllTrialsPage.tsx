@@ -127,12 +127,22 @@ export default function AllTrialsPage() {
                     }}>
                         <Box display="flex" alignItems="center" gap={2}>
                             <Button
-                                variant="outlined"
                                 onClick={() => navigate('/dashboard')}
                                 startIcon={<ArrowBackIcon />}
-                                sx={{ mr: 2 }}
+                                sx={{ 
+                                    mr: 2,
+                                    backgroundColor: '#6c757d',
+                                    color: 'white',
+                                    padding: '10px 20px',
+                                    borderRadius: '6px',
+                                    textTransform: 'none',
+                                    fontWeight: 500,
+                                    '&:hover': {
+                                        backgroundColor: '#545b62'
+                                    }
+                                }}
                             >
-                                Back
+                                Back to Dashboard
                             </Button>
                             <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}>
                                 {filterByUser ? 'My Initiated Trials' : 'All Trials Repository'}
