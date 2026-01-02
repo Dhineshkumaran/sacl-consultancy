@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     Paper,
@@ -13,16 +13,11 @@ import {
     ThemeProvider,
     CircularProgress,
     TextField,
-    InputAdornment,
-    useMediaQuery,
-    useTheme,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel
+    InputAdornment
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SaclHeader from '../components/common/SaclHeader';
 import { appTheme, COLORS } from '../theme/appTheme';
@@ -36,12 +31,6 @@ export default function AllTrialsPage() {
     const [trials, setTrials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedPatternCode, setSelectedPatternCode] = useState<string>('all');
-    const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-    const [selectedStatus, setSelectedStatus] = useState<string>('all');
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
     useEffect(() => {
         const fetchTrials = async () => {
@@ -58,153 +47,46 @@ export default function AllTrialsPage() {
         fetchTrials();
     }, []);
 
-    const uniquePatternCodes = useMemo(() => {
-        const patternCodes = trials
-            .map(trial => trial.pattern_code)
-            .filter(Boolean);
-        return [...new Set(patternCodes)].sort();
-    }, [trials]);
-
-    const uniqueDepartments = useMemo(() => {
-        const departments = trials
-            .map(trial => trial.current_department_id)
-            .filter(Boolean);
-        return [...new Set(departments)].sort((a, b) => a - b);
-    }, [trials]);
-
-    const uniqueStatuses = useMemo(() => {
-        const statuses = trials
-            .map(trial => trial.status || 'CREATED')
-            .filter(Boolean);
-        return [...new Set(statuses)].sort();
-    }, [trials]);
-
-    const filteredTrials = trials.filter(trial => {
-        const matchesSearch = trial.trial_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            trial.part_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            trial.pattern_code?.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesPatternCode = selectedPatternCode === 'all' || trial.pattern_code === selectedPatternCode;
-
-        const matchesDepartment = selectedDepartment === 'all' || trial.current_department_id === parseInt(selectedDepartment);
-
-        const matchesStatus = selectedStatus === 'all' || (trial.status || 'CREATED') === selectedStatus;
-
-        return matchesSearch && matchesPatternCode && matchesDepartment && matchesStatus;
-    });
-
-    const getStatusStyle = (status: string) => {
-        const normalizedStatus = status ? status.toUpperCase() : 'CREATED';
-        switch (normalizedStatus) {
-            case 'CREATED':
-                return { bgcolor: '#e0f2fe', color: '#0369a1' }; // Light Blue
-            case 'IN_PROGRESS':
-                return { bgcolor: '#fff7ed', color: '#c2410c' }; // Orange
-            case 'CLOSED':
-                return { bgcolor: '#dcfce7', color: '#15803d' }; // Green
-            default:
-                return { bgcolor: '#f1f5f9', color: '#475569' }; // Grey
-        }
-    };
+    const filteredTrials = trials.filter(trial =>
+        trial.trial_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        trial.part_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        trial.pattern_code?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <ThemeProvider theme={appTheme}>
-            <Box sx={{ minHeight: '100vh', bgcolor: COLORS.background, py: { xs: 2, sm: 3, md: 4 } }}>
-                <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+            <Box sx={{ minHeight: '100vh', bgcolor: COLORS.background, py: 4 }}>
+                <Container maxWidth="xl">
                     <SaclHeader />
 
-                    <Box sx={{
-                        mt: { xs: 2, sm: 3, md: 4 },
-                        mb: { xs: 2, md: 3 },
-                        display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
-                        gap: 2,
-                        justifyContent: 'space-between',
-                        alignItems: { xs: 'stretch', sm: 'center' },
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1100,
-                        backgroundColor: COLORS.background,
-                        pb: 2
-                    }}>
-                        <Box display="flex" alignItems="center" gap={2}>
+                    <Box sx={{ mt: 4, mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Button
-                                variant="outlined"
+                                variant="contained"
+                                startIcon={<ArrowBackIcon />}
                                 onClick={() => navigate('/dashboard')}
-                                startIcon={<SearchIcon sx={{ transform: 'rotate(90deg)' }} />} // Using SearchIcon generic, but arrow likely better if available
-                                sx={{ mr: 2 }}
+                                sx={{ textTransform: 'none', bgcolor: '#5a6c7d', color: 'white', '&:hover': { bgcolor: '#4a5c6d' } }}
                             >
-                                Back
+                                Back to Dashboard
                             </Button>
-                            <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' } }}>
+                            <Typography variant="h4" fontWeight="bold" color="primary">
                                 All Trials Repository
                             </Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-
-                            <FormControl size="small" sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 200 } }}>
-                                <InputLabel>Pattern Code</InputLabel>
-                                <Select
-                                    value={selectedPatternCode}
-                                    onChange={(e) => setSelectedPatternCode(e.target.value)}
-                                    label="Pattern Code"
-                                >
-                                    <MenuItem value="all">All Patterns</MenuItem>
-                                    {uniquePatternCodes.map((patternCode) => (
-                                        <MenuItem key={patternCode} value={patternCode}>
-                                            {patternCode}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <FormControl size="small" sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 200 } }}>
-                                <InputLabel>Department</InputLabel>
-                                <Select
-                                    value={selectedDepartment}
-                                    onChange={(e) => setSelectedDepartment(e.target.value)}
-                                    label="Current Department"
-                                >
-                                    <MenuItem value="all">All Departments</MenuItem>
-                                    {uniqueDepartments.map((deptId) => (
-                                        <MenuItem key={deptId} value={deptId.toString()}>
-                                            {getDepartmentName(deptId)}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <FormControl size="small" sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 200 } }}>
-                                <InputLabel>Status</InputLabel>
-                                <Select
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    label="Status"
-                                >
-                                    <MenuItem value="all">All Status</MenuItem>
-                                    {uniqueStatuses.map((status) => (
-                                        <MenuItem key={status} value={status}>
-                                            {status}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <TextField
-                                placeholder="Search Trial ID, Part Name..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                size="small"
-                                sx={{ bgcolor: 'white', minWidth: { xs: '100%', sm: 250, md: 300 } }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <SearchIcon color="action" />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                        </Box>
+                        <TextField
+                            placeholder="Search Trial ID, Part Name..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            size="small"
+                            sx={{ bgcolor: 'white', minWidth: 300 }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon color="action" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
                     </Box>
 
                     <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 3, borderRadius: 2 }}>
@@ -213,26 +95,26 @@ export default function AllTrialsPage() {
                                 <CircularProgress />
                             </Box>
                         ) : (
-                            <Box sx={{ width: '100%', overflowX: 'auto' }}>
-                                <Table stickyHeader size={isMobile ? "small" : "medium"} sx={{ minWidth: 900 }}>
+                            <Box sx={{ maxHeight: '70vh', overflow: 'auto' }}>
+                                <Table stickyHeader>
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Trial ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Part Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Trial ID</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Part Name</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Pattern Code</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Grade</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Date</TableCell>
                                             <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Current Department</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', textAlign: 'center', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Actions</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', textAlign: 'center' }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {filteredTrials.length > 0 ? (
                                             filteredTrials.map((trial) => (
                                                 <TableRow key={trial.trial_id} hover>
-                                                    <TableCell sx={{ fontWeight: 'bold', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{trial.trial_id}</TableCell>
-                                                    <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{trial.part_name}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 'bold' }}>{trial.trial_id}</TableCell>
+                                                    <TableCell>{trial.part_name}</TableCell>
                                                     <TableCell>{trial.pattern_code}</TableCell>
                                                     <TableCell>{trial.material_grade}</TableCell>
                                                     <TableCell>{new Date(trial.date_of_sampling).toLocaleDateString()}</TableCell>
@@ -252,25 +134,24 @@ export default function AllTrialsPage() {
                                                     <TableCell>
                                                         <Box sx={{
                                                             display: 'inline-block',
-                                                            px: { xs: 1, sm: 1.5 },
-                                                            py: 0.5,
+                                                            px: 1.5, py: 0.5,
                                                             borderRadius: 5,
-                                                            fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                                                            ...getStatusStyle(trial.status),
-                                                            fontWeight: 600
+                                                            fontSize: '0.75rem',
+                                                            bgcolor: trial.status === 'Completed' ? '#dcfce7' : '#fff7ed',
+                                                            color: trial.status === 'Completed' ? '#166534' : '#9a3412'
                                                         }}>
-                                                            {trial.status || 'CREATED'}
+                                                            {trial.status || 'In Progress'}
                                                         </Box>
                                                     </TableCell>
                                                     <TableCell align="center">
                                                         <Button
                                                             variant="outlined"
                                                             size="small"
-                                                            startIcon={!isMobile && <DescriptionIcon />}
+                                                            startIcon={<DescriptionIcon />}
                                                             onClick={() => navigate(`/full-report?trial_id=${trial.trial_id}`)}
-                                                            sx={{ borderRadius: 2, textTransform: 'none', fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, px: { xs: 1, sm: 2 } }}
+                                                            sx={{ borderRadius: 2, textTransform: 'none' }}
                                                         >
-                                                            {isMobile ? 'View' : 'View Report'}
+                                                            View Report
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
@@ -287,6 +168,9 @@ export default function AllTrialsPage() {
                             </Box>
                         )}
                     </Paper>
+
+                    <Box sx={{ mt: 3, textAlign: 'right' }}>
+                    </Box>
                 </Container>
             </Box>
         </ThemeProvider>
