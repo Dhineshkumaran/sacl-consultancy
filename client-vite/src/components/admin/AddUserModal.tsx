@@ -19,8 +19,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
-    password: 'sacl123',
-    confirmPassword: 'sacl123',
+    password: 'Sacl@123',
+    confirmPassword: 'Sacl@123',
     department_id: '',
     role: 'User',
   });
@@ -84,7 +84,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
         username: formData.username,
         full_name: formData.full_name,
         // email removed as per admin flow
-        password: formData.password || 'sacl123',
+        password: formData.password || 'Sacl@123',
         department_id: formData.department_id ? parseInt(formData.department_id) : null,
         role: formData.role,
       };
@@ -94,8 +94,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       setFormData({
         username: '',
         full_name: '',
-        password: 'sacl123',
-        confirmPassword: 'sacl123',
+        password: 'Sacl@123',
+        confirmPassword: 'Sacl@123',
         department_id: '',
         role: 'User',
       });
