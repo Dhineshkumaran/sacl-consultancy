@@ -159,8 +159,13 @@ export default function DimensionalInspection({
         if (!isNaN(castingWeight) && !isNaN(numCavity) && !isNaN(bunch) && bunch > 0) {
             const totalCastingWeight = castingWeight * numCavity;
             if (totalCastingWeight > bunch) {
+                setIsYieldInvalid(true);
                 showAlert('warning', 'Yield exceeds 100%! Total casting weight (casting weight × no. of cavities) cannot exceed bunch weight. Please adjust the values.');
+            } else {
+                setIsYieldInvalid(false);
             }
+        } else {
+            setIsYieldInvalid(false);
         }
     }, [weightTarget, numberOfCavity, bunchWeight, showAlert]);
 
@@ -177,17 +182,10 @@ export default function DimensionalInspection({
         const bunch = parseFloat(bunchWeight);
 
         if (isNaN(castingWeight) || isNaN(numCavity) || isNaN(bunch) || bunch === 0) {
-            setIsYieldInvalid(false);
             return "";
         }
 
         const totalCastingWeight = castingWeight * numCavity;
-        if (totalCastingWeight > bunch) {
-            setIsYieldInvalid(true);
-        } else {
-            setIsYieldInvalid(false);
-        }
-
         const yieldValue = (totalCastingWeight / bunch) * 100;
         return yieldValue.toFixed(2);
     };
