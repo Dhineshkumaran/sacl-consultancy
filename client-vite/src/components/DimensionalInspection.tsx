@@ -90,6 +90,7 @@ export default function DimensionalInspection({
     const [previewPayload, setPreviewPayload] = useState<any | null>(null);
     const [previewSubmitted, setPreviewSubmitted] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isYieldInvalid, setIsYieldInvalid] = useState(false);
 
     const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
@@ -150,6 +151,19 @@ export default function DimensionalInspection({
         fetchUserIP();
     }, []);
 
+    useEffect(() => {
+        const castingWeight = parseFloat(weightTarget);
+        const numCavity = parseFloat(numberOfCavity);
+        const bunch = parseFloat(bunchWeight);
+
+        if (!isNaN(castingWeight) && !isNaN(numCavity) && !isNaN(bunch) && bunch > 0) {
+            const totalCastingWeight = castingWeight * numCavity;
+            if (totalCastingWeight > bunch) {
+                showAlert('warning', 'Yield exceeds 100%! Total casting weight (casting weight × no. of cavities) cannot exceed bunch weight. Please adjust the values.');
+            }
+        }
+    }, [weightTarget, numberOfCavity, bunchWeight, showAlert]);
+
 
 
     const makeCavRows = (cavLabels: string[]) => [
@@ -163,10 +177,18 @@ export default function DimensionalInspection({
         const bunch = parseFloat(bunchWeight);
 
         if (isNaN(castingWeight) || isNaN(numCavity) || isNaN(bunch) || bunch === 0) {
+            setIsYieldInvalid(false);
             return "";
         }
 
-        const yieldValue = ((castingWeight * numCavity) / bunch) * 100;
+        const totalCastingWeight = castingWeight * numCavity;
+        if (totalCastingWeight > bunch) {
+            setIsYieldInvalid(true);
+        } else {
+            setIsYieldInvalid(false);
+        }
+
+        const yieldValue = (totalCastingWeight / bunch) * 100;
         return yieldValue.toFixed(2);
     };
 
@@ -444,8 +466,20 @@ export default function DimensionalInspection({
                                     fullWidth
                                     value={calculateYield()}
                                     InputProps={{ readOnly: true }}
-                                    sx={{ bgcolor: 'white', '& .MuiInputBase-input': { fontWeight: 700 } }}
+                                    error={isYieldInvalid}
+                                    sx={{
+                                        bgcolor: isYieldInvalid ? '#ffebee' : 'white',
+                                        '& .MuiInputBase-input': { fontWeight: 700 },
+                                        '& .MuiOutlinedInput-root': {
+                                            borderColor: isYieldInvalid ? '#d32f2f' : undefined
+                                        }
+                                    }}
                                 />
+                                {isYieldInvalid && (
+                                    <Typography variant="caption" sx={{ color: '#d32f2f', mt: 0.5, display: 'block' }}>
+                                        ⚠ Yield exceeds 100%. Please adjust values.
+                                    </Typography>
+                                )}
                             </Grid>
                         </Grid>
 
@@ -511,23 +545,17 @@ export default function DimensionalInspection({
                         </Button>
 
                         <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, mt: 3 }}>
-                            {(user?.role !== 'HOD' || isEditing) && (
-                                <>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                                        Attach PDF / Image Files
-                                    </Typography>
-                                    <FileUploadSection
-                                        files={attachedFiles}
-                                        onFilesChange={handleAttachFiles}
-                                        onFileRemove={removeAttachedFile}
-                                        showAlert={showAlert}
-                                        label="Attach PDF"
-                                    />
-                                </>
-                            )}
-                            {user?.role === 'HOD' && (
-                                <DocumentViewer trialId={trialId || ""} category="DIMENSIONAL_INSPECTION" />
-                            )}
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                                Attach PDF / Image Files
+                            </Typography>
+                            <FileUploadSection
+                                files={attachedFiles}
+                                onFilesChange={handleAttachFiles}
+                                onFileRemove={removeAttachedFile}
+                                showAlert={showAlert}
+                                label="Attach PDF"
+                            />
+                            <DocumentViewer trialId={trialId || ""} category="DIMENSIONAL_INSPECTION" />
                         </Box>
                     </Paper>
 
