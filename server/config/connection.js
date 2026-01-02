@@ -42,7 +42,7 @@ const client = {
       prepareRequest(request, params);
 
       const result = await request.query(sqlText);
-      return result.recordset || result.rowsAffected;
+      return [result.recordset || result.rowsAffected, result.output];
     } catch (error) {
       console.error('SQL Execution Error:', error);
       throw error;
@@ -61,7 +61,7 @@ const client = {
           const request = new sql.Request(transaction);
           prepareRequest(request, params);
           const result = await request.query(sqlText);
-          return result.recordset || result.rowsAffected;
+          return [result.recordset || result.rowsAffected, result.output];
         }
       };
 

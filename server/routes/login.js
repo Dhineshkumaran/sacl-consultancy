@@ -8,7 +8,7 @@ import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 dotenv.config();
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-development';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const generateToken = (user_id, username, department_id = null, role = null) => {
     const payload = {
@@ -22,13 +22,12 @@ const generateToken = (user_id, username, department_id = null, role = null) => 
 };
 
 const generateRefreshToken = (user_id, username) => {
-    const refreshSecret = process.env.REFRESH_TOKEN_SECRET || (process.env.JWT_SECRET + '_refresh');
+    const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
     return jwt.sign({ user_id, username }, refreshSecret, { expiresIn: '7d' });
 };
 
 router.post('/', asyncErrorHandler(async (req, res, next) => {
     const { username, password } = req.body || {};
-    console.log(req.body);
 
     if (!username || !password) {
         return next(new CustomError('Username and password are required', 400));
