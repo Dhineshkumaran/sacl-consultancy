@@ -196,7 +196,7 @@ function MouldingTable() {
 
         const approvalPayload = {
           trial_id: trialId,
-          next_department_id: 7,
+          next_department_id: 9,
           username: user.username,
           current_form: "METALLURGICAL_INSPECTION",
           role: user.role,
