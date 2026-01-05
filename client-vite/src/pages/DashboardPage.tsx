@@ -88,7 +88,7 @@ const DashboardPage: React.FC = () => {
           <div style={{
             position: 'sticky',
             top: 0,
-            zIndex: 1100,
+            zIndex: 900,
             backgroundColor: '#f8f9fa',
             padding: '10px 0',
             width: '100%',

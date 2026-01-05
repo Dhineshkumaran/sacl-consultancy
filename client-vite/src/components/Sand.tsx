@@ -25,6 +25,7 @@ import {
   GlobalStyles,
   Divider
 } from "@mui/material";
+import Swal from 'sweetalert2';
 
 // Icons
 import FactoryIcon from '@mui/icons-material/Factory';
@@ -193,8 +194,13 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
         await updateDepartment(approvalPayload);
         setSubmitted(true);
-        showAlert('success', 'Department progress approved successfully.');
-        setTimeout(() => navigate('/dashboard'), 1500);
+        setPreviewMode(false);
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Department progress approved successfully.'
+        });
+        navigate('/dashboard');
       } else {
         const payload = {
           trial_id: trialId,
@@ -243,16 +249,28 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
             });
           } catch (roleError) {
             console.error("Failed to update role progress:", roleError);
-            showAlert('error', 'Failed to update role progress. Please try again.');
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to update role progress. Please try again.'
+            });
           }
         }
         setSubmitted(true);
-        showAlert('success', 'Sand properties created and department progress updated successfully.');
-
+        setPreviewMode(false);
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Sand properties created and department progress updated successfully.'
+        });
         navigate('/dashboard');
       }
     } catch (err) {
-      showAlert('error', user?.role === 'HOD' ? 'Failed to approve. Please try again.' : 'Failed to save sand properties. Please try again.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: user?.role === 'HOD' ? 'Failed to approve. Please try again.' : 'Failed to save sand properties. Please try again.'
+      });
     } finally {
       setLoading(false);
     }
@@ -397,9 +415,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                   />
                 </>
               )}
-              {user?.role === 'HOD' && (
-                <DocumentViewer trialId={trialId || ""} category="SAND_PROPERTIES" />
-              )}
+              <DocumentViewer trialId={trialId || ""} category="SAND_PROPERTIES" />
             </Box>
 
             <Box sx={{ p: 3, display: "flex", flexDirection: { xs: 'column', sm: 'row' }, justifyContent: "flex-end", alignItems: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>

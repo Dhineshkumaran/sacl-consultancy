@@ -26,6 +26,7 @@ import {
   Divider,
   GlobalStyles,
 } from "@mui/material";
+import Swal from 'sweetalert2';
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
@@ -310,10 +311,19 @@ export default function McShopInspection({
         });
 
         setPreviewSubmitted(true);
-        showAlert('success', 'Department progress approved and Trial Closed successfully.');
-        setTimeout(() => navigate('/dashboard'), 1500);
+        setPreviewMode(false);
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Department progress approved and Trial Closed successfully.'
+        });
+        navigate('/dashboard');
       } catch (err) {
-        showAlert('error', 'Failed to approve. Please try again.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to approve. Please try again.'
+        });
         console.error(err);
       } finally {
         setSaving(false);
@@ -379,11 +389,20 @@ export default function McShopInspection({
       }
 
       setPreviewSubmitted(true);
-      showAlert('success', 'Machine shop inspection created and department progress updated successfully.');
+      setPreviewMode(false);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Machine shop inspection created and department progress updated successfully.'
+      });
       navigate('/dashboard');
     } catch (err: any) {
       console.error("Error saving machine shop inspection:", err);
-      showAlert('error', 'Failed to save machine shop inspection. Please try again.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to save machine shop inspection. Please try again.'
+      });
     } finally {
       setSaving(false);
     }
@@ -611,9 +630,7 @@ export default function McShopInspection({
                   />
                 </>
               )}
-              {user?.role === 'HOD' && (
-                <DocumentViewer trialId={trialId || ""} category="MC_SHOP_INSPECTION" />
-              )}
+              <DocumentViewer trialId={trialId || ""} category="MC_SHOP_INSPECTION" />
             </Box>
 
 

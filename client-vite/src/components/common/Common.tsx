@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import LoadingState from "./LoadingState";
 import GearSpinner from "./GearSpinner";
+import DocumentViewer from "./DocumentViewer";
 import { COLORS, appTheme } from "../../theme/appTheme";
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import ConstructionIcon from '@mui/icons-material/Construction';
@@ -65,6 +66,8 @@ type TrialData = {
   initiated_by?: string;
   date_of_sampling?: string;
   no_of_moulds?: number;
+  plan_moulds?: string | number;
+  actual_moulds?: string | number;
   reason_for_sampling?: string;
   status?: string;
   tooling_modification?: string;
@@ -208,6 +211,7 @@ const PatternDatasheetSection = ({ patternCode }: { patternCode: string }) => {
   }, [patternCode]);
 
   if (loading) return <Box sx={{ p: 2, textAlign: 'center' }}><div style={{ display: 'inline-block', transform: 'scale(0.8)' }}><GearSpinner /></div></Box>;
+
   if (!patternData || Object.keys(patternData).length === 0) {
     return (
       <Box sx={{ p: 2, textAlign: 'center', fontStyle: 'italic', color: 'text.secondary' }}>
@@ -216,64 +220,86 @@ const PatternDatasheetSection = ({ patternCode }: { patternCode: string }) => {
     );
   }
 
-  const rows = [
-    { label: "Number of cavity", common: "number_of_cavity" },
-    { label: "Pattern plate thickness", sp: "pattern_plate_thickness_sp", pp: "pattern_plate_thickness_pp" },
-    { label: "Cavity identification", common: "cavity_identification" },
-    { label: "Pattern plate weight", sp: "pattern_plate_weight_sp", pp: "pattern_plate_weight_pp" },
-    { label: "Pattern material", common: "pattern_material" },
-    { label: "Crush pin height", sp: "crush_pin_height_sp", pp: "crush_pin_height_pp" },
-    { label: "Core weight", common: "core_weight" },
-    { label: "Core mask weight", sp: "core_mask_weight_sp", pp: "core_mask_weight_pp" },
-    { label: "Core mask thickness", common: "core_mask_thickness" },
-    { label: "Calculated Yield (%)", sp: "calculated_yield_sp", pp: "calculated_yield_pp", yieldLabel: "yield_label" },
-    { label: "Estimated casting weight", common: "estimated_casting_weight" },
-    { label: "Estimated Bunch weight", common: "estimated_bunch_weight" },
-  ];
-
   return (
-    <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
-      <Table size="small" sx={{ minWidth: 600, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd' } }}>
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ bgcolor: '#f1f5f9', fontWeight: 600 }}>Description</TableCell>
-            <TableCell align="center" sx={{ bgcolor: '#f1f5f9', fontWeight: 600 }}>SP Side</TableCell>
-            <TableCell align="center" sx={{ bgcolor: '#f1f5f9', fontWeight: 600 }}>PP Side</TableCell>
-            <TableCell align="center" sx={{ bgcolor: '#f1f5f9', fontWeight: 600 }}>Common/Value</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row, i) => (
-            <TableRow key={i}>
-              <TableCell variant="head" sx={{ color: 'text.secondary', fontWeight: 500 }}>{row.label}</TableCell>
-              <TableCell align="center">
-                <Typography variant="body2" fontFamily="Roboto Mono">{row.sp ? patternData[row.sp] : '-'}</Typography>
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="body2" fontFamily="Roboto Mono">{row.pp ? patternData[row.pp] : '-'}</Typography>
-              </TableCell>
-              <TableCell align="center">
-                {row.yieldLabel ? (
-                  <Typography variant="body2" fontFamily="Roboto Mono" fontWeight={700}>
-                    {patternData[row.yieldLabel] ? `${patternData[row.yieldLabel]}%` : '-'}
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" fontFamily="Roboto Mono">
-                    {row.common ? (patternData[row.common] || '-') : '-'}
-                  </Typography>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      {patternData.remarks && (
-        <Box sx={{ mt: 2, p: 2, bgcolor: '#f8fafc', borderRadius: 1 }}>
-          <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>Remarks</Typography>
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{patternData.remarks}</Typography>
-        </Box>
-      )}
-    </Box>
+    <Grid container spacing={3}>
+      {/* Left Column */}
+      <Grid size={{ xs: 12, md: 5 }}>
+        <Paper elevation={0} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>Value</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[
+                { l: "Number of cavity in pattern", v: patternData.number_of_cavity },
+                { l: "Cavity identification number", v: patternData.cavity_identification },
+                { l: "Pattern material", v: patternData.pattern_material },
+                { l: "Core weight in kgs", v: patternData.core_weight },
+                { l: "Core mask thickness in mm", v: patternData.core_mask_thickness },
+                { l: "Estimated casting weight", v: patternData.estimated_casting_weight },
+              ].map((r, i) => (
+                <TableRow key={i}>
+                  <TableCell sx={{ fontSize: '13px', color: 'text.secondary' }}>{r.l}</TableCell>
+                  <TableCell sx={{ fontSize: '13px', fontWeight: 500 }}>{r.v || "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      </Grid>
+
+      {/* Right Column */}
+      <Grid size={{ xs: 12, md: 7 }}>
+        <Paper elevation={0} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>SP Side Pattern</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>PP Side Pattern</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[
+                { l: "Pattern plate thickness in mm", sp: patternData.pattern_plate_thickness_sp, pp: patternData.pattern_plate_thickness_pp },
+                { l: "Pattern plate weight in kgs", sp: patternData.pattern_plate_weight_sp, pp: patternData.pattern_plate_weight_pp },
+                { l: "Crush pin height in mm", sp: patternData.crush_pin_height_sp, pp: patternData.crush_pin_height_pp },
+                { l: "Core mask weight in kgs", sp: patternData.core_mask_weight_sp, pp: patternData.core_mask_weight_pp },
+                { l: "Calculated Yield in percentage", sp: patternData.calculated_yield_sp, pp: patternData.calculated_yield_pp },
+              ].map((r, i) => (
+                <TableRow key={i}>
+                  <TableCell sx={{ fontSize: '13px', color: 'text.secondary' }}>{r.l}</TableCell>
+                  <TableCell sx={{ fontSize: '13px', fontWeight: 500 }}>{r.sp || "-"}</TableCell>
+                  <TableCell sx={{ fontSize: '13px', fontWeight: 500 }}>{r.pp || "-"}</TableCell>
+                </TableRow>
+              ))}
+              <TableRow>
+                <TableCell sx={{ fontSize: '13px', color: 'text.secondary' }}>Estimated Bunch weight</TableCell>
+                <TableCell colSpan={2} sx={{ fontSize: '13px', fontWeight: 500 }}>
+                  <Box display="flex" alignItems="center" gap={3}>
+                    <span>{patternData.estimated_bunch_weight || "-"}</span>
+                    {patternData.yield_label && (
+                      <span style={{ fontWeight: 'bold' }}>Yield: {patternData.yield_label}</span>
+                    )}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Paper>
+      </Grid>
+
+      {/* Remarks */}
+      <Grid size={{ xs: 12 }}>
+        <Typography variant="subtitle2" gutterBottom fontWeight="bold">Remarks:</Typography>
+        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb', minHeight: '60px' }}>
+          <Typography variant="body2">{patternData.remarks || "-"}</Typography>
+        </Paper>
+      </Grid>
+    </Grid>
   );
 };
 
@@ -319,7 +345,7 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
       if (trial) {
         // Parse JSON fields if they are strings
         const parsedTrial = { ...trial };
-        ['chemical_composition', 'micro_structure', 'tensile', 'hardness', 'mould_correction'].forEach(key => {
+        ['chemical_composition', 'micro_structure', 'tensile', 'hardness', 'mould_correction', 'pattern_data_sheet_files', 'tooling_files'].forEach(key => {
           if (typeof parsedTrial[key] === 'string') {
             try {
               parsedTrial[key] = JSON.parse(parsedTrial[key]);
@@ -645,7 +671,8 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
                         <TableRow>
                           {[
                             "Date of Sampling",
-                            "No. of Moulds",
+                            "Plan Moulds",
+                            "Actual Moulds",
                             "DISA / FOUNDRY-A",
                             "Reason For Sampling",
                             "Sample Traceability",
@@ -680,7 +707,15 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
                             <TextField
                               fullWidth
                               size="small"
-                              value={data.no_of_moulds || '-'}
+                              value={data.plan_moulds || data.no_of_moulds || '-'}
+                              InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <TextField
+                              fullWidth
+                              size="small"
+                              value={data.actual_moulds || '-'}
                               InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
                             />
                           </TableCell>
@@ -710,15 +745,7 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
                           </TableCell>
                           <TableCell align="center">
                             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-                              {(data.pattern_data_sheet_files || []).length > 0 ? (
-                                (data.pattern_data_sheet_files || []).map((f, i) => (
-                                  <Chip key={i} label={f.name} size="small" />
-                                ))
-                              ) : (
-                                <Typography variant="body2" sx={{ color: COLORS.textSecondary, fontStyle: 'italic' }}>
-                                  No files
-                                </Typography>
-                              )}
+                              <DocumentViewer trialId={effectiveTrialId} category="PATTERN_DATA_SHEET" label="" />
                             </Box>
                           </TableCell>
                         </TableRow>
@@ -752,15 +779,7 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
                           Tooling Files
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', p: 2, border: `1px solid ${COLORS.border}`, borderRadius: 1, bgcolor: '#f8fafc', minHeight: 100 }}>
-                          {(data.tooling_files || []).length > 0 ? (
-                            (data.tooling_files || []).map((f, i) => (
-                              <Chip key={i} label={f.name} size="small" />
-                            ))
-                          ) : (
-                            <Typography variant="body2" sx={{ color: COLORS.textSecondary, fontStyle: 'italic' }}>
-                              No files attached
-                            </Typography>
-                          )}
+                          <DocumentViewer trialId={effectiveTrialId} category="TOOLING_MODIFICATION" label="" />
                         </Box>
                       </Grid>
                     </Grid>

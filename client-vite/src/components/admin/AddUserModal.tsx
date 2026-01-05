@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/commonService';
 import GearSpinner from '../common/GearSpinner';
 import './AddUserModal.css';
+import { useAlert } from '../../hooks/useAlert';
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -27,10 +28,9 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   });
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { showAlert } = useAlert();
 
   // Fetch departments on mount or when modal opens
   useEffect(() => {
@@ -45,7 +45,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       setDepartments(departments);
     } catch (err: any) {
       console.error('Failed to fetch departments:', err);
-      setError('Could not load departments');
+      showAlert('error', 'Could not load departments');
     }
   };
 
@@ -59,22 +59,20 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     // Validation (email removed — default password used)
     if (!formData.username || !formData.full_name || !formData.password) {
-      setError('All required fields must be filled');
+      showAlert('error', 'All required fields must be filled');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      showAlert('error', 'Passwords do not match');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      showAlert('error', 'Password must be at least 6 characters');
       return;
     }
 
@@ -91,7 +89,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       };
 
       await apiService.createUser(payload);
-      setSuccess('User created successfully!');
+
       setFormData({
         username: '',
         full_name: '',
@@ -101,13 +99,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
         role: 'User',
       });
 
-      // Call callback after a short delay for UI feedback
-      setTimeout(() => {
-        onUserCreated?.();
-        onClose();
-      }, 1500);
+      await showAlert('success', 'User created successfully!');
+      onUserCreated?.();
+      onClose();
+
     } catch (err: any) {
-      setError(err.message || 'Failed to create user');
+      showAlert('error', err.message || 'Failed to create user');
     } finally {
       setLoading(false);
     }
@@ -248,8 +245,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
             </div>
           </div>
 
-          {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
+
 
           <div className="form-actions">
             <button type="submit" className="btn-primary" disabled={loading}>

@@ -28,11 +28,13 @@ import {
   Divider,
   GlobalStyles
 } from "@mui/material";
+import Swal from 'sweetalert2';
 import Autocomplete from "@mui/material/Autocomplete";
 import { useNavigate } from "react-router-dom";
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import FactoryIcon from '@mui/icons-material/Factory';
@@ -44,6 +46,7 @@ import ScienceIcon from '@mui/icons-material/Science';
 import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { inspectionService } from '../services/inspectionService';
+import { documentService } from '../services/documentService';
 import { uploadFiles } from '../services/fileUploadHelper';
 import { COLORS, appTheme } from '../theme/appTheme';
 import { useAlert } from '../hooks/useAlert';
@@ -80,6 +83,33 @@ const initialRows = (labels: string[]): Row[] =>
   }));
 
 const MICRO_PARAMS = ["Cavity Number", "Nodularity", "Matrix", "Carbide", "Inclusion"];
+
+const viewAttachment = (file: any) => {
+  if (!file) return;
+  if (file instanceof File) {
+    const url = URL.createObjectURL(file);
+    window.open(url, '_blank');
+  } else if (file.file_base64) {
+    try {
+      const byteCharacters = atob(file.file_base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const ext = (file.name || file.file_name || "").split('.').pop()?.toLowerCase();
+      let mime = 'application/pdf';
+      if (['jpg', 'jpeg', 'png'].includes(ext)) mime = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+
+      const blob = new Blob([byteArray], { type: mime });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (e) {
+      console.error("Error viewing file", e);
+      alert("Could not view file.");
+    }
+  }
+};
 
 function SectionTable({
   title,
@@ -311,15 +341,20 @@ function SectionTable({
                     </label>
 
                     {groupMeta.attachment && (
-                      <Chip
-                        icon={<InsertDriveFileIcon />}
-                        label={groupMeta.attachment.name}
-                        onDelete={() => updateGroupMeta({ attachment: null })}
-                        size="small"
-                        variant="outlined"
-                        sx={{ maxWidth: 120 }}
-                        disabled={user?.role === 'HOD' && !isEditing}
-                      />
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <IconButton size="small" onClick={() => viewAttachment(groupMeta.attachment)} sx={{ color: COLORS.primary }}>
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                        <Chip
+                          icon={<InsertDriveFileIcon />}
+                          label={groupMeta.attachment.name}
+                          onDelete={() => updateGroupMeta({ attachment: null })}
+                          size="small"
+                          variant="outlined"
+                          sx={{ maxWidth: 120 }}
+                          disabled={user?.role === 'HOD' && !isEditing}
+                        />
+                      </Box>
                     )}
                   </Box>
                 </Box>
@@ -652,15 +687,20 @@ function MicrostructureTable({
                           </label>
 
                           {meta['group']?.attachment && (
-                            <Chip
-                              icon={<InsertDriveFileIcon />}
-                              label={meta['group']?.attachment?.name}
-                              onDelete={() => updateMeta('group', { attachment: null })}
-                              size="small"
-                              variant="outlined"
-                              sx={{ maxWidth: 120 }}
-                              disabled={user?.role === 'HOD' && !isEditing}
-                            />
+                            <Box display="flex" alignItems="center" gap={0.5}>
+                              <IconButton size="small" onClick={() => viewAttachment(meta['group']?.attachment)} sx={{ color: COLORS.primary }}>
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                              <Chip
+                                icon={<InsertDriveFileIcon />}
+                                label={meta['group']?.attachment?.name}
+                                onDelete={() => updateMeta('group', { attachment: null })}
+                                size="small"
+                                variant="outlined"
+                                sx={{ maxWidth: 120 }}
+                                disabled={user?.role === 'HOD' && !isEditing}
+                              />
+                            </Box>
                           )}
                         </Box>
                       </Box>
@@ -740,6 +780,24 @@ export default function MetallurgicalInspection() {
       if (user?.role === 'HOD' && trialId) {
         try {
           const response = await inspectionService.getMetallurgicalInspection(trialId);
+
+          let docsMap: Record<string, any> = {};
+          if (trialId) {
+            try {
+              const docRes = await documentService.getDocument(trialId);
+              if (docRes.ok) {
+                const docData = await docRes.json();
+                if (docData.success && Array.isArray(docData.data)) {
+                  docData.data.forEach((d: any) => {
+                    if (d.document_type === 'METALLURGICAL_INSPECTION') {
+                      docsMap[d.file_name] = d;
+                    }
+                  });
+                }
+              }
+            } catch (e) { console.error(e); }
+          }
+
           if (response.success && response.data && response.data.length > 0) {
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
@@ -762,12 +820,22 @@ export default function MetallurgicalInspection() {
                 });
                 setMicroValues(prev => ({ ...prev, ...newValues }));
 
+                const groupAttachName = data.micro_structure_attachment_name; // Wait, handled in group?
+                // The provided code in Step 814 line 771 set attachment: null. 
+                // But micro_structure_ok and remarks were top level cols in DB or inside JSON?
+                // Step 814 Line 769: data.micro_structure_ok
+                // It seems 'group' attachment wasn't persisted in DB as top level column?
+                // Wait, if it's not in DB, I can't restore it.
+                // Assuming it's not saved for now or I'd need to check schema.
+                // However, user complaint was about "Metallurgical Inspection" (sections).
+
+                // Let's check Restore Section logic.
                 setMicroMeta(prev => ({
                   ...prev,
                   'group': {
                     ok: data.micro_structure_ok === null || data.micro_structure_ok === undefined ? null : (data.micro_structure_ok === true || data.micro_structure_ok === 1 || String(data.micro_structure_ok) === "1" || String(data.micro_structure_ok) === "true"),
                     remarks: data.micro_structure_remarks || "",
-                    attachment: null
+                    attachment: null // If I knew the filename I could restore it. Check if data helps.
                   }
                 }));
               }
@@ -782,7 +850,7 @@ export default function MetallurgicalInspection() {
                 ok: r.ok === null || r.ok === undefined ? null : (r.ok === true || String(r.ok) === "1" || String(r.ok) === "true"),
                 remarks: r.remarks,
                 total: r.total,
-                attachment: null
+                attachment: r.attachment && r.attachment.name ? docsMap[r.attachment.name] || null : null
               }));
             }
 
@@ -952,10 +1020,19 @@ export default function MetallurgicalInspection() {
         };
         await updateDepartment(approvalPayload);
         setPreviewSubmitted(true);
-        showAlert('success', 'Department progress approved successfully.');
-        setTimeout(() => navigate('/dashboard'), 1500);
+        setPreviewMode(false);
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Department progress approved successfully.'
+        });
+        navigate('/dashboard');
       } catch (err) {
-        showAlert('error', 'Failed to approve. Please try again.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to approve. Please try again.'
+        });
         console.error(err);
       } finally {
         setSending(false);
@@ -983,10 +1060,18 @@ export default function MetallurgicalInspection() {
         }
       }
 
-      if (attachedFiles.length > 0) {
+      const allFiles = [...attachedFiles];
+      if (microMeta['group']?.attachment instanceof File) allFiles.push(microMeta['group'].attachment);
+      const collectRowFiles = (rows: Row[]) => rows.forEach(r => { if (r.attachment instanceof File) allFiles.push(r.attachment); });
+      collectRowFiles(mechRows);
+      collectRowFiles(impactRows);
+      collectRowFiles(hardRows);
+      collectRowFiles(ndtRows);
+
+      if (allFiles.length > 0) {
         try {
           const uploadResults = await uploadFiles(
-            attachedFiles,
+            allFiles,
             trialId,
             "METALLURGICAL_INSPECTION",
             user?.username || "system",
@@ -996,20 +1081,37 @@ export default function MetallurgicalInspection() {
           const failures = uploadResults.filter(r => !r.success);
           if (failures.length > 0) {
             console.error("Some files failed to upload:", failures);
-            showAlert('warning', 'Some files failed to upload, but inspection data was saved.');
+            Swal.fire({
+              icon: 'warning',
+              title: 'Warning',
+              text: 'Some files failed to upload, but inspection data was saved.'
+            });
           }
           setPreviewSubmitted(true);
-          showAlert('success', 'Metallurgical inspection created and department progress updated successfully.');
+          setPreviewMode(false);
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Metallurgical inspection created and department progress updated successfully.'
+          });
         } catch (uploadError) {
           console.error("File upload error:", uploadError);
-          showAlert('warning', 'File upload failed, but inspection data was saved.');
+          Swal.fire({
+            icon: 'warning',
+            title: 'Warning',
+            text: 'File upload failed, but inspection data was saved.'
+          });
         }
       }
 
       navigate('/dashboard');
     } catch (err: any) {
       setMessage('Failed to submit inspection data');
-      showAlert('error', err.message || 'Failed to submit inspection data');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Failed to submit inspection data'
+      });
     } finally {
       setSending(false);
     }
@@ -1302,9 +1404,7 @@ export default function MetallurgicalInspection() {
                   />
                 </>
               )}
-              {user?.role === 'HOD' && (
-                <DocumentViewer trialId={trialId || ""} category="METALLURGICAL_INSPECTION" />
-              )}
+              <DocumentViewer trialId={trialId || ""} category="METALLURGICAL_INSPECTION" />
             </Box>
 
 

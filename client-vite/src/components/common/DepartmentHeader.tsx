@@ -17,7 +17,7 @@ const DepartmentHeader = ({ title, userIP, user }: any) => {
       borderLeft: `6px solid ${COLORS.secondary}`,
       position: 'sticky',
       top: 0,
-      zIndex: 1200,
+      zIndex: 100,
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       backdropFilter: 'blur(8px)',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'

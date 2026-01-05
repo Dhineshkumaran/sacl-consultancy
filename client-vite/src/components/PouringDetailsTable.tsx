@@ -25,8 +25,10 @@ import {
     useMediaQuery,
     GlobalStyles,
     Divider,
+
     IconButton
 } from "@mui/material";
+import Swal from 'sweetalert2';
 
 
 import FactoryIcon from '@mui/icons-material/Factory';
@@ -40,6 +42,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "./common/SaclHeader";
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
+import { trialService } from '../services/trialService';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
 import DepartmentHeader from "./common/DepartmentHeader";
@@ -190,11 +193,14 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
     const { user } = useAuth();
     const navigate = useNavigate();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
     const [loading, setLoading] = useState(false);
 
     const [pouringDate, setPouringDate] = useState<string>(pouringDetails?.date || new Date().toISOString().split('T')[0]);
     const [heatCode, setHeatCode] = useState<string>(pouringDetails?.heatCode || "");
     const [userIP, setUserIP] = useState<string>("Loading...");
+    const [actualMoulds, setActualMoulds] = useState<string>("");
+    const [noOfMouldPoured, setNoOfMouldPoured] = useState<string>("");
 
     useEffect(() => {
         const fetchIP = async () => {
@@ -203,6 +209,25 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
         };
         fetchIP();
     }, []);
+
+    useEffect(() => {
+        const fetchTrialDetails = async () => {
+            if (trialId) {
+                try {
+                    const response = await trialService.getTrialById(trialId);
+                    if (response && response.data) {
+                        setActualMoulds(response.data.actual_moulds || "");
+                        // Only set if not already set by existing pouring data (which is fetched in the other useEffect)
+                        // Actually, it's safer to check if we are creating new
+                        setNoOfMouldPoured(prev => prev || response.data.actual_moulds || "");
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch trial details:", error);
+                }
+            }
+        };
+        fetchTrialDetails();
+    }, [trialId]);
 
     const [chemState, setChemState] = useState({
         c: pouringDetails?.cComposition || "",
@@ -232,8 +257,6 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
     const [submitted, setSubmitted] = useState(false);
     const { alert, showAlert } = useAlert();
     const [isEditing, setIsEditing] = useState(false);
-
-    const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
 
 
@@ -272,6 +295,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                         setPpCode(rem["PP Code"] || "");
                         setFollowedBy(rem["Followed by"] || "");
                         setRemarksText(data.remarks || "");
+                        setNoOfMouldPoured(String(data.no_of_mould_poured || ""));
                     }
                 } catch (error) {
                     console.error("Failed to fetch pouring data:", error);
@@ -310,6 +334,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
             pouringDate,
             heatCode,
             chemical_composition: chemState,
+            noOfMouldPoured,
             pouringTemp,
             pouringTime,
             inoculation: { text: inoculationText, stream: inoculationStream, inmould: inoculationInmould },
@@ -342,6 +367,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                                 Cu: chemState.cu,
                                 Cr: chemState.cr
                             },
+                            no_of_mould_poured: parseInt(noOfMouldPoured) || 0,
                             pouring_temp_c: parseFloat(previewPayload.pouringTemp) || 0,
                             pouring_time_sec: parseInt(previewPayload.pouringTime) || 0,
                             inoculation: {
@@ -371,11 +397,21 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                     };
 
                     await updateDepartment(approvalPayload);
+                    await updateDepartment(approvalPayload);
                     setSubmitted(true);
-                    showAlert('success', 'Department progress approved successfully.');
-                    setTimeout(() => navigate('/dashboard'), 1500);
+                    setPreviewMode(false);
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Department progress approved successfully.'
+                    });
+                    navigate('/dashboard');
                 } catch (err: any) {
-                    showAlert('error', 'Failed to approve. Please try again.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to approve. Please try again.'
+                    });
                     console.error(err);
                 }
                 return;
@@ -395,6 +431,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                     Cu: chemState.cu,
                     Cr: chemState.cr
                 },
+                no_of_mould_poured: parseInt(noOfMouldPoured) || 0,
                 pouring_temp_c: parseFloat(pouringTemp) || 0,
                 pouring_time_sec: parseInt(pouringTime) || 0,
                 inoculation: {
@@ -446,11 +483,20 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                 }
             }
             setSubmitted(true);
-            showAlert('success', 'Pouring Details Registered and department progress updated Successfully');
+            setPreviewMode(false);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Pouring Details Registered and department progress updated Successfully'
+            });
             navigate('/dashboard');
         } catch (error) {
             console.error("Error saving pouring details:", error);
-            showAlert('error', 'Failed to save pouring details. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to save pouring details. Please try again.'
+            });
         } finally {
             setLoading(false);
         }
@@ -483,14 +529,29 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                         icon={<FactoryIcon sx={{ fontSize: 32 }} />}
                         userIP={userIP}
                         user={user}
-                        extra={submittedData?.trialNo && (
-                            <Chip
-                                label={`Trial: ${submittedData.trialNo}`}
-                                color="secondary"
-                                size="small"
-                                sx={{ fontWeight: 600 }}
-                            />
-                        )}
+                        extra={
+                            <Box display="flex" gap={2} alignItems="center">
+                                {submittedData?.trialNo && (
+                                    <Chip
+                                        label={`Trial: ${submittedData.trialNo}`}
+                                        color="secondary"
+                                        size="small"
+                                        sx={{ fontWeight: 600 }}
+                                    />
+                                )}
+                                {actualMoulds && (
+                                    <Chip
+                                        label={`No. of mould poured: ${actualMoulds}`}
+                                        sx={{
+                                            bgcolor: '#FDE68A',
+                                            color: '#854d0e',
+                                            fontWeight: 'bold',
+                                            border: '1px solid #854d0e'
+                                        }}
+                                    />
+                                )}
+                            </Box>
+                        }
                     />
 
                     <Common trialId={trialId} />
@@ -573,6 +634,21 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                                                                 </Box>
                                                             </Grid>
                                                         ))}
+                                                        <Grid size={{ xs: 12 }} sx={{ my: 0.5 }}><Divider /></Grid>
+                                                        <Grid size={{ xs: 12 }}>
+                                                            <Box display="flex" alignItems="center" gap={2}>
+                                                                <Typography variant="body2" fontWeight="bold">No of mould poured-</Typography>
+                                                                <SpecInput
+                                                                    placeholder="Actual"
+                                                                    value={noOfMouldPoured}
+                                                                    onChange={(e: any) => setNoOfMouldPoured(e.target.value)}
+                                                                    readOnly={true}
+                                                                    InputProps={{ readOnly: true, sx: { bgcolor: '#f1f5f9' } }}
+                                                                    disabled={false}
+                                                                    sx={{ width: '100px' }}
+                                                                />
+                                                            </Box>
+                                                        </Grid>
                                                     </Grid>
                                                 </TableCell>
 
@@ -696,9 +772,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                                         />
                                     </>
                                 )}
-                                {user?.role === 'HOD' && (
-                                    <DocumentViewer trialId={trialId || ""} category="POURING_DETAILS" />
-                                )}
+                                <DocumentViewer trialId={trialId || ""} category="POURING_DETAILS" />
                             </Paper>
                         </Grid>
 
@@ -776,6 +850,9 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                                                 {previewPayload?.chemical_composition && Object.entries(previewPayload.chemical_composition).map(([k, v]) => (
                                                     <div key={k}><strong>{k.toUpperCase()}-</strong> <span style={dataFontStyle}>{v as string}</span></div>
                                                 ))}
+                                            </div>
+                                            <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px dashed #ccc' }}>
+                                                <strong>No of mould poured:</strong> <span style={dataFontStyle}>{previewPayload?.noOfMouldPoured}</span>
                                             </div>
                                         </td>
                                         <td style={{ border: '1px solid black', padding: '12px' }}>

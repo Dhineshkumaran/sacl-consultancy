@@ -268,6 +268,37 @@ export const trialService = {
         } catch (error) {
             console.error('Failed to update trial:', error);
             throw error;
+            throw error;
+        }
+    },
+
+    /**
+     * Deletes multiple trials
+     * @param trialIds - Array of trial IDs to delete
+     * @returns Promise resolving to API response
+     */
+    async deleteTrials(trialIds: string[]): Promise<any> {
+        try {
+            const response = await fetch(`${API_BASE}/trial/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                },
+                credentials: 'include',
+                body: JSON.stringify({ trial_ids: trialIds })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || `HTTP ${response.status}`);
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Failed to delete trials:', error);
+            throw error;
         }
     },
 };

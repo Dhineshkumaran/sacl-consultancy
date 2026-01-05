@@ -344,12 +344,10 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 throw new Error(errorMessage);
             }
 
-            showAlert('success', initialData ? 'Master list updated successfully!' : 'Successfully added to master list!');
-            setTimeout(() => {
-                onClose();
-                resetForm();
-                if (onSuccess) onSuccess();
-            }, 2000);
+            await showAlert('success', initialData ? 'Master list updated successfully!' : 'Successfully added to master list!');
+            onClose();
+            resetForm();
+            if (onSuccess) onSuccess();
 
         } catch (err) {
             console.error('Error submitting form:', err);

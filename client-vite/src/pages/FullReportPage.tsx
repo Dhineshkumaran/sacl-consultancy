@@ -19,6 +19,7 @@ import {
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useLocation, useNavigate } from "react-router-dom";
 import PrintIcon from '@mui/icons-material/Print';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { inspectionService } from "../services/inspectionService";
 import SaclHeader from "../components/common/SaclHeader";
 import { COLORS, appTheme } from '../theme/appTheme';
@@ -26,10 +27,9 @@ import { COLORS, appTheme } from '../theme/appTheme';
 const ReportSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
     <Box sx={{
         mb: 2,
-        breakInside: 'avoid',
         '@media print': {
             mb: 0.5,
-            pageBreakInside: 'avoid'
+            pageBreakInside: 'auto'
         }
     }}>
         <Typography variant="h6" sx={{
@@ -37,7 +37,7 @@ const ReportSection = ({ title, children }: { title: string, children: React.Rea
             mb: 0.5,
             borderBottom: '2px solid #000',
             '@media print': {
-                fontSize: '10pt',
+                fontSize: '9pt',
                 mb: 0.2,
                 borderBottom: '1px solid #000',
                 lineHeight: 1.2
@@ -54,8 +54,8 @@ const VerticalTable = ({ data }: { data: { label: string, value: string | number
         border: '1px solid #ddd',
         mb: 1,
         '@media print': {
-            mb: 0.2,
-            fontSize: '7pt'
+            mb: 0.1,
+            fontSize: '6pt'
         }
     }}>
         <TableBody>
@@ -68,9 +68,10 @@ const VerticalTable = ({ data }: { data: { label: string, value: string | number
                         border: '1px solid #ddd',
                         padding: '4px 8px',
                         '@media print': {
-                            padding: '1px 3px',
-                            fontSize: '7pt',
-                            height: 'auto'
+                            padding: '0px 2px',
+                            fontSize: '6pt',
+                            height: 'auto',
+                            lineHeight: 1.1
                         }
                     }}>
                         {item.label}
@@ -79,9 +80,10 @@ const VerticalTable = ({ data }: { data: { label: string, value: string | number
                         border: '1px solid #ddd',
                         padding: '4px 8px',
                         '@media print': {
-                            padding: '1px 3px',
-                            fontSize: '7pt',
-                            height: 'auto'
+                            padding: '0px 2px',
+                            fontSize: '6pt',
+                            height: 'auto',
+                            lineHeight: 1.1
                         }
                     }}>
                         {item.value || "-"}
@@ -97,8 +99,8 @@ const SimpleTable = ({ headers, rows }: { headers: string[], rows: (string | num
         border: '1px solid #ddd',
         mb: 1,
         '@media print': {
-            mb: 0.2,
-            fontSize: '6.5pt'
+            mb: 0.1,
+            fontSize: '6pt'
         }
     }}>
         <TableHead>
@@ -109,9 +111,10 @@ const SimpleTable = ({ headers, rows }: { headers: string[], rows: (string | num
                         border: '1px solid #ddd',
                         padding: '4px 8px',
                         '@media print': {
-                            padding: '1px 3px',
-                            fontSize: '6.5pt',
-                            height: 'auto'
+                            padding: '0px 2px',
+                            fontSize: '6pt',
+                            height: 'auto',
+                            lineHeight: 1.1
                         }
                     }}>{h}</TableCell>
                 ))}
@@ -125,9 +128,10 @@ const SimpleTable = ({ headers, rows }: { headers: string[], rows: (string | num
                             border: '1px solid #ddd',
                             padding: '4px 8px',
                             '@media print': {
-                                padding: '1px 3px',
-                                fontSize: '6.5pt',
-                                height: 'auto'
+                                padding: '0px 2px',
+                                fontSize: '6pt',
+                                height: 'auto',
+                                lineHeight: 1.1
                             }
                         }}>{cell ?? "-"}</TableCell>
                     ))}
@@ -139,6 +143,7 @@ const SimpleTable = ({ headers, rows }: { headers: string[], rows: (string | num
 
 export default function FullReportPage() {
     const location = useLocation();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
@@ -235,7 +240,30 @@ export default function FullReportPage() {
                     }
                 }}>
                     {/* Header Actions - Hidden on Print */}
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, "@media print": { display: 'none' } }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, "@media print": { display: 'none' } }}>
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            style={{
+                                backgroundColor: '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                marginRight: '8px',
+                                fontSize: '14px'
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
+                        >
+                            ← Back to Dashboard
+                        </button>
                         <Button variant="contained" startIcon={<PrintIcon />} onClick={handlePrint}>
                             Print Report
                         </Button>
@@ -243,9 +271,9 @@ export default function FullReportPage() {
 
                     {/* Report Header */}
                     <SaclHeader />
-                    <Box sx={{ textAlign: 'center', mb: 4, mt: 2, borderBottom: '2px solid #000', pb: 2 }}>
-                        <Typography variant="h4" fontWeight="bold">FULL INSPECTION REPORT</Typography>
-                        <Typography variant="h6">Trial ID: {trialId}</Typography>
+                    <Box sx={{ textAlign: 'center', mb: 4, mt: 2, borderBottom: '2px solid #000', pb: 2, '@media print': { mb: 1, mt: 0, pb: 0.5, borderBottomWidth: '1px' } }}>
+                        <Typography variant="h4" fontWeight="bold" sx={{ '@media print': { fontSize: '12pt', fontWeight: 800 } }}>FULL INSPECTION REPORT</Typography>
+                        <Typography variant="h6" sx={{ '@media print': { fontSize: '9pt' } }}>Trial ID: {trialId}</Typography>
                     </Box>
 
 
@@ -268,7 +296,8 @@ export default function FullReportPage() {
                                             { label: "Pattern Code", value: trialCard.pattern_code },
                                             { label: "Trial No", value: trialCard.trial_id },
                                             { label: "Date of Sampling", value: trialCard.date_of_sampling },
-                                            { label: "Mould Count", value: trialCard.no_of_moulds },
+                                            { label: "Mould Count (Plan)", value: trialCard.plan_moulds || trialCard.no_of_moulds },
+                                            { label: "Mould Count (Actual)", value: trialCard.actual_moulds },
                                             { label: "Machine", value: trialCard.disa },
                                             { label: "Reason", value: trialCard.reason_for_sampling },
                                         ]} />
@@ -286,11 +315,12 @@ export default function FullReportPage() {
                                             { label: "Pouring Temp (°C)", value: pouring.pouring_temp_c },
                                             { label: "Pouring Time (sec)", value: pouring.pouring_time_sec },
                                             { label: "F/C Heat No.", value: pRem["F/C & Heat No."] },
+                                            { label: "No. of Mould Poured", value: pouring.no_of_mould_poured },
                                             { label: "Inoculation Type", value: pInoc.Text },
                                             { label: "Stream Inoc.", value: pInoc.Stream },
                                             { label: "Inmould Inoc.", value: pInoc.Inmould }
                                         ]} />
-                                        <Typography variant="subtitle2" sx={{ mt: 1, mb: 0.5, fontWeight: 'bold', '@media print': { fontSize: '9pt', mt: 0.5, mb: 0.2 } }}>Chemical Composition</Typography>
+                                        <Typography variant="subtitle2" sx={{ mt: 1, mb: 0.5, fontWeight: 'bold', '@media print': { fontSize: '8pt', mt: 0.5, mb: 0.2 } }}>Chemical Composition</Typography>
                                         <SimpleTable
                                             headers={Object.keys(pComp)}
                                             rows={[Object.values(pComp)]}
@@ -357,7 +387,7 @@ export default function FullReportPage() {
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                     {mechRows.length > 0 && (
                                         <Box mb={2} sx={{ '@media print': { mb: 0 } }}>
-                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '9pt', mb: 0.2 } }}>Mechanical Properties</Typography>
+                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '8pt', mb: 0.2 } }}>Mechanical Properties</Typography>
                                             <SimpleTable
                                                 headers={["Parameter", "Value", "Status", "Remarks"]}
                                                 rows={mechRows.map((r: any) => [r.label, r.value, r.ok ? "OK" : "NOT OK", r.remarks])} />
@@ -368,7 +398,7 @@ export default function FullReportPage() {
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                     {hardRows.length > 0 && (
                                         <Box mb={2} sx={{ '@media print': { mb: 0 } }}>
-                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '9pt', mb: 0.2 } }}>Hardness</Typography>
+                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '8pt', mb: 0.2 } }}>Hardness</Typography>
                                             <SimpleTable
                                                 headers={["Parameter", "Value", "Status", "Remarks"]}
                                                 rows={hardRows.map((r: any) => [r.label, r.value, r.ok ? "OK" : "NOT OK", r.remarks])} />
@@ -383,7 +413,7 @@ export default function FullReportPage() {
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                     {impactRows.length > 0 && (
                                         <Box mb={2} sx={{ '@media print': { mb: 0 } }}>
-                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '9pt', mb: 0.2 } }}>Impact Strength</Typography>
+                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '8pt', mb: 0.2 } }}>Impact Strength</Typography>
                                             <SimpleTable
                                                 headers={["Parameter", "Value", "Status", "Remarks"]}
                                                 rows={impactRows.map((r: any) => [r.label, r.value, r.ok ? "OK" : "NOT OK", r.remarks])} />
@@ -394,7 +424,7 @@ export default function FullReportPage() {
                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                     {ndtRows.length > 0 && (
                                         <Box mb={2} sx={{ '@media print': { mb: 0 } }}>
-                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '9pt', mb: 0.2 } }}>NDT Inspection Analysis</Typography>
+                                            <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '8pt', mb: 0.2 } }}>NDT Inspection Analysis</Typography>
                                             <SimpleTable
                                                 headers={["Parameter", "Value", "Status", "Remarks"]}
                                                 rows={ndtRows.map((r: any) => [r.label, r.value, r.ok ? "OK" : "NOT OK", r.remarks])} />
@@ -406,23 +436,23 @@ export default function FullReportPage() {
                             {/* Microstructure */}
                             {microRows.length > 0 && (
                                 <Box mb={2} sx={{ '@media print': { mb: 0 } }}>
-                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '9pt', mb: 0.2 } }}>Microstructure Examination</Typography>
-                                    <Table size="small" sx={{ border: '1px solid #ddd', '@media print': { fontSize: '6.5pt' } }}>
+                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '8pt', mb: 0.2 } }}>Microstructure Examination</Typography>
+                                    <Table size="small" sx={{ border: '1px solid #ddd', '@media print': { fontSize: '6pt' } }}>
                                         <TableHead>
                                             <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>Parameter</TableCell>
-                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>Values</TableCell>
-                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>Status</TableCell>
-                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>Remarks</TableCell>
+                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>Parameter</TableCell>
+                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>Values</TableCell>
+                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>Status</TableCell>
+                                                <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>Remarks</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
                                             {microRows.map((row: any, i: number) => (
                                                 <TableRow key={i}>
-                                                    <TableCell sx={{ border: '1px solid #ddd', fontWeight: 'bold', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>{row.label}</TableCell>
-                                                    <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>{row.values?.join(", ")}</TableCell>
-                                                    <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>{row.ok ? "OK" : "NOT OK"}</TableCell>
-                                                    <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>{row.remarks}</TableCell>
+                                                    <TableCell sx={{ border: '1px solid #ddd', fontWeight: 'bold', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{row.label}</TableCell>
+                                                    <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{row.values?.join(", ")}</TableCell>
+                                                    <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{row.ok ? "OK" : "NOT OK"}</TableCell>
+                                                    <TableCell sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{row.remarks}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -444,8 +474,8 @@ export default function FullReportPage() {
                                     <VerticalTable data={[
                                         { label: "Result", value: visual.visual_ok ? "OK" : "NOT OK" },
                                     ]} />
-                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '9pt', mb: 0.2 } }}>Remarks</Typography>
-                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 2, '@media print': { mb: 0.5, fontSize: '6.5pt' } }}>{visual.remarks}</Typography>
+                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '8pt', mb: 0.2 } }}>Remarks</Typography>
+                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 2, '@media print': { mb: 0.5, fontSize: '6pt' } }}>{visual.remarks}</Typography>
                                     {/* Visual Inspections Table */}
                                     {(() => {
                                         const visInspections = safeParse(visual.inspections, []);
@@ -482,8 +512,8 @@ export default function FullReportPage() {
                                         { label: "No. of Cavities", value: dimensional.no_of_cavities },
                                         { label: "Yields (%)", value: dimensional.yields },
                                     ]} />
-                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '9pt', mb: 0.2 } }}>Remarks</Typography>
-                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 2, '@media print': { mb: 0.5, fontSize: '6.5pt' } }}>{dimensional.remarks}</Typography>
+                                    <Typography variant="subtitle2" fontWeight="bold" sx={{ '@media print': { fontSize: '8pt', mb: 0.2 } }}>Remarks</Typography>
+                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 2, '@media print': { mb: 0.5, fontSize: '6pt' } }}>{dimensional.remarks}</Typography>
 
                                     {/* Dimensional Inspections Table */}
                                     {(() => {
@@ -509,7 +539,7 @@ export default function FullReportPage() {
                                     <TableRow sx={{ bgcolor: '#f5f5f5' }}>
                                         {/* Dynamically get headers from the first object, excluding hidden ones if any */}
                                         {Object.keys(mcInspections[0] || {}).map((key, i) => (
-                                            <TableCell key={i} sx={{ fontWeight: 'bold', border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>{key}</TableCell>
+                                            <TableCell key={i} sx={{ fontWeight: 'bold', border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{key}</TableCell>
                                         ))}
                                     </TableRow>
                                 </TableHead>
@@ -517,7 +547,7 @@ export default function FullReportPage() {
                                     {mcInspections.map((row: any, i: number) => (
                                         <TableRow key={i}>
                                             {Object.values(row).map((val: any, j: number) => (
-                                                <TableCell key={j} sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '1px 3px' } }}>{val}</TableCell>
+                                                <TableCell key={j} sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{val}</TableCell>
                                             ))}
                                         </TableRow>
                                     ))}

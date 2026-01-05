@@ -1,12 +1,16 @@
 import Client from '../config/connection.js';
 
 export const createTrial = async (req, res, next) => {
-    const { trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks } = req.body || {};
-    if (!trial_id || !part_name || !pattern_code || !material_grade || !initiated_by || !date_of_sampling || !no_of_moulds || !reason_for_sampling || !current_department_id || !disa || !sample_traceability) {
+    const { trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks } = req.body || {};
+
+    // Fallback: if no_of_moulds is not provided but plan_moulds is, use plan_moulds
+    const moulds = no_of_moulds || plan_moulds;
+
+    if (!trial_id || !part_name || !pattern_code || !material_grade || !initiated_by || !date_of_sampling || !moulds || !reason_for_sampling || !current_department_id || !disa || !sample_traceability) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const mouldJson = JSON.stringify(mould_correction);
-    const sql = 'INSERT INTO trial_cards (trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks) VALUES (@trial_id, @part_name, @pattern_code, @material_grade, @initiated_by, @date_of_sampling, @no_of_moulds, @reason_for_sampling, @status, @current_department_id, @disa, @sample_traceability, @mould_correction, @tooling_modification, @remarks)';
+    const sql = 'INSERT INTO trial_cards (trial_id, part_name, pattern_code, material_grade, initiated_by, date_of_sampling, no_of_moulds, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks) VALUES (@trial_id, @part_name, @pattern_code, @material_grade, @initiated_by, @date_of_sampling, @no_of_moulds, @plan_moulds, @actual_moulds, @reason_for_sampling, @status, @current_department_id, @disa, @sample_traceability, @mould_correction, @tooling_modification, @remarks)';
     await Client.query(sql, {
         trial_id,
         part_name,
@@ -14,7 +18,9 @@ export const createTrial = async (req, res, next) => {
         material_grade,
         initiated_by,
         date_of_sampling,
-        no_of_moulds,
+        no_of_moulds: moulds,
+        plan_moulds: plan_moulds || moulds, // Ensure plan_moulds is set
+        actual_moulds: actual_moulds || null,
         reason_for_sampling,
         status: status || 'CREATED',
         current_department_id,
@@ -88,6 +94,8 @@ export const updateTrial = async (req, res, next) => {
         material_grade,
         date_of_sampling,
         no_of_moulds,
+        plan_moulds,
+        actual_moulds,
         reason_for_sampling,
         disa,
         sample_traceability,
@@ -101,6 +109,7 @@ export const updateTrial = async (req, res, next) => {
     }
 
     const mouldJson = mould_correction ? JSON.stringify(mould_correction) : null;
+    const moulds = no_of_moulds || plan_moulds;
 
     const sql = `UPDATE trial_cards SET 
         part_name = COALESCE(@part_name, part_name),
@@ -108,6 +117,8 @@ export const updateTrial = async (req, res, next) => {
         material_grade = COALESCE(@material_grade, material_grade),
         date_of_sampling = COALESCE(@date_of_sampling, date_of_sampling),
         no_of_moulds = COALESCE(@no_of_moulds, no_of_moulds),
+        plan_moulds = COALESCE(@plan_moulds, plan_moulds),
+        actual_moulds = COALESCE(@actual_moulds, actual_moulds),
         reason_for_sampling = COALESCE(@reason_for_sampling, reason_for_sampling),
         disa = COALESCE(@disa, disa),
         sample_traceability = COALESCE(@sample_traceability, sample_traceability),
@@ -121,7 +132,9 @@ export const updateTrial = async (req, res, next) => {
         pattern_code,
         material_grade,
         date_of_sampling,
-        no_of_moulds,
+        no_of_moulds: moulds,
+        plan_moulds,
+        actual_moulds,
         reason_for_sampling,
         disa,
         sample_traceability,
@@ -141,4 +154,30 @@ export const updateTrial = async (req, res, next) => {
     });
 
     res.status(200).json({ success: true, message: 'Trial updated successfully.' });
+};
+
+export const deleteTrials = async (req, res, next) => {
+    const { trial_ids } = req.body;
+
+    if (!trial_ids || !Array.isArray(trial_ids) || trial_ids.length === 0) {
+        return res.status(400).json({ success: false, message: 'No trial IDs provided for deletion.' });
+    }
+
+    const placeholders = trial_ids.map((_, i) => `@id${i}`).join(', ');
+    const params = trial_ids.reduce((acc, id, i) => ({ ...acc, [`id${i}`]: id }), {});
+
+    const sql = `DELETE FROM trial_cards WHERE trial_id IN (${placeholders})`;
+
+    await Client.query(sql, params);
+
+    // Audit log (one entry for the batch or individual? Batch is cleaner but less detailed. Let's do batch summary)
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+    await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        action: 'Trials deleted',
+        remarks: `Trials deleted by ${req.user.username}: ${trial_ids.join(', ')}`
+    });
+
+    res.status(200).json({ success: true, message: 'Trials deleted successfully.' });
 };

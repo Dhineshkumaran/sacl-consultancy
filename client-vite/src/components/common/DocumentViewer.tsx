@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, List, ListItem, ListItemText, ListItemIcon, Button, Paper } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, ListItemIcon, Button, Paper, IconButton } from '@mui/material';
 import GearSpinner from './GearSpinner';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ImageIcon from '@mui/icons-material/Image';
@@ -12,6 +12,7 @@ interface DocumentViewerProps {
     trialId: string;
     category?: string;
     label?: string;
+    refreshTrigger?: number;
 }
 
 interface Document {
@@ -25,7 +26,7 @@ interface Document {
     remarks: string;
 }
 
-const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, label = "Previously Attached Files" }) => {
+const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, label = "Previously Attached Files", refreshTrigger = 0 }) => {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -59,7 +60,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
         };
 
         fetchDocuments();
-    }, [trialId, category]);
+    }, [trialId, category, refreshTrigger]);
 
     const handleViewFile = (file: Document) => {
         const win = window.open();
@@ -92,16 +93,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
     if (loading) return <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}><div style={{ transform: 'scale(0.4)', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><GearSpinner /></div><Typography variant="body2">Loading documents...</Typography></Box>;
 
     if (documents.length === 0) {
-        return (
-            <Box sx={{ mt: 2, mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: 'text.secondary', textTransform: 'uppercase' }}>
-                    {label}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.disabled', fontStyle: 'italic' }}>
-                    No documents attached.
-                </Typography>
-            </Box>
-        );
+        return null;
     }
 
     return (
@@ -114,14 +106,13 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
                     <ListItem
                         key={doc.document_id}
                         secondaryAction={
-                            <Button
+                            <IconButton
                                 size="small"
-                                startIcon={<VisibilityIcon />}
                                 onClick={() => handleViewFile(doc)}
-                                sx={{ textTransform: 'none' }}
+                                sx={{ color: 'primary.main' }}
                             >
-                                View
-                            </Button>
+                                <VisibilityIcon />
+                            </IconButton>
                         }
                         sx={{ borderBottom: '1px solid #f0f0f0', '&:last-child': { borderBottom: 'none' } }}
                     >

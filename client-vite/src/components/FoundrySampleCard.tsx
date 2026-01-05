@@ -13,6 +13,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TableContainer,
   Chip,
   ThemeProvider,
   createTheme,
@@ -31,6 +32,7 @@ import {
   DialogContent,
   DialogActions
 } from "@mui/material";
+import Swal from 'sweetalert2';
 import Autocomplete from "@mui/material/Autocomplete";
 
 import CloseIcon from "@mui/icons-material/Close";
@@ -222,6 +224,7 @@ const SpecInput = (props: any) => (
     fullWidth
     inputProps={{
       ...props.inputProps,
+      readOnly: props.readOnly,
       style: { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' }
     }}
     sx={{
@@ -243,14 +246,17 @@ function FoundrySampleCard() {
   const [loading, setLoading] = useState(true);
   const [trialLoading, setTrialLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPatternDialog, setShowPatternDialog] = useState(false);
 
   const { user } = useAuth();
   const { alert, showAlert } = useAlert();
+  const [docsRefreshTrigger, setDocsRefreshTrigger] = useState(0);
 
   const MACHINES = ["DISA - 1", "DISA - 2", "DISA - 3", "DISA - 4", "DISA - 5"];
   const SAMPLING_REASONS = ["First trial", "Metallurgical Trial", "Others"];
   const [samplingDate, setSamplingDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [mouldCount, setMouldCount] = useState("");
+  const [planMoulds, setPlanMoulds] = useState("");
+  const [actualMoulds, setActualMoulds] = useState("");
   const [machine, setMachine] = useState("");
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
@@ -314,7 +320,8 @@ function FoundrySampleCard() {
             setTrialId(data.trial_id || trialIdFromUrl);
             setTrialNo(data.trial_id?.split('-').pop() || '');
             setSamplingDate(data.date_of_sampling || new Date().toISOString().split("T")[0]);
-            setMouldCount(data.no_of_moulds || '');
+            setPlanMoulds(data.plan_moulds || data.no_of_moulds || '');
+            setActualMoulds(data.actual_moulds || '');
             setMachine(data.disa || '');
             setReason(data.reason_for_sampling || '');
             setSampleTraceability(data.sample_traceability && data.sample_traceability !== 'null' && data.sample_traceability !== 'undefined' ? data.sample_traceability : '');
@@ -471,7 +478,9 @@ function FoundrySampleCard() {
       date_of_sampling: samplingDate,
       status: "CREATED",
       current_department_id: 3,
-      no_of_moulds: mouldCount,
+      no_of_moulds: planMoulds, // Fallback
+      plan_moulds: planMoulds,
+      actual_moulds: actualMoulds,
       reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
       sample_traceability: sampleTraceability,
       mould_correction: mouldCorrections,
@@ -502,7 +511,9 @@ function FoundrySampleCard() {
               pattern_code: selectedPart?.pattern_code,
               material_grade: selectedPart?.material_grade,
               date_of_sampling: samplingDate,
-              no_of_moulds: mouldCount,
+              no_of_moulds: planMoulds, // Fallback
+              plan_moulds: planMoulds,
+              actual_moulds: actualMoulds,
               reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
               disa: machine,
               sample_traceability: sampleTraceability,
@@ -540,11 +551,20 @@ function FoundrySampleCard() {
 
           await updateDepartment(approvalPayload);
           setSubmitted(true);
-          showAlert('success', 'Trial approved successfully.');
-          setTimeout(() => navigate('/dashboard'), 1500);
+          setPreviewMode(false);
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Trial approved successfully.'
+          });
+          navigate('/dashboard');
           return;
         } catch (err) {
-          showAlert('error', 'Failed to approve. Please try again.');
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to approve. Please try again.'
+          });
           console.error(err);
           return;
         } finally {
@@ -588,9 +608,14 @@ function FoundrySampleCard() {
           user?.username || "Unknown",
           "Pattern Data Sheet files"
         );
+        setDocsRefreshTrigger(prev => prev + 1);
       } catch (uploadError) {
         console.error(`Failed to upload file:`, uploadError);
-        showAlert("error", `Failed to upload file`);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to upload file'
+        });
       }
 
       try {
@@ -613,19 +638,34 @@ function FoundrySampleCard() {
         });
       } catch (progressError) {
         console.error("Failed to update department progress:", progressError);
-        showAlert("warning", "Failed to update department progress.");
+        Swal.fire({
+          icon: 'warning',
+          title: 'Warning',
+          text: 'Failed to update department progress.'
+        });
       }
 
       setSubmittedData({ ...previewPayload });
       setSubmitted(true);
+      setSubmittedData({ ...previewPayload });
+      setSubmitted(true);
+      setPreviewMode(false);
       setPreviewMessage("Trial Specification Registered Successfully");
-      showAlert("success", "Trial Specification Registered Successfully");
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Trial Specification Registered Successfully'
+      });
+      navigate("/dashboard");
 
     } catch (err: any) {
       console.error("Submission Error:", err);
-      showAlert("error", "Failed to submit trial data: " + (err.message || "Unknown error"));
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: "Failed to submit trial data: " + (err.message || "Unknown error")
+      });
     } finally {
-      navigate("/dashboard");
       setIsSubmitting(false);
     }
   };
@@ -782,8 +822,8 @@ function FoundrySampleCard() {
                             <TableCell key={key}>
                               <SpecInput
                                 value={(chemState as any)[key]}
-                                onChange={(e: any) => setChemState({ ...chemState, [key]: e.target.value })}
-                                disabled={user?.role === 'HOD' && !isEditing}
+                                onChange={() => { }}
+                                readOnly={true}
                               />
                             </TableCell>
                           ))}
@@ -792,8 +832,8 @@ function FoundrySampleCard() {
                             <TableCell key={key}>
                               <SpecInput
                                 value={(microState as any)[key]}
-                                onChange={(e: any) => setMicroState({ ...microState, [key]: e.target.value })}
-                                disabled={user?.role === 'HOD' && !isEditing}
+                                onChange={() => { }}
+                                readOnly={true}
                               />
                             </TableCell>
                           ))}
@@ -830,13 +870,13 @@ function FoundrySampleCard() {
                       </TableHead>
                       <TableBody>
                         <TableRow>
-                          <TableCell><SpecInput value={tensileState.tensileStrength} onChange={(e: any) => setTensileState({ ...tensileState, tensileStrength: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                          <TableCell><SpecInput value={tensileState.yieldStrength} onChange={(e: any) => setTensileState({ ...tensileState, yieldStrength: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                          <TableCell><SpecInput value={tensileState.elongation} onChange={(e: any) => setTensileState({ ...tensileState, elongation: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                          <TableCell><SpecInput value={tensileState.impactCold} onChange={(e: any) => setTensileState({ ...tensileState, impactCold: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                          <TableCell><SpecInput value={tensileState.impactRoom} onChange={(e: any) => setTensileState({ ...tensileState, impactRoom: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                          <TableCell><SpecInput value={hardnessState.surface} onChange={(e: any) => setHardnessState({ ...hardnessState, surface: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
-                          <TableCell><SpecInput value={hardnessState.core} onChange={(e: any) => setHardnessState({ ...hardnessState, core: e.target.value })} disabled={user?.role === 'HOD' && !isEditing} /></TableCell>
+                          <TableCell><SpecInput value={tensileState.tensileStrength} onChange={() => { }} readOnly={true} /></TableCell>
+                          <TableCell><SpecInput value={tensileState.yieldStrength} onChange={() => { }} readOnly={true} /></TableCell>
+                          <TableCell><SpecInput value={tensileState.elongation} onChange={() => { }} readOnly={true} /></TableCell>
+                          <TableCell><SpecInput value={tensileState.impactCold} onChange={() => { }} readOnly={true} /></TableCell>
+                          <TableCell><SpecInput value={tensileState.impactRoom} onChange={() => { }} readOnly={true} /></TableCell>
+                          <TableCell><SpecInput value={hardnessState.surface} onChange={() => { }} readOnly={true} /></TableCell>
+                          <TableCell><SpecInput value={hardnessState.core} onChange={() => { }} readOnly={true} /></TableCell>
                           <TableCell><SpecInput value={selectedPart?.xray || "--"} readOnly /></TableCell>
                           <TableCell><SpecInput value={selectedPart?.mpi || "--"} readOnly /></TableCell>
                         </TableRow>
@@ -960,7 +1000,11 @@ function FoundrySampleCard() {
                 <Grid size={{ xs: 12, sm: 4 }}>
                   <Paper elevation={0} sx={{ p: 2, border: `1px solid ${COLORS.border}` }}>
                     <Typography variant="caption" color="text.secondary">No. of Moulds</Typography>
-                    <Typography variant="subtitle1">{previewPayload?.no_of_moulds || previewPayload?.mouldCount || "-"}</Typography>
+                    <Typography variant="caption" color="text.secondary">No. of Moulds</Typography>
+                    <Typography variant="subtitle1">
+                      Plan: {previewPayload?.plan_moulds || previewPayload?.planMoulds || "-"} <br />
+                      Actual: {previewPayload?.actual_moulds || previewPayload?.actualMoulds || "-"}
+                    </Typography>
                   </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 4 }}>
@@ -1135,15 +1179,42 @@ function FoundrySampleCard() {
                         />
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          type="number"
-                          fullWidth
-                          value={mouldCount}
-                          onChange={(e) => setMouldCount(e.target.value)}
-                          size="small"
-                          placeholder="10"
-                          disabled={user?.role === 'HOD' && !isEditing}
-                        />
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          <TextField
+                            type="number"
+                            fullWidth
+                            label="Plan"
+                            value={planMoulds}
+                            onChange={(e) => setPlanMoulds(e.target.value)}
+                            size="small"
+                            placeholder="20"
+                            disabled={user?.role === 'HOD' && !isEditing}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                              bgcolor: '#FFF59D',
+                              "& .MuiInputBase-input": { color: "black !important" },
+                              "& .MuiInputLabel-root": { color: "black !important", fontWeight: 600 },
+                              "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "black !important" }
+                            }}
+                          />
+                          <TextField
+                            type="number"
+                            fullWidth
+                            label="Actual"
+                            value={actualMoulds}
+                            onChange={(e) => setActualMoulds(e.target.value)}
+                            size="small"
+                            placeholder="25"
+                            disabled={user?.role === 'HOD' && !isEditing}
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                              bgcolor: '#FFF59D',
+                              "& .MuiInputBase-input": { color: "black !important" },
+                              "& .MuiInputLabel-root": { color: "black !important", fontWeight: 600 },
+                              "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "black !important" }
+                            }}
+                          />
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <FormControl fullWidth size="small">
@@ -1207,19 +1278,19 @@ function FoundrySampleCard() {
                           disabled={user?.role === 'HOD' && !isEditing}
                         />
                       </TableCell>
-                      <TableCell>
-                        {(user?.role !== 'HOD' || isEditing) && (
-                          <FileUploadSection
-                            files={patternDataSheetFiles}
-                            onFilesChange={handlePatternDataSheetFilesChange}
-                            onFileRemove={removePatternDataSheetFile}
-                            showAlert={showAlert}
-                            label="Attach Pattern Data Sheet"
-                          />
-                        )}
-                        {user?.role === 'HOD' && (
-                          <DocumentViewer trialId={trialId || ""} category="PATTERN_DATA_SHEET" label="Attached Sheets" />
-                        )}
+                      <TableCell align="center">
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<ConstructionIcon />}
+                          onClick={() => {
+                            if (selectedPattern) setShowPatternDialog(true);
+                            else showAlert("warning", "Please select a pattern first.");
+                          }}
+                          sx={{ textTransform: 'none', width: '100%' }}
+                        >
+                          View Pattern Data Sheet
+                        </Button>
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -1262,9 +1333,7 @@ function FoundrySampleCard() {
                         label="Attach Tooling PDF"
                       />
                     )}
-                    {user?.role === 'HOD' && (
-                      <DocumentViewer trialId={trialId || ""} category="TOOLING_MODIFICATION" label="Attached Tooling Files" />
-                    )}
+                    <DocumentViewer trialId={trialId || ""} category="TOOLING_MODIFICATION" label="Attached Tooling Files" refreshTrigger={docsRefreshTrigger} />
                   </Grid>
                 </Grid>
               </Paper>
@@ -1401,7 +1470,9 @@ function FoundrySampleCard() {
                     <strong>Date:</strong> {previewPayload.samplingDate || '-'}
                   </div>
                   <div>
-                    <strong>No. of Moulds:</strong> {previewPayload.mouldCount || '-'}
+                    <strong>No. of Moulds:</strong> <br />
+                    Plan: {previewPayload.plan_moulds || previewPayload.planMoulds || '-'} <br />
+                    Actual: {previewPayload.actual_moulds || previewPayload.actualMoulds || '-'}
                   </div>
                   <div>
                     <strong>Machine:</strong> {previewPayload.machine || '-'}
@@ -1513,6 +1584,103 @@ function FoundrySampleCard() {
 
         </Container>
       </Box>
+
+      <Dialog open={showPatternDialog} onClose={() => setShowPatternDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ bgcolor: COLORS.primary, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Pattern Data Sheet
+          <IconButton onClick={() => setShowPatternDialog(false)} sx={{ color: 'white' }}><CloseIcon /></IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedPattern ? (
+            <Grid container spacing={3}>
+              {/* Left Column */}
+              <Grid size={{ xs: 12, md: 5 }}>
+                <TableContainer component={Paper} elevation={0} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>Value</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {[
+                        { l: "Number of cavity in pattern", v: (selectedPattern as any).number_of_cavity },
+                        { l: "Cavity identification number", v: (selectedPattern as any).cavity_identification },
+                        { l: "Pattern material", v: (selectedPattern as any).pattern_material },
+                        { l: "Core weight in kgs", v: (selectedPattern as any).core_weight },
+                        { l: "Core mask thickness in mm", v: (selectedPattern as any).core_mask_thickness },
+                        { l: "Estimated casting weight", v: (selectedPattern as any).estimated_casting_weight },
+                      ].map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>{r.l}</TableCell>
+                          <TableCell sx={{ fontSize: '13px', fontWeight: 500 }}>{r.v || "-"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+
+              {/* Right Column */}
+              <Grid size={{ xs: 12, md: 7 }}>
+                <TableContainer component={Paper} elevation={0} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>Description</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>SP Side Pattern</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px' }}>PP Side Pattern</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {[
+                        { l: "Pattern plate thickness in mm", sp: (selectedPattern as any).pattern_plate_thickness_sp, pp: (selectedPattern as any).pattern_plate_thickness_pp },
+                        { l: "Pattern plate weight in kgs", sp: (selectedPattern as any).pattern_plate_weight_sp, pp: (selectedPattern as any).pattern_plate_weight_pp },
+                        { l: "Crush pin height in mm", sp: (selectedPattern as any).crush_pin_height_sp, pp: (selectedPattern as any).crush_pin_height_pp },
+                        { l: "Core mask weight in kgs", sp: (selectedPattern as any).core_mask_weight_sp, pp: (selectedPattern as any).core_mask_weight_pp },
+                        { l: "Calculated Yield in percentage", sp: (selectedPattern as any).calculated_yield_sp, pp: (selectedPattern as any).calculated_yield_pp },
+                      ].map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>{r.l}</TableCell>
+                          <TableCell sx={{ fontSize: '13px', fontWeight: 500 }}>{r.sp || "-"}</TableCell>
+                          <TableCell sx={{ fontSize: '13px', fontWeight: 500 }}>{r.pp || "-"}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow>
+                        <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>Estimated Bunch weight</TableCell>
+                        <TableCell colSpan={2} sx={{ fontSize: '13px', fontWeight: 500 }}>
+                          <Box display="flex" alignItems="center" gap={3}>
+                            <span>{(selectedPattern as any).estimated_bunch_weight || "-"}</span>
+                            {(selectedPattern as any).yield_label && (
+                              <span style={{ fontWeight: 'bold' }}>Yield: {(selectedPattern as any).yield_label}</span>
+                            )}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+
+              {/* Remarks */}
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle2" gutterBottom fontWeight="bold">Remarks:</Typography>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb', minHeight: '60px' }}>
+                  <Typography variant="body2">{(selectedPattern as any).remarks || "-"}</Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+          ) : (
+            <Box textAlign="center" py={4}>
+              <Typography color="textSecondary">No pattern selected</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPatternDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </ThemeProvider >
   );
 }

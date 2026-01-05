@@ -25,6 +25,7 @@ import {
   GlobalStyles,
   Divider
 } from "@mui/material";
+import Swal from 'sweetalert2';
 
 import FactoryIcon from '@mui/icons-material/Factory';
 import PrintIcon from '@mui/icons-material/Print';
@@ -204,9 +205,14 @@ function MouldingTable() {
         };
 
         await updateDepartment(approvalPayload);
-        showAlert('success', 'Department progress approved successfully.');
         setSubmitted(true);
-        setTimeout(() => navigate('/dashboard'), 1500);
+        setPreviewMode(false);
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Department progress approved successfully.'
+        });
+        navigate('/dashboard');
       } else {
 
         const payload = {
@@ -248,14 +254,23 @@ function MouldingTable() {
             role: "user",
             remarks: "Completed by user"
           });
-          showAlert('success', 'Moulding details created and department progress updated successfully.');
           setSubmitted(true);
+          setPreviewMode(false);
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Moulding details created and department progress updated successfully.'
+          });
         }
         navigate('/dashboard');
       }
     } catch (error) {
       console.error("Error saving moulding details:", error);
-      showAlert('error', 'Failed to save details.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to save details.'
+      });
     } finally {
       setLoading(false);
     }
@@ -344,7 +359,7 @@ function MouldingTable() {
                 </TableBody>
               </Table>
             </Box>
-            <Box sx={{ mt: 3, mb: 3 }}>
+            <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
               {(user?.role !== 'HOD' || isEditing) && (
                 <>
                   <Typography
@@ -354,46 +369,17 @@ function MouldingTable() {
                     Attach PDF / Image Files
                   </Typography>
 
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    sx={{
-                      bgcolor: "white",
-                      borderStyle: "dashed",
-                      py: 1.5,
-                      px: 3,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Attach PDF
-                    <input
-                      type="file"
-                      hidden
-                      multiple
-                      accept="application/pdf,image/*"
-                      onChange={handleAttachFiles}
-                    />
-                  </Button>
-
-                  <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {attachedFiles.map((file, index) => (
-                      <Chip
-                        key={index}
-                        label={file.name}
-                        onDelete={() => removeAttachedFile(index)}
-                        sx={{
-                          bgcolor: "white",
-                          border: `1px solid ${COLORS.border}`,
-                          fontSize: "0.8rem"
-                        }}
-                      />
-                    ))}
-                  </Box>
+                  <FileUploadSection
+                    files={attachedFiles}
+                    onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
+                    onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                    showAlert={showAlert}
+                    label="Attach PDF"
+                    disabled={user?.role === 'HOD' && !isEditing}
+                  />
                 </>
               )}
-              {user?.role === 'HOD' && (
-                <DocumentViewer trialId={trialId || ""} category="MOULDING" />
-              )}
+              <DocumentViewer trialId={trialId || ""} category="MOULDING" />
             </Box>
 
 

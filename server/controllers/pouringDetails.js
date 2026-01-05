@@ -1,14 +1,14 @@
 import Client from '../config/connection.js';
 
 export const createPouringDetails = async (req, res, next) => {
-    const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks } = req.body || {};
+    const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks, no_of_mould_poured } = req.body || {};
     if (!trial_id || !pour_date || !heat_code || !composition || !pouring_temp_c || !pouring_time_sec || !inoculation || !other_remarks || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const compositionJson = JSON.stringify(composition);
     const otherRemarksJson = JSON.stringify(other_remarks);
     const inoculationJson = JSON.stringify(inoculation);
-    const sql = 'INSERT INTO pouring_details (trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks) VALUES (@trial_id, @pour_date, @heat_code, @composition, @pouring_temp_c, @pouring_time_sec, @inoculation, @other_remarks, @remarks)';
+    const sql = 'INSERT INTO pouring_details (trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks, no_of_mould_poured) VALUES (@trial_id, @pour_date, @heat_code, @composition, @pouring_temp_c, @pouring_time_sec, @inoculation, @other_remarks, @remarks, @no_of_mould_poured)';
     await Client.query(sql, {
         trial_id,
         pour_date,
@@ -18,7 +18,8 @@ export const createPouringDetails = async (req, res, next) => {
         pouring_time_sec,
         inoculation: inoculationJson,
         other_remarks: otherRemarksJson,
-        remarks
+        remarks,
+        no_of_mould_poured
     });
 
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
@@ -33,14 +34,14 @@ export const createPouringDetails = async (req, res, next) => {
 };
 
 export const updatePouringDetails = async (req, res, next) => {
-    const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks } = req.body || {};
+    const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks, no_of_mould_poured } = req.body || {};
     if (!trial_id || !pour_date || !heat_code || !composition || !pouring_temp_c || !pouring_time_sec || !inoculation || !other_remarks || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const compositionJson = JSON.stringify(composition);
     const otherRemarksJson = JSON.stringify(other_remarks);
     const inoculationJson = JSON.stringify(inoculation);
-    const sql = 'UPDATE pouring_details SET pour_date = @pour_date, heat_code = @heat_code, composition = @composition, pouring_temp_c = @pouring_temp_c, pouring_time_sec = @pouring_time_sec, inoculation = @inoculation, other_remarks = @other_remarks, remarks = @remarks WHERE trial_id = @trial_id';
+    const sql = 'UPDATE pouring_details SET pour_date = @pour_date, heat_code = @heat_code, composition = @composition, pouring_temp_c = @pouring_temp_c, pouring_time_sec = @pouring_time_sec, inoculation = @inoculation, other_remarks = @other_remarks, remarks = @remarks, no_of_mould_poured = @no_of_mould_poured WHERE trial_id = @trial_id';
     await Client.query(sql, {
         pour_date,
         heat_code,
@@ -50,6 +51,7 @@ export const updatePouringDetails = async (req, res, next) => {
         inoculation: inoculationJson,
         other_remarks: otherRemarksJson,
         remarks,
+        no_of_mould_poured,
         trial_id
     });
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';

@@ -72,6 +72,8 @@ CREATE TABLE trial_cards (
     initiated_by VARCHAR(50) NOT NULL,
     date_of_sampling DATE NOT NULL,
     no_of_moulds INT CHECK (no_of_moulds > 0),
+    plan_moulds INT,
+    actual_moulds INT,
     reason_for_sampling NVARCHAR(MAX),
     status VARCHAR(30) NOT NULL DEFAULT 'CREATED',
     tooling_modification NVARCHAR(MAX),

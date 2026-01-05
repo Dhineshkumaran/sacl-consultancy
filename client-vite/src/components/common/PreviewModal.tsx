@@ -96,16 +96,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
                     <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
                         Close
                     </Button>
-                    {submitted && onExport && (
-                        <Button
-                            variant="contained"
-                            startIcon={<PrintIcon />}
-                            onClick={onExport}
-                            sx={{ bgcolor: COLORS.primary }}
-                        >
-                            Download PDF
-                        </Button>
-                    )}
+
                     {!submitted && onSubmit && (
                         <Button
                             variant="contained"

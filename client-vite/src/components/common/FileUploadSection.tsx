@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Button, List, ListItem, ListItemText, IconButton, Typography } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { validateFileSizes, formatFileSize } from '../../utils';
 
 interface FileUploadSectionProps {
@@ -86,15 +87,25 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                         <ListItem
                             key={`${file.name}-${index}`}
                             secondaryAction={
-                                <IconButton
-                                    edge="end"
-                                    aria-label="delete"
-                                    onClick={() => onFileRemove(index)}
-                                    size="small"
-                                    disabled={disabled}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
+                                <Box>
+                                    <IconButton
+                                        aria-label="view"
+                                        onClick={() => window.open(URL.createObjectURL(file), '_blank')}
+                                        size="small"
+                                        sx={{ mr: 1, color: 'primary.main' }}
+                                    >
+                                        <VisibilityIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="delete"
+                                        onClick={() => onFileRemove(index)}
+                                        size="small"
+                                        disabled={disabled}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Box>
                             }
                             sx={{
                                 bgcolor: 'background.paper',

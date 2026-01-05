@@ -21,6 +21,7 @@ import {
     GlobalStyles,
     useMediaQuery
 } from "@mui/material";
+import Swal from 'sweetalert2';
 
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -46,6 +47,7 @@ import { inspectionService } from "../services/inspectionService";
 import { uploadFiles } from "../services/fileUploadHelper";
 import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { ActionButtons, EmptyState } from "./common";
+import { useAlert } from "../hooks/useAlert";
 
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: string, color: string }) => (
@@ -71,7 +73,6 @@ export default function MaterialCorrection() {
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewPayload, setPreviewPayload] = useState<any | null>(null);
     const [submitted, setSubmitted] = useState(false);
-    const [alertMessage, setAlertMessage] = useState<{ severity: 'success' | 'error' | 'warning', message: string } | null>(null);
     const [userIP, setUserIP] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -115,24 +116,14 @@ export default function MaterialCorrection() {
                     }
                 } catch (error) {
                     console.error("Failed to fetch material correction data:", error);
-                    setAlertMessage({ severity: 'error', message: 'Failed to load existing data.' });
+                    showAlert('error', 'Failed to load existing data.');
                 }
             }
         };
         if (trialId) fetchData();
     }, [user, trialId]);
 
-    useEffect(() => {
-        if (alertMessage) { const t = setTimeout(() => setAlertMessage(null), 4000); return () => clearTimeout(t); }
-    }, [alertMessage]);
-
-    useEffect(() => {
-        const fetchIP = async () => {
-            const ip = await ipService.getUserIP();
-            setUserIP(ip);
-        };
-        fetchIP();
-    }, []);
+    const { showAlert } = useAlert();
 
     const handleFileChange = (newFiles: File[]) => {
         setAttachedFiles(prev => [...prev, ...newFiles]);
@@ -157,7 +148,6 @@ export default function MaterialCorrection() {
         setPreviewPayload(payload);
         setPreviewOpen(true);
         setSubmitted(false);
-        setAlertMessage(null);
     };
 
     const handleFinalSave = async () => {
@@ -190,10 +180,19 @@ export default function MaterialCorrection() {
 
                     await updateDepartment(approvalPayload);
                     setSubmitted(true);
-                    setAlertMessage({ severity: 'success', message: 'Department progress approved successfully.' });
-                    setTimeout(() => navigate('/dashboard'), 1500);
+                    setPreviewOpen(false);
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Department progress approved successfully.'
+                    });
+                    navigate('/dashboard');
                 } catch (err) {
-                    setAlertMessage({ severity: 'error', message: 'Failed to approve. Please try again.' });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to approve. Please try again.'
+                    });
                     console.error(err);
                 }
                 return;
@@ -231,20 +230,33 @@ export default function MaterialCorrection() {
                             status: "IN_PROGRESS"
                         });
                         setSubmitted(true);
-                        setAlertMessage({ severity: 'success', message: "Material correction created and department progress updated successfully!" });
+                        setPreviewOpen(false);
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Material correction created and department progress updated successfully!'
+                        });
                     } catch (roleError) {
                         console.error("Failed to update role progress or trial status:", roleError);
                     }
                 }
 
-                setTimeout(() => navigate('/dashboard'), 1500);
+                navigate('/dashboard');
 
             } else {
-                setAlertMessage({ severity: 'error', message: response.message || "Submission failed" });
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.message || "Submission failed"
+                });
             }
         } catch (error) {
             console.error(error);
-            setAlertMessage({ severity: 'error', message: "An error occurred during submission." });
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: "An error occurred during submission."
+            });
         } finally {
             setLoading(false);
         }
@@ -267,8 +279,6 @@ export default function MaterialCorrection() {
 
                     <SaclHeader />
                     <DepartmentHeader title="MATERIAL CORRECTION DETAILS" userIP={userIP} user={user} />
-
-                    <AlertMessage alert={alertMessage} />
 
                     <Grid container spacing={3}>
 
@@ -364,13 +374,11 @@ export default function MaterialCorrection() {
                                             onFilesChange={handleFileChange}
                                             onFileRemove={removeAttachedFile}
                                             label="Upload Files"
-                                            showAlert={(severity, message) => setAlertMessage({ severity, message })}
+                                            showAlert={showAlert}
                                         />
                                     </>
                                 )}
-                                {user?.role === 'HOD' && (
-                                    <DocumentViewer trialId={trialId || ""} category="MATERIAL_CORRECTION" />
-                                )}
+                                <DocumentViewer trialId={trialId || ""} category="MATERIAL_CORRECTION" />
                             </Paper>
                         </Grid>
 
@@ -473,8 +481,6 @@ export default function MaterialCorrection() {
                                         </Typography>
                                     </Box>
                                 )}
-
-                                {alertMessage && alertMessage.severity === 'success' && <Alert severity="success" sx={{ mt: 2 }}>{alertMessage.message}</Alert>}
                             </Box>
                         )}
                     </PreviewModal>

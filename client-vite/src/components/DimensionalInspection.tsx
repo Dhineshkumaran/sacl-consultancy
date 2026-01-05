@@ -25,6 +25,7 @@ import {
     Divider,
     GlobalStyles,
 } from "@mui/material";
+import Swal from 'sweetalert2';
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
@@ -297,10 +298,19 @@ export default function DimensionalInspection({
 
                 await updateDepartment(approvalPayload);
                 setPreviewSubmitted(true);
-                showAlert('success', 'Department progress approved successfully.');
-                setTimeout(() => navigate('/dashboard'), 1500);
+                setPreviewMode(false);
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Department progress approved successfully.'
+                });
+                navigate('/dashboard');
             } catch (err) {
-                showAlert('error', 'Failed to approve. Please try again.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to approve. Please try again.'
+                });
             } finally {
                 setSaving(false);
             }
@@ -342,7 +352,11 @@ export default function DimensionalInspection({
                     );
                 } catch (uploadError) {
                     console.error("File upload error:", uploadError);
-                    showAlert('warning', 'File upload failed, but inspection data was saved.');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Warning',
+                        text: 'File upload failed, but inspection data was saved.'
+                    });
                 }
             }
 
@@ -357,14 +371,27 @@ export default function DimensionalInspection({
                     });
                 } catch (roleError) {
                     console.error("Failed to update role progress:", roleError);
-                    showAlert('warning', 'Failed to update role progress, but inspection data was saved.');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Warning',
+                        text: 'Failed to update role progress, but inspection data was saved.'
+                    });
                 }
             }
             setPreviewSubmitted(true);
-            showAlert('success', 'Dimensional inspection created and department progress updated successfully.');
+            setPreviewMode(false);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Dimensional inspection created and department progress updated successfully.'
+            });
             navigate('/dashboard');
         } catch (err: any) {
-            showAlert('error', 'Failed to save dimensional inspection. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to save dimensional inspection. Please try again.'
+            });
         } finally {
             setSaving(false);
         }

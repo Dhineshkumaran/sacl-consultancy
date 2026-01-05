@@ -26,6 +26,7 @@ import {
     Divider,
     GlobalStyles
 } from "@mui/material";
+import Swal from 'sweetalert2';
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
@@ -43,7 +44,9 @@ import SaclHeader from "./common/SaclHeader";
 import NoAccess from "./common/NoAccess";
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
+import { documentService } from '../services/documentService';
 import { uploadFiles } from '../services/fileUploadHelper';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from "react-router-dom";
 import { COLORS, appTheme } from '../theme/appTheme';
 import { useAlert } from '../hooks/useAlert';
@@ -62,6 +65,33 @@ const buildRows = (labels: string[], initialCols: string[]): Row[] =>
         label: lab,
         values: initialCols.map(() => ""),
     }));
+
+const viewAttachment = (file: any) => {
+    if (!file) return;
+    if (file instanceof File) {
+        const url = URL.createObjectURL(file);
+        window.open(url, '_blank');
+    } else if (file.file_base64) {
+        try {
+            const byteCharacters = atob(file.file_base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const ext = (file.name || file.file_name || "").split('.').pop()?.toLowerCase();
+            let mime = 'application/pdf';
+            if (['jpg', 'jpeg', 'png'].includes(ext)) mime = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+
+            const blob = new Blob([byteArray], { type: mime });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (e) {
+            console.error("Error viewing file", e);
+            alert("Could not view file.");
+        }
+    }
+};
 
 export default function VisualInspection({
     initialRows = ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage (%)", "Reason for rejection: cavity wise"],
@@ -106,6 +136,20 @@ export default function VisualInspection({
             if (user?.role === 'HOD' && urlTrialId) {
                 try {
                     const response = await inspectionService.getVisualInspection(urlTrialId);
+
+                    let docsMap: Record<string, any> = {};
+                    try {
+                        const docRes = await documentService.getDocument(urlTrialId);
+                        if (docRes.ok) {
+                            const docData = await docRes.json();
+                            if (docData.success && Array.isArray(docData.data)) {
+                                docData.data.forEach((d: any) => {
+                                    if (d.document_type === 'VISUAL_INSPECTION') docsMap[d.file_name] = d;
+                                });
+                            }
+                        }
+                    } catch (e) { console.error(e); }
+
                     if (response.success && response.data && response.data.length > 0) {
                         const data = response.data[0];
                         if (data.inspection_date) setDate(new Date(data.inspection_date).toISOString().slice(0, 10));
@@ -133,10 +177,15 @@ export default function VisualInspection({
                             }));
                         }
 
+                        // Try to find attachment by name if data has it, or just leave it null if not supported by schema yet.
+                        // If schema doesn't have attachment_name, we can't link it.
+                        // Assuming data.attachment_name might exist or we rely on user re-uploading if needed.
+                        const linkedAttachment = data.attachment_name ? docsMap[data.attachment_name] : null;
+
                         setGroupMeta({
                             ok: data.visual_ok === null || data.visual_ok === undefined ? null : (data.visual_ok === true || data.visual_ok === 1 || String(data.visual_ok) === "1" || String(data.visual_ok) === "true"),
                             remarks: data.remarks || "",
-                            attachment: null
+                            attachment: linkedAttachment || null
                         });
                         setTrialId(data.trial_id || "");
                     }
@@ -392,11 +441,20 @@ export default function VisualInspection({
 
                 await updateDepartment(approvalPayload);
                 setSubmitted(true);
-                showAlert('success', 'Department progress approved successfully.');
-                setTimeout(() => navigate('/dashboard'), 1500);
+                setPreviewMode(false);
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Department progress approved successfully.'
+                });
+                navigate('/dashboard');
             } catch (err) {
                 console.error(err);
-                showAlert('error', 'Failed to approve. Please try again.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to approve. Please try again.'
+                });
             } finally {
                 setSaving(false);
             }
@@ -441,10 +499,13 @@ export default function VisualInspection({
 
             await inspectionService.submitVisualInspection(serverPayload);
 
-            if (attachedFiles.length > 0) {
+            const allFiles = [...attachedFiles];
+            if (groupMeta.attachment instanceof File) allFiles.push(groupMeta.attachment);
+
+            if (allFiles.length > 0) {
                 try {
                     const uploadResults = await uploadFiles(
-                        attachedFiles,
+                        allFiles,
                         trialId || "trial_id",
                         "VISUAL_INSPECTION",
                         user?.username || "system",
@@ -475,10 +536,19 @@ export default function VisualInspection({
             }
 
             setSubmitted(true);
-            showAlert('success', 'Visual inspection created and department progress updated successfully.');
+            setPreviewMode(false);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Visual inspection created and department progress updated successfully.'
+            });
             navigate('/dashboard');
         } catch (err: any) {
-            showAlert('error', err?.message || 'Failed to save visual inspection. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err?.message || 'Failed to save visual inspection. Please try again.'
+            });
         } finally {
             setSaving(false);
         }
@@ -729,15 +799,20 @@ export default function VisualInspection({
                                                                 </label>
 
                                                                 {groupMeta.attachment ? (
-                                                                    <Chip
-                                                                        icon={<InsertDriveFileIcon />}
-                                                                        label={groupMeta.attachment.name}
-                                                                        onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
-                                                                        size="small"
-                                                                        variant="outlined"
-                                                                        sx={{ maxWidth: 140 }}
-                                                                        disabled={user?.role === 'HOD' && !isEditing}
-                                                                    />
+                                                                    <Box display="flex" alignItems="center" gap={0.5}>
+                                                                        <Chip
+                                                                            icon={<InsertDriveFileIcon />}
+                                                                            label={groupMeta.attachment.name}
+                                                                            onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
+                                                                            size="small"
+                                                                            variant="outlined"
+                                                                            sx={{ maxWidth: 140 }}
+                                                                            disabled={user?.role === 'HOD' && !isEditing}
+                                                                        />
+                                                                        <IconButton size="small" onClick={() => viewAttachment(groupMeta.attachment)}>
+                                                                            <VisibilityIcon fontSize="small" />
+                                                                        </IconButton>
+                                                                    </Box>
                                                                 ) : (
                                                                     <Typography variant="caption" color="text.secondary">
 
@@ -780,9 +855,7 @@ export default function VisualInspection({
                                     />
                                 </>
                             )}
-                            {user?.role === 'HOD' && (
-                                <DocumentViewer trialId={urlTrialId} category="VISUAL_INSPECTION" />
-                            )}
+                            <DocumentViewer trialId={urlTrialId} category="VISUAL_INSPECTION" />
                         </Box>
 
 

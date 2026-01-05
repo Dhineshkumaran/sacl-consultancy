@@ -12,13 +12,18 @@ import {
     Container,
     ThemeProvider,
     TextField,
-    InputAdornment
+    InputAdornment,
+    Checkbox,
+    IconButton,
+    Tooltip
 } from '@mui/material';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DescriptionIcon from '@mui/icons-material/Description';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Swal from 'sweetalert2';
 import SaclHeader from '../components/common/SaclHeader';
 import { appTheme, COLORS } from '../theme/appTheme';
 import { trialService } from '../services/trialService';
@@ -32,6 +37,7 @@ export default function AllTrialsPage() {
     const [trials, setTrials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedTrials, setSelectedTrials] = useState<string[]>([]);
 
     const isMyTrials = searchParams.get('myTrials') === 'true';
 
@@ -57,6 +63,86 @@ export default function AllTrialsPage() {
             trial.pattern_code?.toLowerCase().includes(searchTerm.toLowerCase())
         )
         .sort((a, b) => new Date(b.date_of_sampling).getTime() - new Date(a.date_of_sampling).getTime());
+
+    const canDelete = isMyTrials || user?.role === 'Admin';
+
+    const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.checked) {
+            const newSelecteds = filteredTrials.map((n) => n.trial_id);
+            setSelectedTrials(newSelecteds);
+            return;
+        }
+        setSelectedTrials([]);
+    };
+
+    const handleClick = (event: React.MouseEvent<unknown>, trialId: string) => {
+        const selectedIndex = selectedTrials.indexOf(trialId);
+        let newSelected: string[] = [];
+
+        if (selectedIndex === -1) {
+            newSelected = newSelected.concat(selectedTrials, trialId);
+        } else if (selectedIndex === 0) {
+            newSelected = newSelected.concat(selectedTrials.slice(1));
+        } else if (selectedIndex === selectedTrials.length - 1) {
+            newSelected = newSelected.concat(selectedTrials.slice(0, -1));
+        } else if (selectedIndex > 0) {
+            newSelected = newSelected.concat(
+                selectedTrials.slice(0, selectedIndex),
+                selectedTrials.slice(selectedIndex + 1),
+            );
+        }
+
+        setSelectedTrials(newSelected);
+    };
+
+    const handleDelete = async () => {
+        if (selectedTrials.length === 0) return;
+
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: `You are about to delete ${selectedTrials.length} trial(s). This action cannot be undone!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete them!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setLoading(true);
+                const response = await trialService.deleteTrials(selectedTrials);
+                if (response.success) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Trials have been deleted.',
+                        'success'
+                    );
+                    // Refresh trials
+                    const data = await trialService.getAllTrials();
+                    setTrials(data);
+                    setSelectedTrials([]);
+                } else {
+                    Swal.fire(
+                        'Failed!',
+                        response.message || 'Failed to delete trials.',
+                        'error'
+                    );
+                }
+            } catch (error) {
+                console.error("Error deleting trials:", error);
+                Swal.fire(
+                    'Error!',
+                    'An error occurred while deleting trials.',
+                    'error'
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    const isSelected = (trialId: string) => selectedTrials.indexOf(trialId) !== -1;
 
     return (
         <ThemeProvider theme={appTheme}>
@@ -106,6 +192,13 @@ export default function AllTrialsPage() {
                             >
                                 {isMyTrials ? 'Initiated Trials' : 'All Trials Repository'}
                             </Typography>
+                            {canDelete && selectedTrials.length > 0 && (
+                                <Tooltip title="Delete Selected">
+                                    <IconButton onClick={handleDelete} color="error" sx={{ ml: 2, bgcolor: '#ffebee', '&:hover': { bgcolor: '#ffcdd2' } }}>
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
                         </Box>
                         <TextField
                             placeholder="Search Trial ID, Part Name..."
@@ -151,6 +244,24 @@ export default function AllTrialsPage() {
                                 >
                                     <TableHead>
                                         <TableRow>
+                                            {canDelete && (
+                                                <TableCell sx={{
+                                                    fontWeight: 'bold',
+                                                    bgcolor: '#f8fafc',
+                                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                                    width: '50px'
+                                                }}>
+                                                    <Checkbox
+                                                        color="primary"
+                                                        indeterminate={selectedTrials.length > 0 && selectedTrials.length < filteredTrials.length}
+                                                        checked={filteredTrials.length > 0 && selectedTrials.length === filteredTrials.length}
+                                                        onChange={handleSelectAllClick}
+                                                        inputProps={{
+                                                            'aria-label': 'select all trials',
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                            )}
                                             <TableCell sx={{
                                                 fontWeight: 'bold',
                                                 bgcolor: '#f8fafc',
@@ -201,7 +312,26 @@ export default function AllTrialsPage() {
                                     <TableBody>
                                         {filteredTrials.length > 0 ? (
                                             filteredTrials.map((trial) => (
-                                                <TableRow key={trial.trial_id} hover>
+                                                <TableRow
+                                                    key={trial.trial_id}
+                                                    hover
+                                                    onClick={(event) => canDelete && handleClick(event, trial.trial_id)}
+                                                    role="checkbox"
+                                                    aria-checked={isSelected(trial.trial_id)}
+                                                    selected={isSelected(trial.trial_id)}
+                                                    sx={{ cursor: canDelete ? 'pointer' : 'default' }}
+                                                >
+                                                    {canDelete && (
+                                                        <TableCell padding="checkbox">
+                                                            <Checkbox
+                                                                color="primary"
+                                                                checked={isSelected(trial.trial_id)}
+                                                                inputProps={{
+                                                                    'aria-labelledby': `enhanced-table-checkbox-${trial.trial_id}`,
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                    )}
                                                     <TableCell sx={{
                                                         fontWeight: 'bold',
                                                         fontSize: { xs: '0.75rem', sm: '0.875rem' }
@@ -279,7 +409,7 @@ export default function AllTrialsPage() {
                     <Box sx={{ mt: 3, textAlign: 'right' }}>
                     </Box>
                 </Container>
-            </Box>
-        </ThemeProvider>
+            </Box >
+        </ThemeProvider >
     );
 }
