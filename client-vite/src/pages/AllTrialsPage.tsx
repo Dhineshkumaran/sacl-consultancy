@@ -64,17 +64,46 @@ export default function AllTrialsPage() {
                 <Container maxWidth="xl">
                     <SaclHeader />
 
-                    <Box sx={{ mt: 4, mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ 
+                        mt: 4, 
+                        mb: 3, 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        flexDirection: { xs: 'column', sm: 'column', md: 'row' },
+                        gap: { xs: 2, md: 0 }
+                    }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 2,
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            width: { xs: '100%', md: 'auto' }
+                        }}>
                             <Button
                                 variant="contained"
                                 startIcon={<ArrowBackIcon />}
                                 onClick={() => navigate('/dashboard')}
-                                sx={{ textTransform: 'none', bgcolor: '#5a6c7d', color: 'white', '&:hover': { bgcolor: '#4a5c6d' } }}
+                                sx={{ 
+                                    textTransform: 'none', 
+                                    bgcolor: '#5a6c7d', 
+                                    color: 'white', 
+                                    '&:hover': { bgcolor: '#4a5c6d' },
+                                    width: { xs: '100%', sm: 'auto' }
+                                }}
                             >
                                 Back to Dashboard
                             </Button>
-                            <Typography variant="h4" fontWeight="bold" color="primary">
+                            <Typography 
+                                variant="h4" 
+                                fontWeight="bold" 
+                                color="primary"
+                                sx={{ 
+                                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+                                    textAlign: { xs: 'center', sm: 'left' },
+                                    width: { xs: '100%', sm: 'auto' }
+                                }}
+                            >
                                 {isMyTrials ? 'Initiated Trials' : 'All Trials Repository'}
                             </Typography>
                         </Box>
@@ -83,7 +112,11 @@ export default function AllTrialsPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             size="small"
-                            sx={{ bgcolor: 'white', minWidth: 300 }}
+                            sx={{ 
+                                bgcolor: 'white', 
+                                minWidth: 300,
+                                width: { xs: '100%', md: 300 }
+                            }}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
@@ -94,26 +127,73 @@ export default function AllTrialsPage() {
                         />
                     </Box>
 
-                    <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: 3, borderRadius: 2 }}>
+                    <Paper sx={{ 
+                        width: '100%', 
+                        overflow: 'hidden', 
+                        boxShadow: 3, 
+                        borderRadius: 2,
+                        overflowX: { xs: 'auto', md: 'hidden' }
+                    }}>
                         {loading ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
                                 <CircularProgress />
                             </Box>
                         ) : (
-                            <Box sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-                                <Table stickyHeader>
+                            <Box sx={{ 
+                                maxHeight: { xs: '60vh', md: '70vh' }, 
+                                overflow: 'auto'
+                            }}>
+                                <Table 
+                                    stickyHeader
+                                    sx={{
+                                        minWidth: { xs: 500, md: '100%' }
+                                    }}
+                                >
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Trial ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Part Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Pattern Code</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Grade</TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Date</TableCell>
+                                            <TableCell sx={{ 
+                                                fontWeight: 'bold', 
+                                                bgcolor: '#f8fafc',
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                            }}>Trial ID</TableCell>
+                                            <TableCell sx={{ 
+                                                fontWeight: 'bold', 
+                                                bgcolor: '#f8fafc',
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                            }}>Part Name</TableCell>
+                                            <TableCell sx={{ 
+                                                fontWeight: 'bold', 
+                                                bgcolor: '#f8fafc',
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                            }}>Pattern Code</TableCell>
+                                            <TableCell sx={{ 
+                                                fontWeight: 'bold', 
+                                                bgcolor: '#f8fafc',
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                            }}>Grade</TableCell>
+                                            <TableCell sx={{ 
+                                                fontWeight: 'bold', 
+                                                bgcolor: '#f8fafc',
+                                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                            }}>Date</TableCell>
                                             {!isMyTrials && (
                                                 <>
-                                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Current Department</TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc' }}>Status</TableCell>
-                                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f8fafc', textAlign: 'center' }}>Actions</TableCell>
+                                                    <TableCell sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        bgcolor: '#f8fafc',
+                                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                                    }}>Dept</TableCell>
+                                                    <TableCell sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        bgcolor: '#f8fafc',
+                                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                                    }}>Status</TableCell>
+                                                    <TableCell sx={{ 
+                                                        fontWeight: 'bold', 
+                                                        bgcolor: '#f8fafc', 
+                                                        textAlign: 'center',
+                                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                                    }}>Actions</TableCell>
                                                 </>
                                             )}
                                         </TableRow>
@@ -122,47 +202,61 @@ export default function AllTrialsPage() {
                                         {filteredTrials.length > 0 ? (
                                             filteredTrials.map((trial) => (
                                                 <TableRow key={trial.trial_id} hover>
-                                                    <TableCell sx={{ fontWeight: 'bold' }}>{trial.trial_id}</TableCell>
-                                                    <TableCell>{trial.part_name}</TableCell>
-                                                    <TableCell>{trial.pattern_code}</TableCell>
-                                                    <TableCell>{trial.material_grade}</TableCell>
-                                                    <TableCell>{new Date(trial.date_of_sampling).toLocaleDateString('en-GB')}</TableCell>
+                                                    <TableCell sx={{ 
+                                                        fontWeight: 'bold',
+                                                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                                    }}>{trial.trial_id}</TableCell>
+                                                    <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                                                        <Box sx={{ maxWidth: { xs: '60px', sm: '100%' }, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            {trial.part_name}
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{trial.pattern_code}</TableCell>
+                                                    <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{trial.material_grade}</TableCell>
+                                                    <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{new Date(trial.date_of_sampling).toLocaleDateString('en-GB')}</TableCell>
                                                     {!isMyTrials && (
                                                         <>
-                                                            <TableCell>
+                                                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                                                                 <Box sx={{
                                                                     display: 'inline-block',
-                                                                    px: 1.5, py: 0.5,
+                                                                    px: 1, py: 0.3,
                                                                     borderRadius: 5,
-                                                                    fontSize: '0.75rem',
+                                                                    fontSize: { xs: '0.65rem', sm: '0.75rem' },
                                                                     bgcolor: '#e0f2fe',
                                                                     color: '#0369a1',
-                                                                    fontWeight: 500
+                                                                    fontWeight: 500,
+                                                                    whiteSpace: 'nowrap'
                                                                 }}>
                                                                     {getDepartmentName(trial.current_department_id) || 'N/A'}
                                                                 </Box>
                                                             </TableCell>
-                                                            <TableCell>
+                                                            <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                                                                 <Box sx={{
                                                                     display: 'inline-block',
-                                                                    px: 1.5, py: 0.5,
+                                                                    px: 1, py: 0.3,
                                                                     borderRadius: 5,
-                                                                    fontSize: '0.75rem',
+                                                                    fontSize: { xs: '0.65rem', sm: '0.75rem' },
                                                                     bgcolor: trial.status === 'Completed' ? '#dcfce7' : '#fff7ed',
-                                                                    color: trial.status === 'Completed' ? '#166534' : '#9a3412'
+                                                                    color: trial.status === 'Completed' ? '#166534' : '#9a3412',
+                                                                    whiteSpace: 'nowrap'
                                                                 }}>
                                                                     {trial.status || 'In Progress'}
                                                                 </Box>
                                                             </TableCell>
-                                                            <TableCell align="center">
+                                                            <TableCell align="center" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                                                                 <Button
                                                                     variant="outlined"
                                                                     size="small"
                                                                     startIcon={<DescriptionIcon />}
                                                                     onClick={() => navigate(`/full-report?trial_id=${trial.trial_id}`)}
-                                                                    sx={{ borderRadius: 2, textTransform: 'none' }}
+                                                                    sx={{ 
+                                                                        borderRadius: 2, 
+                                                                        textTransform: 'none',
+                                                                        fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                                                                        padding: { xs: '4px 8px', sm: '6px 12px' }
+                                                                    }}
                                                                 >
-                                                                    View Report
+                                                                    Report
                                                                 </Button>
                                                             </TableCell>
                                                         </>
