@@ -335,3 +335,34 @@ CREATE INDEX idx_audit_user ON audit_log(user_id);
 CREATE INDEX idx_audit_timestamp ON audit_log(action_timestamp);
 CREATE INDEX idx_audit_trial_timestamp ON audit_log(trial_id, action_timestamp);
 GO
+
+CREATE TABLE tooling_pattern_data (
+    id INT NOT NULL IDENTITY(1,1),
+    master_card_id INT NOT NULL,
+    number_of_cavity NVARCHAR(MAX),  
+    cavity_identification NVARCHAR(MAX),
+    pattern_material NVARCHAR(MAX),
+    core_weight NVARCHAR(MAX),
+    core_mask_thickness NVARCHAR(MAX),
+    estimated_casting_weight NVARCHAR(MAX),
+    estimated_bunch_weight NVARCHAR(MAX),
+    pattern_plate_thickness_sp NVARCHAR(MAX),
+    pattern_plate_weight_sp NVARCHAR(MAX),
+    core_mask_weight_sp NVARCHAR(MAX),    
+    crush_pin_height_sp NVARCHAR(MAX),
+    calculated_yield_sp NVARCHAR(MAX),
+    pattern_plate_thickness_pp NVARCHAR(MAX),
+    pattern_plate_weight_pp NVARCHAR(MAX),
+    core_mask_weight_pp NVARCHAR(MAX),
+    crush_pin_height_pp NVARCHAR(MAX),
+    calculated_yield_pp NVARCHAR(MAX),
+    yield_label NVARCHAR(MAX),
+    remarks NVARCHAR(MAX),
+    created_at DATETIME2 DEFAULT GETDATE(),
+    updated_at DATETIME2 DEFAULT GETDATE(),
+    PRIMARY KEY (id),
+    CONSTRAINT fk_tooling_master
+    FOREIGN KEY (master_card_id) REFERENCES master_card(id) 
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);

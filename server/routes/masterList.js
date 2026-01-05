@@ -5,6 +5,7 @@ import * as masterListController from '../controllers/masterList.js';
 
 const router = express.Router();
 
+router.get('/search', verifyToken, asyncErrorHandler(masterListController.getMasterByPatternCode));
 router.get('/', verifyToken, asyncErrorHandler(masterListController.getMasterList));
 router.post('/', verifyToken, asyncErrorHandler(masterListController.createMasterList));
 router.put('/:id', verifyToken, asyncErrorHandler(masterListController.updateMasterList));

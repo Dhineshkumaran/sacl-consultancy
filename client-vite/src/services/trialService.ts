@@ -32,6 +32,33 @@ export const trialService = {
     },
 
     /**
+     * Fetches master list item by pattern code
+     * @param patternCode - Pattern code to search for
+     * @returns Promise resolving to master list item
+     */
+    async getMasterListByPatternCode(patternCode: string): Promise<any> {
+        try {
+            const response = await fetch(`${API_BASE}/master-list/search?pattern_code=${encodeURIComponent(patternCode)}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('authToken') || ''
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            return data.data || null;
+        } catch (error) {
+            console.error('Failed to fetch master list item:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Fetches trial information by part name
      * @param partName - Name of the part to search for
      * @returns Promise resolving to trial data

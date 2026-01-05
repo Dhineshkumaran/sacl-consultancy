@@ -4,14 +4,14 @@ export const getDepartmentName = (departmentId: number | string | undefined): st
 
     const departmentMap: Record<number, string> = {
         1: 'ADMIN',
-        2: 'METHODS',
+        2: 'NPD METHODS',
         3: 'NPD QC',
         4: 'SANDPLANT',
         5: 'FETTLING & VISUAL INSPECTION',
         6: 'MOULDING',
-        7: 'QUALITY',
+        7: 'PROCESS CONTROL(QC)',
         8: 'MACHINESHOP',
-        9: 'NDT QC',
+        9: 'METALLURGICAL INSPECTION(QC)',
         10: 'QA',
         11: 'CUSTOMER'
     };

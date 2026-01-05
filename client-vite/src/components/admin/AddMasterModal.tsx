@@ -56,37 +56,22 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
         mpi: '',
         tooling: {
             number_of_cavity: '',
-            number_of_cavity_sp: '',
-            number_of_cavity_pp: '',
-            cavity_identification: '',
-            pattern_material: '',
-            core_weight: '',
-            core_mask_weight: '',
-            core_mask_thickness: '',
-            estimated_casting_weight: '',
-            estimated_bunch_weight: '',
             pattern_plate_thickness_sp: '',
             pattern_plate_thickness_pp: '',
-            cavity_identification_sp: '',
-            cavity_identification_pp: '',
+            cavity_identification: '',
             pattern_plate_weight_sp: '',
             pattern_plate_weight_pp: '',
-            pattern_material_sp: '',
-            pattern_material_pp: '',
+            pattern_material: '',
             crush_pin_height_sp: '',
             crush_pin_height_pp: '',
-            core_weight_sp: '',
-            core_weight_pp: '',
+            core_weight: '',
             core_mask_weight_sp: '',
             core_mask_weight_pp: '',
-            core_mask_thickness_sp: '',
-            core_mask_thickness_pp: '',
+            core_mask_thickness: '',
             calculated_yield_sp: '',
             calculated_yield_pp: '',
-            estimated_casting_weight_sp: '',
-            estimated_casting_weight_pp: '',
-            estimated_bunch_weight_sp: '',
-            estimated_bunch_weight_pp: '',
+            estimated_casting_weight: '',
+            estimated_bunch_weight: '',
             yield_label: '',
             remarks: ''
         }
@@ -140,6 +125,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 if (typeof initialData.chemical_composition === 'string') {
                     try {
                         obj = JSON.parse(initialData.chemical_composition);
+                        chemComp = obj;
                     } catch (e) {
                         const result = { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' };
                         const regex = /([A-Za-z]+)\s*:\s*([^:]+?)(?=\s+[A-Za-z]+\s*:|$)/g;
@@ -166,6 +152,28 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                         chemComp = result;
                         obj = null;
                     }
+                } else {
+                    chemComp = obj;
+                }
+            }
+
+            // Tensile Parsing
+            let tensileStr = '', yieldStr = '', elongStr = '';
+            if (initialData.tensile) {
+                // Heuristic: specific split for known formats or space split for simple '1 1 1'
+                const parts = initialData.tensile.trim().split(/\s+(?=\d)/); // Split on space followed by digit is risky?
+                // Simple space split
+                const simpleParts = initialData.tensile.trim().split(' ');
+
+                if (simpleParts.length === 3) {
+                    tensileStr = simpleParts[0];
+                    yieldStr = simpleParts[1];
+                    elongStr = simpleParts[2];
+                } else {
+                    // Fallback: put everything in tensile or try to be smarter
+                    // Usage of regex to identify common patterns? 
+                    // For now, let's just dump it in first field if ambiguous, or try 3 parts
+                    tensileStr = initialData.tensile;
                 }
             }
 
@@ -204,9 +212,9 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 material_grade: initialData.material_grade || '',
                 chemical_composition: chemComp,
                 micro_structure: initialData.micro_structure || '',
-                tensile_strength_min: initialData.tensile || '',
-                yield_strength_min: '',
-                elongation: '',
+                tensile_strength_min: tensileStr,
+                yield_strength_min: yieldStr,
+                elongation: elongStr,
                 impact_cold: impactCold,
                 impact_room: impactRoom,
                 hardness_surface: hardSurf,
@@ -233,37 +241,22 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 mpi: '',
                 tooling: {
                     number_of_cavity: '',
-                    number_of_cavity_sp: '',
-                    number_of_cavity_pp: '',
-                    cavity_identification: '',
-                    pattern_material: '',
-                    core_weight: '',
-                    core_mask_weight: '',
-                    core_mask_thickness: '',
-                    estimated_casting_weight: '',
-                    estimated_bunch_weight: '',
                     pattern_plate_thickness_sp: '',
                     pattern_plate_thickness_pp: '',
-                    cavity_identification_sp: '',
-                    cavity_identification_pp: '',
+                    cavity_identification: '',
                     pattern_plate_weight_sp: '',
                     pattern_plate_weight_pp: '',
-                    pattern_material_sp: '',
-                    pattern_material_pp: '',
+                    pattern_material: '',
                     crush_pin_height_sp: '',
                     crush_pin_height_pp: '',
-                    core_weight_sp: '',
-                    core_weight_pp: '',
+                    core_weight: '',
                     core_mask_weight_sp: '',
                     core_mask_weight_pp: '',
-                    core_mask_thickness_sp: '',
-                    core_mask_thickness_pp: '',
+                    core_mask_thickness: '',
                     calculated_yield_sp: '',
                     calculated_yield_pp: '',
-                    estimated_casting_weight_sp: '',
-                    estimated_casting_weight_pp: '',
-                    estimated_bunch_weight_sp: '',
-                    estimated_bunch_weight_pp: '',
+                    estimated_casting_weight: '',
+                    estimated_bunch_weight: '',
                     yield_label: '',
                     remarks: ''
                 }
@@ -417,44 +410,42 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             left: "Number of cavity in pattern",
             right: "Pattern plate thickness in mm",
             fieldLeft: "number_of_cavity",
-            sp: "number_of_cavity_sp",
-            pp: "number_of_cavity_pp"
+            sp: "pattern_plate_thickness_sp",
+            pp: "pattern_plate_thickness_pp"
         },
         {
             left: "Cavity identification number",
             right: "Pattern plate weight in kgs",
             fieldLeft: "cavity_identification",
-            sp: "cavity_identification_sp",
-            pp: "cavity_identification_pp"
+            sp: "pattern_plate_weight_sp",
+            pp: "pattern_plate_weight_pp"
         },
         {
             left: "Pattern material",
             right: "Crush pin height in mm",
             fieldLeft: "pattern_material",
-            sp: "pattern_material_sp",
-            pp: "pattern_material_pp"
+            sp: "crush_pin_height_sp",
+            pp: "crush_pin_height_pp"
         },
         {
             left: "Core weight in kgs",
             right: "Core mask weight in kgs",
             fieldLeft: "core_weight",
-            sp: "core_weight_sp",
-            pp: "core_weight_pp"
+            sp: "core_mask_weight_sp",
+            pp: "core_mask_weight_pp"
         },
         {
             left: "Core mask thickness in mm",
             right: "Calculated Yield in percentage",
             fieldLeft: "core_mask_thickness",
-            sp: "core_mask_thickness_sp",
-            pp: "core_mask_thickness_pp"
+            sp: "calculated_yield_sp",
+            pp: "calculated_yield_pp"
         },
         {
             left: "Estimated casting weight",
             right: "Estimated Bunch weight",
             fieldLeft: "estimated_casting_weight",
             fieldRight: "estimated_bunch_weight",
-            sp: "estimated_casting_weight_sp",
-            pp: "estimated_casting_weight_pp",
             isYieldRow: true
         }
     ];
@@ -721,7 +712,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {toolingRows.map((row, idx) => (
+                                    {toolingRows.map((row: any, idx) => (
                                         <TableRow key={idx}>
                                             <TableCell>{row.left}</TableCell>
                                             <TableCell sx={{ p: 0.5 }}>

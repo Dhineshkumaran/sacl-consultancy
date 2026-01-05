@@ -185,11 +185,11 @@ const PatternDatasheetSection = ({ patternCode }: { patternCode: string }) => {
     const fetchPatternData = async () => {
       setLoading(true);
       try {
-        const masterList = await trialService.getMasterList();
-        const match = masterList.find((item: any) => item.pattern_code === patternCode);
-        if (match) {
-          // Parse tooling if it's a string (it shouldn't be based on my analysis of saving, but let's be safe)
-          let tooling = match.tooling;
+        const masterData = await trialService.getMasterListByPatternCode(patternCode);
+        console.log("Master Data:", masterData);
+
+        if (masterData) {
+          let tooling = masterData.tooling;
           if (typeof tooling === 'string') {
             try { tooling = JSON.parse(tooling); } catch { }
           }
@@ -216,18 +216,18 @@ const PatternDatasheetSection = ({ patternCode }: { patternCode: string }) => {
   }
 
   const rows = [
-    { label: "Number of cavity", sp: "number_of_cavity_sp", pp: "number_of_cavity_pp", common: "number_of_cavity" },
+    { label: "Number of cavity", common: "number_of_cavity" },
     { label: "Pattern plate thickness", sp: "pattern_plate_thickness_sp", pp: "pattern_plate_thickness_pp" },
-    { label: "Cavity identification", sp: "cavity_identification_sp", pp: "cavity_identification_pp", common: "cavity_identification" },
+    { label: "Cavity identification", common: "cavity_identification" },
     { label: "Pattern plate weight", sp: "pattern_plate_weight_sp", pp: "pattern_plate_weight_pp" },
-    { label: "Pattern material", sp: "pattern_material_sp", pp: "pattern_material_pp", common: "pattern_material" },
+    { label: "Pattern material", common: "pattern_material" },
     { label: "Crush pin height", sp: "crush_pin_height_sp", pp: "crush_pin_height_pp" },
-    { label: "Core weight", sp: "core_weight_sp", pp: "core_weight_pp", common: "core_weight" },
+    { label: "Core weight", common: "core_weight" },
     { label: "Core mask weight", sp: "core_mask_weight_sp", pp: "core_mask_weight_pp" },
-    { label: "Core mask thickness", sp: "core_mask_thickness_sp", pp: "core_mask_thickness_pp" },
+    { label: "Core mask thickness", common: "core_mask_thickness" },
     { label: "Calculated Yield (%)", sp: "calculated_yield_sp", pp: "calculated_yield_pp", yieldLabel: "yield_label" },
-    { label: "Estimated casting weight", sp: "estimated_casting_weight_sp", pp: "estimated_casting_weight_pp", common: "estimated_casting_weight" },
-    { label: "Estimated Bunch weight", sp: "estimated_bunch_weight_sp", pp: "estimated_bunch_weight_pp", common: "estimated_bunch_weight" },
+    { label: "Estimated casting weight", common: "estimated_casting_weight" },
+    { label: "Estimated Bunch weight", common: "estimated_bunch_weight" },
   ];
 
   return (
@@ -246,10 +246,10 @@ const PatternDatasheetSection = ({ patternCode }: { patternCode: string }) => {
             <TableRow key={i}>
               <TableCell variant="head" sx={{ color: 'text.secondary', fontWeight: 500 }}>{row.label}</TableCell>
               <TableCell align="center">
-                <Typography variant="body2" fontFamily="Roboto Mono">{patternData[row.sp] || '-'}</Typography>
+                <Typography variant="body2" fontFamily="Roboto Mono">{row.sp ? patternData[row.sp] : '-'}</Typography>
               </TableCell>
               <TableCell align="center">
-                <Typography variant="body2" fontFamily="Roboto Mono">{patternData[row.pp] || '-'}</Typography>
+                <Typography variant="body2" fontFamily="Roboto Mono">{row.pp ? patternData[row.pp] : '-'}</Typography>
               </TableCell>
               <TableCell align="center">
                 {row.yieldLabel ? (
