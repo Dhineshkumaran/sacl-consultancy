@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Paper, Chip, Typography, Box } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
+import { apiService } from '../../services/commonService';
 import { COLORS } from '../../theme/appTheme';
 
 interface HeaderProps {
@@ -29,6 +30,26 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
     const { user, logout } = useAuth();
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [photoLoading, setPhotoLoading] = useState(true);
+
+    // Load profile photo on mount
+    useEffect(() => {
+        loadProfilePhoto();
+    }, []);
+
+    const loadProfilePhoto = async () => {
+        try {
+            const response = await apiService.getProfilePhoto();
+            if (response.profilePhoto) {
+                setProfilePhoto(response.profilePhoto);
+            }
+        } catch (err) {
+            console.error('Error loading profile photo:', err);
+        } finally {
+            setPhotoLoading(false);
+        }
+    };
 
     // Default colors
     const defaultTextColor = '#333';
@@ -198,9 +219,13 @@ const Header: React.FC<HeaderProps> = ({
                             justifyContent: 'center',
                             color: 'white',
                             fontWeight: 'bold',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            overflow: 'hidden',
+                            backgroundImage: profilePhoto ? `url(${profilePhoto})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
                         }}>
-                            {user?.username?.charAt(0).toUpperCase() || 'U'}
+                            {!profilePhoto && (user?.username?.charAt(0).toUpperCase() || 'U')}
                         </div>
                         <div className="profile-username" style={{ textAlign: 'left' }}>
                             <div style={{
