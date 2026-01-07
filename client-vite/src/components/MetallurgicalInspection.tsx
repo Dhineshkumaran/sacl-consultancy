@@ -1299,8 +1299,6 @@ export default function MetallurgicalInspection() {
           <SaclHeader />
           <DepartmentHeader title="METALLURGICAL INSPECTION" userIP={userIP} user={user} />
 
-          <Common trialId={trialId} />
-
           <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 
             <Box

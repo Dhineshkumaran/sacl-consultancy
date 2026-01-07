@@ -68,8 +68,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             core_mask_weight_sp: '',
             core_mask_weight_pp: '',
             core_mask_thickness: '',
-            calculated_yield_sp: '',
-            calculated_yield_pp: '',
+
             estimated_casting_weight: '',
             estimated_bunch_weight: '',
             yield_label: '',
@@ -253,8 +252,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                     core_mask_weight_sp: '',
                     core_mask_weight_pp: '',
                     core_mask_thickness: '',
-                    calculated_yield_sp: '',
-                    calculated_yield_pp: '',
+
                     estimated_casting_weight: '',
                     estimated_bunch_weight: '',
                     yield_label: '',
@@ -430,14 +428,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             right: "Core mask weight in kgs",
             fieldLeft: "core_weight",
             sp: "core_mask_weight_sp",
-            pp: "core_mask_weight_pp"
-        },
-        {
-            left: "Core mask thickness in mm",
-            right: "Calculated Yield in percentage",
-            fieldLeft: "core_mask_thickness",
-            sp: "calculated_yield_sp",
-            pp: "calculated_yield_pp"
+            spOnly: true
         },
         {
             left: "Estimated casting weight",
@@ -445,6 +436,13 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             fieldLeft: "estimated_casting_weight",
             fieldRight: "estimated_bunch_weight",
             isYieldRow: true
+        },
+        {
+            left: "Core mask thickness in mm",
+            right: "",
+            fieldLeft: "core_mask_thickness",
+            fieldRight: "",
+            spanTwoColumns: true
         }
     ];
 
@@ -712,48 +710,67 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                                 <TableBody>
                                     {toolingRows.map((row: any, idx) => (
                                         <TableRow key={idx}>
-                                            <TableCell>{row.left}</TableCell>
-                                            <TableCell sx={{ p: 0.5 }}>
-                                                <TextField
-                                                    fullWidth
-                                                    value={formData.tooling[row.fieldLeft] || ""}
-                                                    onChange={(e) => handleToolingChange(row.fieldLeft, e.target.value)}
-                                                    size="small"
-                                                />
-                                            </TableCell>
-                                            <TableCell>{row.right}</TableCell>
-                                            <TableCell sx={{ p: 0.5 }}>
-                                                <TextField
-                                                    fullWidth
-                                                    value={formData.tooling[row.fieldRight || row.sp] || ""}
-                                                    onChange={(e) => handleToolingChange(row.fieldRight || row.sp, e.target.value)}
-                                                    size="small"
-                                                />
-                                            </TableCell>
-                                            <TableCell sx={{ p: 0.5 }}>
-                                                {row.isYieldRow ? (
-                                                    <Box display="flex" alignItems="center" gap={1}>
-                                                        <Typography variant="body2" fontWeight={600}>Yield:</Typography>
+                                            {row.spanTwoColumns ? (
+                                                <>
+                                                    <TableCell>{row.left}</TableCell>
+                                                    <TableCell colSpan={1} sx={{ p: 0.5 }}>
                                                         <TextField
                                                             fullWidth
-                                                            value={formData.tooling.yield_label ? `${formData.tooling.yield_label}%` : ""}
+                                                            value={formData.tooling[row.fieldLeft] || ""}
+                                                            onChange={(e) => handleToolingChange(row.fieldLeft, e.target.value)}
                                                             size="small"
-                                                            InputProps={{
-                                                                readOnly: true,
-                                                                sx: { bgcolor: 'action.hover' }
-                                                            }}
-                                                            placeholder="Auto-calculated"
                                                         />
-                                                    </Box>
-                                                ) : (
-                                                    <TextField
-                                                        fullWidth
-                                                        value={formData.tooling[row.pp] || ""}
-                                                        onChange={(e) => handleToolingChange(row.pp, e.target.value)}
-                                                        size="small"
-                                                    />
-                                                )}
-                                            </TableCell>
+                                                    </TableCell>
+                                                    <TableCell colSpan={3}></TableCell>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <TableCell>{row.left}</TableCell>
+                                                    <TableCell sx={{ p: 0.5 }}>
+                                                        <TextField
+                                                            fullWidth
+                                                            value={formData.tooling[row.fieldLeft] || ""}
+                                                            onChange={(e) => handleToolingChange(row.fieldLeft, e.target.value)}
+                                                            size="small"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>{row.right}</TableCell>
+                                                    <TableCell sx={{ p: 0.5 }}>
+                                                        <TextField
+                                                            fullWidth
+                                                            value={formData.tooling[row.fieldRight || row.sp] || ""}
+                                                            onChange={(e) => handleToolingChange(row.fieldRight || row.sp, e.target.value)}
+                                                            size="small"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ p: 0.5 }}>
+                                                        {row.isYieldRow ? (
+                                                            <Box display="flex" alignItems="center" gap={1}>
+                                                                <Typography variant="body2" fontWeight={600}>Yield:</Typography>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    value={formData.tooling.yield_label ? `${formData.tooling.yield_label}%` : ""}
+                                                                    size="small"
+                                                                    InputProps={{
+                                                                        readOnly: true,
+                                                                        sx: { bgcolor: 'action.hover' }
+                                                                    }}
+                                                                    placeholder="Auto-calculated"
+                                                                />
+                                                            </Box>
+                                                        ) : row.spOnly ? (
+                                                            <Box />
+                                                        ) : (
+                                                            <TextField
+                                                                fullWidth
+                                                                value={formData.tooling[row.pp] || ""}
+                                                                onChange={(e) => handleToolingChange(row.pp, e.target.value)}
+                                                                size="small"
+                                                            />
+                                                        )}
+                                                    </TableCell>
+                                                </>
+                                            )}
                                         </TableRow>
                                     ))}
                                     <TableRow>
@@ -774,7 +791,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                         </TableContainer>
                     </Collapse>
                 </Box>
-            </DialogContent>
+            </DialogContent >
 
             <DialogActions sx={{ px: 3, py: 2 }}>
                 <Button onClick={onClose} variant="outlined" disabled={loading}>
@@ -788,7 +805,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                     showSave={false}
                 />
             </DialogActions>
-        </Dialog>
+        </Dialog >
     );
 };
 

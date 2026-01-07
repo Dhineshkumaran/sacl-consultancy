@@ -268,7 +268,6 @@ const PatternDatasheetSection = ({ patternCode }: { patternCode: string }) => {
                 { l: "Pattern plate weight in kgs", sp: patternData.pattern_plate_weight_sp, pp: patternData.pattern_plate_weight_pp },
                 { l: "Crush pin height in mm", sp: patternData.crush_pin_height_sp, pp: patternData.crush_pin_height_pp },
                 { l: "Core mask weight in kgs", sp: patternData.core_mask_weight_sp, pp: patternData.core_mask_weight_pp },
-                { l: "Calculated Yield in percentage", sp: patternData.calculated_yield_sp, pp: patternData.calculated_yield_pp },
               ].map((r, i) => (
                 <TableRow key={i}>
                   <TableCell sx={{ fontSize: '13px', color: 'text.secondary' }}>{r.l}</TableCell>
@@ -699,7 +698,7 @@ const Common: React.FC<CommonProps> = ({ trialId: initialTrialId = "" }) => {
                             <TextField
                               fullWidth
                               size="small"
-                              value={data.date_of_sampling || '-'}
+                              value={data.date_of_sampling ? new Date(data.date_of_sampling).toISOString().slice(0, 10) : '-'}
                               InputProps={{ readOnly: true, sx: { textAlign: 'center' } }}
                             />
                           </TableCell>

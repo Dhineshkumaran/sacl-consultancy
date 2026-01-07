@@ -102,6 +102,8 @@ export default function McShopInspection({
   const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
 
+  const [hasExistingData, setHasExistingData] = useState(false);
+
   useEffect(() => {
     const fetchUserIP = async () => {
       const ip = await ipService.getUserIP();
@@ -112,10 +114,11 @@ export default function McShopInspection({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (user?.role === 'HOD' && trialId) {
+      if (trialId) {
         try {
           const response = await inspectionService.getMachineShopInspection(trialId);
           if (response.success && response.data && response.data.length > 0) {
+            setHasExistingData(true);
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
             if (data.inspections) {
@@ -382,7 +385,12 @@ export default function McShopInspection({
             role: "user",
             remarks: "Completed by user"
           });
-          await inspectionService.submitMachineShopInspection(serverPayload);
+
+          if (hasExistingData) {
+            await inspectionService.updateMachineShopInspection(serverPayload);
+          } else {
+            await inspectionService.submitMachineShopInspection(serverPayload);
+          }
         } catch (roleError) {
           console.error("Failed to update role progress:", roleError);
         }

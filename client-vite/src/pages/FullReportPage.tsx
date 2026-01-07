@@ -290,7 +290,7 @@ export default function FullReportPage() {
                             {/* 0. TRIAL CARD DETAILS */}
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                                 {Object.keys(trialCard).length > 0 && (
-                                    <ReportSection title="0. TRIAL CARD DETAILS">
+                                    <ReportSection title="1. TRIAL CARD DETAILS">
                                         <VerticalTable data={[
                                             { label: "Part Name", value: trialCard.part_name },
                                             { label: "Pattern Code", value: trialCard.pattern_code },
@@ -308,7 +308,7 @@ export default function FullReportPage() {
                             {/* 1. POURING DETAILS */}
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                                 {Object.keys(pouring).length > 0 && (
-                                    <ReportSection title="1. POURING DETAILS">
+                                    <ReportSection title="2. POURING DETAILS">
                                         <VerticalTable data={[
                                             { label: "Pour Date", value: pouring.pour_date },
                                             { label: "Heat Code", value: pouring.heat_code },
@@ -338,7 +338,7 @@ export default function FullReportPage() {
                             {/* 2. SAND PROPERTIES */}
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                                 {Object.keys(sand).length > 0 && (
-                                    <ReportSection title="2. SAND PROPERTIES">
+                                    <ReportSection title="3. SAND PROPERTIES">
                                         <VerticalTable data={[
                                             { label: "Date", value: sand.date },
                                             { label: "T. Clay %", value: sand.t_clay },
@@ -359,7 +359,7 @@ export default function FullReportPage() {
                             {/* 3. MOULD CORRECTION */}
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                                 {Object.keys(moulding).length > 0 && (
-                                    <ReportSection title="3. MOULD CORRECTION">
+                                    <ReportSection title="4. MOULD CORRECTION">
                                         <VerticalTable data={[
                                             { label: "Date", value: moulding.date },
                                             { label: "Mould Thickness", value: moulding.mould_thickness },
@@ -379,7 +379,7 @@ export default function FullReportPage() {
 
                     {/* 4. METALLURGICAL */}
                     {Object.keys(meta).length > 0 && (
-                        <ReportSection title="4. METALLURGICAL INSPECTION">
+                        <ReportSection title="5. METALLURGICAL INSPECTION">
 
                             {/* Row 1: Mechanical & Hardness */}
                             <Box sx={{ display: 'flex', gap: 4, '@media print': { display: 'flex', gap: '0.5cm', mb: '0.2cm' } }}>
@@ -470,7 +470,7 @@ export default function FullReportPage() {
                         {/* 5. VISUAL INSPECTION */}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                             {Object.keys(visual).length > 0 && (
-                                <ReportSection title="5. VISUAL INSPECTION">
+                                <ReportSection title="6. VISUAL INSPECTION">
                                     <VerticalTable data={[
                                         { label: "Result", value: visual.visual_ok ? "OK" : "NOT OK" },
                                     ]} />
@@ -504,7 +504,7 @@ export default function FullReportPage() {
                         {/* 6. DIMENSIONAL INSPECTION */}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                             {Object.keys(dimensional).length > 0 && (
-                                <ReportSection title="6. DIMENSIONAL INSPECTION">
+                                <ReportSection title="7. DIMENSIONAL INSPECTION">
                                     <VerticalTable data={[
                                         { label: "Inspection Date", value: dimensional.inspection_date },
                                         { label: "Casting Weight (kg)", value: dimensional.casting_weight },
@@ -532,27 +532,34 @@ export default function FullReportPage() {
                     </Box>
 
                     {/* 7. MACHINE SHOP */}
-                    {mcInspections.length > 0 && (
-                        <ReportSection title="7. MACHINE SHOP INSPECTION">
-                            <Table size="small" sx={{ border: '1px solid #ddd', '@media print': { fontSize: '6.5pt' } }}>
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                                        {/* Dynamically get headers from the first object, excluding hidden ones if any */}
-                                        {Object.keys(mcInspections[0] || {}).map((key, i) => (
-                                            <TableCell key={i} sx={{ fontWeight: 'bold', border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{key}</TableCell>
-                                        ))}
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {mcInspections.map((row: any, i: number) => (
-                                        <TableRow key={i}>
-                                            {Object.values(row).map((val: any, j: number) => (
-                                                <TableCell key={j} sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{val}</TableCell>
+                    {Object.keys(mcShop).length > 0 && (
+                        <ReportSection title="8. MACHINE SHOP INSPECTION">
+                            <VerticalTable data={[
+                                { label: "Inspection Date", value: mcShop.inspection_date },
+                                { label: "Remarks", value: mcShop.remarks }
+                            ]} />
+
+                            {mcInspections.length > 0 && (
+                                <Table size="small" sx={{ border: '1px solid #ddd', '@media print': { fontSize: '6.5pt' } }}>
+                                    <TableHead>
+                                        <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                                            {/* Dynamically get headers from the first object, excluding hidden ones if any */}
+                                            {Object.keys(mcInspections[0] || {}).map((key, i) => (
+                                                <TableCell key={i} sx={{ fontWeight: 'bold', border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{key}</TableCell>
                                             ))}
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHead>
+                                    <TableBody>
+                                        {mcInspections.map((row: any, i: number) => (
+                                            <TableRow key={i}>
+                                                {Object.values(row).map((val: any, j: number) => (
+                                                    <TableCell key={j} sx={{ border: '1px solid #ddd', padding: '4px 8px', '@media print': { padding: '0px 2px' } }}>{val}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </ReportSection>
                     )}
 

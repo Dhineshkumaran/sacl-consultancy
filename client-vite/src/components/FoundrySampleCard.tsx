@@ -1639,7 +1639,6 @@ function FoundrySampleCard() {
                         { l: "Pattern plate weight in kgs", sp: (selectedPattern as any).pattern_plate_weight_sp, pp: (selectedPattern as any).pattern_plate_weight_pp },
                         { l: "Crush pin height in mm", sp: (selectedPattern as any).crush_pin_height_sp, pp: (selectedPattern as any).crush_pin_height_pp },
                         { l: "Core mask weight in kgs", sp: (selectedPattern as any).core_mask_weight_sp, pp: (selectedPattern as any).core_mask_weight_pp },
-                        { l: "Calculated Yield in percentage", sp: (selectedPattern as any).calculated_yield_sp, pp: (selectedPattern as any).calculated_yield_pp },
                       ].map((r, i) => (
                         <TableRow key={i}>
                           <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>{r.l}</TableCell>

@@ -39,7 +39,8 @@ import {
     AlertMessage,
     SpecInput,
     FileUploadSection,
-    DocumentViewer
+    DocumentViewer,
+    Common
 } from "./common";
 import { useAuth } from "../context/AuthContext";
 import { ipService } from "../services/ipService";
@@ -48,6 +49,9 @@ import { uploadFiles } from "../services/fileUploadHelper";
 import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { ActionButtons, EmptyState } from "./common";
 import { useAlert } from "../hooks/useAlert";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import Collapse from '@mui/material/Collapse';
 
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: string, color: string }) => (
@@ -76,8 +80,17 @@ export default function MaterialCorrection() {
     const [userIP, setUserIP] = useState<string>("");
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [showBasicInfo, setShowBasicInfo] = useState(false);
 
     const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+
+    useEffect(() => {
+        const fetchIP = async () => {
+            const ip = await ipService.getUserIP();
+            setUserIP(ip);
+        };
+        fetchIP();
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -279,6 +292,26 @@ export default function MaterialCorrection() {
 
                     <SaclHeader />
                     <DepartmentHeader title="MATERIAL CORRECTION DETAILS" userIP={userIP} user={user} />
+
+                    <Box sx={{ mb: 2 }}>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={showBasicInfo ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            onClick={() => setShowBasicInfo(!showBasicInfo)}
+                            sx={{
+                                color: COLORS.primary,
+                                borderColor: COLORS.primary,
+                                '&:hover': { borderColor: COLORS.primary, bgcolor: 'rgba(0,0,0,0.04)' }
+                            }}
+                        >
+                            {showBasicInfo ? 'Hide' : 'Show'} Basic Information
+                        </Button>
+                    </Box>
+
+                    <Collapse in={showBasicInfo} timeout="auto" unmountOnExit>
+                        <Common trialId={trialId} />
+                    </Collapse>
 
                     <Grid container spacing={3}>
 

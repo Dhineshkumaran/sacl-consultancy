@@ -24,7 +24,8 @@ import {
     Grid,
     Chip,
     Divider,
-    GlobalStyles
+    GlobalStyles,
+    Collapse
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
@@ -47,6 +48,7 @@ import { inspectionService } from '../services/inspectionService';
 import { documentService } from '../services/documentService';
 import { uploadFiles } from '../services/fileUploadHelper';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useNavigate } from "react-router-dom";
 import { COLORS, appTheme } from '../theme/appTheme';
 import { useAlert } from '../hooks/useAlert';
@@ -124,6 +126,7 @@ export default function VisualInspection({
     const [submitted, setSubmitted] = useState(false);
     const [userIP, setUserIP] = useState<string>("Loading...");
     const [isEditing, setIsEditing] = useState(false); // HOD Edit Mode
+    const [showBasicInfo, setShowBasicInfo] = useState(false);
 
     const urlTrialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
@@ -577,7 +580,25 @@ export default function VisualInspection({
 
                     <DepartmentHeader title="VISUAL INSPECTION" userIP={userIP} user={user} />
 
-                    <Common trialId={urlTrialId} />
+                    <Box sx={{ mb: 2 }}>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={showBasicInfo ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            onClick={() => setShowBasicInfo(!showBasicInfo)}
+                            sx={{
+                                color: COLORS.primary,
+                                borderColor: COLORS.primary,
+                                '&:hover': { borderColor: COLORS.primary, bgcolor: 'rgba(0,0,0,0.04)' }
+                            }}
+                        >
+                            {showBasicInfo ? 'Hide' : 'Show'} Basic Information
+                        </Button>
+                    </Box>
+
+                    <Collapse in={showBasicInfo} timeout="auto" unmountOnExit>
+                        <Common trialId={urlTrialId} />
+                    </Collapse>
 
                     <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 

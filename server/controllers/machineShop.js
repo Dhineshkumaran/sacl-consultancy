@@ -2,7 +2,7 @@ import Client from '../config/connection.js';
 
 export const createMachineShop = async (req, res, next) => {
     const { trial_id, inspection_date, inspections, remarks } = req.body || {};
-    if (!trial_id || !inspection_date || !inspections || !remarks) {
+    if (!trial_id || !inspection_date || !inspections) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const inspectionsJson = JSON.stringify(inspections);
@@ -25,7 +25,7 @@ export const createMachineShop = async (req, res, next) => {
 
 export const updateMachineShop = async (req, res, next) => {
     const { trial_id, inspection_date, inspections, remarks } = req.body || {};
-    if (!trial_id || !inspection_date || !inspections || !remarks) {
+    if (!trial_id || !inspection_date || !inspections) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const inspectionsJson = JSON.stringify(inspections);
