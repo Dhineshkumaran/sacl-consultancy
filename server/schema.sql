@@ -1,3 +1,5 @@
+CREATE DATABASE SACL;
+GO
 USE SACL;
 GO
 CREATE TABLE master_card (
@@ -69,6 +71,7 @@ CREATE TABLE trial_cards (
     part_name VARCHAR(100) NOT NULL,
     pattern_code VARCHAR(150) NOT NULL,
     material_grade VARCHAR(50) NOT NULL,
+    trial_type VARCHAR(50) NOT NULL,
     initiated_by VARCHAR(50) NOT NULL,
     date_of_sampling DATE NOT NULL,
     no_of_moulds INT CHECK (no_of_moulds > 0),
