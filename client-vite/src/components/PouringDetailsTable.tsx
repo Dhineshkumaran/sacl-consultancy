@@ -351,40 +351,39 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
 
             if (user?.role === 'HOD' && trialId) {
                 try {
-                    if (isEditing) {
-                        const updatePayload = {
-                            trial_id: trialId,
-                            pour_date: previewPayload.pouringDate,
-                            heat_code: previewPayload.heatCode,
-                            composition: {
-                                C: chemState.c,
-                                Si: chemState.si,
-                                Mn: chemState.mn,
-                                P: chemState.p,
-                                S: chemState.s,
-                                Mg: chemState.mg,
-                                Cu: chemState.cu,
-                                Cr: chemState.cr
-                            },
-                            no_of_mould_poured: parseInt(noOfMouldPoured) || 0,
-                            pouring_temp_c: parseFloat(previewPayload.pouringTemp) || 0,
-                            pouring_time_sec: parseInt(previewPayload.pouringTime) || 0,
-                            inoculation: {
-                                Text: inoculationText,
-                                Stream: inoculationStream,
-                                Inmould: inoculationInmould
-                            },
-                            other_remarks: {
-                                "F/C & Heat No.": ficHeatNo,
-                                "PP Code": ppCode,
-                                "Followed by": followedBy,
-                                "Username": userName
-                            },
-                            remarks: previewPayload.remarksText
-                        };
+                    const updatePayload = {
+                        trial_id: trialId,
+                        pour_date: previewPayload.pouringDate,
+                        heat_code: previewPayload.heatCode,
+                        composition: {
+                            C: chemState.c,
+                            Si: chemState.si,
+                            Mn: chemState.mn,
+                            P: chemState.p,
+                            S: chemState.s,
+                            Mg: chemState.mg,
+                            Cu: chemState.cu,
+                            Cr: chemState.cr
+                        },
+                        no_of_mould_poured: parseInt(noOfMouldPoured) || 0,
+                        pouring_temp_c: parseFloat(previewPayload.pouringTemp) || 0,
+                        pouring_time_sec: parseInt(previewPayload.pouringTime) || 0,
+                        inoculation: {
+                            Text: inoculationText,
+                            Stream: inoculationStream,
+                            Inmould: inoculationInmould
+                        },
+                        other_remarks: {
+                            "F/C & Heat No.": ficHeatNo,
+                            "PP Code": ppCode,
+                            "Followed by": followedBy,
+                            "Username": userName
+                        },
+                        remarks: previewPayload.remarksText,
+                        is_edit: isEditing
+                    };
 
-                        await inspectionService.updatePouringDetails(updatePayload);
-                    }
+                    await inspectionService.updatePouringDetails(updatePayload);
 
                     setSubmitted(true);
                     setPreviewMode(false);

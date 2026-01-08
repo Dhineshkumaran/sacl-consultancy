@@ -394,43 +394,42 @@ export default function VisualInspection({
 
         if (user?.role === 'HOD' && urlTrialId) {
             try {
-                if (isEditing) {
-                    const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
-                    const cavityRow = findRow('cavity number');
-                    const inspectedRow = findRow('inspected quantity');
-                    const acceptedRow = findRow('accepted quantity');
-                    const rejectedRow = findRow('rejected quantity');
-                    const reasonRow = findRow('reason for rejection');
+                const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
+                const cavityRow = findRow('cavity number');
+                const inspectedRow = findRow('inspected quantity');
+                const acceptedRow = findRow('accepted quantity');
+                const rejectedRow = findRow('rejected quantity');
+                const reasonRow = findRow('reason for rejection');
 
-                    const inspections = cols.map((col, idx) => {
-                        const inspected = inspectedRow?.values?.[idx] ?? null;
-                        const accepted = acceptedRow?.values?.[idx] ?? null;
-                        const rejected = rejectedRow?.values?.[idx] ?? null;
-                        const rejectionPercentage = (() => {
-                            const ins = parseFloat(String(inspected ?? '0'));
-                            const rej = parseFloat(String(rejected ?? '0'));
-                            if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
-                            return ((rej / ins) * 100).toFixed(2);
-                        })();
+                const inspections = cols.map((col, idx) => {
+                    const inspected = inspectedRow?.values?.[idx] ?? null;
+                    const accepted = acceptedRow?.values?.[idx] ?? null;
+                    const rejected = rejectedRow?.values?.[idx] ?? null;
+                    const rejectionPercentage = (() => {
+                        const ins = parseFloat(String(inspected ?? '0'));
+                        const rej = parseFloat(String(rejected ?? '0'));
+                        if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
+                        return ((rej / ins) * 100).toFixed(2);
+                    })();
 
-                        return {
-                            'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
-                            'Inspected Quantity': inspected ?? null,
-                            'Accepted Quantity': accepted ?? null,
-                            'Rejected Quantity': rejected ?? null,
-                            'Rejection Percentage': rejectionPercentage ?? null,
-                            'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-                        };
-                    });
-
-                    const updatePayload = {
-                        trial_id: urlTrialId,
-                        inspections,
-                        visual_ok: groupMeta.ok,
-                        remarks: groupMeta.remarks || null,
+                    return {
+                        'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
+                        'Inspected Quantity': inspected ?? null,
+                        'Accepted Quantity': accepted ?? null,
+                        'Rejected Quantity': rejected ?? null,
+                        'Rejection Percentage': rejectionPercentage ?? null,
+                        'Reason for rejection': reasonRow?.values?.[idx] ?? null,
                     };
-                    await inspectionService.updateVisualInspection(updatePayload);
-                }
+                });
+
+                const updatePayload = {
+                    trial_id: urlTrialId,
+                    inspections,
+                    visual_ok: groupMeta.ok,
+                    remarks: groupMeta.remarks || null,
+                    is_edit: isEditing
+                };
+                await inspectionService.updateVisualInspection(updatePayload);
 
                 setSubmitted(true);
                 setPreviewMode(false);

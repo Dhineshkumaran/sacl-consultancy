@@ -100,9 +100,6 @@ export default function McShopInspection({
 
   const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
-
-  const [hasExistingData, setHasExistingData] = useState(false);
-
   useEffect(() => {
     const fetchUserIP = async () => {
       const ip = await ipService.getUserIP();
@@ -117,7 +114,7 @@ export default function McShopInspection({
         try {
           const response = await inspectionService.getMachineShopInspection(trialId);
           if (response.success && response.data && response.data.length > 0) {
-            setHasExistingData(true);
+
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
             if (data.inspections) {
@@ -273,47 +270,40 @@ export default function McShopInspection({
 
     if (user?.role === 'HOD' && trialId) {
       try {
-        if (isEditing) {
-          const trialIdParam = trialId;
-          const payload = buildPayload();
-          const receivedRow = rows[1];
-          const inspectedRow = rows[2];
-          const acceptedRow = rows[3];
-          const rejectedRow = rows[4];
-          const reasonRow = rows[5];
+        const payload = buildPayload();
+        const receivedRow = rows[1];
+        const inspectedRow = rows[2];
+        const acceptedRow = rows[3];
+        const rejectedRow = rows[4];
+        const reasonRow = rows[5];
 
-          const inspections: any[] = cavities.map((cav, idx) => {
-            return {
-              'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
-              'Received Quantity': receivedRow?.values?.[idx] ?? null,
-              'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
-              'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
-              'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
-              'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-            };
-          });
-
-          const serverPayload = {
-            trial_id: trialIdParam,
-            inspection_date: payload.inspection_date,
-            inspections: inspections,
-            remarks: remarks || groupMeta.remarks || null,
+        const inspections: any[] = cavities.map((cav, idx) => {
+          return {
+            'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
+            'Received Quantity': receivedRow?.values?.[idx] ?? null,
+            'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
+            'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
+            'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
+            'Reason for rejection': reasonRow?.values?.[idx] ?? null,
           };
-
-          await inspectionService.updateMachineShopInspection(serverPayload);
-        }
-
-        await trialService.updateTrialStatus({
-          trial_id: trialId,
-          status: "CLOSED"
         });
+
+        const serverPayload = {
+          trial_id: trialId,
+          inspection_date: payload.inspection_date,
+          inspections: inspections,
+          remarks: remarks || groupMeta.remarks || null,
+          is_edit: isEditing
+        };
+
+        await inspectionService.updateMachineShopInspection(serverPayload);
 
         setPreviewSubmitted(true);
         setPreviewMode(false);
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Machine Shop Inspection updated and Trial Closed successfully.'
+          text: 'Machine Shop Inspection updated successfully.'
         });
         navigate('/dashboard');
       } catch (err) {
@@ -357,6 +347,8 @@ export default function McShopInspection({
         remarks: remarks || groupMeta.remarks || null,
       };
 
+      await inspectionService.submitMachineShopInspection(serverPayload);
+
       if (attachedFiles.length > 0) {
         try {
           const uploadResults = await uploadFiles(
@@ -382,18 +374,6 @@ export default function McShopInspection({
             title: 'Error',
             text: 'File upload error. Please try again.'
           });
-        }
-      }
-
-      if (trialId) {
-        try {
-          if (hasExistingData) {
-            await inspectionService.updateMachineShopInspection(serverPayload);
-          } else {
-            await inspectionService.submitMachineShopInspection(serverPayload);
-          }
-        } catch (roleError) {
-          console.error("Failed to update role progress:", roleError);
         }
       }
 

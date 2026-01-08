@@ -1,6 +1,6 @@
 import sql from 'mssql';
 import dotenv from 'dotenv';
-
+import CustomError from '../utils/customError.js';
 dotenv.config();
 
 const config = {
@@ -45,7 +45,7 @@ const client = {
       return [result.recordset || result.rowsAffected, result.output];
     } catch (error) {
       console.error('SQL Execution Error:', error);
-      throw error;
+      throw new CustomError(error);
     }
   },
 
@@ -72,7 +72,7 @@ const client = {
     } catch (error) {
       await transaction.rollback();
       console.error('Transaction Rolled Back:', error);
-      throw error;
+      throw new CustomError(error);
     }
   }
 };

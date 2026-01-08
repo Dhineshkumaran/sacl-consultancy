@@ -263,28 +263,27 @@ export default function DimensionalInspection({
 
         if (user?.role === 'HOD' && trialId) {
             try {
-                if (isEditing) {
-                    const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
-                    const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
+                const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
+                const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
 
-                    const inspections = (previewPayload.cavities || []).map((_: any, i: number) => ({
-                        "Cavity Number": (cavityRow?.values?.[i] ?? previewPayload.cavities[i] ?? null),
-                        "Casting Weight": (castingRow?.values?.[i] ?? null)
-                    }));
+                const inspections = (previewPayload.cavities || []).map((_: any, i: number) => ({
+                    "Cavity Number": (cavityRow?.values?.[i] ?? previewPayload.cavities[i] ?? null),
+                    "Casting Weight": (castingRow?.values?.[i] ?? null)
+                }));
 
-                    const updatePayload = {
-                        trial_id: trialId,
-                        inspection_date: previewPayload.inspection_date || previewPayload.created_at || null,
-                        casting_weight: parseFloat(previewPayload.weight_target) || 0,
-                        bunch_weight: parseFloat(previewPayload.bunch_weight) || 0,
-                        no_of_cavities: parseInt(previewPayload.number_of_cavity) || (previewPayload.cavities ? previewPayload.cavities.length : 0),
-                        yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
-                        inspections: JSON.stringify(inspections),
-                        remarks: previewPayload.remarks || ""
-                    };
+                const updatePayload = {
+                    trial_id: trialId,
+                    inspection_date: previewPayload.inspection_date || previewPayload.created_at || null,
+                    casting_weight: parseFloat(previewPayload.weight_target) || 0,
+                    bunch_weight: parseFloat(previewPayload.bunch_weight) || 0,
+                    no_of_cavities: parseInt(previewPayload.number_of_cavity) || (previewPayload.cavities ? previewPayload.cavities.length : 0),
+                    yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
+                    inspections: JSON.stringify(inspections),
+                    remarks: previewPayload.remarks || "",
+                    is_edit: isEditing
+                };
 
-                    await inspectionService.updateDimensionalInspection(updatePayload);
-                }
+                await inspectionService.updateDimensionalInspection(updatePayload);
 
                 setPreviewSubmitted(true);
                 setPreviewMode(false);

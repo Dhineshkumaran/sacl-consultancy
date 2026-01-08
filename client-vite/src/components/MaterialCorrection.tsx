@@ -168,18 +168,17 @@ export default function MaterialCorrection() {
 
             if (user?.role === 'HOD' && trialId) {
                 try {
-                    if (isEditing) {
-                        const updatePayload = {
-                            trial_id: trialId,
-                            chemical_composition: previewPayload.chemical_composition,
-                            process_parameters: previewPayload.process_parameters,
-                            remarks: previewPayload.remarks,
-                            user_name: user?.username || 'Unknown',
-                            user_ip: userIP
-                        };
+                    const updatePayload = {
+                        trial_id: trialId,
+                        chemical_composition: previewPayload.chemical_composition,
+                        process_parameters: previewPayload.process_parameters,
+                        remarks: previewPayload.remarks,
+                        user_name: user?.username || 'Unknown',
+                        user_ip: userIP,
+                        is_edit: isEditing
+                    };
 
-                        await inspectionService.updateMaterialCorrection(updatePayload);
-                    }
+                    await inspectionService.updateMaterialCorrection(updatePayload);
                     setSubmitted(true);
                     setPreviewOpen(false);
                     await Swal.fire({

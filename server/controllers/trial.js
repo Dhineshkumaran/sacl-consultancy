@@ -1,5 +1,6 @@
 import Client from '../config/connection.js';
-import { createDepartmentProgress } from '../services/departmentProgress.js';
+import { createDepartmentProgress, updateDepartment, updateRole } from '../services/departmentProgress.js';
+import { updateTrialStatus } from '../services/trial.js';
 
 export const createTrial = async (req, res, next) => {
     const { trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks } = req.body || {};
@@ -41,6 +42,7 @@ export const createTrial = async (req, res, next) => {
         });
 
         await createDepartmentProgress(trial_id, req.user, part_name, trx);
+        await updateRole(trial_id, req.user, trx);
     });
 
     res.status(201).json({ success: true, message: 'Trial created successfully.' });
@@ -91,57 +93,64 @@ export const updateTrial = async (req, res, next) => {
         mould_correction,
         tooling_modification,
         remarks,
+        is_edit
     } = req.body || {};
 
     if (!trial_id) {
-        return res.status(400).json({ success: false, message: 'trial_id is required to update the trial' });
+        return res.status(400).json({ success: false, message: 'Trial ID is required to update the trial' });
     }
 
     const mouldJson = mould_correction ? JSON.stringify(mould_correction) : null;
     const moulds = no_of_moulds || plan_moulds;
 
-    const sql = `UPDATE trial_cards SET 
-        part_name = COALESCE(@part_name, part_name),
-        pattern_code = COALESCE(@pattern_code, pattern_code),
-        trial_type = COALESCE(@trial_type, trial_type),
-        material_grade = COALESCE(@material_grade, material_grade),
-        date_of_sampling = COALESCE(@date_of_sampling, date_of_sampling),
-        no_of_moulds = COALESCE(@no_of_moulds, no_of_moulds),
-        plan_moulds = COALESCE(@plan_moulds, plan_moulds),
-        actual_moulds = COALESCE(@actual_moulds, actual_moulds),
-        reason_for_sampling = COALESCE(@reason_for_sampling, reason_for_sampling),
-        disa = COALESCE(@disa, disa),
-        sample_traceability = COALESCE(@sample_traceability, sample_traceability),
-        mould_correction = COALESCE(@mould_correction, mould_correction),
-        tooling_modification = COALESCE(@tooling_modification, tooling_modification),
-        remarks = COALESCE(@remarks, remarks)
-        WHERE trial_id = @trial_id`;
 
-    await Client.query(sql, {
-        part_name,
-        pattern_code,
-        trial_type,
-        material_grade,
-        date_of_sampling,
-        no_of_moulds: moulds,
-        plan_moulds,
-        actual_moulds,
-        reason_for_sampling,
-        disa,
-        sample_traceability,
-        mould_correction: mouldJson,
-        tooling_modification,
-        remarks,
-        trial_id
-    });
+    await Client.transaction(async (trx) => {
+        if(is_edit){
+            const sql = `UPDATE trial_cards SET 
+                part_name = COALESCE(@part_name, part_name),
+                pattern_code = COALESCE(@pattern_code, pattern_code),
+                trial_type = COALESCE(@trial_type, trial_type),
+                material_grade = COALESCE(@material_grade, material_grade),
+                date_of_sampling = COALESCE(@date_of_sampling, date_of_sampling),
+                no_of_moulds = COALESCE(@no_of_moulds, no_of_moulds),
+                plan_moulds = COALESCE(@plan_moulds, plan_moulds),
+                actual_moulds = COALESCE(@actual_moulds, actual_moulds),
+                reason_for_sampling = COALESCE(@reason_for_sampling, reason_for_sampling),
+                disa = COALESCE(@disa, disa),
+                sample_traceability = COALESCE(@sample_traceability, sample_traceability),
+                mould_correction = COALESCE(@mould_correction, mould_correction),
+                tooling_modification = COALESCE(@tooling_modification, tooling_modification),
+                remarks = COALESCE(@remarks, remarks)
+                WHERE trial_id = @trial_id`;
 
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
-    await Client.query(audit_sql, {
-        user_id: req.user.user_id,
-        department_id: req.user.department_id,
-        trial_id,
-        action: 'Trial updated',
-        remarks: `Trial ${trial_id} updated by ${req.user.username}`
+            await trx.query(sql, {
+                part_name,
+                pattern_code,
+                trial_type,
+                material_grade,
+                date_of_sampling,
+                no_of_moulds: moulds,
+                plan_moulds,
+                actual_moulds,
+                reason_for_sampling,
+                disa,
+                sample_traceability,
+                mould_correction: mouldJson,
+                tooling_modification,
+                remarks,
+                trial_id
+            });
+
+            const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
+            await trx.query(audit_sql, {
+                user_id: req.user.user_id,
+                department_id: req.user.department_id,
+                trial_id,
+                action: 'Trial updated',
+                remarks: `Trial ${trial_id} updated by ${req.user.username}`
+            });
+        }
+        await updateDepartment(trial_id, req.user, trx);
     });
 
     res.status(200).json({ success: true, message: 'Trial updated successfully.' });

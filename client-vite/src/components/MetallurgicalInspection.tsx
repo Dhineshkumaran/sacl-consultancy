@@ -997,17 +997,16 @@ export default function MetallurgicalInspection() {
         hardness_remarks: getHardnessRemarks(),
         ndt_inspection: payload.ndtRows || [],
         ndt_inspection_ok: getNdtOk(),
-        ndt_inspection_remarks: getNdtRemarks()
+        ndt_inspection_remarks: getNdtRemarks(),
+        is_edit: isEditing
       };
     };
 
     if (user?.role === 'HOD' && trialId) {
       setSending(true);
       try {
-        if (isEditing) {
-          const serverPayload = transformToServerPayload(previewPayload);
-          await inspectionService.updateMetallurgicalInspection(serverPayload);
-        }
+        const serverPayload = transformToServerPayload(previewPayload);
+        await inspectionService.updateMetallurgicalInspection(serverPayload);
         setPreviewSubmitted(true);
         setPreviewMode(false);
         await Swal.fire({

@@ -506,26 +506,25 @@ function FoundrySampleCard() {
     try {
       if (user?.role === 'HOD' && trialIdFromUrl) {
         try {
-          if (isEditing) {
-            await trialService.updateTrial({
-              trial_id: trialIdFromUrl,
-              user_name: user?.username || 'Unknown',
-              user_ip: userIP,
-              part_name: selectedPart?.part_name,
-              pattern_code: selectedPart?.pattern_code,
-              material_grade: selectedPart?.material_grade,
-              date_of_sampling: samplingDate,
-              plan_moulds: planMoulds,
-              actual_moulds: actualMoulds,
-              reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
-              disa: machine,
-              sample_traceability: sampleTraceability,
-              trial_type: trialType,
-              mould_correction: mouldCorrections,
-              tooling_modification: toolingModification,
-              remarks: remarks
-            });
-          }
+          await trialService.updateTrial({
+            trial_id: trialIdFromUrl,
+            user_name: user?.username || 'Unknown',
+            user_ip: userIP,
+            part_name: selectedPart?.part_name,
+            pattern_code: selectedPart?.pattern_code,
+            material_grade: selectedPart?.material_grade,
+            date_of_sampling: samplingDate,
+            plan_moulds: planMoulds,
+            actual_moulds: actualMoulds,
+            reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
+            disa: machine,
+            sample_traceability: sampleTraceability,
+            trial_type: trialType,
+            mould_correction: mouldCorrections,
+            tooling_modification: toolingModification,
+            remarks: remarks,
+            is_edit: isEditing
+          });
 
           setSubmitted(true);
           setPreviewMode(false);

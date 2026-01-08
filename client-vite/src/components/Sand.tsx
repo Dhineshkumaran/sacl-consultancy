@@ -175,12 +175,11 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           moi: Number((sandProps as any).moi) || 0,
           compactability: Number((sandProps as any).compactability) || 0,
           permeability: Number((sandProps as any).perm) || 0,
-          remarks: (sandProps as any).remarks || ""
+          remarks: (sandProps as any).remarks || "",
+          is_edit: isEditing
         };
 
-        if (isEditing) {
-          await inspectionService.updateSandProperties(payload);
-        }
+        await inspectionService.updateSandProperties(payload);
 
         setSubmitted(true);
         setPreviewMode(false);

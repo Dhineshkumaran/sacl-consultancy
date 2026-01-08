@@ -182,17 +182,16 @@ function MouldingTable() {
     try {
       if (user?.role === 'HOD' && trialId) {
 
-        if (isEditing) {
-          const payload = {
-            mould_thickness: mouldState.thickness,
-            compressability: mouldState.compressability,
-            squeeze_pressure: mouldState.pressure,
-            mould_hardness: mouldState.hardness,
-            remarks: mouldState.remarks,
-            trial_id: trialId
-          };
-          await inspectionService.updateMouldingCorrection(payload);
-        }
+        const payload = {
+          mould_thickness: mouldState.thickness,
+          compressability: mouldState.compressability,
+          squeeze_pressure: mouldState.pressure,
+          mould_hardness: mouldState.hardness,
+          remarks: mouldState.remarks,
+          trial_id: trialId,
+          is_edit: isEditing
+        };
+        await inspectionService.updateMouldingCorrection(payload);
 
         setSubmitted(true);
         setPreviewMode(false);
