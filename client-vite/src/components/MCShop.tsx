@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { updateDepartment, updateDepartmentRole, approve } from "../services/departmentProgressService";
 import { trialService } from "../services/trialService";
 import { useNavigate } from "react-router-dom";
 import {
@@ -304,10 +303,6 @@ export default function McShopInspection({
           await inspectionService.updateMachineShopInspection(serverPayload);
         }
 
-        await approve({
-          trial_id: trialId
-        });
-
         await trialService.updateTrialStatus({
           trial_id: trialId,
           status: "CLOSED"
@@ -318,14 +313,14 @@ export default function McShopInspection({
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Department progress approved and Trial Closed successfully.'
+          text: 'Machine Shop Inspection updated and Trial Closed successfully.'
         });
         navigate('/dashboard');
       } catch (err) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to approve. Please try again.'
+          text: 'Failed to update Machine Shop Inspection. Please try again.'
         });
         console.error(err);
       } finally {
@@ -371,21 +366,27 @@ export default function McShopInspection({
             user?.username || "system",
             "MC_SHOP_INSPECTION"
           );
+
+          const failures = uploadResults.filter(r => !r.success);
+          if (failures.length > 0) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Some files failed to upload. Please try again.'
+            });
+          }
         } catch (uploadError) {
           console.error("File upload error:", uploadError);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'File upload error. Please try again.'
+          });
         }
       }
 
       if (trialId) {
         try {
-          await updateDepartmentRole({
-            trial_id: trialId,
-            current_department_id: 8,
-            username: user?.username || "user",
-            role: "user",
-            remarks: "Completed by user"
-          });
-
           if (hasExistingData) {
             await inspectionService.updateMachineShopInspection(serverPayload);
           } else {
@@ -401,7 +402,7 @@ export default function McShopInspection({
       await Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: 'Machine shop inspection created and department progress updated successfully.'
+        text: 'Machine shop inspection created successfully.'
       });
       navigate('/dashboard');
     } catch (err: any) {

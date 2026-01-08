@@ -71,7 +71,7 @@ CREATE TABLE trial_cards (
     part_name VARCHAR(100) NOT NULL,
     pattern_code VARCHAR(150) NOT NULL,
     material_grade VARCHAR(50) NOT NULL,
-    trial_type VARCHAR(50) NOT NULL, --ALTER TABLE trial_cards ADD trial_type VARCHAR(50) NOT NULL;
+    trial_type VARCHAR(50) NOT NULL DEFAULT 'NPD',  
     initiated_by VARCHAR(50) NOT NULL,
     date_of_sampling DATE NOT NULL,
     no_of_moulds INT CHECK (no_of_moulds > 0),
@@ -350,3 +350,42 @@ CREATE TABLE tooling_pattern_data (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
+
+---------------------------TO BE UPDATED---------------------------
+
+CREATE TABLE trial_reports (
+    document_id INT IDENTITY(1,1) PRIMARY KEY,
+    trial_id NVARCHAR(255) NOT NULL,
+    document_type VARCHAR(50) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_base64 NVARCHAR(MAX),
+    uploaded_at DATETIME2 DEFAULT GETDATE(),
+    remarks NVARCHAR(MAX),
+    FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX idx_trial_reports_trial ON trial_reports(trial_id);
+CREATE INDEX idx_trial_reports_type ON trial_reports(document_type);
+GO
+
+CREATE TABLE department_flow (
+    id INT PRIMARY KEY IDENTITY,
+    department_name VARCHAR(50),
+    department_id INT,
+    sequence_no INT,
+    FOREIGN KEY (department_id) REFERENCES departments(department_id)
+);
+GO
+
+INSERT INTO department_flow(department_name, department_id, sequence_no) VALUES
+('NPD METHODS', 2, 1),
+('NPD QC', 3, 2),
+('SANDPLANT', 4, 4),
+('FETTLING & VISUAL INSPECTION', 5, 7),
+('MOULDING', 6, 5),
+('PROCESS CONTROL(QC)', 7, 3),
+('MACHINESHOP', 8, 9),
+('METALLURGICAL INSPECTION(QC)', 9, 6),
+('QA', 10, 8);
+GO

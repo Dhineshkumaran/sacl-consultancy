@@ -1,4 +1,5 @@
 import Client from '../config/connection.js';
+import { createDepartmentProgress } from '../services/departmentProgress.js';
 
 export const createTrial = async (req, res, next) => {
     const { trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks } = req.body || {};
@@ -7,34 +8,41 @@ export const createTrial = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const mouldJson = JSON.stringify(mould_correction);
-    const sql = 'INSERT INTO trial_cards (trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks) VALUES (@trial_id, @part_name, @pattern_code, @trial_type, @material_grade, @initiated_by, @date_of_sampling, @plan_moulds, @actual_moulds, @reason_for_sampling, @status, @current_department_id, @disa, @sample_traceability, @mould_correction, @tooling_modification, @remarks)';
-    await Client.query(sql, {
-        trial_id,
-        part_name,
-        pattern_code,
-        trial_type,
-        material_grade,
-        initiated_by,
-        date_of_sampling,
-        plan_moulds,
-        actual_moulds,
-        reason_for_sampling,
-        status: status || 'CREATED',
-        current_department_id,
-        disa,
-        sample_traceability,
-        mould_correction: mouldJson,
-        tooling_modification: tooling_modification,
-        remarks: remarks || null
+
+    await Client.transaction(async (trx) => {
+        const sql = 'INSERT INTO trial_cards (trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks) VALUES (@trial_id, @part_name, @pattern_code, @trial_type, @material_grade, @initiated_by, @date_of_sampling, @plan_moulds, @actual_moulds, @reason_for_sampling, @status, @current_department_id, @disa, @sample_traceability, @mould_correction, @tooling_modification, @remarks)';
+        await trx.query(sql, {
+            trial_id,
+            part_name,
+            pattern_code,
+            trial_type,
+            material_grade,
+            initiated_by,
+            date_of_sampling,
+            plan_moulds,
+            actual_moulds,
+            reason_for_sampling,
+            status: status || 'CREATED',
+            current_department_id,
+            disa,
+            sample_traceability,
+            mould_correction: mouldJson,
+            tooling_modification: tooling_modification,
+            remarks: remarks || null
+        });
+
+        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
+        await trx.query(audit_sql, {
+            user_id: req.user.user_id,
+            department_id: req.user.department_id,
+            trial_id,
+            action: 'Trial created',
+            remarks: `Trial ${trial_id} created by ${req.user.username} with part name ${part_name}`
+        });
+
+        await createDepartmentProgress(trial_id, req.user, part_name, trx);
     });
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
-    await Client.query(audit_sql, {
-        user_id: req.user.user_id,
-        department_id: req.user.department_id,
-        trial_id,
-        action: 'Trial created',
-        remarks: `Trial ${trial_id} created by ${req.user.username} with part name ${part_name}`
-    });
+
     res.status(201).json({ success: true, message: 'Trial created successfully.' });
 };
 
@@ -64,23 +72,6 @@ export const generateTrialId = async (req, res, next) => {
     const count = rows[0].count + 1;
     const formattedId = `${part_name}-${count}`;
     res.status(200).json({ success: true, data: formattedId });
-};
-
-export const updateTrialStatus = async (req, res, next) => {
-    const { trial_id, status } = req.body;
-    if (!trial_id || !status) {
-        return res.status(400).json({ success: false, message: 'trial_id is required to approve the status' });
-    }
-    await Client.query("UPDATE trial_cards SET status = @status WHERE trial_id = @trial_id", { status, trial_id });
-    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
-    await Client.query(audit_sql, {
-        user_id: req.user.user_id,
-        department_id: req.user.department_id,
-        trial_id,
-        action: 'Trial updated',
-        remarks: `Trial ${trial_id} updated by ${req.user.username} as ${status}`
-    });
-    res.status(200).json({ success: true, message: 'Trial status updated successfully.' });
 };
 
 export const updateTrial = async (req, res, next) => {

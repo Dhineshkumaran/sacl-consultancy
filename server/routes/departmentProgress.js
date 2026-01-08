@@ -5,10 +5,6 @@ import * as departmentProgressController from '../controllers/departmentProgress
 
 const router = express.Router();
 
-router.post('/', verifyToken, asyncErrorHandler(departmentProgressController.createProgress));
-router.put('/update-department', verifyToken, asyncErrorHandler(departmentProgressController.updateDepartment));
-router.put('/update-role', verifyToken, asyncErrorHandler(departmentProgressController.updateRole));
-router.put('/approve', verifyToken, asyncErrorHandler(departmentProgressController.approveProgress));
 router.get('/get-progress', verifyToken, asyncErrorHandler(departmentProgressController.getProgress));
 router.get('/get-completed-trials', verifyToken, asyncErrorHandler(departmentProgressController.getCompletedTrials));
 

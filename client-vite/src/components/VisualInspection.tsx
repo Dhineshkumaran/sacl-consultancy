@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import {
     Paper,
     Typography,
@@ -433,29 +432,19 @@ export default function VisualInspection({
                     await inspectionService.updateVisualInspection(updatePayload);
                 }
 
-                const approvalPayload = {
-                    trial_id: urlTrialId,
-                    next_department_id: 10,
-                    username: user.username,
-                    role: user.role,
-                    remarks: "Approved by HOD"
-                };
-
-                await updateDepartment(approvalPayload);
                 setSubmitted(true);
                 setPreviewMode(false);
                 await Swal.fire({
                     icon: 'success',
                     title: 'Success',
-                    text: 'Department progress approved successfully.'
+                    text: 'Visual Inspection updated successfully.'
                 });
                 navigate('/dashboard');
             } catch (err) {
-                console.error(err);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to approve. Please try again.'
+                    text: 'Failed to update. Please try again.'
                 });
             } finally {
                 setSaving(false);
@@ -523,27 +512,12 @@ export default function VisualInspection({
                 }
             }
 
-            if (urlTrialId) {
-                try {
-                    await updateDepartmentRole({
-                        trial_id: urlTrialId,
-                        current_department_id: 5,
-                        next_department_id: 10,
-                        username: user?.username || "user",
-                        role: "user",
-                        remarks: "Completed by user"
-                    });
-                } catch (roleError) {
-                    console.error("Failed to update role progress:", roleError);
-                }
-            }
-
             setSubmitted(true);
             setPreviewMode(false);
             await Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Visual inspection created and department progress updated successfully.'
+                text: 'Visual inspection updated successfully.'
             });
             navigate('/dashboard');
         } catch (err: any) {

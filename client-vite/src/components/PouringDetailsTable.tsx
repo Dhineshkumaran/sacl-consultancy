@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { useNavigate } from 'react-router-dom';
 import { uploadFiles } from '../services/fileUploadHelper';
 import {
@@ -387,29 +386,19 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
                         await inspectionService.updatePouringDetails(updatePayload);
                     }
 
-                    const approvalPayload = {
-                        trial_id: trialId,
-                        next_department_id: 4,
-                        username: user.username,
-                        role: user.role,
-                        remarks: "Approved by HOD"
-                    };
-
-                    await updateDepartment(approvalPayload);
-                    await updateDepartment(approvalPayload);
                     setSubmitted(true);
                     setPreviewMode(false);
                     await Swal.fire({
                         icon: 'success',
                         title: 'Success',
-                        text: 'Department progress approved successfully.'
+                        text: 'Pouring details updated successfully.'
                     });
                     navigate('/dashboard');
                 } catch (err: any) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Failed to approve. Please try again.'
+                        text: 'Failed to update pouring details. Please try again.'
                     });
                     console.error(err);
                 }
@@ -449,21 +438,6 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
 
             await inspectionService.submitPouringDetails(apiPayload);
 
-            if (trialId) {
-                try {
-                    await updateDepartmentRole({
-                        trial_id: trialId,
-                        current_department_id: 7,
-                        next_department_id: 4,
-                        username: user?.username || "user",
-                        role: "user",
-                        remarks: "Completed by user"
-                    });
-                } catch (roleError) {
-                    console.error("Failed to update role progress:", roleError);
-                }
-            }
-
             if (attachedFiles.length > 0) {
                 try {
                     const uploadResults = await uploadFiles(
@@ -476,10 +450,18 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
 
                     const failures = uploadResults.filter(r => !r.success);
                     if (failures.length > 0) {
-                        console.error("Some files failed to upload:", failures);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Some files failed to upload. Please try again.'
+                        });
                     }
                 } catch (uploadError) {
-                    console.error("File upload error:", uploadError);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'File upload error. Please try again.'
+                    });
                 }
             }
             setSubmitted(true);
@@ -487,7 +469,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
             await Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Pouring Details Registered and department progress updated Successfully'
+                text: 'Pouring details created successfully.'
             });
             navigate('/dashboard');
         } catch (error) {
@@ -495,7 +477,7 @@ function PouringDetailsTable({ pouringDetails, onPouringDetailsChange, submitted
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Failed to save pouring details. Please try again.'
+                text: 'Failed to create pouring details. Please try again.'
             });
         } finally {
             setLoading(false);

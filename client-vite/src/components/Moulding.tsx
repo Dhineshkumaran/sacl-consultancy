@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { useNavigate } from "react-router-dom";
 import {
   Paper,
@@ -195,21 +194,12 @@ function MouldingTable() {
           await inspectionService.updateMouldingCorrection(payload);
         }
 
-        const approvalPayload = {
-          trial_id: trialId,
-          next_department_id: 9,
-          username: user.username,
-          role: user.role,
-          remarks: "Approved by HOD"
-        };
-
-        await updateDepartment(approvalPayload);
         setSubmitted(true);
         setPreviewMode(false);
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Department progress approved successfully.'
+          text: 'Moulding correction updated successfully.'
         });
         navigate('/dashboard');
       } else {
@@ -238,38 +228,35 @@ function MouldingTable() {
 
             const failures = uploadResults.filter(r => !r.success);
             if (failures.length > 0) {
-              console.error("Some files failed to upload:", failures);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Some files failed to upload. Please try again.'
+              });
             }
           } catch (uploadError) {
-            console.error("File upload error:", uploadError);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'File upload error. Please try again.'
+            });
           }
         }
 
-        if (trialId) {
-          await updateDepartmentRole({
-            trial_id: trialId,
-            current_department_id: 6,
-            next_department_id: 9,
-            username: user?.username || "user",
-            role: "user",
-            remarks: "Completed by user"
-          });
-          setSubmitted(true);
-          setPreviewMode(false);
-          await Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: 'Moulding details created and department progress updated successfully.'
-          });
-        }
+        setSubmitted(true);
+        setPreviewMode(false);
+        await Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Moulding details created successfully.'
+        });
         navigate('/dashboard');
       }
     } catch (error) {
-      console.error("Error saving moulding details:", error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Failed to save details.'
+        text: user?.role === 'HOD' ? 'Failed to update moulding correction. Please try again.' : 'Failed to save moulding details. Please try again.'
       });
     } finally {
       setLoading(false);

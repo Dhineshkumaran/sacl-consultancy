@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { useNavigate } from "react-router-dom";
 import {
   Paper,
@@ -183,21 +182,12 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           await inspectionService.updateSandProperties(payload);
         }
 
-        const approvalPayload = {
-          trial_id: trialId,
-          next_department_id: 6,
-          username: user.username,
-          role: user.role,
-          remarks: "Approved by HOD"
-        };
-
-        await updateDepartment(approvalPayload);
         setSubmitted(true);
         setPreviewMode(false);
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Department progress approved successfully.'
+          text: 'Sand properties updated successfully.'
         });
         navigate('/dashboard');
       } else {
@@ -230,38 +220,27 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
             const failures = uploadResults.filter(r => !r.success);
             if (failures.length > 0) {
-              console.error("Some files failed to upload:", failures);
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Some files failed to upload. Please try again.'
+              });
             }
           } catch (uploadError) {
-            console.error("File upload error:", uploadError);
-          }
-        }
-
-        if (trialId) {
-          try {
-            await updateDepartmentRole({
-              trial_id: trialId,
-              current_department_id: 4,
-              next_department_id: 6,
-              username: user?.username || "user",
-              role: "user",
-              remarks: "Completed by user"
-            });
-          } catch (roleError) {
-            console.error("Failed to update role progress:", roleError);
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: 'Failed to update role progress. Please try again.'
+              text: 'File upload error. Please try again.'
             });
           }
         }
+
         setSubmitted(true);
         setPreviewMode(false);
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Sand properties created and department progress updated successfully.'
+          text: 'Sand properties created successfully.'
         });
         navigate('/dashboard');
       }
@@ -269,7 +248,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: user?.role === 'HOD' ? 'Failed to approve. Please try again.' : 'Failed to save sand properties. Please try again.'
+        text: user?.role === 'HOD' ? 'Failed to approve sand properties. Please try again.' : 'Failed to save sand properties. Please try again.'
       });
     } finally {
       setLoading(false);

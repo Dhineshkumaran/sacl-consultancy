@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { useNavigate } from "react-router-dom";
 import {
     Paper,
@@ -287,28 +286,19 @@ export default function DimensionalInspection({
                     await inspectionService.updateDimensionalInspection(updatePayload);
                 }
 
-                const approvalPayload = {
-                    trial_id: trialId,
-                    next_department_id: 8,
-                    username: user.username,
-                    role: user.role || "HOD",
-                    remarks: "Approved by HOD"
-                };
-
-                await updateDepartment(approvalPayload);
                 setPreviewSubmitted(true);
                 setPreviewMode(false);
                 await Swal.fire({
                     icon: 'success',
                     title: 'Success',
-                    text: 'Department progress approved successfully.'
+                    text: 'Dimensional Inspection updated successfully.'
                 });
                 navigate('/dashboard');
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to approve. Please try again.'
+                    text: 'Failed to update Dimensional Inspection. Please try again.'
                 });
             } finally {
                 setSaving(false);
@@ -349,41 +339,31 @@ export default function DimensionalInspection({
                         user?.username || "system",
                         "DIMENSIONAL_INSPECTION"
                     );
+
+                    const failures = uploadResults.filter(r => !r.success);
+                    if (failures.length > 0) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Some files failed to upload. Please try again.'
+                        });
+                    }
                 } catch (uploadError) {
                     console.error("File upload error:", uploadError);
                     Swal.fire({
-                        icon: 'warning',
-                        title: 'Warning',
-                        text: 'File upload failed, but inspection data was saved.'
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'File upload error. Please try again.'
                     });
                 }
             }
 
-            if (trialId) {
-                try {
-                    await updateDepartmentRole({
-                        trial_id: trialId,
-                        current_department_id: 10,
-                        next_department_id: 8,
-                        username: user?.username || "user",
-                        role: "user",
-                        remarks: "Completed by user"
-                    });
-                } catch (roleError) {
-                    console.error("Failed to update role progress:", roleError);
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Warning',
-                        text: 'Failed to update role progress, but inspection data was saved.'
-                    });
-                }
-            }
             setPreviewSubmitted(true);
             setPreviewMode(false);
             await Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Dimensional inspection created and department progress updated successfully.'
+                text: 'Dimensional inspection created successfully.'
             });
             navigate('/dashboard');
         } catch (err: any) {

@@ -3,7 +3,6 @@ import Box from "@mui/material/Box";
 
 import NoPendingWorks from "./common/NoPendingWorks";
 import { useAuth } from "../context/AuthContext";
-import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import type { Dispatch, SetStateAction } from "react";
 import {
   Paper,
@@ -1009,28 +1008,19 @@ export default function MetallurgicalInspection() {
           const serverPayload = transformToServerPayload(previewPayload);
           await inspectionService.updateMetallurgicalInspection(serverPayload);
         }
-
-        const approvalPayload = {
-          trial_id: trialId,
-          next_department_id: 5,
-          username: user.username,
-          role: user.role,
-          remarks: "Approved by HOD"
-        };
-        await updateDepartment(approvalPayload);
         setPreviewSubmitted(true);
         setPreviewMode(false);
         await Swal.fire({
           icon: 'success',
           title: 'Success',
-          text: 'Department progress approved successfully.'
+          text: 'Metallurgical Inspection updated successfully.'
         });
         navigate('/dashboard');
       } catch (err) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to approve. Please try again.'
+          text: 'Failed to update Metallurgical Inspection. Please try again.'
         });
         console.error(err);
       } finally {
@@ -1044,21 +1034,6 @@ export default function MetallurgicalInspection() {
 
       const serverPayload = transformToServerPayload(previewPayload);
       await inspectionService.submitMetallurgicalInspection(serverPayload);
-
-      if (trialId) {
-        try {
-          await updateDepartmentRole({
-            trial_id: trialId,
-            current_department_id: 9,
-            next_department_id: 5,
-            username: user?.username || "user",
-            role: "user",
-            remarks: "Completed by user"
-          });
-        } catch (roleError) {
-          console.error("Failed to update role progress:", roleError);
-        }
-      }
 
       const allFiles = [...attachedFiles];
       if (microMeta['group']?.attachment instanceof File) allFiles.push(microMeta['group'].attachment);
@@ -1082,27 +1057,28 @@ export default function MetallurgicalInspection() {
           if (failures.length > 0) {
             console.error("Some files failed to upload:", failures);
             Swal.fire({
-              icon: 'warning',
-              title: 'Warning',
-              text: 'Some files failed to upload, but inspection data was saved.'
+              icon: 'error',
+              title: 'Error',
+              text: 'Some files failed to upload. Please try again.'
             });
           }
-          setPreviewSubmitted(true);
-          setPreviewMode(false);
-          await Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: 'Metallurgical inspection created and department progress updated successfully.'
-          });
         } catch (uploadError) {
           console.error("File upload error:", uploadError);
           Swal.fire({
-            icon: 'warning',
-            title: 'Warning',
-            text: 'File upload failed, but inspection data was saved.'
+            icon: 'error',
+            title: 'Error',
+            text: 'File upload error. Please try again.'
           });
         }
       }
+
+      setPreviewSubmitted(true);
+      setPreviewMode(false);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Metallurgical inspection created successfully.'
+      });
 
       navigate('/dashboard');
     } catch (err: any) {
@@ -1110,7 +1086,7 @@ export default function MetallurgicalInspection() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: err.message || 'Failed to submit inspection data'
+        text: 'Failed to submit inspection data. Please try again.'
       });
     } finally {
       setSending(false);

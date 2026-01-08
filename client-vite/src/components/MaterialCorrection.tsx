@@ -46,7 +46,6 @@ import { useAuth } from "../context/AuthContext";
 import { ipService } from "../services/ipService";
 import { inspectionService } from "../services/inspectionService";
 import { uploadFiles } from "../services/fileUploadHelper";
-import { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { ActionButtons, EmptyState } from "./common";
 import { useAlert } from "../hooks/useAlert";
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -181,29 +180,19 @@ export default function MaterialCorrection() {
 
                         await inspectionService.updateMaterialCorrection(updatePayload);
                     }
-
-                    const approvalPayload = {
-                        trial_id: trialId,
-                        next_department_id: 7,
-                        username: user.username,
-                        role: user.role,
-                        remarks: "Approved by HOD"
-                    };
-
-                    await updateDepartment(approvalPayload);
                     setSubmitted(true);
                     setPreviewOpen(false);
                     await Swal.fire({
                         icon: 'success',
                         title: 'Success',
-                        text: 'Department progress approved successfully.'
+                        text: 'Material correction updated successfully.'
                     });
                     navigate('/dashboard');
                 } catch (err) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Failed to approve. Please try again.'
+                        text: 'Failed to update material correction. Please try again.'
                     });
                     console.error(err);
                 }
@@ -220,24 +209,34 @@ export default function MaterialCorrection() {
 
             if (response.success) {
                 if (attachedFiles.length > 0) {
-                    const uploadResults = await uploadFiles(
-                        attachedFiles,
-                        trialId,
-                        "MATERIAL_CORRECTION",
-                        user?.username || "system",
-                        "MATERIAL_CORRECTION"
-                    );
+                    try {
+                        const uploadResults = await uploadFiles(
+                            attachedFiles,
+                            trialId,
+                            "MATERIAL_CORRECTION",
+                            user?.username || "system",
+                            "MATERIAL_CORRECTION"
+                        );
+
+                        const failures = uploadResults.filter(r => !r.success);
+                        if (failures.length > 0) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Some files failed to upload. Please try again.'
+                            });
+                        }
+                    } catch (uploadError) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'File upload error. Please try again.'
+                        });
+                    }
                 }
+
                 if (trialId) {
                     try {
-                        await updateDepartmentRole({
-                            trial_id: trialId,
-                            current_department_id: 3,
-                            next_department_id: 7,
-                            username: user?.username || "user",
-                            role: "HOD",
-                            remarks: "Completed by user"
-                        });
                         await trialService.updateTrialStatus({
                             trial_id: trialId,
                             status: "IN_PROGRESS"
@@ -247,7 +246,7 @@ export default function MaterialCorrection() {
                         await Swal.fire({
                             icon: 'success',
                             title: 'Success',
-                            text: 'Material correction created and department progress updated successfully!'
+                            text: 'Material correction created successfully.'
                         });
                     } catch (roleError) {
                         console.error("Failed to update role progress or trial status:", roleError);
@@ -260,7 +259,7 @@ export default function MaterialCorrection() {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: response.message || "Submission failed"
+                    text: response.message || "Failed to submit material correction. Please try again."
                 });
             }
         } catch (error) {
@@ -268,7 +267,7 @@ export default function MaterialCorrection() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: "An error occurred during submission."
+                text: "An error occurred during submission. Please try again."
             });
         } finally {
             setLoading(false);

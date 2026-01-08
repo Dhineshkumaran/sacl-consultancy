@@ -55,7 +55,6 @@ import { appTheme, COLORS } from "../theme/appTheme";
 import { trialService } from "../services/trialService";
 import { ipService } from "../services/ipService";
 import { uploadFiles } from '../services/fileUploadHelper';
-import departmentProgressService, { updateDepartment, updateDepartmentRole } from "../services/departmentProgressService";
 import { validateFileSizes, fileToBase64 } from '../utils/fileHelpers';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
@@ -528,15 +527,6 @@ function FoundrySampleCard() {
             });
           }
 
-          const approvalPayload = {
-            trial_id: trialIdFromUrl,
-            next_department_id: 3,
-            username: user.username,
-            role: user.role,
-            remarks: "Approved by HOD"
-          };
-
-          await updateDepartment(approvalPayload);
           setSubmitted(true);
           setPreviewMode(false);
           await Swal.fire({
@@ -550,7 +540,7 @@ function FoundrySampleCard() {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to approve. Please try again.'
+            text: 'Failed to update Trial Specification. Please try again.'
           });
           console.error(err);
           return;
@@ -582,39 +572,10 @@ function FoundrySampleCard() {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to upload file'
+          text: 'File upload error. Please try again.'
         });
       }
 
-      try {
-        await departmentProgressService.createDepartmentProgress({
-          trial_id: trialId,
-          department_id: 2,
-          username: user?.username || "Unknown",
-          approval_status: "pending",
-          remarks: "Trial Initiated",
-          completed_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
-        });
-
-        await updateDepartmentRole({
-          trial_id: trialId,
-          current_department_id: 2,
-          next_department_id: 3,
-          username: user?.username || "HOD",
-          role: "HOD",
-          remarks: "Approved by HOD"
-        });
-      } catch (progressError) {
-        console.error("Failed to update department progress:", progressError);
-        Swal.fire({
-          icon: 'warning',
-          title: 'Warning',
-          text: 'Failed to update department progress.'
-        });
-      }
-
-      setSubmittedData({ ...previewPayload });
-      setSubmitted(true);
       setSubmittedData({ ...previewPayload });
       setSubmitted(true);
       setPreviewMode(false);
@@ -631,7 +592,7 @@ function FoundrySampleCard() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: "Failed to submit trial data: " + (err.message || "Unknown error")
+        text: "Failed to submit trial data. Please try again."
       });
     } finally {
       setIsSubmitting(false);
