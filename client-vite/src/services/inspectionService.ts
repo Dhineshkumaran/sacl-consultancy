@@ -413,24 +413,5 @@ export const inspectionService = {
             if (!response.ok) throw new Error(data.message || 'Failed to update material correction');
             return data;
         } catch (error) { console.error('Error updating material correction:', error); throw error; }
-    },
-
-    /**
-     * Fetches all department data for a given trial ID
-     * @param trialId - The trial ID to fetch data for
-     * @returns Promise resolving to API response with all data
-     */
-    async getAllDepartmentData(trialId: string): Promise<any> {
-        try {
-            const response = await fetch(`${API_BASE}/get-all-department-data?trial_id=${trialId}`, {
-                headers: { 'Authorization': localStorage.getItem('authToken') || '' }
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Failed to fetch all department data');
-            return data;
-        } catch (error) {
-            console.error('Error fetching all department data:', error);
-            throw error;
-        }
     }
 };

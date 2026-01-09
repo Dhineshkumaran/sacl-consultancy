@@ -55,6 +55,17 @@ export const masterListService = {
       },
       body: JSON.stringify({ ids })
     });
+  },
+
+  toggleStatus(id: number, isActive: boolean) {
+    return fetch(`${API_BASE}/master-list/toggle-status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem('authToken') || ''
+      },
+      body: JSON.stringify({ id, is_active: isActive })
+    });
   }
 };
 

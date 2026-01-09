@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import CustomError from '../utils/customError.js';
 import transporter from '../utils/mailSender.js';
+import { generateAndStoreReport } from './pdfGenerator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -95,13 +96,18 @@ export const updateDepartment = async (trial_id, user, trx) => {
         remarks: `Department progress for trial ${trial_id} updated by ${user.username} as completed at ${user.department_name}`
     });
 
+    const [currentDepartment] = await trx.query(
+        `SELECT department_id FROM department_progress WHERE trial_id = @trial_id`,
+        { trial_id }
+    );
+
     const [rows] = await trx.query(
         `SELECT df2.department_id AS next_department_id
             FROM department_flow df1
             JOIN department_flow df2
             ON df2.sequence_no = df1.sequence_no + 1
             WHERE df1.department_id = @currentDepartmentId`,
-        { currentDepartmentId: user.department_id } //Need to change
+        { currentDepartmentId: currentDepartment[0].department_id }
     );
 
     if (!rows || rows.length === 0) {
@@ -121,9 +127,13 @@ export const updateRole = async (trial_id, user, trx) => {
         action: 'Department progress completed',
         remarks: `Department progress for trial ${trial_id} marked as completed by ${user.username}`
     });
+    const [currentDepartment] = await trx.query(
+        `SELECT department_id FROM department_progress WHERE trial_id = @trial_id`,
+        { trial_id }
+    );
     const [current_department_hod] = await trx.query(
         `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1`,
-        { current_department_id: user.department_id } //Need to change
+        { current_department_id: currentDepartment[0].department_id }
     );
     if (current_department_hod && current_department_hod.length > 0) {
         const current_department_hod_username = current_department_hod[0].username;
@@ -172,7 +182,7 @@ export const updateRole = async (trial_id, user, trx) => {
                 JOIN department_flow df2
                 ON df2.sequence_no = df1.sequence_no + 1
                 WHERE df1.department_id = @currentDepartmentId`,
-            { currentDepartmentId: user.department_id } //Need to change
+            { currentDepartmentId: currentDepartment[0].department_id }
         );
 
         if (!rows || rows.length === 0) {
@@ -189,6 +199,7 @@ export const approveProgress = async (trial_id, user, trx) => {
         `UPDATE department_progress SET approval_status = 'approved' WHERE trial_id = @trial_id`,
         { trial_id }
     );
+    await generateAndStoreReport(trial_id);
     await updateTrialStatus(trial_id, 'CLOSED', user, trx);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     await trx.query(audit_sql, {

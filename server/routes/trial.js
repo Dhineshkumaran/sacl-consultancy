@@ -11,6 +11,6 @@ router.get('/trial_id', verifyToken, asyncErrorHandler(trialController.getTrialB
 router.get('/id', verifyToken, asyncErrorHandler(trialController.generateTrialId));
 router.put('/update-status', verifyToken, asyncErrorHandler(trialController.updateTrialStatus));
 router.put('/update', verifyToken, asyncErrorHandler(trialController.updateTrial));
-router.delete('/delete', verifyToken, asyncErrorHandler(trialController.deleteTrials));
+router.delete('/delete', verifyToken, asyncErrorHandler(trialController.deleteTrialReports));
 
 export default router;

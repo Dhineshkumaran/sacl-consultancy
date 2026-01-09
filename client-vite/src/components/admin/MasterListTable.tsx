@@ -168,7 +168,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                             <TableCell><b>Pattern Code</b></TableCell>
                             <TableCell><b>Part Name</b></TableCell>
                             <TableCell><b>Material Grade</b></TableCell>
-                            <TableCell align="center"><b>Actions</b></TableCell>
+                            <TableCell align="center"><b>Status / Actions</b></TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -189,6 +189,33 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                     <TableCell>{row.part_name}</TableCell>
                                     <TableCell>{row.material_grade}</TableCell>
                                     <TableCell align="center">
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                try {
+                                                    const newStatus = !row.is_active;
+                                                    await masterListService.toggleStatus(row.id, newStatus);
+                                                    await fetchData(); // Refresh list
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert('Failed to update status');
+                                                }
+                                            }}
+                                            style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                fontSize: '12px',
+                                                fontWeight: 600,
+                                                backgroundColor: row.is_active ? '#e6f4ea' : '#fce8e6',
+                                                color: row.is_active ? '#1e7e34' : '#c62828',
+                                                transition: 'all 0.2s',
+                                                marginRight: '8px'
+                                            }}
+                                        >
+                                            {row.is_active ? 'Active' : 'Inactive'}
+                                        </button>
                                         <IconButton size="small" color="primary" onClick={() => onEdit(row)}>
                                             <EditIcon />
                                         </IconButton>

@@ -10,5 +10,6 @@ router.get('/', verifyToken, asyncErrorHandler(masterListController.getMasterLis
 router.post('/', verifyToken, asyncErrorHandler(masterListController.createMasterList));
 router.put('/:id', verifyToken, asyncErrorHandler(masterListController.updateMasterList));
 router.delete('/bulk', verifyToken, asyncErrorHandler(masterListController.bulkDeleteMasterList));
+router.put('/toggle-status', verifyToken, asyncErrorHandler(masterListController.toggleMasterListStatus));
 
 export default router;

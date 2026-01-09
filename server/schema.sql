@@ -14,6 +14,7 @@ CREATE TABLE master_card (
     hardness NVARCHAR(MAX),
     xray NVARCHAR(MAX),
     created_at DATETIME2 DEFAULT GETDATE(),
+    is_active BIT DEFAULT 1,
     PRIMARY KEY (id),
     CONSTRAINT ux_pattern_code UNIQUE (pattern_code)
 );
@@ -87,7 +88,7 @@ CREATE TABLE trial_cards (
     mould_correction NVARCHAR(MAX),
     CONSTRAINT chk_trial_status CHECK (status IN ('CREATED', 'IN_PROGRESS', 'CLOSED')),
     FOREIGN KEY (current_department_id) REFERENCES departments(department_id),
-    CONSTRAINT fk_trial_master_pattern FOREIGN KEY (pattern_code) REFERENCES master_card(pattern_code) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (pattern_code) REFERENCES master_card(pattern_code)
 );
 GO
 
@@ -350,8 +351,6 @@ CREATE TABLE tooling_pattern_data (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
-
----------------------------TO BE UPDATED---------------------------
 
 CREATE TABLE trial_reports (
     document_id INT IDENTITY(1,1) PRIMARY KEY,

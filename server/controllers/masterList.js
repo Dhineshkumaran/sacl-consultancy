@@ -2,13 +2,24 @@ import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
 
 export const getMasterList = async (req, res, next) => {
-    const query = `
+    let query = `
         SELECT 
             m.*,
             t.*
         FROM master_card m
-        LEFT JOIN tooling_pattern_data t ON m.id = t.master_card_id
+        LEFT JOIN tooling_pattern_data t ON m.id = t.master_card_id WHERE m.is_active = 1
     `;
+
+    if (req.user.role === 'Admin') {
+        query = `
+            SELECT 
+                m.*,
+                t.*
+            FROM master_card m
+            LEFT JOIN tooling_pattern_data t ON m.id = t.master_card_id
+        `;
+    }
+
     const [rows] = await Client.query(query);
 
     res.status(200).json({ success: true, data: rows });
@@ -284,5 +295,28 @@ export const bulkDeleteMasterList = async (req, res, next) => {
     res.status(200).json({
         success: true,
         message: `${ids.length} items deleted successfully`
+    });
+};
+
+export const toggleMasterListStatus = async (req, res, next) => {
+    const { id, is_active } = req.body;
+
+    if (!id || typeof is_active !== 'boolean') {
+        throw new CustomError('Valid ID and status are required', 400);
+    }
+
+    await Client.query('UPDATE master_card SET is_active = @is_active WHERE id = @id', { is_active, id });
+
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+    await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        action: 'Master list status updated',
+        remarks: `Master list item ${id} status changed to ${is_active ? 'Active' : 'Inactive'} by ${req.user.username}`
+    });
+
+    res.status(200).json({
+        success: true,
+        message: 'Master list status updated successfully'
     });
 };

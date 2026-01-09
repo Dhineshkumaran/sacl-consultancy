@@ -19,9 +19,9 @@ import {
   Button,
   Collapse,
 } from "@mui/material";
-import LoadingState from "./LoadingState";
-import GearSpinner from "./GearSpinner";
-import DocumentViewer from "./DocumentViewer";
+import LoadingState from "../common/LoadingState";
+import GearSpinner from "../common/GearSpinner";
+import DocumentViewer from "../common/DocumentViewer";
 import { COLORS, appTheme } from "../../theme/appTheme";
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import ConstructionIcon from '@mui/icons-material/Construction';
