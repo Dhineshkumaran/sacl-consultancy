@@ -15,9 +15,14 @@ import {
     InputAdornment,
     Checkbox,
     IconButton,
-    Tooltip
+    Tooltip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
 } from '@mui/material';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import DocumentViewer from '../components/common/DocumentViewer';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -140,6 +145,24 @@ export default function AllTrialsPage() {
                 setLoading(false);
             }
         }
+    };
+
+    const [viewReport, setViewReport] = useState<any>(null);
+
+    const handleViewReport = (trial: any) => {
+        const document = {
+            document_id: Date.now(),
+            file_name: trial.file_name || `Report_${trial.trial_id}.pdf`,
+            document_type: trial.document_type || 'TRIAL_REPORT',
+            file_base64: trial.file_base64,
+            uploaded_by: 'System',
+            uploaded_at: new Date().toISOString(),
+            remarks: 'Auto-generated Report'
+        };
+        setViewReport({
+            trialId: trial.trial_id,
+            documents: [document]
+        });
     };
 
     const isSelected = (trialId: string) => selectedTrials.indexOf(trialId) !== -1;
@@ -378,7 +401,7 @@ export default function AllTrialsPage() {
                                                                     variant="outlined"
                                                                     size="small"
                                                                     startIcon={<DescriptionIcon />}
-                                                                    onClick={() => navigate(`/full-report?trial_id=${trial.trial_id}`)}
+                                                                    onClick={() => handleViewReport(trial)}
                                                                     sx={{
                                                                         borderRadius: 2,
                                                                         textTransform: 'none',
@@ -410,6 +433,22 @@ export default function AllTrialsPage() {
                     </Box>
                 </Container>
             </Box >
+            <Dialog open={!!viewReport} onClose={() => setViewReport(null)} maxWidth="md" fullWidth>
+                <DialogTitle>
+                    Trial Report - {viewReport?.trialId}
+                </DialogTitle>
+                <DialogContent>
+                    {viewReport && (
+                        <DocumentViewer
+                            documents={viewReport.documents}
+                            label="Generated Report"
+                        />
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setViewReport(null)}>Close</Button>
+                </DialogActions>
+            </Dialog>
         </ThemeProvider >
     );
 }

@@ -9,10 +9,11 @@ import { documentService } from '../../services/documentService';
 import { formatFileSize } from '../../utils';
 
 interface DocumentViewerProps {
-    trialId: string;
+    trialId?: string;
     category?: string;
     label?: string;
     refreshTrigger?: number;
+    documents?: Document[];
 }
 
 interface Document {
@@ -26,13 +27,19 @@ interface Document {
     remarks: string;
 }
 
-const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, label = "Previously Attached Files", refreshTrigger = 0 }) => {
+const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, label = "Previously Attached Files", refreshTrigger = 0, documents: externalDocuments }) => {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchDocuments = async () => {
+            if (externalDocuments) {
+                setDocuments(externalDocuments);
+                return;
+            }
+
+            if (!trialId) return;
 
             setLoading(true);
             try {
@@ -60,7 +67,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ trialId, category, labe
         };
 
         fetchDocuments();
-    }, [trialId, category, refreshTrigger]);
+    }, [trialId, category, refreshTrigger, externalDocuments]);
 
     const handleViewFile = (file: Document) => {
         const win = window.open();
