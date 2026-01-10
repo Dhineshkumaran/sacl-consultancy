@@ -26,3 +26,9 @@ AuthorizeDepartment(1, I)
 ->Make all fields mandatory in frontend
 
 ->If machine shop ask three different types
+
+View progress button
+
+Remove delete option in master card
+
+Similar to Hod in department forms for Admin
