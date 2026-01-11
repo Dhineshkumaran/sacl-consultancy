@@ -3,6 +3,7 @@ import AddUserModal from '../components/admin/AddUserModal';
 import AddMasterModal from '../components/admin/AddMasterModal';
 import UserManagement from '../components/admin/UserManagement';
 import MasterListTable from '../components/admin/MasterListTable';
+import BackButton from '../components/common/BackButton';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/dashboard/Header';
 import NotificationModal from '../components/dashboard/NotificationModal';
@@ -96,57 +97,14 @@ const DashboardPage: React.FC = () => {
 
       <main className={`dashboard-content ${(showUserDetails || showMasterList) ? 'with-fixed-back' : ''}`}>
         {(showUserDetails || showMasterList) && (
-          <div style={{
-            backgroundColor: '#ffffff',
-            padding: '12px 20px',
-            width: '100%',
-            marginBottom: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            position: 'fixed',
-            top: 80,
-            left: 0,
-            right: 0,
-            paddingLeft: '20px',
-            zIndex: 100,
-            borderBottom: '1px solid #e0e0e0',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)'
-          }}>
-            <button
-              className="btn-back"
-              onClick={() => {
-                setShowUserDetails(false);
-                setShowMasterList(false);
-              }}
-              style={{
-                backgroundColor: '#f0f4f8',
-                color: '#2c3e50',
-                border: '1px solid #ddd',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                fontWeight: 500,
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e8eef7';
-                e.currentTarget.style.borderColor = '#bbb';
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f0f4f8';
-                e.currentTarget.style.borderColor = '#ddd';
-                e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-              }}
-            >
-              ← Back
-            </button>
-          </div>
+          <BackButton 
+            label="Back" 
+            variant="fixed"
+            onClick={() => {
+              setShowUserDetails(false);
+              setShowMasterList(false);
+            }}
+          />
         )}
 
         {showUserDetails ? (
