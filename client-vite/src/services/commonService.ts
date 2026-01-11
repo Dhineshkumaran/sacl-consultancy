@@ -101,6 +101,12 @@ class ApiService {
     });
   }
 
+  async deleteUser(userId: number): Promise<void> {
+    return this.request(`/users/${userId}`, {
+      method: 'DELETE'
+    });
+  }
+
   async sendEmailOtp(email: string) {
     return this.request('/users/send-otp', {
       method: 'POST',
