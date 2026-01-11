@@ -520,6 +520,15 @@ const DashboardPage: React.FC = () => {
             )}
 
             {/* All Trials Section */}
+            <h4 style={{
+              marginTop: '30px',
+              marginBottom: '20px',
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              color: '#1976d2'
+            }}>
+              View All Trials
+            </h4>
             <TrialsTable />
           </>
         ) : (
