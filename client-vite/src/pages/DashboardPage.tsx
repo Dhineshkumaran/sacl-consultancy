@@ -97,8 +97,8 @@ const DashboardPage: React.FC = () => {
       <main className={`dashboard-content ${(showUserDetails || showMasterList) ? 'with-fixed-back' : ''}`}>
         {(showUserDetails || showMasterList) && (
           <div style={{
-            backgroundColor: '#f8f9fa',
-            padding: '10px 0',
+            backgroundColor: '#ffffff',
+            padding: '12px 20px',
             width: '100%',
             marginBottom: '10px',
             display: 'flex',
@@ -109,7 +109,8 @@ const DashboardPage: React.FC = () => {
             right: 0,
             paddingLeft: '20px',
             zIndex: 100,
-            borderBottom: '1px solid #ddd'
+            borderBottom: '1px solid #e0e0e0',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)'
           }}>
             <button
               className="btn-back"
@@ -118,23 +119,32 @@ const DashboardPage: React.FC = () => {
                 setShowMasterList(false);
               }}
               style={{
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
+                backgroundColor: '#f0f4f8',
+                color: '#2c3e50',
+                border: '1px solid #ddd',
+                padding: '8px 16px',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
+                transition: 'all 0.2s ease',
                 fontWeight: 500,
+                fontSize: '14px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                gap: '6px',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#545b62')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6c757d')}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e8eef7';
+                e.currentTarget.style.borderColor = '#bbb';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#f0f4f8';
+                e.currentTarget.style.borderColor = '#ddd';
+                e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+              }}
             >
-              ← Back to Dashboard
+              ← Back
             </button>
           </div>
         )}
