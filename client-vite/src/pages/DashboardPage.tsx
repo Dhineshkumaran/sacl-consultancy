@@ -29,6 +29,7 @@ const DashboardPage: React.FC = () => {
   const [loadingStats, setLoadingStats] = useState(true);
   const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
   const [masterListMenuAnchor, setMasterListMenuAnchor] = useState<null | HTMLElement>(null);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
   const departmentInfo = getDepartmentInfo(user);
 
@@ -173,11 +174,11 @@ const DashboardPage: React.FC = () => {
                     </MenuItem>
                   </Menu>
                   <button
-                    className="btn-add-user"
-                    onClick={() => setIsAddUserModalOpen(true)}
+                    className="btn-manage-users"
+                    onClick={(e) => setUserMenuAnchor(e.currentTarget)}
                     style={{
                       backgroundImage: 'none',
-                      backgroundColor: '#2c2822ff',
+                      backgroundColor: '#FF9C00',
                       color: 'white',
                       border: 'none',
                       padding: '10px 20px',
@@ -187,34 +188,37 @@ const DashboardPage: React.FC = () => {
                       fontSize: '14px',
                       marginLeft: '10px',
                       transition: 'background-color 0.2s',
+                      boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
                   >
-                    Add User Profiles
+                    Manage Users ▼
                   </button>
+                  <Menu
+                    anchorEl={userMenuAnchor}
+                    open={Boolean(userMenuAnchor)}
+                    onClose={() => setUserMenuAnchor(null)}
+                  >
+                    <MenuItem
+                      onClick={() => {
+                        setIsAddUserModalOpen(true);
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      Add User Profiles
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setShowUserDetails(true);
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      View User Details
+                    </MenuItem>
+                  </Menu>
                 </>
               )}
-              <button
-                className="btn-view-users"
-                onClick={() => setShowUserDetails(true)}
-                style={{
-                  backgroundImage: 'none',
-                  backgroundColor: '#FF9C00',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 20px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  fontSize: '14px',
-                  transition: 'background-color 0.2s',
-                  boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
-              >
-                View User Details
-              </button>
-
               <button
                 className="btn-view-trials"
                 onClick={() => window.location.href = '/trials'}
