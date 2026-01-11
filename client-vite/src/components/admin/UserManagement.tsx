@@ -12,11 +12,9 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-
-
-
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
 
   const loadUsers = async () => {
     try {
@@ -49,6 +47,54 @@ const UserManagement: React.FC = () => {
     setShowEditModal(true);
   };
 
+  const handleSelectUser = (userId: number) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const handleSelectAllUsers = () => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map(u => u.user_id)));
+    }
+  };
+
+  const handleBulkStatusChange = async (status: boolean) => {
+    try {
+      const selectedIds = Array.from(selectedUsers);
+      for (const userId of selectedIds) {
+        await apiService.updateUserStatus(userId, status);
+      }
+      await loadUsers();
+      setSelectedUsers(new Set());
+    } catch (err: any) {
+      setError(err.message || `Failed to update user status`);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUsers.size === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedUsers.size} user(s)? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      const selectedIds = Array.from(selectedUsers);
+      for (const userId of selectedIds) {
+        await apiService.deleteUser(userId);
+      }
+      await loadUsers();
+      setSelectedUsers(new Set());
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete users');
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -67,7 +113,85 @@ const UserManagement: React.FC = () => {
 
       {error && <div className="error-message">{error}</div>}
 
-      <UserTable users={users} onToggleStatus={handleToggleStatus} onEdit={handleEdit} />
+      {selectedUsers.size > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          marginBottom: '15px',
+          padding: '15px',
+          backgroundColor: '#f0f0f0',
+          borderRadius: '6px',
+          alignItems: 'center',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{ fontWeight: 500, fontSize: '14px' }}>
+            {selectedUsers.size} user(s) selected
+          </span>
+          <button
+            onClick={() => handleBulkStatusChange(true)}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
+          >
+            ✓ Activate
+          </button>
+          <button
+            onClick={() => handleBulkStatusChange(false)}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: '#ffc107',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e0a800')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffc107')}
+          >
+            ✕ Deactivate
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#c82333')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc3545')}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      <UserTable 
+        users={users} 
+        onToggleStatus={handleToggleStatus} 
+        onEdit={handleEdit}
+        selectedUsers={selectedUsers}
+        onSelectUser={handleSelectUser}
+        onSelectAllUsers={handleSelectAllUsers}
+      />
 
       {showCreateModal && (
         <AddUserModal
