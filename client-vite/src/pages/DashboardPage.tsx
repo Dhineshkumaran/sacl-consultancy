@@ -180,6 +180,7 @@ const DashboardPage: React.FC = () => {
                     <MenuItem
                       onClick={() => {
                         setShowUserDetails(true);
+                        setShowMasterList(false);
                         setUserMenuAnchor(null);
                       }}
                     >
@@ -272,6 +273,7 @@ const DashboardPage: React.FC = () => {
                     <MenuItem
                       onClick={() => {
                         setShowMasterList(true);
+                        setShowUserDetails(false);
                         setMasterListMenuAnchor(null);
                       }}
                     >
@@ -316,6 +318,7 @@ const DashboardPage: React.FC = () => {
                     <MenuItem
                       onClick={() => {
                         setShowUserDetails(true);
+                        setShowMasterList(false);
                         setUserMenuAnchor(null);
                       }}
                     >
