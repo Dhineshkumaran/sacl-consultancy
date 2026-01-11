@@ -57,6 +57,24 @@ const DashboardPage: React.FC = () => {
     fetchStats();
   }, [user]);
 
+  const handleViewTrials = () => {
+    setShowAllTrials(true);
+    setShowUserDetails(false);
+    setShowMasterList(false);
+  };
+
+  const handleViewMasterList = () => {
+    setShowMasterList(true);
+    setShowUserDetails(false);
+    setShowAllTrials(false);
+  };
+
+  const handleViewUserDetails = () => {
+    setShowUserDetails(true);
+    setShowMasterList(false);
+    setShowAllTrials(false);
+  };
+
   return (
     <div className="dashboard" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
       {/* Load Poppins Font Global */}
@@ -137,7 +155,7 @@ const DashboardPage: React.FC = () => {
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        setShowMasterList(true);
+                        handleViewMasterList();
                         setMasterListMenuAnchor(null);
                       }}
                     >
@@ -181,8 +199,7 @@ const DashboardPage: React.FC = () => {
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        setShowUserDetails(true);
-                        setShowMasterList(false);
+                        handleViewUserDetails();
                         setUserMenuAnchor(null);
                       }}
                     >
@@ -193,7 +210,7 @@ const DashboardPage: React.FC = () => {
               )}
               <button
                 className="btn-view-trials"
-                onClick={() => window.location.href = '/trials'}
+                onClick={handleViewTrials}
                 style={{
                   backgroundImage: 'none',
                   backgroundColor: '#6f42c1',
@@ -274,8 +291,7 @@ const DashboardPage: React.FC = () => {
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        setShowMasterList(true);
-                        setShowUserDetails(false);
+                        handleViewMasterList();
                         setMasterListMenuAnchor(null);
                       }}
                     >
@@ -319,8 +335,7 @@ const DashboardPage: React.FC = () => {
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        setShowUserDetails(true);
-                        setShowMasterList(false);
+                        handleViewUserDetails();
                         setUserMenuAnchor(null);
                       }}
                     >
@@ -331,7 +346,7 @@ const DashboardPage: React.FC = () => {
               )}
               <button
                 className="btn-view-trials"
-                onClick={() => window.location.href = '/trials'}
+                onClick={handleViewTrials}
                 style={{
                   backgroundImage: 'none',
                   backgroundColor: '#6f42c1',
@@ -370,6 +385,142 @@ const DashboardPage: React.FC = () => {
                 setIsAddMasterModalOpen(true);
               }}
             />
+          </>
+        ) : showAllTrials ? (
+          <>
+            <WelcomeSection
+              title="Admin Dashboard"
+              description={`Welcome back, ${user?.username}!`}
+              titleColor="#333"
+              descriptionColor="#666"
+            >
+              {user?.role === 'Admin' && (
+                <>
+                  <button
+                    className="btn-manage-master"
+                    onClick={(e) => setMasterListMenuAnchor(e.currentTarget)}
+                    style={{
+                      backgroundImage: 'none',
+                      backgroundColor: '#9c27b0',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      fontSize: '14px',
+                      transition: 'background-color 0.2s',
+                      boxShadow: '0 2px 4px rgba(156, 39, 176, 0.2)'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#7b1fa2')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#9c27b0')}
+                  >
+                    Manage Master List ▼
+                  </button>
+                  <Menu
+                    anchorEl={masterListMenuAnchor}
+                    open={Boolean(masterListMenuAnchor)}
+                    onClose={() => setMasterListMenuAnchor(null)}
+                  >
+                    <MenuItem
+                      onClick={() => {
+                        setEditingMasterItem(null);
+                        setIsAddMasterModalOpen(true);
+                        setMasterListMenuAnchor(null);
+                      }}
+                    >
+                      Add to Master List
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        handleViewMasterList();
+                        setMasterListMenuAnchor(null);
+                      }}
+                    >
+                      View details in Master List
+                    </MenuItem>
+                  </Menu>
+                  <button
+                    className="btn-manage-users"
+                    onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+                    style={{
+                      backgroundImage: 'none',
+                      backgroundColor: '#FF9C00',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 500,
+                      fontSize: '14px',
+                      marginLeft: '10px',
+                      transition: 'background-color 0.2s',
+                      boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
+                  >
+                    Manage Users ▼
+                  </button>
+                  <Menu
+                    anchorEl={userMenuAnchor}
+                    open={Boolean(userMenuAnchor)}
+                    onClose={() => setUserMenuAnchor(null)}
+                  >
+                    <MenuItem
+                      onClick={() => {
+                        setIsAddUserModalOpen(true);
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      Add User Profiles
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        handleViewUserDetails();
+                        setUserMenuAnchor(null);
+                      }}
+                    >
+                      View User Details
+                    </MenuItem>
+                  </Menu>
+                </>
+              )}
+              <button
+                className="btn-view-trials"
+                onClick={handleViewTrials}
+                style={{
+                  backgroundImage: 'none',
+                  backgroundColor: '#6f42c1',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  marginLeft: '10px',
+                  transition: 'background-color 0.2s',
+                  boxShadow: '0 2px 4px rgba(111, 66, 193, 0.2)'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#59359a')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#6f42c1')}
+              >
+                View All Trials
+              </button>
+            </WelcomeSection>
+
+            {/* Overview Section */}
+            {loadingStats ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <CircularProgress />
+              </div>
+            ) : (
+              <StatsGrid stats={stats} />
+            )}
+
+            {/* All Trials Section */}
+            <TrialsTable />
           </>
         ) : (
           <>
@@ -418,7 +569,7 @@ const DashboardPage: React.FC = () => {
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        setShowMasterList(true);
+                        handleViewMasterList();
                         setMasterListMenuAnchor(null);
                       }}
                     >
@@ -462,7 +613,7 @@ const DashboardPage: React.FC = () => {
                     </MenuItem>
                     <MenuItem
                       onClick={() => {
-                        setShowUserDetails(true);
+                        handleViewUserDetails();
                         setUserMenuAnchor(null);
                       }}
                     >
@@ -473,7 +624,7 @@ const DashboardPage: React.FC = () => {
               )}
               <button
                 className="btn-view-trials"
-                onClick={() => window.location.href = '/trials'}
+                onClick={handleViewTrials}
                 style={{
                   backgroundImage: 'none',
                   backgroundColor: '#6f42c1',
@@ -505,7 +656,6 @@ const DashboardPage: React.FC = () => {
             )}
           </>
         )}
-
       </main>
 
       {/* Add User Modal */}
