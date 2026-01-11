@@ -13,7 +13,7 @@ import WelcomeSection from '../components/dashboard/WelcomeSection';
 import { getDepartmentInfo } from '../utils/dashboardUtils';
 import { type StatItem } from '../data/dashboardData';
 import { getDashboardStats } from '../services/statsService';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Menu, MenuItem } from '@mui/material';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -28,6 +28,7 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<StatItem[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
+  const [masterListMenuAnchor, setMasterListMenuAnchor] = useState<null | HTMLElement>(null);
 
   const departmentInfo = getDepartmentInfo(user);
 
@@ -120,7 +121,7 @@ const DashboardPage: React.FC = () => {
         ) : (
           <>
             <WelcomeSection
-              title="Admin Ideas Dashboard"
+              title="Admin Dashboard"
               description={`Welcome back, ${user?.username}!`}
               titleColor="#333"
               descriptionColor="#666"
@@ -128,14 +129,11 @@ const DashboardPage: React.FC = () => {
               {user?.role === 'Admin' && (
                 <>
                   <button
-                    className="btn-add-master"
-                    onClick={() => {
-                      setEditingMasterItem(null);
-                      setIsAddMasterModalOpen(true);
-                    }}
+                    className="btn-manage-master"
+                    onClick={(e) => setMasterListMenuAnchor(e.currentTarget)}
                     style={{
                       backgroundImage: 'none',
-                      backgroundColor: '#28a745',
+                      backgroundColor: '#9c27b0',
                       color: 'white',
                       border: 'none',
                       padding: '10px 20px',
@@ -144,35 +142,36 @@ const DashboardPage: React.FC = () => {
                       fontWeight: 500,
                       fontSize: '14px',
                       transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(40, 167, 69, 0.2)'
+                      boxShadow: '0 2px 4px rgba(156, 39, 176, 0.2)'
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#7b1fa2')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#9c27b0')}
                   >
-                    Add to Master List
+                    Manage Master List ▼
                   </button>
-                  <button
-                    className="btn-view-master"
-                    onClick={() => setShowMasterList(true)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#17a2b8',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      marginLeft: '10px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(23, 162, 184, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#138496')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#17a2b8')}
+                  <Menu
+                    anchorEl={masterListMenuAnchor}
+                    open={Boolean(masterListMenuAnchor)}
+                    onClose={() => setMasterListMenuAnchor(null)}
                   >
-                    View details in Master List
-                  </button>
+                    <MenuItem
+                      onClick={() => {
+                        setEditingMasterItem(null);
+                        setIsAddMasterModalOpen(true);
+                        setMasterListMenuAnchor(null);
+                      }}
+                    >
+                      Add to Master List
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setShowMasterList(true);
+                        setMasterListMenuAnchor(null);
+                      }}
+                    >
+                      View details in Master List
+                    </MenuItem>
+                  </Menu>
                   <button
                     className="btn-add-user"
                     onClick={() => setIsAddUserModalOpen(true)}
