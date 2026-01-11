@@ -62,14 +62,23 @@ const DashboardPage: React.FC = () => {
           .dashboard-content {
             padding: 20px;
           }
+          .dashboard-content.with-fixed-back {
+            padding-top: 80px;
+          }
           @media (max-width: 768px) {
             .dashboard-content {
               padding: 15px;
+            }
+            .dashboard-content.with-fixed-back {
+              padding-top: 70px;
             }
           }
           @media (max-width: 480px) {
             .dashboard-content {
               padding: 10px;
+            }
+            .dashboard-content.with-fixed-back {
+              padding-top: 60px;
             }
           }
         `}
@@ -85,7 +94,7 @@ const DashboardPage: React.FC = () => {
         photoRefreshKey={headerRefreshKey}
       />
 
-      <main className="dashboard-content">
+      <main className={`dashboard-content ${(showUserDetails || showMasterList) ? 'with-fixed-back' : ''}`}>
         {(showUserDetails || showMasterList) && (
           <div style={{
             backgroundColor: '#f8f9fa',
@@ -93,7 +102,14 @@ const DashboardPage: React.FC = () => {
             width: '100%',
             marginBottom: '10px',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            position: 'fixed',
+            top: 80,
+            left: 0,
+            right: 0,
+            paddingLeft: '20px',
+            zIndex: 100,
+            borderBottom: '1px solid #ddd'
           }}>
             <button
               className="btn-back"
