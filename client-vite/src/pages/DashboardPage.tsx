@@ -4,6 +4,7 @@ import AddMasterModal from '../components/admin/AddMasterModal';
 import UserManagement from '../components/admin/UserManagement';
 import MasterListTable from '../components/admin/MasterListTable';
 import TrialsTable from '../components/admin/TrialsTable';
+import DropdownButton from '../components/dashboard/DropdownButton';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/dashboard/Header';
 import NotificationModal from '../components/dashboard/NotificationModal';
@@ -118,27 +119,12 @@ const DashboardPage: React.FC = () => {
             >
               {user?.role === 'Admin' && (
                 <>
-                  <button
-                    className="btn-manage-master"
+                  <DropdownButton
+                    label="Manage Master List"
                     onClick={(e) => setMasterListMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#9c27b0',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(156, 39, 176, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#7b1fa2')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#9c27b0')}
-                  >
-                    Manage Master List ▼
-                  </button>
+                    isOpen={Boolean(masterListMenuAnchor)}
+                    color="purple"
+                  />
                   <Menu
                     anchorEl={masterListMenuAnchor}
                     open={Boolean(masterListMenuAnchor)}
@@ -162,28 +148,13 @@ const DashboardPage: React.FC = () => {
                       View details in Master List
                     </MenuItem>
                   </Menu>
-                  <button
-                    className="btn-manage-users"
+                  <DropdownButton
+                    label="Manage Users"
                     onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#FF9C00',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      marginLeft: '10px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
-                  >
-                    Manage Users ▼
-                  </button>
+                    isOpen={Boolean(userMenuAnchor)}
+                    color="orange"
+                    marginLeft="10px"
+                  />
                   <Menu
                     anchorEl={userMenuAnchor}
                     open={Boolean(userMenuAnchor)}
@@ -254,27 +225,12 @@ const DashboardPage: React.FC = () => {
             >
               {user?.role === 'Admin' && (
                 <>
-                  <button
-                    className="btn-manage-master"
+                  <DropdownButton
+                    label="Manage Master List"
                     onClick={(e) => setMasterListMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#9c27b0',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(156, 39, 176, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#7b1fa2')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#9c27b0')}
-                  >
-                    Manage Master List ▼
-                  </button>
+                    isOpen={Boolean(masterListMenuAnchor)}
+                    color="purple"
+                  />
                   <Menu
                     anchorEl={masterListMenuAnchor}
                     open={Boolean(masterListMenuAnchor)}
@@ -298,28 +254,13 @@ const DashboardPage: React.FC = () => {
                       View details in Master List
                     </MenuItem>
                   </Menu>
-                  <button
-                    className="btn-manage-users"
+                  <DropdownButton
+                    label="Manage Users"
                     onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#FF9C00',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      marginLeft: '10px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
-                  >
-                    Manage Users ▼
-                  </button>
+                    isOpen={Boolean(userMenuAnchor)}
+                    color="orange"
+                    marginLeft="10px"
+                  />
                   <Menu
                     anchorEl={userMenuAnchor}
                     open={Boolean(userMenuAnchor)}
@@ -396,27 +337,12 @@ const DashboardPage: React.FC = () => {
             >
               {user?.role === 'Admin' && (
                 <>
-                  <button
-                    className="btn-manage-master"
+                  <DropdownButton
+                    label="Manage Master List"
                     onClick={(e) => setMasterListMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#9c27b0',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(156, 39, 176, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#7b1fa2')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#9c27b0')}
-                  >
-                    Manage Master List ▼
-                  </button>
+                    isOpen={Boolean(masterListMenuAnchor)}
+                    color="purple"
+                  />
                   <Menu
                     anchorEl={masterListMenuAnchor}
                     open={Boolean(masterListMenuAnchor)}
@@ -440,28 +366,13 @@ const DashboardPage: React.FC = () => {
                       View details in Master List
                     </MenuItem>
                   </Menu>
-                  <button
-                    className="btn-manage-users"
+                  <DropdownButton
+                    label="Manage Users"
                     onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#FF9C00',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      marginLeft: '10px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
-                  >
-                    Manage Users ▼
-                  </button>
+                    isOpen={Boolean(userMenuAnchor)}
+                    color="orange"
+                    marginLeft="10px"
+                  />
                   <Menu
                     anchorEl={userMenuAnchor}
                     open={Boolean(userMenuAnchor)}
@@ -541,27 +452,12 @@ const DashboardPage: React.FC = () => {
             >
               {user?.role === 'Admin' && (
                 <>
-                  <button
-                    className="btn-manage-master"
+                  <DropdownButton
+                    label="Manage Master List"
                     onClick={(e) => setMasterListMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#9c27b0',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(156, 39, 176, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#7b1fa2')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#9c27b0')}
-                  >
-                    Manage Master List ▼
-                  </button>
+                    isOpen={Boolean(masterListMenuAnchor)}
+                    color="purple"
+                  />
                   <Menu
                     anchorEl={masterListMenuAnchor}
                     open={Boolean(masterListMenuAnchor)}
@@ -585,28 +481,13 @@ const DashboardPage: React.FC = () => {
                       View details in Master List
                     </MenuItem>
                   </Menu>
-                  <button
-                    className="btn-manage-users"
+                  <DropdownButton
+                    label="Manage Users"
                     onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                    style={{
-                      backgroundImage: 'none',
-                      backgroundColor: '#FF9C00',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      marginLeft: '10px',
-                      transition: 'background-color 0.2s',
-                      boxShadow: '0 2px 4px rgba(255, 156, 0, 0.2)'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e57f00')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF9C00')}
-                  >
-                    Manage Users ▼
-                  </button>
+                    isOpen={Boolean(userMenuAnchor)}
+                    color="orange"
+                    marginLeft="10px"
+                  />
                   <Menu
                     anchorEl={userMenuAnchor}
                     open={Boolean(userMenuAnchor)}
