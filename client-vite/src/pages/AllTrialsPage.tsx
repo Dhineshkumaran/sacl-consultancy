@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import DocumentViewer from '../components/common/DocumentViewer';
+import BackButton from '../components/common/BackButton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -189,20 +190,7 @@ export default function AllTrialsPage() {
                             flexDirection: { xs: 'column', sm: 'row' },
                             width: { xs: '100%', md: 'auto' }
                         }}>
-                            <Button
-                                variant="contained"
-                                startIcon={<ArrowBackIcon />}
-                                onClick={() => navigate('/dashboard')}
-                                sx={{
-                                    textTransform: 'none',
-                                    bgcolor: '#5a6c7d',
-                                    color: 'white',
-                                    '&:hover': { bgcolor: '#4a5c6d' },
-                                    width: { xs: '100%', sm: 'auto' }
-                                }}
-                            >
-                                Back to Dashboard
-                            </Button>
+                            <BackButton label="Back to Dashboard" variant="button" />
                             <Typography
                                 variant="h4"
                                 fontWeight="bold"
