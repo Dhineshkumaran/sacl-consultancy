@@ -138,48 +138,6 @@ const Header: React.FC<HeaderProps> = ({
                         }}
                     />
                 </Box>
-
-                {/* Department and Role Info */}
-                <Paper
-                    elevation={1}
-                    className="header-dept-info"
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        px: 2,
-                        py: 1,
-                        borderRadius: 2,
-                        backgroundColor: '#f8f9fa',
-                        border: '1px solid #e0e0e0'
-                    }}
-                >
-                    <Chip
-                        label={user?.role?.toUpperCase() || 'USER'}
-                        size="small"
-                        sx={{
-                            backgroundColor: COLORS.primary,
-                            color: 'white',
-                            fontWeight: 600,
-                            fontSize: '0.75rem'
-                        }}
-                    />
-                    {/* Only show department separator and name for non-Admin/Methods users */}
-                    {departmentInfo.showDepartment && departmentInfo.displayText && (
-                        <>
-                            <Typography sx={{ color: '#666', fontSize: '0.875rem' }}>|</Typography>
-                            <Typography sx={{ color: '#555', fontSize: '0.875rem', fontWeight: 500 }}>
-                                {departmentInfo.displayText}
-                            </Typography>
-                        </>
-                    )}
-                    {/* Fallback if showDepartment is false but we still want to show displayText */}
-                    {!departmentInfo.showDepartment && departmentInfo.displayText && (
-                        <Typography sx={{ color: '#555', fontSize: '0.875rem', fontWeight: 500 }}>
-                            {departmentInfo.displayText}
-                        </Typography>
-                    )}
-                </Paper>
             </Box>
 
             {/* Right side - Icons and Profile */}
