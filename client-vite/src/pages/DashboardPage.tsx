@@ -88,7 +88,7 @@ const DashboardPage: React.FC = () => {
         setShowNotifications={setShowNotifications}
         setShowProfile={setShowProfile}
         departmentInfo={departmentInfo}
-        customStyle={{ backgroundColor: '#ffffff', color: '#333', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+        customStyle={{ backgroundColor: '#ffffff', color: '#333', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderBottom: '2px solid #e0e0e0' }}
         textColor="#333"
         logoTextColors={{ title: '#000000', subtitle: '#666' }}
         photoRefreshKey={headerRefreshKey}
