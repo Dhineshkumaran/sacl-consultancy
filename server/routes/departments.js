@@ -5,7 +5,6 @@ import * as departmentsController from '../controllers/departments.js';
 
 const router = express.Router();
 
-// Get all departments
 router.get('/', verifyToken, asyncErrorHandler(departmentsController.getAllDepartments));
 
 export default router;

@@ -2,10 +2,6 @@
 
 ->Add Authorization in backend (both role and department)
 
-->Pass department url to progress api to avoid conflicts
-
-->In common component add a button to display the pdf
-
 ->Use comments consistently or remove if unnecessary through out the project
 
 ->Update remarks and actions consistently in all departments
@@ -13,9 +9,7 @@
 ->Department level restrictions
 AuthorizeDepartment(1, I)
 
-->Create a readme for the project in client folder
-
-->Add trial type in DB: INHOUSE_MC, MC_CUSTOMER
+->Create a readme for the project
 
 ->Navbar fixed
 
@@ -27,10 +21,4 @@ AuthorizeDepartment(1, I)
 
 ->If machine shop ask three different types
 
-View progress button
-
-Remove delete option in master card
-
-Similar to Hod in department forms for Admin
-
-Add option to view progress and edit all department data for Admin
+->Remove delete option in master card

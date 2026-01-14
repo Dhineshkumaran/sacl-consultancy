@@ -311,7 +311,6 @@ export const toggleMasterListStatus = async (req, res, next) => {
         throw new CustomError('No IDs provided', 400);
     }
 
-    // Use parameterized query for array
     const params = { is_active };
     const placeholders = ids.map((val, index) => {
         const paramName = `id${index}`;

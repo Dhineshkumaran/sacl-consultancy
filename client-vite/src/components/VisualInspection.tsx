@@ -124,7 +124,7 @@ export default function VisualInspection({
     const [previewPayload, setPreviewPayload] = useState<any | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [userIP, setUserIP] = useState<string>("Loading...");
-    const [isEditing, setIsEditing] = useState(false); // HOD Edit Mode
+    const [isEditing, setIsEditing] = useState(false);
     const [showBasicInfo, setShowBasicInfo] = useState(false);
 
     const urlTrialId = new URLSearchParams(window.location.search).get('trial_id') || "";

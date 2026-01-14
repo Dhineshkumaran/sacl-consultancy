@@ -2,11 +2,13 @@ import express from 'express';
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import verifyToken from '../utils/verifyToken.js';
 import * as sandPropertiesController from '../controllers/sandProperties.js';
+import authorizeDepartment from '../utils/authorizeDepartment.js';
+import authorizeRoles from '../utils/authorizeRoles.js';
 
 const router = express.Router();
 
-router.post('/', verifyToken, asyncErrorHandler(sandPropertiesController.createSandProperties));
-router.put('/', verifyToken, asyncErrorHandler(sandPropertiesController.updateSandProperties));
+router.post('/', verifyToken, authorizeDepartment(1, 4), asyncErrorHandler(sandPropertiesController.createSandProperties));
+router.put('/', verifyToken, authorizeDepartment(1, 4), authorizeRoles('Admin', 'HOD'), asyncErrorHandler(sandPropertiesController.updateSandProperties));
 router.get('/', verifyToken, asyncErrorHandler(sandPropertiesController.getSandProperties));
 router.get('/trial_id', verifyToken, asyncErrorHandler(sandPropertiesController.getSandPropertiesByTrialId));
 

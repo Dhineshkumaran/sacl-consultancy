@@ -2,10 +2,13 @@ import express from 'express';
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import verifyToken from '../utils/verifyToken.js';
 import * as mouldCorrectionController from '../controllers/mouldCorrection.js';
+import authorizeDepartment from '../utils/authorizeDepartment.js';
+import authorizeRoles from '../utils/authorizeRoles.js';
 
 const router = express.Router();
 
-router.post('/', verifyToken, asyncErrorHandler(mouldCorrectionController.createCorrection));
+router.post('/', verifyToken, authorizeDepartment(1, 6), asyncErrorHandler(mouldCorrectionController.createCorrection));
+router.put('/', verifyToken, authorizeDepartment(1, 6), authorizeRoles('Admin', 'HOD'), asyncErrorHandler(mouldCorrectionController.updateCorrection));
 router.get('/', verifyToken, asyncErrorHandler(mouldCorrectionController.getCorrections));
 router.get('/trial_id', verifyToken, asyncErrorHandler(mouldCorrectionController.getCorrectionByTrialId));
 
