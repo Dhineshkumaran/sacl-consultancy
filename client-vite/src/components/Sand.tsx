@@ -41,6 +41,7 @@ import { COLORS, appTheme } from '../theme/appTheme';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
 import { fileToMeta, validateFileSizes } from '../utils';
+import departmentProgressService from "../services/departmentProgressService";
 import DepartmentHeader from "./common/DepartmentHeader";
 import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, Common, DocumentViewer } from './common';
 
@@ -87,6 +88,29 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+  const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
+
+  useEffect(() => {
+      const checkAssignment = async () => {
+          if (user && trialId) {
+              if (user.role === 'Admin') {
+                  setIsAssigned(true);
+                  return;
+              }
+              try {
+                  const pending = await departmentProgressService.getProgress(user.username);
+                  const found = pending.find(p => p.trial_id === trialId);
+                  setIsAssigned(!!found);
+              } catch (error) {
+                  console.error("Failed to check assignment:", error);
+                  setIsAssigned(false);
+              }
+          } else {
+              setIsAssigned(false);
+          }
+      };
+      checkAssignment();
+  }, [user, trialId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -273,177 +297,192 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           {/* Header Bar */}
 
           <DepartmentHeader title="SAND PROPERTIES" userIP={userIP} user={user} />
-
-          <Common trialId={trialId} />
-
           <AlertMessage alert={alert} />
 
-          {/* Main Content Card */}
-          <Paper sx={{ overflow: 'hidden', border: `2px solid ${COLORS.border}` }}>
+          {isAssigned === false && (user?.role !== 'Admin') ? (
+            <EmptyState
+              title="No Pending Works"
+              description="This trial is not currently assigned to you."
+              severity="warning"
+              action={{
+                label: "Go to Dashboard",
+                onClick: () => navigate('/dashboard')
+              }}
+            />
+          ) : (
+            <>
+              <Common trialId={trialId || ""} />
 
-            <Box sx={{ overflowX: "auto" }}>
-              <Table size="small" sx={{ minWidth: 1000, borderCollapse: 'collapse' }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell colSpan={10} sx={{ backgroundColor: COLORS.headerBg, textAlign: 'left', py: 1.5, borderBottom: `1px solid ${COLORS.border}` }}>
-                      <Typography variant="h6" sx={{ color: 'black', textTransform: 'uppercase', fontSize: '1rem' }}>SAND PROPERTIES</Typography>
-                    </TableCell>
-                  </TableRow>
+              <Paper sx={{ p: { xs: 2, md: 4 } }}>
 
-                  <TableRow>
-                    <TableCell colSpan={9} sx={{ borderRight: 'none', backgroundColor: '#fff' }}></TableCell>
-                    <TableCell
-                      colSpan={1}
-                      sx={{
-                        backgroundColor: '#f1f5f9',
-                        borderLeft: `1px solid ${COLORS.border}`,
-                        minWidth: 250,
-                        p: 1,
-                        borderBottom: `1px solid ${COLORS.headerBg}`
-                      }}
-                    >
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'black' }}>Date</Typography>
-                        <TextField
-                          type="date"
-                          size="small"
-                          fullWidth
-                          value={sandDate}
-                          onChange={(e) => setSandDate(e.target.value)}
-                          sx={{ bgcolor: 'white', borderRadius: 1 }}
+                {/* Main Content Card */}
+                <Paper sx={{ overflow: 'hidden', border: `2px solid ${COLORS.border}` }}>
+
+                  <Box sx={{ overflowX: "auto" }}>
+                    <Table size="small" sx={{ minWidth: 1000, borderCollapse: 'collapse' }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell colSpan={10} sx={{ backgroundColor: COLORS.headerBg, textAlign: 'left', py: 1.5, borderBottom: `1px solid ${COLORS.border}` }}>
+                            <Typography variant="h6" sx={{ color: 'black', textTransform: 'uppercase', fontSize: '1rem' }}>SAND PROPERTIES</Typography>
+                          </TableCell>
+                        </TableRow>
+
+                        <TableRow>
+                          <TableCell colSpan={9} sx={{ borderRight: 'none', backgroundColor: '#fff' }}></TableCell>
+                          <TableCell
+                            colSpan={1}
+                            sx={{
+                              backgroundColor: '#f1f5f9',
+                              borderLeft: `1px solid ${COLORS.border}`,
+                              minWidth: 250,
+                              p: 1,
+                              borderBottom: `1px solid ${COLORS.headerBg}`
+                            }}
+                          >
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: 'black' }}>Date</Typography>
+                              <TextField
+                                type="date"
+                                size="small"
+                                fullWidth
+                                value={sandDate}
+                                onChange={(e) => setSandDate(e.target.value)}
+                                sx={{ bgcolor: 'white', borderRadius: 1 }}
+                              />
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+
+                        <TableRow>
+                          {["T.Clay", "A.Clay", "VCM", "LOI", "AFS", "G.C.S", "MOI", "Compactability", "Perm"].map((header) => (
+                            <TableCell
+                              key={header}
+                              width="9%"
+                              sx={{
+                                backgroundColor: '#f1f5f9',
+                                color: 'black',
+                                fontWeight: 600,
+                                textAlign: 'center',
+                                borderBottom: `1px solid ${COLORS.headerBg}`
+                              }}
+                            >
+                              {header}
+                            </TableCell>
+                          ))}
+                          <TableCell
+                            width="19%"
+                            sx={{
+                              backgroundColor: '#f1f5f9',
+                              color: 'black',
+                              fontWeight: 600,
+                              textAlign: 'center',
+                              borderBottom: `1px solid ${COLORS.headerBg}`
+                            }}
+                          >
+                            Remarks
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+
+                      <TableBody>
+                        <TableRow>
+                          {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((key) => (
+                            <TableCell key={key} sx={{ p: 2, verticalAlign: 'middle' }}>
+                              <SpecInput
+                                value={(sandProps as any)[key]}
+                                onChange={(e: any) => handleChange(key, e.target.value)}
+                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                              />
+                            </TableCell>
+                          ))}
+                          <TableCell sx={{ p: 1 }}>
+                            <TextField
+                              multiline
+                              rows={3}
+                              fullWidth
+                              variant="outlined"
+                              placeholder="Enter remarks..."
+                              value={sandProps.remarks}
+                              onChange={(e) => handleChange("remarks", e.target.value)}
+                              disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                              sx={{ bgcolor: '#fff' }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </Box>
+
+                  <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+                    {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                      <>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                          Attach PDF / Image Files
+                        </Typography>
+                        <FileUploadSection
+                          files={attachedFiles}
+                          onFilesChange={handleAttachFiles}
+                          onFileRemove={removeAttachedFile}
+                          showAlert={showAlert}
+                          label="Attach PDF"
                         />
-                      </Box>
-                    </TableCell>
-                  </TableRow>
+                      </>
+                    )}
+                    <DocumentViewer trialId={trialId || ""} category="SAND_PROPERTIES" />
+                  </Box>
 
-                  <TableRow>
-                    {["T.Clay", "A.Clay", "VCM", "LOI", "AFS", "G.C.S", "MOI", "Compactability", "Perm"].map((header) => (
-                      <TableCell
-                        key={header}
-                        width="9%"
+                  <Box sx={{ p: 3, display: "flex", flexDirection: { xs: 'column', sm: 'row' }, justifyContent: "flex-end", alignItems: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                      {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
+                        <Button
+                          variant="outlined"
+                          onClick={handleReset}
+                          fullWidth={isMobile}
+                          sx={{
+                            color: COLORS.primary,
+                            borderColor: COLORS.primary,
+                            borderWidth: '1.5px',
+                            '&:hover': {
+                              borderColor: COLORS.primary,
+                              borderWidth: '1.5px',
+                              bgcolor: '#f3f4f6'
+                            }
+                          }}
+                        >
+                          Reset Form
+                        </Button>
+                      )}
+
+                      {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => setIsEditing(!isEditing)}
+                          sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                        >
+                          {isEditing ? "Cancel Edit" : "Edit Details"}
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="contained"
+                        onClick={handleSaveAndContinue}
+                        fullWidth={isMobile}
+                        startIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
                         sx={{
-                          backgroundColor: '#f1f5f9',
-                          color: 'black',
-                          fontWeight: 600,
-                          textAlign: 'center',
-                          borderBottom: `1px solid ${COLORS.headerBg}`
+                          bgcolor: COLORS.secondary,
+                          color: 'white',
+                          '&:hover': { bgcolor: '#c2410c' }
                         }}
                       >
-                        {header}
-                      </TableCell>
-                    ))}
-                    <TableCell
-                      width="19%"
-                      sx={{
-                        backgroundColor: '#f1f5f9',
-                        color: 'black',
-                        fontWeight: 600,
-                        textAlign: 'center',
-                        borderBottom: `1px solid ${COLORS.headerBg}`
-                      }}
-                    >
-                      Remarks
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
+                        {user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                      </Button>
+                    </Box>
+                  </Box>
 
-                <TableBody>
-                  <TableRow>
-                    {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((key) => (
-                      <TableCell key={key} sx={{ p: 2, verticalAlign: 'middle' }}>
-                        <SpecInput
-                          value={(sandProps as any)[key]}
-                          onChange={(e: any) => handleChange(key, e.target.value)}
-                          disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                        />
-                      </TableCell>
-                    ))}
-                    <TableCell sx={{ p: 1 }}>
-                      <TextField
-                        multiline
-                        rows={3}
-                        fullWidth
-                        variant="outlined"
-                        placeholder="Enter remarks..."
-                        value={sandProps.remarks}
-                        onChange={(e) => handleChange("remarks", e.target.value)}
-                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                        sx={{ bgcolor: '#fff' }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Box>
-
-            <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-              {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
-                <>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                    Attach PDF / Image Files
-                  </Typography>
-                  <FileUploadSection
-                    files={attachedFiles}
-                    onFilesChange={handleAttachFiles}
-                    onFileRemove={removeAttachedFile}
-                    showAlert={showAlert}
-                    label="Attach PDF"
-                  />
-                </>
-              )}
-              <DocumentViewer trialId={trialId || ""} category="SAND_PROPERTIES" />
-            </Box>
-
-            <Box sx={{ p: 3, display: "flex", flexDirection: { xs: 'column', sm: 'row' }, justifyContent: "flex-end", alignItems: "flex-end", gap: 2, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                  <Button
-                    variant="outlined"
-                    onClick={handleReset}
-                    fullWidth={isMobile}
-                    sx={{
-                      color: COLORS.primary,
-                      borderColor: COLORS.primary,
-                      borderWidth: '1.5px',
-                      '&:hover': {
-                        borderColor: COLORS.primary,
-                        borderWidth: '1.5px',
-                        bgcolor: '#f3f4f6'
-                      }
-                    }}
-                  >
-                    Reset Form
-                  </Button>
-                )}
-
-                {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                  <Button
-                    variant="outlined"
-                    onClick={() => setIsEditing(!isEditing)}
-                    sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                  >
-                    {isEditing ? "Cancel Edit" : "Edit Details"}
-                  </Button>
-                )}
-
-                <Button
-                  variant="contained"
-                  onClick={handleSaveAndContinue}
-                  fullWidth={isMobile}
-                  startIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
-                  sx={{
-                    bgcolor: COLORS.secondary,
-                    color: 'white',
-                    '&:hover': { bgcolor: '#c2410c' }
-                  }}
-                >
-                  {user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                </Button>
-              </Box>
-            </Box>
-
-          </Paper>
-
+                </Paper>
+              </Paper>
+            </>
+          )}
 
           <PreviewModal
             open={previewMode}

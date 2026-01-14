@@ -44,6 +44,7 @@ import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 import { documentService } from '../services/documentService';
 import { uploadFiles } from '../services/fileUploadHelper';
+import departmentProgressService from "../services/departmentProgressService";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useNavigate } from "react-router-dom";
@@ -107,7 +108,6 @@ export default function VisualInspection({
     const navigate = useNavigate();
     const [cols, setCols] = useState<string[]>([...initialCols]);
     const [rows, setRows] = useState<Row[]>(() => buildRows(initialRows, initialCols));
-    const [trialId, setTrialId] = useState<string>("");
     const [groupMeta, setGroupMeta] = useState<GroupMeta>({
         ok: null,
         remarks: "",
@@ -125,21 +125,42 @@ export default function VisualInspection({
     const [isEditing, setIsEditing] = useState(false);
     const [showBasicInfo, setShowBasicInfo] = useState(false);
 
-    const urlTrialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+    const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+    const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
 
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-
+    useEffect(() => {
+        const checkAssignment = async () => {
+            if (user && trialId) {
+                if (user.role === 'Admin') {
+                    setIsAssigned(true);
+                    return;
+                }
+                try {
+                    const pending = await departmentProgressService.getProgress(user.username);
+                    const found = pending.find(p => p.trial_id === trialId);
+                    setIsAssigned(!!found);
+                } catch (error) {
+                    console.error("Failed to check assignment:", error);
+                    setIsAssigned(false);
+                }
+            } else {
+                setIsAssigned(false);
+            }
+        };
+        checkAssignment();
+    }, [user, trialId]);
 
     useEffect(() => {
         const fetchData = async () => {
-            if ((user?.role === 'HOD' || user?.role === 'Admin') && urlTrialId) {
+            if ((user?.role === 'HOD' || user?.role === 'Admin') && trialId) {
                 try {
-                    const response = await inspectionService.getVisualInspection(urlTrialId);
+                    const response = await inspectionService.getVisualInspection(trialId);
 
                     let docsMap: Record<string, any> = {};
                     try {
-                        const docRes = await documentService.getDocument(urlTrialId);
+                        const docRes = await documentService.getDocument(trialId);
                         if (docRes && docRes.success && Array.isArray(docRes.data)) {
                             docRes.data.forEach((d: any) => {
                                 if (d.document_type === 'VISUAL_INSPECTION') docsMap[d.file_name] = d;
@@ -174,9 +195,6 @@ export default function VisualInspection({
                             }));
                         }
 
-                        // Try to find attachment by name if data has it, or just leave it null if not supported by schema yet.
-                        // If schema doesn't have attachment_name, we can't link it.
-                        // Assuming data.attachment_name might exist or we rely on user re-uploading if needed.
                         const linkedAttachment = data.attachment_name ? docsMap[data.attachment_name] : null;
 
                         setGroupMeta({
@@ -184,7 +202,6 @@ export default function VisualInspection({
                             remarks: data.remarks || "",
                             attachment: linkedAttachment || null
                         });
-                        setTrialId(data.trial_id || "");
                     }
                 } catch (error) {
                     console.error("Failed to fetch visual inspection:", error);
@@ -192,8 +209,8 @@ export default function VisualInspection({
                 }
             }
         };
-        if (urlTrialId) fetchData();
-    }, [user, urlTrialId]);
+        if (trialId) fetchData();
+    }, [user, trialId]);
 
     const calculateRejectionPercentage = (colIndex: number): string => {
         const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
@@ -387,7 +404,7 @@ export default function VisualInspection({
         setSaving(true);
         setMessage(null);
 
-        if ((user?.role === 'HOD' || user?.role === 'Admin') && urlTrialId) {
+        if ((user?.role === 'HOD' || user?.role === 'Admin') && trialId) {
             try {
                 const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
                 const cavityRow = findRow('cavity number');
@@ -418,7 +435,7 @@ export default function VisualInspection({
                 });
 
                 const updatePayload = {
-                    trial_id: urlTrialId,
+                    trial_id: trialId,
                     inspections,
                     visual_ok: groupMeta.ok,
                     remarks: groupMeta.remarks || null,
@@ -476,7 +493,7 @@ export default function VisualInspection({
             });
 
             const serverPayload = {
-                trial_id: urlTrialId,
+                trial_id: trialId,
                 inspections,
                 visual_ok: previewPayload.group?.ok ?? null,
                 remarks: previewPayload.additionalRemarks || previewPayload.group?.remarks || null,
@@ -547,479 +564,493 @@ export default function VisualInspection({
                     <SaclHeader />
 
                     <DepartmentHeader title="VISUAL INSPECTION" userIP={userIP} user={user} />
+                    <AlertMessage alert={alert} />
 
-                    <Box sx={{ mb: 2 }}>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={showBasicInfo ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                            onClick={() => setShowBasicInfo(!showBasicInfo)}
-                            sx={{
-                                color: COLORS.primary,
-                                borderColor: COLORS.primary,
-                                '&:hover': { borderColor: COLORS.primary, bgcolor: 'rgba(0,0,0,0.04)' }
+                    {isAssigned === false && (user?.role !== 'Admin') ? (
+                        <EmptyState
+                            title="No Pending Works"
+                            description="This trial is not currently assigned to you."
+                            severity="warning"
+                            action={{
+                                label: "Go to Dashboard",
+                                onClick: () => navigate('/dashboard')
                             }}
-                        >
-                            {showBasicInfo ? 'Hide' : 'Show'} Basic Information
-                        </Button>
-                    </Box>
-
-                    <Collapse in={showBasicInfo} timeout="auto" unmountOnExit>
-                        <Common trialId={urlTrialId} />
-                    </Collapse>
-
-                    <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
-
-                        <Box display="flex" alignItems="center" gap={1} mb={1}>
-                            <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-                            <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
-                        </Box>
-                        <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
-
-                        <Grid container spacing={2} sx={{ mb: 2 }}>
-                        </Grid>
-
-
-
-                        <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell sx={{ minWidth: 200 }}>Parameter</TableCell>
-                                        {cols.map((col, ci) => (
-                                            <TableCell key={ci} sx={{ minWidth: 140 }}>
-                                                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                                    <TextField
-                                                        variant="standard"
-                                                        value={col}
-                                                        onChange={(e) => updateColLabel(ci, e.target.value)}
-                                                        InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
-                                                        size="small"
-                                                        sx={{ input: { textAlign: 'center' } }}
-                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                    />
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => removeColumn(ci)}
-                                                        sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }}
-                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                    >
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Box>
-                                            </TableCell>
-                                        ))}
-                                        <TableCell
-                                            sx={{ width: 120, bgcolor: '#f1f5f9', fontWeight: 700, textAlign: 'center' }}
-                                        >
-                                            Total
-                                        </TableCell>
-                                        <TableCell sx={{ width: 140, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>OK / NOT OK</TableCell>
-                                        <TableCell sx={{ width: 280, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
-                                    </TableRow>
-                                </TableHead>
-
-                                <TableBody>
-                                    {rows.map((r, ri) => (
-                                        <TableRow key={r.id}>
-                                            <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
-                                                {r.label}
-                                            </TableCell>
-
-                                            {cols.map((_, ci) => {
-                                                const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
-                                                const isRejectionPercentage = r.label === "Rejection Percentage (%)";
-                                                const isRejectedQty = r.label === "Rejected Quantity";
-                                                const isAcceptedQty = r.label === "Accepted Quantity";
-
-                                                const inspectedValue = inspectedRow ? (inspectedRow.values[ci] ?? "") : "";
-                                                const inspectedNum = parseFloat(String(inspectedValue).trim());
-                                                const acceptedNum = isAcceptedQty ? parseFloat(String(r.values[ci] ?? '').trim()) : NaN;
-                                                const isInvalid = !isNaN(inspectedNum) && !isNaN(acceptedNum) && acceptedNum > inspectedNum;
-                                                const rejectedValue = isRejectedQty ? (r.values[ci] ?? "") : "";
-                                                const isRejectedInvalid = rejectedValue === 'Invalid';
-
-                                                const displayValue = isRejectionPercentage ? calculateRejectionPercentage(ci) : (r.values[ci] ?? "");
-                                                const isFieldDisabled = ((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) ||
-                                                    (isAcceptedQty && !inspectedValue) ||
-                                                    isRejectedQty ||
-                                                    isRejectionPercentage;
-
-                                                return (
-                                                    <TableCell key={ci}>
-                                                        <TextField
-                                                            size="small"
-                                                            fullWidth
-                                                            value={displayValue}
-                                                            onChange={(e) => updateCell(r.id, ci, e.target.value)}
-                                                            variant="outlined"
-                                                            InputProps={{
-                                                                readOnly: isFieldDisabled,
-                                                            }}
-                                                            sx={{
-                                                                "& .MuiInputBase-input": {
-                                                                    textAlign: 'center',
-                                                                    fontFamily: 'Roboto Mono',
-                                                                    fontSize: '0.85rem',
-                                                                    bgcolor: isRejectionPercentage ? '#fffbeb' :
-                                                                        isRejectedQty ? '#f3f4f6' :
-                                                                            (isInvalid || isRejectedInvalid) ? '#fee2e2' :
-                                                                                'transparent',
-                                                                    fontWeight: isRejectionPercentage ? 700 : 400,
-                                                                },
-                                                                "& .MuiInputBase-root": {
-                                                                    bgcolor: isRejectionPercentage ? '#fffbeb' :
-                                                                        isRejectedQty ? '#f3f4f6' :
-                                                                            'white'
-                                                                }
-                                                            }}
-                                                            error={isInvalid || isRejectedInvalid}
-                                                        />
-                                                    </TableCell>
-                                                );
-                                            })}
-                                            <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>
-                                                {(() => {
-                                                    if (r.label === "Cavity Number") return "-";
-
-                                                    if (r.label === "Rejection Percentage (%)") {
-                                                        const inspectedRow = rows.find(row => row.label === "Inspected Quantity");
-                                                        const rejectedRow = rows.find(row => row.label === "Rejected Quantity");
-
-                                                        if (!inspectedRow || !rejectedRow) return "-";
-
-                                                        const totalInspected = inspectedRow.values.reduce((acc, v) => {
-                                                            const n = parseFloat(String(v).trim());
-                                                            return acc + (isNaN(n) ? 0 : n);
-                                                        }, 0);
-
-                                                        const totalRejected = rejectedRow.values.reduce((acc, v) => {
-                                                            const n = parseFloat(String(v).trim());
-                                                            return acc + (isNaN(n) ? 0 : n);
-                                                        }, 0);
-
-                                                        if (totalInspected > 0 && !isNaN(totalRejected)) {
-                                                            const percent = (totalRejected / totalInspected) * 100;
-                                                            return `${percent.toFixed(2)}%`;
-                                                        }
-                                                        return "-";
-                                                    }
-
-                                                    const sum = r.values.reduce((acc, v) => {
-                                                        const n = parseFloat(String(v).trim());
-                                                        return acc + (isNaN(n) ? 0 : n);
-                                                    }, 0);
-                                                    return sum || "-";
-                                                })()}
-                                            </TableCell>
-
-
-                                            {ri === 0 ? (
-                                                <>
-                                                    <TableCell
-                                                        rowSpan={rows.length}
-                                                        sx={{
-                                                            bgcolor: COLORS.successBg,
-                                                            verticalAlign: "middle",
-                                                            textAlign: 'center'
-                                                        }}
-                                                    >
-                                                        <RadioGroup
-                                                            row
-                                                            sx={{ justifyContent: 'center' }}
-                                                            value={groupMeta.ok === null ? "" : String(groupMeta.ok)}
-                                                            onChange={(e) => setGroupMeta((g) => ({ ...g, ok: e.target.value === "true" }))}
-                                                        >
-                                                            <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
-                                                            <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
-                                                        </RadioGroup>
-                                                    </TableCell>
-
-                                                    <TableCell
-                                                        rowSpan={rows.length}
-                                                        colSpan={2}
-                                                        sx={{ bgcolor: '#fff7ed', verticalAlign: "top" }}
-                                                    >
-                                                        <Box display="flex" flexDirection="column" height="100%" gap={1}>
-                                                            <TextField
-                                                                size="small"
-                                                                fullWidth
-                                                                multiline
-                                                                rows={5}
-                                                                placeholder="Remarks (optional)"
-                                                                value={groupMeta.remarks}
-                                                                onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
-                                                                variant="outlined"
-                                                                sx={{ bgcolor: 'white' }}
-                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                            />
-
-                                                            <Box display="flex" alignItems="center" gap={1} mt="auto">
-                                                                <input
-                                                                    accept="image/*,application/pdf"
-                                                                    id="visual-group-file"
-                                                                    style={{ display: "none" }}
-                                                                    type="file"
-                                                                    onChange={(e) => {
-                                                                        const file = e.target.files?.[0] ?? null;
-                                                                        if (file) {
-                                                                            const validation = validateFileSizes([file]);
-                                                                            if (!validation.isValid) {
-                                                                                validation.errors.forEach((error: string) => showAlert('error', error));
-                                                                                e.target.value = '';
-                                                                                return;
-                                                                            }
-                                                                        }
-                                                                        setGroupMeta((g) => ({ ...g, attachment: file }));
-                                                                    }}
-                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                                />
-                                                                <label htmlFor="visual-group-file">
-                                                                    <Button
-                                                                        size="small"
-                                                                        variant="outlined"
-                                                                        component="span"
-                                                                        startIcon={<UploadFileIcon />}
-                                                                        sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
-                                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                                    >
-                                                                        Attach PDF
-                                                                    </Button>
-                                                                </label>
-
-                                                                {groupMeta.attachment ? (
-                                                                    <Box display="flex" alignItems="center" gap={0.5}>
-                                                                        <Chip
-                                                                            icon={<InsertDriveFileIcon />}
-                                                                            label={groupMeta.attachment.name}
-                                                                            onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
-                                                                            size="small"
-                                                                            variant="outlined"
-                                                                            sx={{ maxWidth: 140 }}
-                                                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                                        />
-                                                                        <IconButton size="small" onClick={() => viewAttachment(groupMeta.attachment)}>
-                                                                            <VisibilityIcon fontSize="small" />
-                                                                        </IconButton>
-                                                                    </Box>
-                                                                ) : (
-                                                                    <Typography variant="caption" color="text.secondary">
-
-                                                                    </Typography>
-                                                                )}
-                                                            </Box>
-                                                        </Box>
-                                                    </TableCell>
-                                                </>
-                                            ) : null}
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </Box>
-
-                        <Button
-                            size="small"
-                            onClick={addColumn}
-                            startIcon={<AddCircleIcon />}
-                            sx={{ mt: 1, color: COLORS.secondary }}
-                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                        >
-                            Add Column
-                        </Button>
-
-                        <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                            {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
-                                <>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                                        Attach PDF / Image Files
-                                    </Typography>
-                                    <FileUploadSection
-                                        files={attachedFiles}
-                                        onFilesChange={handleAttachFiles}
-                                        onFileRemove={removeAttachedFile}
-                                        showAlert={showAlert}
-                                        label="Attach PDF"
-                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                    />
-                                </>
-                            )}
-                            <DocumentViewer trialId={urlTrialId} category="VISUAL_INSPECTION" />
-                        </Box>
-
-
-                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                                <ActionButtons
-                                    {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: reset } : {})}
-                                    onSave={handleSaveAndContinue}
-                                    showSubmit={false}
-                                    saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                                    saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                        />
+                    ) : (
+                        <>
+                            <Box sx={{ mb: 2 }}>
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={showBasicInfo ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                    onClick={() => setShowBasicInfo(!showBasicInfo)}
+                                    sx={{
+                                        color: COLORS.primary,
+                                        borderColor: COLORS.primary,
+                                        '&:hover': { borderColor: COLORS.primary, bgcolor: 'rgba(0,0,0,0.04)' }
+                                    }}
                                 >
-                                    {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() => setIsEditing(!isEditing)}
-                                            sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                                        >
-                                            {isEditing ? "Cancel Edit" : "Edit Details"}
-                                        </Button>
-                                    )}
-                                </ActionButtons>
+                                    {showBasicInfo ? 'Hide' : 'Show'} Basic Information
+                                </Button>
                             </Box>
-                        </Box>
 
-                    </Paper>
+                            <Collapse in={showBasicInfo} timeout="auto" unmountOnExit>
+                                <Common trialId={trialId} />
+                            </Collapse>
 
-                    <PreviewModal
-                        open={previewMode}
-                        onClose={() => setPreviewMode(false)}
-                        onSubmit={handleFinalSave}
-                        onExport={handleExportPdf}
-                        title="VISUAL INSPECTION DETAILS"
-                        submitted={submitted}
-                        isSubmitting={saving}
-                    >
-                        <Box sx={{ p: 4 }}>
-                            <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                    <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Visual Inspection Report</Typography>
-                                    <Typography variant="body2" color="textSecondary">Created: {previewPayload?.created_at}</Typography>
+                            <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+
+                                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                                    <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
+                                    <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
                                 </Box>
-                                <Divider sx={{ mb: 3 }} />
+                                <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
 
-                                <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
+                                <Grid container spacing={2} sx={{ mb: 2 }}>
+                                </Grid>
+
+
+
+                                <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
                                     <Table size="small">
                                         <TableHead>
-                                            <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                                <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                                                {previewPayload?.cols.map((c: string, i: number) => (
-                                                    <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
+                                            <TableRow>
+                                                <TableCell sx={{ minWidth: 200 }}>Parameter</TableCell>
+                                                {cols.map((col, ci) => (
+                                                    <TableCell key={ci} sx={{ minWidth: 140 }}>
+                                                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                                            <TextField
+                                                                variant="standard"
+                                                                value={col}
+                                                                onChange={(e) => updateColLabel(ci, e.target.value)}
+                                                                InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
+                                                                size="small"
+                                                                sx={{ input: { textAlign: 'center' } }}
+                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                            />
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => removeColumn(ci)}
+                                                                sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }}
+                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                            >
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Box>
+                                                    </TableCell>
                                                 ))}
+                                                <TableCell
+                                                    sx={{ width: 120, bgcolor: '#f1f5f9', fontWeight: 700, textAlign: 'center' }}
+                                                >
+                                                    Total
+                                                </TableCell>
+                                                <TableCell sx={{ width: 140, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>OK / NOT OK</TableCell>
+                                                <TableCell sx={{ width: 280, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
                                             </TableRow>
                                         </TableHead>
+
                                         <TableBody>
-                                            {previewPayload?.rows.map((r: any, idx: number) => (
-                                                <TableRow key={idx}>
-                                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
-                                                    {r.values.map((v: any, j: number) => (
-                                                        <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
-                                                            {v === null ? "-" : String(v)}
-                                                        </TableCell>
-                                                    ))}
+                                            {rows.map((r, ri) => (
+                                                <TableRow key={r.id}>
+                                                    <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
+                                                        {r.label}
+                                                    </TableCell>
+
+                                                    {cols.map((_, ci) => {
+                                                        const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
+                                                        const isRejectionPercentage = r.label === "Rejection Percentage (%)";
+                                                        const isRejectedQty = r.label === "Rejected Quantity";
+                                                        const isAcceptedQty = r.label === "Accepted Quantity";
+
+                                                        const inspectedValue = inspectedRow ? (inspectedRow.values[ci] ?? "") : "";
+                                                        const inspectedNum = parseFloat(String(inspectedValue).trim());
+                                                        const acceptedNum = isAcceptedQty ? parseFloat(String(r.values[ci] ?? '').trim()) : NaN;
+                                                        const isInvalid = !isNaN(inspectedNum) && !isNaN(acceptedNum) && acceptedNum > inspectedNum;
+                                                        const rejectedValue = isRejectedQty ? (r.values[ci] ?? "") : "";
+                                                        const isRejectedInvalid = rejectedValue === 'Invalid';
+
+                                                        const displayValue = isRejectionPercentage ? calculateRejectionPercentage(ci) : (r.values[ci] ?? "");
+                                                        const isFieldDisabled = ((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) ||
+                                                            (isAcceptedQty && !inspectedValue) ||
+                                                            isRejectedQty ||
+                                                            isRejectionPercentage;
+
+                                                        return (
+                                                            <TableCell key={ci}>
+                                                                <TextField
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    value={displayValue}
+                                                                    onChange={(e) => updateCell(r.id, ci, e.target.value)}
+                                                                    variant="outlined"
+                                                                    InputProps={{
+                                                                        readOnly: isFieldDisabled,
+                                                                    }}
+                                                                    sx={{
+                                                                        "& .MuiInputBase-input": {
+                                                                            textAlign: 'center',
+                                                                            fontFamily: 'Roboto Mono',
+                                                                            fontSize: '0.85rem',
+                                                                            bgcolor: isRejectionPercentage ? '#fffbeb' :
+                                                                                isRejectedQty ? '#f3f4f6' :
+                                                                                    (isInvalid || isRejectedInvalid) ? '#fee2e2' :
+                                                                                        'transparent',
+                                                                            fontWeight: isRejectionPercentage ? 700 : 400,
+                                                                        },
+                                                                        "& .MuiInputBase-root": {
+                                                                            bgcolor: isRejectionPercentage ? '#fffbeb' :
+                                                                                isRejectedQty ? '#f3f4f6' :
+                                                                                    'white'
+                                                                        }
+                                                                    }}
+                                                                    error={isInvalid || isRejectedInvalid}
+                                                                />
+                                                            </TableCell>
+                                                        );
+                                                    })}
+                                                    <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>
+                                                        {(() => {
+                                                            if (r.label === "Cavity Number") return "-";
+
+                                                            if (r.label === "Rejection Percentage (%)") {
+                                                                const inspectedRow = rows.find(row => row.label === "Inspected Quantity");
+                                                                const rejectedRow = rows.find(row => row.label === "Rejected Quantity");
+
+                                                                if (!inspectedRow || !rejectedRow) return "-";
+
+                                                                const totalInspected = inspectedRow.values.reduce((acc, v) => {
+                                                                    const n = parseFloat(String(v).trim());
+                                                                    return acc + (isNaN(n) ? 0 : n);
+                                                                }, 0);
+
+                                                                const totalRejected = rejectedRow.values.reduce((acc, v) => {
+                                                                    const n = parseFloat(String(v).trim());
+                                                                    return acc + (isNaN(n) ? 0 : n);
+                                                                }, 0);
+
+                                                                if (totalInspected > 0 && !isNaN(totalRejected)) {
+                                                                    const percent = (totalRejected / totalInspected) * 100;
+                                                                    return `${percent.toFixed(2)}%`;
+                                                                }
+                                                                return "-";
+                                                            }
+
+                                                            const sum = r.values.reduce((acc, v) => {
+                                                                const n = parseFloat(String(v).trim());
+                                                                return acc + (isNaN(n) ? 0 : n);
+                                                            }, 0);
+                                                            return sum || "-";
+                                                        })()}
+                                                    </TableCell>
+
+
+                                                    {ri === 0 ? (
+                                                        <>
+                                                            <TableCell
+                                                                rowSpan={rows.length}
+                                                                sx={{
+                                                                    bgcolor: COLORS.successBg,
+                                                                    verticalAlign: "middle",
+                                                                    textAlign: 'center'
+                                                                }}
+                                                            >
+                                                                <RadioGroup
+                                                                    row
+                                                                    sx={{ justifyContent: 'center' }}
+                                                                    value={groupMeta.ok === null ? "" : String(groupMeta.ok)}
+                                                                    onChange={(e) => setGroupMeta((g) => ({ ...g, ok: e.target.value === "true" }))}
+                                                                >
+                                                                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                                                                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                                                                </RadioGroup>
+                                                            </TableCell>
+
+                                                            <TableCell
+                                                                rowSpan={rows.length}
+                                                                colSpan={2}
+                                                                sx={{ bgcolor: '#fff7ed', verticalAlign: "top" }}
+                                                            >
+                                                                <Box display="flex" flexDirection="column" height="100%" gap={1}>
+                                                                    <TextField
+                                                                        size="small"
+                                                                        fullWidth
+                                                                        multiline
+                                                                        rows={5}
+                                                                        placeholder="Remarks (optional)"
+                                                                        value={groupMeta.remarks}
+                                                                        onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
+                                                                        variant="outlined"
+                                                                        sx={{ bgcolor: 'white' }}
+                                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                    />
+
+                                                                    <Box display="flex" alignItems="center" gap={1} mt="auto">
+                                                                        <input
+                                                                            accept="image/*,application/pdf"
+                                                                            id="visual-group-file"
+                                                                            style={{ display: "none" }}
+                                                                            type="file"
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0] ?? null;
+                                                                                if (file) {
+                                                                                    const validation = validateFileSizes([file]);
+                                                                                    if (!validation.isValid) {
+                                                                                        validation.errors.forEach((error: string) => showAlert('error', error));
+                                                                                        e.target.value = '';
+                                                                                        return;
+                                                                                    }
+                                                                                }
+                                                                                setGroupMeta((g) => ({ ...g, attachment: file }));
+                                                                            }}
+                                                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                        />
+                                                                        <label htmlFor="visual-group-file">
+                                                                            <Button
+                                                                                size="small"
+                                                                                variant="outlined"
+                                                                                component="span"
+                                                                                startIcon={<UploadFileIcon />}
+                                                                                sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
+                                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                            >
+                                                                                Attach PDF
+                                                                            </Button>
+                                                                        </label>
+
+                                                                        {groupMeta.attachment ? (
+                                                                            <Box display="flex" alignItems="center" gap={0.5}>
+                                                                                <Chip
+                                                                                    icon={<InsertDriveFileIcon />}
+                                                                                    label={groupMeta.attachment.name}
+                                                                                    onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
+                                                                                    size="small"
+                                                                                    variant="outlined"
+                                                                                    sx={{ maxWidth: 140 }}
+                                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                                />
+                                                                                <IconButton size="small" onClick={() => viewAttachment(groupMeta.attachment)}>
+                                                                                    <VisibilityIcon fontSize="small" />
+                                                                                </IconButton>
+                                                                            </Box>
+                                                                        ) : (
+                                                                            <Typography variant="caption" color="text.secondary">
+
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Box>
+                                                                </Box>
+                                                            </TableCell>
+                                                        </>
+                                                    ) : null}
                                                 </TableRow>
                                             ))}
                                         </TableBody>
                                     </Table>
                                 </Box>
 
-                                <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                    <Typography variant="subtitle2" mb={1} color="textSecondary">FINAL STATUS & REMARKS</Typography>
-                                    <Grid container spacing={2}>
-                                        <Grid size={{ xs: 12, sm: 4 }}>
-                                            <Box display="flex" alignItems="center" gap={1}>
-                                                <Typography variant="body2">Status:</Typography>
-                                                {previewPayload?.group.ok === true ?
-                                                    <Chip label="OK" color="success" size="small" /> :
-                                                    previewPayload?.group.ok === false ?
-                                                        <Chip label="NOT OK" color="error" size="small" /> :
-                                                        <Chip label="-" size="small" />
-                                                }
-                                            </Box>
-                                        </Grid>
-                                        <Grid size={{ xs: 12, sm: 8 }}>
-                                            <Typography variant="body2">
-                                                <strong>Remarks:</strong> {previewPayload?.group.remarks || "No remarks"}
+                                <Button
+                                    size="small"
+                                    onClick={addColumn}
+                                    startIcon={<AddCircleIcon />}
+                                    sx={{ mt: 1, color: COLORS.secondary }}
+                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                >
+                                    Add Column
+                                </Button>
+
+                                <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+                                    {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                                        <>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                                                Attach PDF / Image Files
                                             </Typography>
-                                            {previewPayload?.group.attachment && (
-                                                <Typography variant="caption" display="block" mt={0.5} color="primary">
-                                                    Attachment: {previewPayload.group.attachment.name}
-                                                </Typography>
-                                            )}
-                                        </Grid>
-                                    </Grid>
+                                            <FileUploadSection
+                                                files={attachedFiles}
+                                                onFilesChange={handleAttachFiles}
+                                                onFileRemove={removeAttachedFile}
+                                                showAlert={showAlert}
+                                                label="Attach PDF"
+                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                            />
+                                        </>
+                                    )}
+                                    <DocumentViewer trialId={trialId} category="VISUAL_INSPECTION" />
                                 </Box>
 
-                                {/* Attached PDF Files Preview */}
-                                {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
-                                    <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                        <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                            {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
-                                                <Chip
-                                                    key={idx}
-                                                    icon={<InsertDriveFileIcon />}
-                                                    label={fileName}
+
+                                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                                        <ActionButtons
+                                            {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: reset } : {})}
+                                            onSave={handleSaveAndContinue}
+                                            showSubmit={false}
+                                            saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                                            saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                                        >
+                                            {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                                                <Button
                                                     variant="outlined"
-                                                    sx={{ bgcolor: 'white' }}
-                                                />
-                                            ))}
+                                                    onClick={() => setIsEditing(!isEditing)}
+                                                    sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                                                >
+                                                    {isEditing ? "Cancel Edit" : "Edit Details"}
+                                                </Button>
+                                            )}
+                                        </ActionButtons>
+                                    </Box>
+                                </Box>
+
+                            </Paper>
+
+                            <PreviewModal
+                                open={previewMode}
+                                onClose={() => setPreviewMode(false)}
+                                onSubmit={handleFinalSave}
+                                onExport={handleExportPdf}
+                                title="VISUAL INSPECTION DETAILS"
+                                submitted={submitted}
+                                isSubmitting={saving}
+                            >
+                                <Box sx={{ p: 4 }}>
+                                    <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                                            <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Visual Inspection Report</Typography>
+                                            <Typography variant="body2" color="textSecondary">Created: {previewPayload?.created_at}</Typography>
                                         </Box>
+                                        <Divider sx={{ mb: 3 }} />
+
+                                        <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
+                                            <Table size="small">
+                                                <TableHead>
+                                                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                                                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
+                                                        {previewPayload?.cols.map((c: string, i: number) => (
+                                                            <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
+                                                        ))}
+                                                    </TableRow>
+                                                </TableHead>
+                                                <TableBody>
+                                                    {previewPayload?.rows.map((r: any, idx: number) => (
+                                                        <TableRow key={idx}>
+                                                            <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
+                                                            {r.values.map((v: any, j: number) => (
+                                                                <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
+                                                                    {v === null ? "-" : String(v)}
+                                                                </TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </Box>
+
+                                        <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                            <Typography variant="subtitle2" mb={1} color="textSecondary">FINAL STATUS & REMARKS</Typography>
+                                            <Grid container spacing={2}>
+                                                <Grid size={{ xs: 12, sm: 4 }}>
+                                                    <Box display="flex" alignItems="center" gap={1}>
+                                                        <Typography variant="body2">Status:</Typography>
+                                                        {previewPayload?.group.ok === true ?
+                                                            <Chip label="OK" color="success" size="small" /> :
+                                                            previewPayload?.group.ok === false ?
+                                                                <Chip label="NOT OK" color="error" size="small" /> :
+                                                                <Chip label="-" size="small" />
+                                                        }
+                                                    </Box>
+                                                </Grid>
+                                                <Grid size={{ xs: 12, sm: 8 }}>
+                                                    <Typography variant="body2">
+                                                        <strong>Remarks:</strong> {previewPayload?.group.remarks || "No remarks"}
+                                                    </Typography>
+                                                    {previewPayload?.group.attachment && (
+                                                        <Typography variant="caption" display="block" mt={0.5} color="primary">
+                                                            Attachment: {previewPayload.group.attachment.name}
+                                                        </Typography>
+                                                    )}
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+
+                                        {/* Attached PDF Files Preview */}
+                                        {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
+                                            <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                                <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                    {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
+                                                        <Chip
+                                                            key={idx}
+                                                            icon={<InsertDriveFileIcon />}
+                                                            label={fileName}
+                                                            variant="outlined"
+                                                            sx={{ bgcolor: 'white' }}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            </Box>
+                                        )}
+
+                                        {/* Additional Remarks Preview */}
+                                        {previewPayload?.additionalRemarks && (
+                                            <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                                                <Typography variant="subtitle2" mb={1} color="textSecondary">ADDITIONAL REMARKS</Typography>
+                                                <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
+                                            </Box>
+                                        )}
                                     </Box>
-                                )}
 
-                                {/* Additional Remarks Preview */}
-                                {previewPayload?.additionalRemarks && (
-                                    <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                        <Typography variant="subtitle2" mb={1} color="textSecondary">ADDITIONAL REMARKS</Typography>
-                                        <Typography variant="body2">{previewPayload.additionalRemarks}</Typography>
+                                    {alert && (
+                                        <Alert severity={alert.severity} sx={{ mt: 2 }}>{alert.message}</Alert>
+                                    )}
+                                </Box>
+                            </PreviewModal>
+
+                            {/* PRINT SECTION */}
+                            <Box className="print-section" sx={{ display: 'none' }}>
+                                <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+                                    <Box>
+                                        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>VISUAL INSPECTION REPORT</Typography>
                                     </Box>
-                                )}
-                            </Box>
+                                    <Box sx={{ textAlign: 'right' }}>
+                                        <Typography variant="body2">IP: {userIP}</Typography>
+                                        {previewPayload && <Typography variant="body2">Date: {previewPayload.created_at}</Typography>}
+                                    </Box>
+                                </Box>
 
-                            {alert && (
-                                <Alert severity={alert.severity} sx={{ mt: 2 }}>{alert.message}</Alert>
-                            )}
-                        </Box>
-                    </PreviewModal>
-
-                    {/* PRINT SECTION */}
-                    <Box className="print-section" sx={{ display: 'none' }}>
-                        <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>VISUAL INSPECTION REPORT</Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'right' }}>
-                                <Typography variant="body2">IP: {userIP}</Typography>
-                                {previewPayload && <Typography variant="body2">Date: {previewPayload.created_at}</Typography>}
-                            </Box>
-                        </Box>
-
-                        {previewPayload && (
-                            <>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black', fontSize: '12px' }}>
-                                    <thead>
-                                        <tr style={{ backgroundColor: '#f0f0f0' }}>
-                                            <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>Parameter</th>
-                                            {previewPayload.cols.map((c: string, i: number) => (
-                                                <th key={i} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{c}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {previewPayload.rows.map((r: any, idx: number) => (
-                                            <tr key={idx}>
-                                                <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{r.label}</td>
-                                                {r.values.map((v: any, j: number) => (
-                                                    <td key={j} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
-                                                        {v === null ? "" : String(v)}
-                                                    </td>
+                                {previewPayload && (
+                                    <>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black', fontSize: '12px' }}>
+                                            <thead>
+                                                <tr style={{ backgroundColor: '#f0f0f0' }}>
+                                                    <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>Parameter</th>
+                                                    {previewPayload.cols.map((c: string, i: number) => (
+                                                        <th key={i} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{c}</th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {previewPayload.rows.map((r: any, idx: number) => (
+                                                    <tr key={idx}>
+                                                        <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{r.label}</td>
+                                                        {r.values.map((v: any, j: number) => (
+                                                            <td key={j} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
+                                                                {v === null ? "" : String(v)}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
                                                 ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                            </tbody>
+                                        </table>
 
-                                <div style={{ marginTop: '20px', padding: '10px', border: '1px solid black' }}>
-                                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Final Result</div>
-                                    <div>Status: {previewPayload.group.ok === true ? 'OK' : previewPayload.group.ok === false ? 'NOT OK' : '-'}</div>
-                                    <div>Remarks: {previewPayload.group.remarks || '-'}</div>
-                                </div>
-                            </>
-                        )}
-                    </Box>
-
+                                        <div style={{ marginTop: '20px', padding: '10px', border: '1px solid black' }}>
+                                            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Final Result</div>
+                                            <div>Status: {previewPayload.group.ok === true ? 'OK' : previewPayload.group.ok === false ? 'NOT OK' : '-'}</div>
+                                            <div>Remarks: {previewPayload.group.remarks || '-'}</div>
+                                        </div>
+                                    </>
+                                )}
+                            </Box>
+                        </>
+                    )}
                 </Container>
             </Box>
         </ThemeProvider>

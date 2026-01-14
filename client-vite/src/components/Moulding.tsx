@@ -45,6 +45,7 @@ import { fileToMeta, validateFileSizes } from '../utils';
 import type { InspectionRow, GroupMetadata } from '../types/inspection';
 import DepartmentHeader from "./common/DepartmentHeader";
 import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, Common, DocumentViewer } from './common';
+import departmentProgressService from "../services/departmentProgressService";
 
 function MouldingTable() {
   const { user } = useAuth();
@@ -70,6 +71,29 @@ function MouldingTable() {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+  const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAssignment = async () => {
+      if (user && trialId) {
+        if (user.role === 'Admin') {
+          setIsAssigned(true);
+          return;
+        }
+        try {
+          const pending = await departmentProgressService.getProgress(user.username);
+          const found = pending.find(p => p.trial_id === trialId);
+          setIsAssigned(!!found);
+        } catch (error) {
+          console.error("Failed to check assignment:", error);
+          setIsAssigned(false);
+        }
+      } else {
+        setIsAssigned(false);
+      }
+    };
+    checkAssignment();
+  }, [user, trialId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -276,120 +300,134 @@ function MouldingTable() {
         <Container maxWidth="xl" disableGutters>
 
           <SaclHeader />
-          <DepartmentHeader title="MOULDING DETAILS" userIP={userIP} user={user} />
+          <DepartmentHeader title="MOULDING CORRECTION" userIP={userIP} user={user} />
+          <AlertMessage alert={alert} />
 
-          <Common trialId={trialId} />
+          {isAssigned === false && (user?.role !== 'Admin') ? (
+            <EmptyState
+              title="No Pending Works"
+              description="This trial is not currently assigned to you."
+              severity="warning"
+              action={{
+                label: "Go to Dashboard",
+                onClick: () => navigate('/dashboard')
+              }}
+            />
+          ) : (
+            <>
+              <Common trialId={trialId || ""} />
 
+              <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+                <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <EngineeringIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
+                    <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>MOULD CORRECTION DETAILS</Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: COLORS.primary }}>Date</Typography>
+                    <TextField
+                      type="date"
+                      size="small"
+                      hiddenLabel
+                      value={mouldDate}
+                      onChange={(e) => setMouldDate(e.target.value)}
+                      sx={{ bgcolor: 'white', borderRadius: 1, width: 140, "& .MuiInputBase-input": { py: 0.5, fontSize: "0.8rem" } }}
+                      disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                    />
+                  </Box>
+                </Box>
+                <Divider sx={{ mb: 2, borderColor: COLORS.blueHeaderText, opacity: 0.3 }} />
 
-          <Paper sx={{ p: { xs: 2, md: 3 }, overflow: 'hidden' }}>
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-              <Box display="flex" alignItems="center" gap={1}>
-                <EngineeringIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-                <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>MOULD CORRECTION DETAILS</Typography>
-              </Box>
-              <Box display="flex" alignItems="center" gap={1}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: COLORS.primary }}>Date</Typography>
-                <TextField
-                  type="date"
-                  size="small"
-                  hiddenLabel
-                  value={mouldDate}
-                  onChange={(e) => setMouldDate(e.target.value)}
-                  sx={{ bgcolor: 'white', borderRadius: 1, width: 140, "& .MuiInputBase-input": { py: 0.5, fontSize: "0.8rem" } }}
-                  disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                />
-              </Box>
-            </Box>
-            <Divider sx={{ mb: 2, borderColor: COLORS.blueHeaderText, opacity: 0.3 }} />
+                <Box sx={{ overflowX: "auto", mb: 4 }}>
+                  <Table size="small" sx={{ minWidth: 1000 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell colSpan={4} sx={{ bgcolor: COLORS.blueHeaderBg, color: COLORS.blueHeaderText, borderBottom: 'none' }}>
+                          <Typography variant="subtitle2" sx={{ color: 'inherit', letterSpacing: 1 }}>Moulding Parameters</Typography>
+                        </TableCell>
+                        <TableCell colSpan={1} sx={{ bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText, borderBottom: 'none' }}>
+                        </TableCell>
+                      </TableRow>
 
-            <Box sx={{ overflowX: "auto", mb: 4 }}>
-              <Table size="small" sx={{ minWidth: 1000 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell colSpan={4} sx={{ bgcolor: COLORS.blueHeaderBg, color: COLORS.blueHeaderText, borderBottom: 'none' }}>
-                      <Typography variant="subtitle2" sx={{ color: 'inherit', letterSpacing: 1 }}>Moulding Parameters</Typography>
-                    </TableCell>
-                    <TableCell colSpan={1} sx={{ bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText, borderBottom: 'none' }}>
-                    </TableCell>
-                  </TableRow>
+                      <TableRow>
+                        <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary }}>Mould Thickness</TableCell>
+                        <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary }}>Compressability</TableCell>
+                        <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary }}>Squeeze Pressure</TableCell>
+                        <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary, borderRight: `2px solid ${COLORS.border}` }}>Mould Hardness</TableCell>
 
-                  <TableRow>
-                    <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary }}>Mould Thickness</TableCell>
-                    <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary }}>Compressability</TableCell>
-                    <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary }}>Squeeze Pressure</TableCell>
-                    <TableCell width="15%" sx={{ bgcolor: '#f8fafc', color: COLORS.textSecondary, borderRight: `2px solid ${COLORS.border}` }}>Mould Hardness</TableCell>
+                        <TableCell width="40%" sx={{ bgcolor: '#fff7ed', color: COLORS.textSecondary }}>Remarks</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell><SpecInput value={mouldState.thickness} onChange={(e: any) => handleChange('thickness', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                        <TableCell><SpecInput value={mouldState.compressability} onChange={(e: any) => handleChange('compressability', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                        <TableCell><SpecInput value={mouldState.pressure} onChange={(e: any) => handleChange('pressure', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                        <TableCell sx={{ borderRight: `2px solid ${COLORS.border}` }}>
+                          <SpecInput value={mouldState.hardness} onChange={(e: any) => handleChange('hardness', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                        </TableCell>
 
-                    <TableCell width="40%" sx={{ bgcolor: '#fff7ed', color: COLORS.textSecondary }}>Remarks</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell><SpecInput value={mouldState.thickness} onChange={(e: any) => handleChange('thickness', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
-                    <TableCell><SpecInput value={mouldState.compressability} onChange={(e: any) => handleChange('compressability', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
-                    <TableCell><SpecInput value={mouldState.pressure} onChange={(e: any) => handleChange('pressure', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
-                    <TableCell sx={{ borderRight: `2px solid ${COLORS.border}` }}>
-                      <SpecInput value={mouldState.hardness} onChange={(e: any) => handleChange('hardness', e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
-                    </TableCell>
+                        <TableCell>
+                          <SpecInput
+                            value={mouldState.remarks}
+                            onChange={(e: any) => handleChange('remarks', e.target.value)}
+                            placeholder="--"
+                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Box>
+                <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+                  {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                    <>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase", color: COLORS.primary }}
+                      >
+                        Attach PDF / Image Files
+                      </Typography>
 
-                    <TableCell>
-                      <SpecInput
-                        value={mouldState.remarks}
-                        onChange={(e: any) => handleChange('remarks', e.target.value)}
-                        placeholder="--"
+                      <FileUploadSection
+                        files={attachedFiles}
+                        onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
+                        onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                        showAlert={showAlert}
+                        label="Attach PDF"
                         disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                       />
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Box>
-            <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-              {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
-                <>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase", color: COLORS.primary }}
-                  >
-                    Attach PDF / Image Files
-                  </Typography>
-
-                  <FileUploadSection
-                    files={attachedFiles}
-                    onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
-                    onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
-                    showAlert={showAlert}
-                    label="Attach PDF"
-                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                  />
-                </>
-              )}
-              <DocumentViewer trialId={trialId || ""} category="MOULDING" />
-            </Box>
-
-
-            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                <ActionButtons
-                  {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: handleReset } : {})}
-                  onSave={handleSaveAndContinue}
-                  showSubmit={false}
-                  saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                  saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
-                >
-                  {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => setIsEditing(!isEditing)}
-                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary, mr: 2 }}
-                    >
-                      {isEditing ? "Cancel Edit" : "Edit Details"}
-                    </Button>
+                    </>
                   )}
-                </ActionButtons>
-              </Box>
-            </Box>
+                  <DocumentViewer trialId={trialId || ""} category="MOULDING" />
+                </Box>
 
-          </Paper>
+
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                  <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                    <ActionButtons
+                      {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: handleReset } : {})}
+                      onSave={handleSaveAndContinue}
+                      showSubmit={false}
+                      saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                      saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                    >
+                      {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => setIsEditing(!isEditing)}
+                          sx={{ color: COLORS.secondary, borderColor: COLORS.secondary, mr: 2 }}
+                        >
+                          {isEditing ? "Cancel Edit" : "Edit Details"}
+                        </Button>
+                      )}
+                    </ActionButtons>
+                  </Box>
+                </Box>
+
+              </Paper>
+            </>
+          )}
 
           <PreviewModal
             open={previewMode}

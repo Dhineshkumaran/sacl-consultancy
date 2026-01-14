@@ -46,6 +46,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { inspectionService } from '../services/inspectionService';
 import { documentService } from '../services/documentService';
 import { uploadFiles } from '../services/fileUploadHelper';
+import departmentProgressService from "../services/departmentProgressService";
 import { COLORS, appTheme } from '../theme/appTheme';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
@@ -724,6 +725,8 @@ export default function MetallurgicalInspection() {
   const [loading, setLoading] = useState(false);
   const [userIP, setUserIP] = useState<string>("Loading...");
   const { alert, showAlert } = useAlert();
+  const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+  const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
   const [loadKey, setLoadKey] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [ndtValidationError, setNdtValidationError] = useState<string | null>(null);
@@ -753,8 +756,6 @@ export default function MetallurgicalInspection() {
   const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core"]));
   const [ndtRows, setNdtRows] = useState<Row[]>(initialRows(["Cavity Number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
 
-  const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
-
   const handleAttachFiles = (newFiles: File[]) => {
     setAttachedFiles(prev => [...prev, ...newFiles]);
   };
@@ -771,7 +772,27 @@ export default function MetallurgicalInspection() {
     fetchIP();
   }, []);
 
-
+  useEffect(() => {
+      const checkAssignment = async () => {
+          if (user && trialId) {
+              if (user.role === 'Admin') {
+                  setIsAssigned(true);
+                  return;
+              }
+              try {
+                  const pending = await departmentProgressService.getProgress(user.username);
+                  const found = pending.find(p => p.trial_id === trialId);
+                  setIsAssigned(!!found);
+              } catch (error) {
+                  console.error("Failed to check assignment:", error);
+                  setIsAssigned(false);
+              }
+          } else {
+              setIsAssigned(false);
+          }
+      };
+      checkAssignment();
+  }, [user, trialId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -815,22 +836,13 @@ export default function MetallurgicalInspection() {
                 });
                 setMicroValues(prev => ({ ...prev, ...newValues }));
 
-                const groupAttachName = data.micro_structure_attachment_name; // Wait, handled in group?
-                // The provided code in Step 814 line 771 set attachment: null. 
-                // But micro_structure_ok and remarks were top level cols in DB or inside JSON?
-                // Step 814 Line 769: data.micro_structure_ok
-                // It seems 'group' attachment wasn't persisted in DB as top level column?
-                // Wait, if it's not in DB, I can't restore it.
-                // Assuming it's not saved for now or I'd need to check schema.
-                // However, user complaint was about "Metallurgical Inspection" (sections).
-
-                // Let's check Restore Section logic.
+                const groupAttachName = data.micro_structure_attachment_name;
                 setMicroMeta(prev => ({
                   ...prev,
                   'group': {
                     ok: data.micro_structure_ok === null || data.micro_structure_ok === undefined ? null : (data.micro_structure_ok === true || data.micro_structure_ok === 1 || String(data.micro_structure_ok) === "1" || String(data.micro_structure_ok) === "true"),
                     remarks: data.micro_structure_remarks || "",
-                    attachment: null // If I knew the filename I could restore it. Check if data helps.
+                    attachment: null
                   }
                 }));
               }
@@ -1269,137 +1281,152 @@ export default function MetallurgicalInspection() {
 
           <SaclHeader />
           <DepartmentHeader title="METALLURGICAL INSPECTION" userIP={userIP} user={user} />
+          <AlertMessage alert={alert} />
 
-          <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
-
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="flex-end"
-              mb={1}
-              flexWrap="wrap"
-              gap={2}
-            >
-              <Box />
-
-              <Box display="flex" gap={2}>
-                <TextField
-                  size="small"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  sx={{ width: 160 }}
-                  disabled={user?.role === 'HOD'}
-                />
-              </Box>
-            </Box>
-
-
-            <MicrostructureTable
-              params={MICRO_PARAMS}
-              cols={microCols}
-              values={microValues}
-              meta={microMeta}
-              setCols={setMicroCols}
-              setValues={setMicroValues}
-              setMeta={setMicroMeta}
-              showAlert={showAlert}
-              user={user}
-              isEditing={isEditing}
+          {isAssigned === false && (user?.role !== 'Admin') ? (
+            <EmptyState
+              title="No Pending Works"
+              description="This trial is not currently assigned to you."
+              severity="warning"
+              action={{
+                label: "Go to Dashboard",
+                onClick: () => navigate('/dashboard')
+              }}
             />
+          ) : (
+            <>
+              <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SectionTable
-                  key={`mech-${loadKey}`}
-                  title="MECHANICAL PROPERTIES"
-                  rows={mechRows}
-                  onChange={updateRow(setMechRows)}
-                  showAlert={showAlert}
-                  user={user}
-                  isEditing={isEditing}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SectionTable
-                  key={`impact-${loadKey}`}
-                  title="IMPACT STRENGTH"
-                  rows={impactRows}
-                  onChange={updateRow(setImpactRows)}
-                  showAlert={showAlert}
-                  user={user}
-                  isEditing={isEditing}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SectionTable
-                  key={`hard-${loadKey}`}
-                  title="HARDNESS"
-                  rows={hardRows}
-                  onChange={updateRow(setHardRows)}
-                  showAlert={showAlert}
-                  user={user}
-                  isEditing={isEditing}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SectionTable
-                  key={`ndt-${loadKey}`}
-                  title="NDT INSPECTION ANALYSIS"
-                  rows={ndtRows}
-                  onChange={updateRow(setNdtRows)}
-                  showTotal={true}
-                  onValidationError={setNdtValidationError}
-                  showAlert={showAlert}
-                  user={user}
-                  isEditing={isEditing}
-                />
-              </Grid>
-            </Grid>
-
-            <Box sx={{ mt: 3, p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-              {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
-                <>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                    Attach PDF / Image Files
-                  </Typography>
-                  <FileUploadSection
-                    files={attachedFiles}
-                    onFilesChange={handleAttachFiles}
-                    onFileRemove={removeAttachedFile}
-                    showAlert={showAlert}
-                    label="Attach PDF"
-                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                  />
-                </>
-              )}
-              <DocumentViewer trialId={trialId || ""} category="METALLURGICAL_INSPECTION" />
-            </Box>
-
-
-            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                <ActionButtons
-                  {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: () => window.location.reload() } : {})}
-                  onSave={handleSaveAndContinue}
-                  showSubmit={false}
-                  saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                  saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="flex-end"
+                  mb={1}
+                  flexWrap="wrap"
+                  gap={2}
                 >
-                  {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => setIsEditing(!isEditing)}
-                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                    >
-                      {isEditing ? "Cancel Edit" : "Edit Details"}
-                    </Button>
-                  )}
-                </ActionButtons>
-              </Box>
-            </Box>
+                  <Box />
 
-          </Paper>
+                  <Box display="flex" gap={2}>
+                    <TextField
+                      size="small"
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      sx={{ width: 160 }}
+                      disabled={user?.role === 'HOD'}
+                    />
+                  </Box>
+                </Box>
+
+
+                <MicrostructureTable
+                  params={MICRO_PARAMS}
+                  cols={microCols}
+                  values={microValues}
+                  meta={microMeta}
+                  setCols={setMicroCols}
+                  setValues={setMicroValues}
+                  setMeta={setMicroMeta}
+                  showAlert={showAlert}
+                  user={user}
+                  isEditing={isEditing}
+                />
+
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <SectionTable
+                      key={`mech-${loadKey}`}
+                      title="MECHANICAL PROPERTIES"
+                      rows={mechRows}
+                      onChange={updateRow(setMechRows)}
+                      showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <SectionTable
+                      key={`impact-${loadKey}`}
+                      title="IMPACT STRENGTH"
+                      rows={impactRows}
+                      onChange={updateRow(setImpactRows)}
+                      showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <SectionTable
+                      key={`hard-${loadKey}`}
+                      title="HARDNESS"
+                      rows={hardRows}
+                      onChange={updateRow(setHardRows)}
+                      showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <SectionTable
+                      key={`ndt-${loadKey}`}
+                      title="NDT INSPECTION ANALYSIS"
+                      rows={ndtRows}
+                      onChange={updateRow(setNdtRows)}
+                      showTotal={true}
+                      onValidationError={setNdtValidationError}
+                      showAlert={showAlert}
+                      user={user}
+                      isEditing={isEditing}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ mt: 3, p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+                  {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                    <>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                        Attach PDF / Image Files
+                      </Typography>
+                      <FileUploadSection
+                        files={attachedFiles}
+                        onFilesChange={handleAttachFiles}
+                        onFileRemove={removeAttachedFile}
+                        showAlert={showAlert}
+                        label="Attach PDF"
+                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                      />
+                    </>
+                  )}
+                  <DocumentViewer trialId={trialId || ""} category="METALLURGICAL_INSPECTION" />
+                </Box>
+
+
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                  <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                    <ActionButtons
+                      {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: () => window.location.reload() } : {})}
+                      onSave={handleSaveAndContinue}
+                      showSubmit={false}
+                      saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                      saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                    >
+                      {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => setIsEditing(!isEditing)}
+                          sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                        >
+                          {isEditing ? "Cancel Edit" : "Edit Details"}
+                        </Button>
+                      )}
+                    </ActionButtons>
+                  </Box>
+                </Box>
+
+              </Paper>
+            </>
+          )}
 
           <PreviewModal
             open={previewMode && previewPayload}

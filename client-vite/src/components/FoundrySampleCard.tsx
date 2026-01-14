@@ -54,6 +54,7 @@ import SaclHeader from "./common/SaclHeader";
 import { appTheme, COLORS } from "../theme/appTheme";
 import { trialService } from "../services/trialService";
 import { ipService } from "../services/ipService";
+import departmentProgressService from "../services/departmentProgressService";
 import { uploadFiles } from '../services/fileUploadHelper';
 import { validateFileSizes, fileToBase64 } from '../utils/fileHelpers';
 import { useAlert } from '../hooks/useAlert';
@@ -306,8 +307,32 @@ function FoundrySampleCard() {
   const [submitted, setSubmitted] = useState(false);
   const [previewMessage, setPreviewMessage] = useState<string | null>(null);
   const [userIP, setUserIP] = useState<string>("");
+  const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
 
+  useEffect(() => {
+    const checkAssignment = async () => {
+      if (!user) return;
 
+      if (user.role === 'Admin' || user.role === 'User') {
+        setIsAssigned(true);
+        return;
+      }
+
+      if (trialIdFromUrl) {
+        try {
+          const pending = await departmentProgressService.getProgress(user.username);
+          const found = pending.find(p => p.trial_id === trialIdFromUrl);
+          setIsAssigned(!!found);
+        } catch (error) {
+          console.error("Failed to check assignment:", error);
+          setIsAssigned(false);
+        }
+      } else {
+        setIsAssigned(false);
+      }
+    };
+    checkAssignment();
+  }, [user, trialIdFromUrl]);
 
   useEffect(() => {
     if (previewMessage) { const t = setTimeout(() => setPreviewMessage(null), 4000); return () => clearTimeout(t); }
@@ -632,8 +657,18 @@ function FoundrySampleCard() {
 
           <AlertMessage alert={alert} />
 
-          {loading ? (
-            <LoadingState message="Loading trial data..." />
+          {isAssigned === false ? (
+            <EmptyState
+              title="No Pending Works"
+              description="This trial is not currently assigned to you."
+              severity="warning"
+              action={{
+                label: "Go to Dashboard",
+                onClick: () => navigate('/dashboard')
+              }}
+            />
+          ) : (loading || isAssigned === null) ? (
+            <LoadingState message={user?.role === 'Admin' || user?.role === 'User' ? "Loading master data..." : "Checking assignment..."} />
           ) : (
             <Grid container spacing={3}>
 

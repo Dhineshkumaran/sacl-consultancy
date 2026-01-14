@@ -48,6 +48,7 @@ import { AlertMessage } from './common/AlertMessage';
 import { fileToMeta, generateUid, validateFileSizes } from '../utils';
 import type { InspectionRow, GroupMetadata } from '../types/inspection';
 import DepartmentHeader from "./common/DepartmentHeader";
+import departmentProgressService from "../services/departmentProgressService";
 import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, Common, DocumentViewer } from './common';
 
 type Row = InspectionRow;
@@ -97,6 +98,29 @@ export default function McShopInspection({
   const [isEditing, setIsEditing] = useState(false);
 
   const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+  const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAssignment = async () => {
+      if (user && trialId) {
+        if (user.role === 'Admin') {
+          setIsAssigned(true);
+          return;
+        }
+        try {
+          const pending = await departmentProgressService.getProgress(user.username);
+          const found = pending.find(p => p.trial_id === trialId);
+          setIsAssigned(!!found);
+        } catch (error) {
+          console.error("Failed to check assignment:", error);
+          setIsAssigned(false);
+        }
+      } else {
+        setIsAssigned(false);
+      }
+    };
+    checkAssignment();
+  }, [user, trialId]);
 
   useEffect(() => {
     const fetchUserIP = async () => {
@@ -416,234 +440,248 @@ export default function McShopInspection({
 
           <SaclHeader />
 
-          <DepartmentHeader title="MACHINE SHOP INSPECTION" userIP={userIP} user={user} />
+          <DepartmentHeader title="MC SHOP INSPECTION" userIP={userIP} user={user} />
+          <AlertMessage alert={alert} />
 
-          <Common trialId={trialId} />
+          {isAssigned === false && (user?.role !== 'Admin') ? (
+            <EmptyState
+              title="No Pending Works"
+              description="This trial is not currently assigned to you."
+              severity="warning"
+              action={{
+                label: "Go to Dashboard",
+                onClick: () => navigate('/dashboard')
+              }}
+            />
+          ) : (
+            <>
+              <Common trialId={trialId || ""} />
 
-          <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+              <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
 
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
-              <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-              <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
-            </Box>
-            <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
-
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
+                </Box>
+                <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
 
 
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid size={{ xs: 12, md: 3 }}>
-                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
-                <TextField
-                  size="small"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  fullWidth
-                  sx={{ bgcolor: 'white' }}
-                  disabled={user?.role === 'HOD' || user?.role === 'Admin'}
-                />
-              </Grid>
 
-            </Grid>
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
+                    <TextField
+                      size="small"
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      fullWidth
+                      sx={{ bgcolor: 'white' }}
+                      disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                    />
+                  </Grid>
 
-            <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>Parameter</TableCell>
-                    {cavities.map((cav, i) => (
-                      <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>
-                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                          <TextField
-                            variant="standard"
-                            value={cav}
-                            onChange={(e) => updateCavityLabel(i, e.target.value)}
-                            InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
-                            size="small"
-                            sx={{ input: { textAlign: 'center' } }}
-                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                          />
-                          <IconButton size="small" onClick={() => removeColumn(i)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    ))}
-                    <TableCell sx={{ width: 120, bgcolor: '#f1f5f9', fontWeight: 700, textAlign: 'center' }}>Total</TableCell>
-                    <TableCell sx={{ width: 240, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
-                  </TableRow>
-                </TableHead>
+                </Grid>
 
-                <TableBody>
-                  {rows.map((r, ri) => {
-                    const isReasonRow = r.label.toLowerCase().includes("reason");
-                    return (
-                      <TableRow key={r.id}>
-                        <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r.label}</TableCell>
-
-                        {isReasonRow ? (
-                          <TableCell colSpan={cavities.length + 1}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              multiline
-                              rows={2}
-                              placeholder="Cavity wise rejection reason..."
-                              value={r.freeText ?? ""}
-                              onChange={(e) => updateReasonFreeText(r.id, e.target.value)}
-                              variant="outlined"
-                              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: 'white' } }}
-                            />
+                <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>Parameter</TableCell>
+                        {cavities.map((cav, i) => (
+                          <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>
+                            <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                              <TextField
+                                variant="standard"
+                                value={cav}
+                                onChange={(e) => updateCavityLabel(i, e.target.value)}
+                                InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
+                                size="small"
+                                sx={{ input: { textAlign: 'center' } }}
+                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                              />
+                              <IconButton size="small" onClick={() => removeColumn(i)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
                           </TableCell>
-                        ) : (
-                          <>
-                            {r.values.map((val, ci) => (
-                              <TableCell key={ci}>
+                        ))}
+                        <TableCell sx={{ width: 120, bgcolor: '#f1f5f9', fontWeight: 700, textAlign: 'center' }}>Total</TableCell>
+                        <TableCell sx={{ width: 240, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {rows.map((r, ri) => {
+                        const isReasonRow = r.label.toLowerCase().includes("reason");
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r.label}</TableCell>
+
+                            {isReasonRow ? (
+                              <TableCell colSpan={cavities.length + 1}>
                                 <TextField
                                   size="small"
                                   fullWidth
-                                  value={val ?? ""}
-                                  onChange={(e) => updateCell(r.id, ci, e.target.value)}
+                                  multiline
+                                  rows={2}
+                                  placeholder="Cavity wise rejection reason..."
+                                  value={r.freeText ?? ""}
+                                  onChange={(e) => updateReasonFreeText(r.id, e.target.value)}
                                   variant="outlined"
                                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: 'white' } }}
-                                  disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                 />
                               </TableCell>
-                            ))}
-                            <TableCell sx={{ textAlign: 'center', fontWeight: 700, bgcolor: '#f1f5f9' }}>
-                              {r.label.toLowerCase().includes("cavity details") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
-                            </TableCell>
-                          </>
-                        )}
+                            ) : (
+                              <>
+                                {r.values.map((val, ci) => (
+                                  <TableCell key={ci}>
+                                    <TextField
+                                      size="small"
+                                      fullWidth
+                                      value={val ?? ""}
+                                      onChange={(e) => updateCell(r.id, ci, e.target.value)}
+                                      variant="outlined"
+                                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: 'white' } }}
+                                      disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                    />
+                                  </TableCell>
+                                ))}
+                                <TableCell sx={{ textAlign: 'center', fontWeight: 700, bgcolor: '#f1f5f9' }}>
+                                  {r.label.toLowerCase().includes("cavity details") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
+                                </TableCell>
+                              </>
+                            )}
 
-                        {ri === 0 && (
-                          <TableCell rowSpan={rows.length} sx={{ verticalAlign: "top", bgcolor: '#fff7ed', padding: 2, minWidth: 240 }}>
-                            <Box display="flex" flexDirection="column" height="100%" gap={2}>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                multiline
-                                rows={8}
-                                placeholder="General remarks..."
-                                value={groupMeta.remarks}
-                                onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
-                                variant="outlined"
-                                sx={{ bgcolor: 'white' }}
-                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                              />
-
-                              <Box display="flex" alignItems="center" gap={1} mt="auto">
-                                <input
-                                  accept="image/*,application/pdf"
-                                  id="mcshop-attach-file"
-                                  style={{ display: "none" }}
-                                  type="file"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0] ?? null;
-                                    if (file) {
-                                      const validation = validateFileSizes([file]);
-                                      if (!validation.isValid) {
-                                        validation.errors.forEach((error: string) => showAlert('error', error));
-                                        e.target.value = '';
-                                        return;
-                                      }
-                                    }
-                                    setGroupMeta((g) => ({ ...g, attachment: file }));
-                                  }}
-                                  disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                />
-                                <label htmlFor="mcshop-attach-file">
-                                  <Button
+                            {ri === 0 && (
+                              <TableCell rowSpan={rows.length} sx={{ verticalAlign: "top", bgcolor: '#fff7ed', padding: 2, minWidth: 240 }}>
+                                <Box display="flex" flexDirection="column" height="100%" gap={2}>
+                                  <TextField
                                     size="small"
+                                    fullWidth
+                                    multiline
+                                    rows={8}
+                                    placeholder="General remarks..."
+                                    value={groupMeta.remarks}
+                                    onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
                                     variant="outlined"
-                                    component="span"
-                                    startIcon={<UploadFileIcon />}
-                                    sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
-                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                  >
-                                    Attach
-                                  </Button>
-                                </label>
-
-                                {groupMeta.attachment ? (
-                                  <Chip
-                                    icon={<InsertDriveFileIcon />}
-                                    label={groupMeta.attachment.name}
-                                    onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ maxWidth: 140 }}
+                                    sx={{ bgcolor: 'white' }}
                                     disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                   />
-                                ) : (
-                                  <Typography variant="caption" color="text.secondary">
-                                    No file attached
-                                  </Typography>
-                                )}
-                              </Box>
-                            </Box>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </Box>
 
-            <Button
-              size="small"
-              onClick={addColumn}
-              startIcon={<AddCircleIcon />}
-              sx={{ mt: 1, color: COLORS.secondary }}
-              disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-            >
-              Add Column
-            </Button>
+                                  <Box display="flex" alignItems="center" gap={1} mt="auto">
+                                    <input
+                                      accept="image/*,application/pdf"
+                                      id="mcshop-attach-file"
+                                      style={{ display: "none" }}
+                                      type="file"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0] ?? null;
+                                        if (file) {
+                                          const validation = validateFileSizes([file]);
+                                          if (!validation.isValid) {
+                                            validation.errors.forEach((error: string) => showAlert('error', error));
+                                            e.target.value = '';
+                                            return;
+                                          }
+                                        }
+                                        setGroupMeta((g) => ({ ...g, attachment: file }));
+                                      }}
+                                      disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                    />
+                                    <label htmlFor="mcshop-attach-file">
+                                      <Button
+                                        size="small"
+                                        variant="outlined"
+                                        component="span"
+                                        startIcon={<UploadFileIcon />}
+                                        sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
+                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                      >
+                                        Attach
+                                      </Button>
+                                    </label>
 
-            <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-              {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
-                <>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                    Attach PDF / Image Files
-                  </Typography>
-                  <FileUploadSection
-                    files={attachedFiles}
-                    onFilesChange={handleAttachFiles}
-                    onFileRemove={removeAttachedFile}
-                    showAlert={showAlert}
-                    label="Attach PDF"
-                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                  />
-                </>
-              )}
-              <DocumentViewer trialId={trialId || ""} category="MC_SHOP_INSPECTION" />
-            </Box>
+                                    {groupMeta.attachment ? (
+                                      <Chip
+                                        icon={<InsertDriveFileIcon />}
+                                        label={groupMeta.attachment.name}
+                                        onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ maxWidth: 140 }}
+                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                      />
+                                    ) : (
+                                      <Typography variant="caption" color="text.secondary">
+                                        No file attached
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                </Box>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </Box>
 
-
-            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                <ActionButtons
-                  {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: resetAll } : {})}
-                  onSave={handleSaveAndContinue}
-                  showSubmit={false}
-                  saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                  saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                <Button
+                  size="small"
+                  onClick={addColumn}
+                  startIcon={<AddCircleIcon />}
+                  sx={{ mt: 1, color: COLORS.secondary }}
+                  disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                 >
-                  {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => setIsEditing(!isEditing)}
-                      sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                    >
-                      {isEditing ? "Cancel Edit" : "Edit Details"}
-                    </Button>
-                  )}
-                </ActionButtons>
-              </Box>
-            </Box>
+                  Add Column
+                </Button>
 
-          </Paper>
+                <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+                  {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                    <>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                        Attach PDF / Image Files
+                      </Typography>
+                      <FileUploadSection
+                        files={attachedFiles}
+                        onFilesChange={handleAttachFiles}
+                        onFileRemove={removeAttachedFile}
+                        showAlert={showAlert}
+                        label="Attach PDF"
+                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                      />
+                    </>
+                  )}
+                  <DocumentViewer trialId={trialId || ""} category="MC_SHOP_INSPECTION" />
+                </Box>
+
+
+                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                  <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                    <ActionButtons
+                      {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: resetAll } : {})}
+                      onSave={handleSaveAndContinue}
+                      showSubmit={false}
+                      saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                      saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                    >
+                      {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => setIsEditing(!isEditing)}
+                          sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                        >
+                          {isEditing ? "Cancel Edit" : "Edit Details"}
+                        </Button>
+                      )}
+                    </ActionButtons>
+                  </Box>
+                </Box>
+
+              </Paper>
+            </>
+          )}
 
           <PreviewModal
             open={previewMode && previewPayload}

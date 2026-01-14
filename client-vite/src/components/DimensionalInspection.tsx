@@ -41,6 +41,7 @@ import SaclHeader from "./common/SaclHeader";
 import { ipService } from '../services/ipService';
 import { inspectionService } from '../services/inspectionService';
 import { uploadFiles } from '../services/fileUploadHelper';
+import departmentProgressService from "../services/departmentProgressService";
 import { COLORS, appTheme } from '../theme/appTheme';
 import { useAlert } from '../hooks/useAlert';
 import { AlertMessage } from './common/AlertMessage';
@@ -91,8 +92,29 @@ export default function DimensionalInspection({
     const [isYieldInvalid, setIsYieldInvalid] = useState(false);
 
     const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+    const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
 
-
+    useEffect(() => {
+        const checkAssignment = async () => {
+            if (user && trialId) {
+                if (user.role === 'Admin') {
+                    setIsAssigned(true);
+                    return;
+                }
+                try {
+                    const pending = await departmentProgressService.getProgress(user.username);
+                    const found = pending.find(p => p.trial_id === trialId);
+                    setIsAssigned(!!found);
+                } catch (error) {
+                    console.error("Failed to check assignment:", error);
+                    setIsAssigned(false);
+                }
+            } else {
+                setIsAssigned(false);
+            }
+        };
+        checkAssignment();
+    }, [user, trialId]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -398,211 +420,223 @@ export default function DimensionalInspection({
                     <SaclHeader />
 
                     <DepartmentHeader title="DIMENSIONAL INSPECTION" userIP={userIP} user={user} />
+                    <AlertMessage alert={alert} />
 
-                    <Common trialId={trialId} />
-
-                    <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
-
-                        <Box display="flex" alignItems="center" gap={1} mb={1}>
-                            <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-                            <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>DIMENSIONAL DETAILS</Typography>
-                        </Box>
-                        <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
-
-                        <AlertMessage alert={alert} />
-
-                        <Grid container spacing={3} sx={{ mb: 3 }}>
-                            <Grid size={{ xs: 12, md: 3 }}>
-                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
-                                <TextField
-                                    type="date"
-                                    size="small"
-                                    fullWidth
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    sx={{ bgcolor: 'white' }}
-                                    disabled={user?.role === 'HOD' || user?.role === 'Admin'}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 3 }}>
-                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Casting Weight (Kg)</Typography>
-                                <TextField
-                                    size="small"
-                                    fullWidth
-                                    placeholder="e.g. 12.5"
-                                    value={weightTarget}
-                                    onChange={(e) => setWeightTarget(e.target.value)}
-                                    sx={{ bgcolor: 'white' }}
-                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 2 }}>
-                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Bunch Weight (Kg)</Typography>
-                                <TextField
-                                    size="small"
-                                    fullWidth
-                                    placeholder="Total Bunch Wt"
-                                    value={bunchWeight}
-                                    onChange={(e) => setBunchWeight(e.target.value)}
-                                    sx={{ bgcolor: 'white' }}
-                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 2 }}>
-                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Number of Cavity</Typography>
-                                <TextField
-                                    size="small"
-                                    fullWidth
-                                    type="number"
-                                    placeholder="e.g. 4"
-                                    value={numberOfCavity}
-                                    onChange={(e) => setNumberOfCavity(e.target.value)}
-                                    sx={{ bgcolor: 'white' }}
-                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 2 }}>
-                                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Yield (%)</Typography>
-                                <TextField
-                                    size="small"
-                                    fullWidth
-                                    value={calculateYield()}
-                                    InputProps={{ readOnly: true }}
-                                    error={isYieldInvalid}
-                                    sx={{
-                                        bgcolor: isYieldInvalid ? '#ffebee' : 'white',
-                                        '& .MuiInputBase-input': { fontWeight: 700 },
-                                        '& .MuiOutlinedInput-root': {
-                                            borderColor: isYieldInvalid ? '#d32f2f' : undefined
-                                        }
-                                    }}
-                                />
-                                {isYieldInvalid && (
-                                    <Typography variant="caption" sx={{ color: '#d32f2f', mt: 0.5, display: 'block' }}>
-                                        ⚠ Yield exceeds 100%. Please adjust values.
-                                    </Typography>
-                                )}
-                            </Grid>
-                        </Grid>
-
-                        <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: COLORS.blueHeaderBg }}>
-                                        <TableCell sx={{ minWidth: 200, color: COLORS.blueHeaderText }}>Parameter</TableCell>
-                                        {cavities.map((c, ci) => (
-                                            <TableCell key={ci} sx={{ minWidth: 140 }}>
-                                                <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                                                    <TextField
-                                                        size="small"
-                                                        variant="standard"
-                                                        value={c}
-                                                        onChange={(e) => updateCavityLabel(ci, e.target.value)}
-                                                        InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
-                                                        sx={{ input: { textAlign: 'center' } }}
-                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                    />
-                                                    <IconButton size="small" onClick={() => removeCavity(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Box>
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                </TableHead>
-
-                                <TableBody>
-                                    {cavRows.map((r, ri) => (
-                                        <TableRow key={r.id}>
-                                            <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
-                                                {r.label}
-                                            </TableCell>
-                                            {r.values.map((val, ci) => (
-                                                <TableCell key={ci}>
-                                                    <TextField
-                                                        size="small"
-                                                        fullWidth
-                                                        value={val}
-                                                        onChange={(e) => updateCavCell(r.id, ci, e.target.value)}
-                                                        variant="outlined"
-                                                        sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
-                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                    />
-                                                </TableCell>
-                                            ))}
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </Box>
-
-                        <Button
-                            size="small"
-                            onClick={addCavity}
-                            startIcon={<AddCircleIcon />}
-                            sx={{ mt: 1, color: COLORS.secondary }}
-                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                        >
-                            Add Column
-                        </Button>
-
-                        <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, mt: 3 }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                                Attach PDF / Image Files
-                            </Typography>
-                            <FileUploadSection
-                                files={attachedFiles}
-                                onFilesChange={handleAttachFiles}
-                                onFileRemove={removeAttachedFile}
-                                showAlert={showAlert}
-                                label="Attach PDF"
-                            />
-                            <DocumentViewer trialId={trialId || ""} category="DIMENSIONAL_INSPECTION" />
-                        </Box>
-                    </Paper>
-
-                    <Paper sx={{ p: 3, mb: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${COLORS.primary}`, width: '100%' }}>
-                            <EditIcon sx={{ color: COLORS.primary }} />
-                            <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1 }}>
-                                Remarks
-                            </Typography>
-                        </Box>
-                        <TextField
-                            multiline
-                            rows={3}
-                            fullWidth
-                            variant="outlined"
-                            placeholder="Enter remarks..."
-                            value={remarks}
-                            onChange={(e) => setRemarks(e.target.value)}
-                            sx={{ bgcolor: '#fff' }}
-                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                    {isAssigned === false && (user?.role !== 'Admin') ? (
+                        <EmptyState
+                            title="No Pending Works"
+                            description="This trial is not currently assigned to you."
+                            severity="warning"
+                            action={{
+                                label: "Go to Dashboard",
+                                onClick: () => navigate('/dashboard')
+                            }}
                         />
-                    </Paper>
+                    ) : (
+                        <>
+                            <Common trialId={trialId} />
+                            <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+
+                                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                                    <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
+                                    <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>DIMENSIONAL DETAILS</Typography>
+                                </Box>
+                                <Divider sx={{ mb: 3, borderColor: COLORS.border }} />
+
+                                <Grid container spacing={3} sx={{ mb: 3 }}>
+                                    <Grid size={{ xs: 12, md: 3 }}>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Inspection Date</Typography>
+                                        <TextField
+                                            type="date"
+                                            size="small"
+                                            fullWidth
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
+                                            sx={{ bgcolor: 'white' }}
+                                            disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                                        />
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 3 }}>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Casting Weight (Kg)</Typography>
+                                        <TextField
+                                            size="small"
+                                            fullWidth
+                                            placeholder="e.g. 12.5"
+                                            value={weightTarget}
+                                            onChange={(e) => setWeightTarget(e.target.value)}
+                                            sx={{ bgcolor: 'white' }}
+                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                        />
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 2 }}>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Bunch Weight (Kg)</Typography>
+                                        <TextField
+                                            size="small"
+                                            fullWidth
+                                            placeholder="Total Bunch Wt"
+                                            value={bunchWeight}
+                                            onChange={(e) => setBunchWeight(e.target.value)}
+                                            sx={{ bgcolor: 'white' }}
+                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                        />
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 2 }}>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Number of Cavity</Typography>
+                                        <TextField
+                                            size="small"
+                                            fullWidth
+                                            type="number"
+                                            placeholder="e.g. 4"
+                                            value={numberOfCavity}
+                                            onChange={(e) => setNumberOfCavity(e.target.value)}
+                                            sx={{ bgcolor: 'white' }}
+                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                        />
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 2 }}>
+                                        <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>Yield (%)</Typography>
+                                        <TextField
+                                            size="small"
+                                            fullWidth
+                                            value={calculateYield()}
+                                            InputProps={{ readOnly: true }}
+                                            error={isYieldInvalid}
+                                            sx={{
+                                                bgcolor: isYieldInvalid ? '#ffebee' : 'white',
+                                                '& .MuiInputBase-input': { fontWeight: 700 },
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderColor: isYieldInvalid ? '#d32f2f' : undefined
+                                                }
+                                            }}
+                                        />
+                                        {isYieldInvalid && (
+                                            <Typography variant="caption" sx={{ color: '#d32f2f', mt: 0.5, display: 'block' }}>
+                                                ⚠ Yield exceeds 100%. Please adjust values.
+                                            </Typography>
+                                        )}
+                                    </Grid>
+                                </Grid>
+
+                                <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
+                                    <Table size="small">
+                                        <TableHead>
+                                            <TableRow sx={{ bgcolor: COLORS.blueHeaderBg }}>
+                                                <TableCell sx={{ minWidth: 200, color: COLORS.blueHeaderText }}>Parameter</TableCell>
+                                                {cavities.map((c, ci) => (
+                                                    <TableCell key={ci} sx={{ minWidth: 140 }}>
+                                                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                                                            <TextField
+                                                                size="small"
+                                                                variant="standard"
+                                                                value={c}
+                                                                onChange={(e) => updateCavityLabel(ci, e.target.value)}
+                                                                InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
+                                                                sx={{ input: { textAlign: 'center' } }}
+                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                            />
+                                                            <IconButton size="small" onClick={() => removeCavity(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Box>
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        </TableHead>
+
+                                        <TableBody>
+                                            {cavRows.map((r, ri) => (
+                                                <TableRow key={r.id}>
+                                                    <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
+                                                        {r.label}
+                                                    </TableCell>
+                                                    {r.values.map((val, ci) => (
+                                                        <TableCell key={ci}>
+                                                            <TextField
+                                                                size="small"
+                                                                fullWidth
+                                                                value={val}
+                                                                onChange={(e) => updateCavCell(r.id, ci, e.target.value)}
+                                                                variant="outlined"
+                                                                sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                            />
+                                                        </TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </Box>
+
+                                <Button
+                                    size="small"
+                                    onClick={addCavity}
+                                    startIcon={<AddCircleIcon />}
+                                    sx={{ mt: 1, color: COLORS.secondary }}
+                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                >
+                                    Add Column
+                                </Button>
+
+                                <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, mt: 3 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                                        Attach PDF / Image Files
+                                    </Typography>
+                                    <FileUploadSection
+                                        files={attachedFiles}
+                                        onFilesChange={handleAttachFiles}
+                                        onFileRemove={removeAttachedFile}
+                                        showAlert={showAlert}
+                                        label="Attach PDF"
+                                    />
+                                    <DocumentViewer trialId={trialId || ""} category="DIMENSIONAL_INSPECTION" />
+                                </Box>
+                            </Paper>
+
+                            <Paper sx={{ p: 3, mb: 3 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${COLORS.primary}`, width: '100%' }}>
+                                    <EditIcon sx={{ color: COLORS.primary }} />
+                                    <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1 }}>
+                                        Remarks
+                                    </Typography>
+                                </Box>
+                                <TextField
+                                    multiline
+                                    rows={3}
+                                    fullWidth
+                                    variant="outlined"
+                                    placeholder="Enter remarks..."
+                                    value={remarks}
+                                    onChange={(e) => setRemarks(e.target.value)}
+                                    sx={{ bgcolor: '#fff' }}
+                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                />
+                            </Paper>
 
 
-                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                            <ActionButtons
-                                {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: resetAll } : {})}
-                                onSave={handleSaveAndContinue}
-                                showSubmit={false}
-                                saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                                saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
-                            >
-                                {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => setIsEditing(!isEditing)}
-                                        sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                            <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                                    <ActionButtons
+                                        {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: resetAll } : {})}
+                                        onSave={handleSaveAndContinue}
+                                        showSubmit={false}
+                                        saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                                        saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
                                     >
-                                        {isEditing ? "Cancel Edit" : "Edit Details"}
-                                    </Button>
-                                )}
-                            </ActionButtons>
-                        </Box>
-                    </Box>
+                                        {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => setIsEditing(!isEditing)}
+                                                sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                                            >
+                                                {isEditing ? "Cancel Edit" : "Edit Details"}
+                                            </Button>
+                                        )}
+                                    </ActionButtons>
+                                </Box>
+                            </Box>
+                        </>
+                    )}
 
                     <PreviewModal
                         open={previewMode && previewPayload}
