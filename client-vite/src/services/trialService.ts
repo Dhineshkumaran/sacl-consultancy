@@ -156,14 +156,14 @@ export const trialService = {
      * @param trialIds - Array of trial IDs to delete
      * @returns Promise resolving to API response
      */
-    async deleteTrialReports(trialIds: string[]): Promise<any> {
+    async deleteTrialReport(trialId: string): Promise<any> {
         try {
             return await apiService.request('/trial/delete-reports', {
                 method: 'DELETE',
-                body: JSON.stringify({ trial_ids: trialIds })
+                body: JSON.stringify({ trial_id: trialId })
             });
         } catch (error) {
-            console.error('Failed to delete trial reports:', error);
+            console.error('Failed to delete trial report:', error);
             throw error;
         }
     },

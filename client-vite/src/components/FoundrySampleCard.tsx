@@ -297,7 +297,7 @@ function FoundrySampleCard() {
   const [editingOnlyMetallurgical, setEditingOnlyMetallurgical] = useState<boolean>(false);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [assigned, setAssigned] = useState<boolean | null>(null);
+
 
   const trialIdFromUrl = new URLSearchParams(window.location.search).get('trial_id') || "";
 
@@ -383,15 +383,11 @@ function FoundrySampleCard() {
               setSelectedPart(matchingPart);
               setSelectedPattern(matchingPart);
             }
-            setAssigned(true);
           }
         } catch (error) {
           console.error("Failed to fetch trial data for HOD:", error);
           showAlert("error", "Failed to load existing trial data.");
-          setAssigned(false);
         }
-      } else if (user?.role === 'HOD' || user?.role === 'Admin') {
-        setAssigned(false);
       }
     };
     if (trialIdFromUrl && masterParts.length > 0) fetchTrialDataForHOD();
@@ -638,10 +634,6 @@ function FoundrySampleCard() {
 
           {loading ? (
             <LoadingState message="Loading trial data..." />
-          ) : user?.role === 'HOD' || user?.role === 'Admin' && assigned === null ? (
-            <LoadingState message="Checking assigned work..." />
-          ) : user?.role === 'HOD' || user?.role === 'Admin' && !assigned ? (
-            <EmptyState title="No pending works at the moment" severity="warning" />
           ) : (
             <Grid container spacing={3}>
 
@@ -1064,7 +1056,7 @@ function FoundrySampleCard() {
           </PreviewModal>
 
           {/* Show these sections only when not in empty state for HOD */}
-          {!(user?.role === 'HOD' || user?.role === 'Admin' && !assigned) && !loading && (
+          {!loading && (
             <React.Fragment>
               <Paper sx={{ overflowX: "auto", mb: 3, p: 2 }}>
                 <Table size="small" sx={{ minWidth: 900 }}>

@@ -166,26 +166,23 @@ export const updateTrial = async (req, res, next) => {
 };
 
 export const deleteTrialReports = async (req, res, next) => {
-    const { trial_ids } = req.body;
+    const { trial_id } = req.body;
 
-    if (!trial_ids || !Array.isArray(trial_ids) || trial_ids.length === 0) {
-        return res.status(400).json({ success: false, message: 'No trial IDs provided for deletion.' });
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'No trial ID provided for deletion.' });
     }
 
-    const placeholders = trial_ids.map((_, i) => `@id${i}`).join(', ');
-    const params = trial_ids.reduce((acc, id, i) => ({ ...acc, [`id${i}`]: id }), {});
+    const sql = `DELETE FROM trial_reports WHERE trial_id = @trial_id`;
 
-    const sql = `DELETE FROM trial_reports WHERE trial_id IN (${placeholders})`;
-
-    await Client.query(sql, params);
+    await Client.query(sql, { trial_id });
 
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
     await Client.query(audit_sql, {
         user_id: req.user.user_id,
         department_id: req.user.department_id,
-        action: 'Trial reports deleted',
-        remarks: `Trial reports deleted by ${req.user.username}: ${trial_ids.join(', ')}`
+        action: 'Trial report deleted',
+        remarks: `Trial report deleted by ${req.user.username}: ${trial_id}`
     });
 
-    res.status(200).json({ success: true, message: 'Trial reports deleted successfully.' });
+    res.status(200).json({ success: true, message: 'Trial report deleted successfully.' });
 };

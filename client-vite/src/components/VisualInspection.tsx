@@ -513,7 +513,7 @@ export default function VisualInspection({
             await Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Visual inspection updated successfully.'
+                text: 'Visual inspection created successfully.'
             });
             navigate('/dashboard');
         } catch (err: any) {
