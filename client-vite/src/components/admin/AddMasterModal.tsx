@@ -146,9 +146,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             // Tensile Parsing
             let tensileStr = '', yieldStr = '', elongStr = '';
             if (initialData.tensile) {
-                // Heuristic: specific split for known formats or space split for simple '1 1 1'
-                const parts = initialData.tensile.trim().split(/\s+(?=\d)/); // Split on space followed by digit is risky?
-                // Simple space split
                 const simpleParts = initialData.tensile.trim().split(' ');
 
                 if (simpleParts.length === 3) {
@@ -156,9 +153,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                     yieldStr = simpleParts[1];
                     elongStr = simpleParts[2];
                 } else {
-                    // Fallback: put everything in tensile or try to be smarter
-                    // Usage of regex to identify common patterns? 
-                    // For now, let's just dump it in first field if ambiguous, or try 3 parts
                     tensileStr = initialData.tensile;
                 }
             }
@@ -189,7 +183,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 const mpiPart = parts.find((p: string) => p.trim().startsWith('MPI:'));
                 if (xrayPart) xrayVal = xrayPart.replace('X-Ray:', '').trim();
                 if (mpiPart) mpiVal = mpiPart.replace('MPI:', '').trim();
-                if (!xrayPart && !mpiPart && parts.length === 1) xrayVal = initialData.xray; // Fallback
+                if (!xrayPart && !mpiPart && parts.length === 1) xrayVal = initialData.xray;
             }
 
             setFormData({

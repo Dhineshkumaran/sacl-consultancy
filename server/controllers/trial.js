@@ -32,6 +32,12 @@ export const createTrial = async (req, res, next) => {
             remarks: remarks || null
         });
 
+        if(trial_type == 'MACHINING - CUSTOMER END'){
+            await trx.query('UPDATE department_flow SET department_id=3 WHERE sequence_no=9');
+        } else {
+            await trx.query('UPDATE department_flow SET department_id=8 WHERE sequence_no=9');
+        }
+
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
         await trx.query(audit_sql, {
             user_id: req.user.user_id,
@@ -91,7 +97,6 @@ export const updateTrial = async (req, res, next) => {
         trial_type,
         material_grade,
         date_of_sampling,
-        no_of_moulds,
         plan_moulds,
         actual_moulds,
         reason_for_sampling,
@@ -108,8 +113,6 @@ export const updateTrial = async (req, res, next) => {
     }
 
     const mouldJson = mould_correction ? JSON.stringify(mould_correction) : null;
-    const moulds = no_of_moulds || plan_moulds;
-
 
     await Client.transaction(async (trx) => {
         if (is_edit) {
@@ -119,7 +122,6 @@ export const updateTrial = async (req, res, next) => {
                 trial_type = COALESCE(@trial_type, trial_type),
                 material_grade = COALESCE(@material_grade, material_grade),
                 date_of_sampling = COALESCE(@date_of_sampling, date_of_sampling),
-                no_of_moulds = COALESCE(@no_of_moulds, no_of_moulds),
                 plan_moulds = COALESCE(@plan_moulds, plan_moulds),
                 actual_moulds = COALESCE(@actual_moulds, actual_moulds),
                 reason_for_sampling = COALESCE(@reason_for_sampling, reason_for_sampling),
@@ -136,7 +138,6 @@ export const updateTrial = async (req, res, next) => {
                 trial_type,
                 material_grade,
                 date_of_sampling,
-                no_of_moulds: moulds,
                 plan_moulds,
                 actual_moulds,
                 reason_for_sampling,
@@ -147,6 +148,12 @@ export const updateTrial = async (req, res, next) => {
                 remarks,
                 trial_id
             });
+
+            if(trial_type == 'MACHINING - CUSTOMER END'){
+                await trx.query('UPDATE department_flow SET department_id=3 WHERE sequence_no=9');
+            } else {
+                await trx.query('UPDATE department_flow SET department_id=8 WHERE sequence_no=9');
+            }
 
             const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
             await trx.query(audit_sql, {

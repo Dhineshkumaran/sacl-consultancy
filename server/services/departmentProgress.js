@@ -136,10 +136,7 @@ export const updateDepartment = async (trial_id, user, trx) => {
         await approveProgress(current_department_id, trial_id, user, trx);
         return;
     }
-    let next_department_id = rows[0].next_department_id;
-    if(next_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END'){
-        next_department_id = 3;
-    }
+    const next_department_id = rows[0].next_department_id;
 
     return await assignToNextDepartmentUser(current_department_id, trial_id, next_department_id, user, trx);
 };
@@ -217,10 +214,7 @@ export const updateRole = async (trial_id, user, trx) => {
             await approveProgress(current_department_id, trial_id, user, trx);
             return;
         }
-        let next_department_id = rows[0].next_department_id;
-        if(next_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END'){
-            next_department_id = 3;
-        }
+        const next_department_id = rows[0].next_department_id;
 
         return await assignToNextDepartmentUser(current_department_id, trial_id, next_department_id, user, trx);
     }

@@ -75,9 +75,8 @@ CREATE TABLE trial_cards (
     trial_type VARCHAR(50) NOT NULL DEFAULT 'NPD',  
     initiated_by VARCHAR(50) NOT NULL,
     date_of_sampling DATE NOT NULL,
-    no_of_moulds INT CHECK (no_of_moulds > 0),
-    plan_moulds INT,
-    actual_moulds INT,
+    plan_moulds INT CHECK (plan_moulds > 0),
+    actual_moulds INT CHECK (actual_moulds > 0),
     reason_for_sampling NVARCHAR(MAX),
     status VARCHAR(30) NOT NULL DEFAULT 'CREATED',
     tooling_modification NVARCHAR(MAX),
@@ -87,6 +86,7 @@ CREATE TABLE trial_cards (
     sample_traceability VARCHAR(50),
     mould_correction NVARCHAR(MAX),
     CONSTRAINT chk_trial_status CHECK (status IN ('CREATED', 'IN_PROGRESS', 'CLOSED')),
+    CONSTRAINT chk_trial_type CHECK (trial_type IN ('INHOUSE MACHINING(NPD)', 'INHOUSE MACHINING(REGULAR)', 'MACHINING - CUSTOMER END')),
     FOREIGN KEY (current_department_id) REFERENCES departments(department_id),
     FOREIGN KEY (pattern_code) REFERENCES master_card(pattern_code)
 );
@@ -248,7 +248,7 @@ CREATE TABLE users (
     email VARCHAR(100) DEFAULT NULL,
     department_id INT DEFAULT NULL,
     role VARCHAR(20) NOT NULL,
-    machine_shop_user_type VARCHAR(50) DEFAULT 'N/A', --ALTER TABLE users ADD COLUMN machine_shop_user_type VARCHAR(50) DEFAULT 'N/A';
+    machine_shop_user_type VARCHAR(50) DEFAULT 'N/A',
     is_active BIT DEFAULT 1,
     created_at DATETIME2 NULL DEFAULT GETDATE(),
     last_login DATETIME2 NULL DEFAULT NULL,
@@ -256,6 +256,7 @@ CREATE TABLE users (
     PRIMARY KEY (user_id),
     CONSTRAINT ux_username UNIQUE (username),
     CONSTRAINT users_chk_1 CHECK (role IN ('User','HOD','Admin')),
+    CONSTRAINT users_chk_2 CHECK (machine_shop_user_type IN ('N/A','NPD','REGULAR')),
     FOREIGN KEY (department_id) REFERENCES departments(department_id)
 );
 GO
