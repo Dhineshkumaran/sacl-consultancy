@@ -32,7 +32,7 @@ export const createDepartmentProgress = async (trial_id, user, part_name, trx) =
     }
 };
 
-const assignToNextDepartmentUser = async (current_department_id, next_sequence_no, trial_id, next_department_id, user, trx) => {
+const assignToNextDepartmentUser = async (current_department_id, trial_id, trial_type, next_department_id, user, trx) => {
     await trx.query(
         `UPDATE department_progress SET completed_at = @completed_at, approval_status = @approval_status, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id`,
         { department_id: current_department_id, trial_id, completed_at: new Date(), approval_status: 'approved', remarks: `Approved by ${user.role}` }
@@ -46,10 +46,28 @@ const assignToNextDepartmentUser = async (current_department_id, next_sequence_n
         action: 'Department progress completed',
         remarks: `Department progress for trial ${trial_id} completed by ${user.username} at ${user.department_name} department`
     });
-    const next_department_user_result = await trx.query(
-        `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1`,
-        { next_department_id }
-    );
+    
+    let next_department_user_result;
+    if(next_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END'){
+        next_department_user_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = 3 AND role = 'User' AND is_active = 1`,
+        );
+    } else if(next_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)'){
+        next_department_user_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
+            { next_department_id }
+        );
+    } else if(next_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)'){
+        next_department_user_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
+            { next_department_id }
+        );
+    } else {
+        next_department_user_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1`,
+            { next_department_id }
+        );
+    }
     const [next_department_user] = next_department_user_result;
 
     if (!next_department_user) {
@@ -64,8 +82,8 @@ const assignToNextDepartmentUser = async (current_department_id, next_sequence_n
     );
 
     await trx.query(
-        `UPDATE trial_cards SET current_department_id = @next_department_id, current_sequence_no = @next_sequence_no, status = 'IN_PROGRESS' WHERE trial_id = @trial_id`,
-        { next_department_id, next_sequence_no, trial_id }
+        `UPDATE trial_cards SET current_department_id = @next_department_id, status = 'IN_PROGRESS' WHERE trial_id = @trial_id`,
+        { next_department_id, trial_id }
     );
 
     const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
@@ -102,12 +120,12 @@ const assignToNextDepartmentUser = async (current_department_id, next_sequence_n
 
 export const updateDepartment = async (trial_id, user, trx) => {
     const [currentDepartment] = await trx.query(
-        `SELECT current_department_id, current_sequence_no FROM trial_cards WHERE trial_id = @trial_id`,
+        `SELECT current_department_id, trial_type FROM trial_cards WHERE trial_id = @trial_id`,
         { trial_id }
     );
 
     const current_department_id = currentDepartment[0].current_department_id;
-    const current_sequence_no = currentDepartment[0].current_sequence_no;
+    const trial_type = currentDepartment[0].trial_type;
 
     await trx.query(
         `UPDATE department_progress SET completed_at = @completed_at, approval_status = @approval_status, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id`,
@@ -124,12 +142,12 @@ export const updateDepartment = async (trial_id, user, trx) => {
     });
 
     const [rows] = await trx.query(
-        `SELECT df2.department_id AS next_department_id, df2.sequence_no AS next_sequence_no
+        `SELECT df2.department_id AS next_department_id
             FROM department_flow df1
             JOIN department_flow df2
             ON df2.sequence_no = df1.sequence_no + 1
-            WHERE df1.sequence_no = @currentSequenceNo`,
-        { currentSequenceNo: current_sequence_no }
+            WHERE df1.department_id = @currentDepartmentId`,
+        { currentDepartmentId: current_department_id }
     );
 
     if (!rows || rows.length === 0) {
@@ -137,9 +155,8 @@ export const updateDepartment = async (trial_id, user, trx) => {
         return;
     }
     const next_department_id = rows[0].next_department_id;
-    const next_sequence_no = rows[0].next_sequence_no;
 
-    return await assignToNextDepartmentUser(current_department_id, next_sequence_no, trial_id, next_department_id, user, trx);
+    return await assignToNextDepartmentUser(current_department_id, trial_id, trial_type, next_department_id, user, trx);
 };
 
 export const updateRole = async (trial_id, user, trx) => {
@@ -152,15 +169,36 @@ export const updateRole = async (trial_id, user, trx) => {
         remarks: `Department progress for trial ${trial_id} updated by ${user.username} in ${user.department_name} department`
     });
     const [currentDepartment] = await trx.query(
-        `SELECT current_department_id, current_sequence_no FROM trial_cards WHERE trial_id = @trial_id`,
+        `SELECT current_department_id, trial_type FROM trial_cards WHERE trial_id = @trial_id`,
         { trial_id }
     );
     const current_department_id = currentDepartment[0].current_department_id;
-    const current_sequence_no = currentDepartment[0].current_sequence_no;
-    const [current_department_hod] = await trx.query(
-        `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1`,
-        { current_department_id }
-    );
+    const trial_type = currentDepartment[0].trial_type;
+
+    let current_department_hod_result;
+    if(current_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END'){
+        current_department_hod_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = 3 AND role = 'HOD' AND is_active = 1`,
+        );
+    } else if(current_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)'){
+        current_department_hod_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
+            { current_department_id }
+        );
+    } else if(current_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)'){
+        current_department_hod_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
+            { current_department_id }
+        );
+    } else {
+        current_department_hod_result = await trx.query(
+            `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1`,
+            { current_department_id }
+        );
+    }
+
+    const [current_department_hod] = current_department_hod_result;
+
     if (current_department_hod && current_department_hod.length > 0) {
         const current_department_hod_username = current_department_hod[0].username;
         await trx.query(
@@ -203,12 +241,12 @@ export const updateRole = async (trial_id, user, trx) => {
         return "Department progress updated successfully";
     } else {
         const [rows] = await trx.query(
-            `SELECT df2.department_id AS next_department_id, df2.sequence_no AS next_sequence_no
+            `SELECT df2.department_id AS next_department_id
                 FROM department_flow df1
                 JOIN department_flow df2
                 ON df2.sequence_no = df1.sequence_no + 1
-                WHERE df1.sequence_no = @currentSequenceNo`,
-            { currentSequenceNo: current_sequence_no }
+                WHERE df1.department_id = @currentDepartmentId`,
+            { currentDepartmentId: current_department_id }
         );
 
         if (!rows || rows.length === 0) {
@@ -216,9 +254,8 @@ export const updateRole = async (trial_id, user, trx) => {
             return;
         }
         const next_department_id = rows[0].next_department_id;
-        const next_sequence_no = rows[0].next_sequence_no;
 
-        return await assignToNextDepartmentUser(current_department_id, next_sequence_no, trial_id, next_department_id, user, trx);
+        return await assignToNextDepartmentUser(current_department_id, trial_id, trial_type, next_department_id, user, trx);
     }
 };
 

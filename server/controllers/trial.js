@@ -33,12 +33,6 @@ export const createTrial = async (req, res, next) => {
             remarks: remarks || null
         });
 
-        if(trial_type == 'MACHINING - CUSTOMER END'){
-            await trx.query('UPDATE department_flow SET department_id=3 WHERE sequence_no=9');
-        } else {
-            await trx.query('UPDATE department_flow SET department_id=8 WHERE sequence_no=9');
-        }
-
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
         await trx.query(audit_sql, {
             user_id: req.user.user_id,
@@ -149,12 +143,6 @@ export const updateTrial = async (req, res, next) => {
                 remarks,
                 trial_id
             });
-
-            if(trial_type == 'MACHINING - CUSTOMER END'){
-                await trx.query('UPDATE department_flow SET department_id=3 WHERE sequence_no=9');
-            } else {
-                await trx.query('UPDATE department_flow SET department_id=8 WHERE sequence_no=9');
-            }
 
             const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
             await trx.query(audit_sql, {

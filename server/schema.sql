@@ -82,7 +82,6 @@ CREATE TABLE trial_cards (
     tooling_modification NVARCHAR(MAX),
     remarks NVARCHAR(MAX),
     current_department_id INT,
-    current_sequence_no INT,
     disa VARCHAR(50),
     sample_traceability VARCHAR(50),
     mould_correction NVARCHAR(MAX),
