@@ -82,6 +82,7 @@ CREATE TABLE trial_cards (
     tooling_modification NVARCHAR(MAX),
     remarks NVARCHAR(MAX),
     current_department_id INT,
+    current_sequence_no INT,
     disa VARCHAR(50),
     sample_traceability VARCHAR(50),
     mould_correction NVARCHAR(MAX),
@@ -371,21 +372,21 @@ GO
 
 CREATE TABLE department_flow (
     id INT PRIMARY KEY IDENTITY,
-    department_name VARCHAR(50),
     department_id INT,
     sequence_no INT,
+    CONSTRAINT uq_department_flow_sequence UNIQUE(sequence_no),
     FOREIGN KEY (department_id) REFERENCES departments(department_id)
 );
 GO
 
-INSERT INTO department_flow(department_name, department_id, sequence_no) VALUES
-('NPD METHODS', 2, 1),
-('NPD QC', 3, 2),
-('SANDPLANT', 4, 4),
-('FETTLING & VISUAL INSPECTION', 5, 7),
-('MOULDING', 6, 5),
-('PROCESS CONTROL(QC)', 7, 3),
-('MACHINESHOP', 8, 9),
-('METALLURGICAL INSPECTION(QC)', 9, 6),
-('QA', 10, 8);
+INSERT INTO department_flow(department_id, sequence_no) VALUES
+(2, 1),
+(3, 2),
+(4, 4),
+(5, 7),
+(6, 5),
+(7, 3),
+(8, 9),
+(9, 6),
+(10, 8);
 GO

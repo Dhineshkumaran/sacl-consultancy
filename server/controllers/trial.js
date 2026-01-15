@@ -11,7 +11,7 @@ export const createTrial = async (req, res, next) => {
     const mouldJson = JSON.stringify(mould_correction);
 
     await Client.transaction(async (trx) => {
-        const sql = 'INSERT INTO trial_cards (trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, disa, sample_traceability, mould_correction, tooling_modification, remarks) VALUES (@trial_id, @part_name, @pattern_code, @trial_type, @material_grade, @initiated_by, @date_of_sampling, @plan_moulds, @actual_moulds, @reason_for_sampling, @status, @current_department_id, @disa, @sample_traceability, @mould_correction, @tooling_modification, @remarks)';
+        const sql = 'INSERT INTO trial_cards (trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, current_department_id, current_sequence_no, disa, sample_traceability, mould_correction, tooling_modification, remarks) VALUES (@trial_id, @part_name, @pattern_code, @trial_type, @material_grade, @initiated_by, @date_of_sampling, @plan_moulds, @actual_moulds, @reason_for_sampling, @status, @current_department_id, @current_sequence_no, @disa, @sample_traceability, @mould_correction, @tooling_modification, @remarks)';
         await trx.query(sql, {
             trial_id,
             part_name,
@@ -25,6 +25,7 @@ export const createTrial = async (req, res, next) => {
             reason_for_sampling,
             status: status || 'CREATED',
             current_department_id: 2,
+            current_sequence_no: 1,
             disa,
             sample_traceability,
             mould_correction: mouldJson,

@@ -19,6 +19,10 @@ export const createUser = async (req, res, next) => {
     if (!username || !password || !full_name || !department_id || !role) {
         throw new CustomError('Missing required fields', 400);
     }
+    const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE username = @username', { username });
+    if (existing && existing.length > 0) {
+        throw new CustomError('Username already in use', 409);
+    }
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
     const hash = await bcrypt.hash(password, saltRounds);
     const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role) VALUES (@username, @full_name, @password_hash, @department_id, @role)';
