@@ -2,7 +2,7 @@
 
 ->Use comments consistently or remove if unnecessary through out the project
 
-->Update remarks and actions consistently in all departments
+->Remove boiler plate codes
 
 ->Create a readme for the project
 
@@ -10,10 +10,12 @@
 
 ->Create a log file
 
-->Add machine_shop_type NPD, REGULAR, INHOUSE_MACHINING
-
 ->Make all fields mandatory in frontend
 
-->If machine shop ask three different types
+->If machine shop ask two different types
 
 ->Remove delete option in master card
+
+->The basic information should be showing always in all forms 
+
+->Reason for rejection cavity wise in machine shop department
