@@ -18,23 +18,22 @@ export const getProgress = async (req, res, next) => {
 export const getCompletedTrials = async (req, res, next) => {
     const [result] = await Client.query(
         `SELECT DISTINCT 
-            a.trial_id,
-            a.department_id,
-            a.action_timestamp as completed_at,
-            a.remarks,
+            dp.trial_id,
+            dp.department_id,
+            dp.completed_at,
+            dp.remarks,
             d.department_name,
             t.part_name,
             t.pattern_code,
             t.disa,
             t.date_of_sampling,
             t.status
-         FROM audit_log a
-         JOIN trial_cards t ON a.trial_id = t.trial_id
-         JOIN departments d ON a.department_id = d.department_id
-         WHERE a.department_id = @department_id 
-         AND (a.action = 'Department progress approved' OR a.action = 'Department progress completed')
-         AND a.trial_id IS NOT NULL
-         ORDER BY a.action_timestamp DESC`,
+         FROM department_progress dp
+         JOIN trial_cards t ON dp.trial_id = t.trial_id
+         JOIN departments d ON dp.department_id = d.department_id
+         WHERE dp.department_id = @department_id 
+         AND (dp.approval_status = 'approved')
+         ORDER BY dp.completed_at DESC`,
         { department_id: req.user.department_id }
     );
 

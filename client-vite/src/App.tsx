@@ -76,7 +76,7 @@ const AppRoutes: React.FC = () => {
       } />
 
       <Route path="/mc-shop" element={
-        <ProtectedRoute requiredDepartment={[1, 8]}><McShopInspection /></ProtectedRoute>
+        <ProtectedRoute requiredDepartment={[1, 8, 3]}><McShopInspection /></ProtectedRoute>
       } />
 
       <Route path="/foundry-sample-card" element={
