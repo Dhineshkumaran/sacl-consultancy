@@ -89,10 +89,10 @@ app.use('/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
 
-// app.all('*', (req, res, next)=>{
-//     const err = new CustomError(`Can't find the ${req.originalUrl} on the server!`, 404);
-//     next(err);
-// });
+app.all(/(.*)/, (req, res, next) => {
+  const err = new CustomError(`Can't find the ${req.originalUrl} on the server!`, 404);
+  next(err);
+});
 
 app.use((error, req, res, next) => {
   logger.error(`Error: ${error.message}`, {
@@ -122,4 +122,9 @@ const port = process.env.PORT || 3000;
 
 app.listen(port, async () => {
   console.log(`Server is listening on port ${port}`);
+});
+
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received. Shutting down...");
+  process.exit(0);
 });
