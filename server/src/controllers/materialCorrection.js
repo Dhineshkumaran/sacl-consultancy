@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 
 import { updateDepartment, updateRole } from '../services/departmentProgress.js';
+import logger from '../config/logger.js';
 
 export const createMaterialCorrection = async (req, res, next) => {
     const { trial_id, chemical_composition, process_parameters, remarks } = req.body || {};
@@ -22,10 +23,12 @@ export const createMaterialCorrection = async (req, res, next) => {
             action: 'Material correction created',
             remarks: `Material correction ${trial_id} created by ${req.user.username} with trial id ${trial_id}`
         });
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateRole(trial_id, req.user, trx);
         }
     });
+
+    logger.info('Material correction created', { trial_id, createdBy: req.user.username });
 
     res.status(201).json({
         success: true,
@@ -66,8 +69,9 @@ export const updateMaterialCorrection = async (req, res, next) => {
                 action: 'Material correction updated',
                 remarks: `Material correction ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`
             });
+            logger.info('Material correction updated', { trial_id, updatedBy: req.user.username });
         }
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
         }
     });

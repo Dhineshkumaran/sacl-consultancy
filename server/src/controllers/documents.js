@@ -1,4 +1,5 @@
 import Client from '../config/connection.js';
+import logger from '../config/logger.js';
 
 export const uploadDocument = async (req, res, next) => {
     const { trial_id, document_type, file_name, file_base64, remarks } = req.body;
@@ -14,6 +15,9 @@ export const uploadDocument = async (req, res, next) => {
         action: 'Document uploaded',
         remarks: `Document ${file_name} uploaded by ${req.user.username} with trial id ${trial_id} for ${document_type}`
     });
+
+    logger.info('Document uploaded', { trial_id, document_type, file_name, uploadedBy: req.user.username });
+
     res.status(201).json({
         message: "Document uploaded successfully.",
         success: true

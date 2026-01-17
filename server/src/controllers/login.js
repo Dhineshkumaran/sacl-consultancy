@@ -3,6 +3,7 @@ import Client from '../config/connection.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import CustomError from '../utils/customError.js';
+import logger from '../config/logger.js';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ export const login = async (req, res, next) => {
     const { username, password } = req.body || {};
 
     if (!username || !password) {
+        logger.warn('Login failed: Missing credentials');
         return next(new CustomError('Username and password are required', 400));
     }
 
@@ -35,6 +37,7 @@ export const login = async (req, res, next) => {
         const [rows] = await Client.query('SELECT TOP 1 * FROM users WHERE username = @username', { username });
 
         if (!rows || rows.length === 0) {
+            logger.warn('Login failed: Invalid credentials', { username });
             return next(new CustomError('Invalid credentials', 401));
         }
 
@@ -45,6 +48,7 @@ export const login = async (req, res, next) => {
             if (deptRows && deptRows.length > 0) {
                 user.department = deptRows[0].department_name;
             } else {
+                logger.warn('Login failed: Invalid department', { username, department_id: user.department_id });
                 return next(new CustomError('Invalid department', 400));
             }
         }
@@ -52,6 +56,7 @@ export const login = async (req, res, next) => {
         const match = await bcrypt.compare(password, user.password_hash);
 
         if (!match) {
+            logger.warn('Login failed: Password mismatch', { username });
             return next(new CustomError('Invalid credentials', 401));
         }
 
@@ -69,6 +74,8 @@ export const login = async (req, res, next) => {
             action: 'Login',
             remarks: `User ${user.username} logged in with IP ${req.ip}`
         });
+
+        logger.info('User logged in successfully', { userId: user.user_id, username: user.username });
 
         return res.status(200).json({
             success: true,
@@ -90,6 +97,7 @@ export const login = async (req, res, next) => {
         });
 
     } catch (err) {
+        logger.error('Server error during login', err);
         return next(new CustomError('Server error during login', 500));
     }
 };

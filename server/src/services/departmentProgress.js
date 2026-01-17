@@ -46,18 +46,18 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
         action: 'Department progress completed',
         remarks: `Department progress for trial ${trial_id} completed by ${user.username} at ${user.department_name} department`
     });
-    
+
     let next_department_user_result;
-    if(next_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END'){
+    if (next_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END') {
         next_department_user_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'User' AND is_active = 1`,
         );
-    } else if(next_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)'){
+    } else if (next_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)') {
         next_department_user_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
             { next_department_id }
         );
-    } else if(next_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)'){
+    } else if (next_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)') {
         next_department_user_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
             { next_department_id }
@@ -110,7 +110,7 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
         `,
         attachments: [{
             filename: 'SACL-LOGO-01.jpg',
-            path: path.resolve(__dirname, '../assets/SACL-LOGO-01.jpg'),
+            path: path.resolve(__dirname, '../../assets/SACL-LOGO-01.jpg'),
             cid: 'sacllogo'
         }]
     };
@@ -176,16 +176,16 @@ export const updateRole = async (trial_id, user, trx) => {
     const trial_type = currentDepartment[0].trial_type;
 
     let current_department_hod_result;
-    if(current_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END'){
+    if (current_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END') {
         current_department_hod_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'HOD' AND is_active = 1`,
         );
-    } else if(current_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)'){
+    } else if (current_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)') {
         current_department_hod_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
             { current_department_id }
         );
-    } else if(current_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)'){
+    } else if (current_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)') {
         current_department_hod_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
             { current_department_id }
@@ -233,7 +233,7 @@ export const updateRole = async (trial_id, user, trx) => {
             `,
             attachments: [{
                 filename: 'SACL-LOGO-01.jpg',
-                path: path.resolve(__dirname, '../assets/SACL-LOGO-01.jpg'),
+                path: path.resolve(__dirname, '../../assets/SACL-LOGO-01.jpg'),
                 cid: 'sacllogo'
             }]
         };

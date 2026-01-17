@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 
 import { updateDepartment, updateRole } from '../services/departmentProgress.js';
+import logger from '../config/logger.js';
 
 export const createSandProperties = async (req, res, next) => {
     const { trial_id, date, t_clay, a_clay, vcm, loi, afs, gcs, moi, compactability, permeability, remarks } = req.body || {};
@@ -21,10 +22,12 @@ export const createSandProperties = async (req, res, next) => {
             action: 'Sand properties created',
             remarks: `Sand properties ${trial_id} created by ${req.user.username} with trial id ${trial_id}`
         });
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateRole(trial_id, req.user, trx);
         }
     });
+
+    logger.info('Sand properties created', { trial_id, createdBy: req.user.username });
 
     res.status(201).json({ success: true, message: 'Sand properties created successfully.' });
 };
@@ -37,7 +40,7 @@ export const updateSandProperties = async (req, res, next) => {
     }
 
     await Client.transaction(async (trx) => {
-        if(is_edit){
+        if (is_edit) {
             const sql = `UPDATE sand_properties SET 
                 date = COALESCE(@date, date),
                 t_clay = COALESCE(@t_clay, t_clay),
@@ -75,8 +78,9 @@ export const updateSandProperties = async (req, res, next) => {
                 action: 'Sand properties updated',
                 remarks: `Sand properties ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`
             });
+            logger.info('Sand properties updated', { trial_id, updatedBy: req.user.username });
         }
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
         }
     });

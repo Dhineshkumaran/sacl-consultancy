@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 
 import { updateDepartment, updateRole } from '../services/departmentProgress.js';
+import logger from '../config/logger.js';
 
 export const createCorrection = async (req, res, next) => {
     const { trial_id, mould_thickness, compressability, squeeze_pressure, mould_hardness, remarks, date } = req.body || {};
@@ -20,10 +21,12 @@ export const createCorrection = async (req, res, next) => {
             action: 'Mould correction created',
             remarks: `Mould correction ${trial_id} created by ${req.user.username} with trial id ${trial_id}`
         });
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateRole(trial_id, req.user, trx);
         }
     });
+
+    logger.info('Mould correction created', { trial_id, createdBy: req.user.username });
 
     res.status(201).json({ success: true, message: 'Mould correction created successfully.' });
 };
@@ -63,9 +66,10 @@ export const updateCorrection = async (req, res, next) => {
             action: 'Mould correction updated',
             remarks: `Mould correction ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`
         });
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
         }
+        logger.info('Mould correction updated', { trial_id, updatedBy: req.user.username });
     });
 
     res.status(201).json({

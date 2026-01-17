@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 
 import { updateDepartment, updateRole } from '../services/departmentProgress.js';
+import logger from '../config/logger.js';
 
 export const createMachineShop = async (req, res, next) => {
     const { trial_id, inspection_date, inspections, remarks } = req.body || {};
@@ -20,11 +21,13 @@ export const createMachineShop = async (req, res, next) => {
             trial_id,
             action: 'Machine shop created',
             remarks: `Machine shop ${trial_id} created by ${req.user.username} with trial id ${trial_id}`
-        });        
-        if(req.user.role !== 'Admin'){
+        });
+        if (req.user.role !== 'Admin') {
             await updateRole(trial_id, req.user, trx);
         }
     });
+
+    logger.info('Machine shop created', { trial_id, createdBy: req.user.username });
 
     res.status(201).json({
         success: true,
@@ -40,7 +43,7 @@ export const updateMachineShop = async (req, res, next) => {
     const inspectionsJson = inspections ? JSON.stringify(inspections) : null;
 
     await Client.transaction(async (trx) => {
-        if(is_edit){
+        if (is_edit) {
             const sql = 'UPDATE machine_shop SET inspection_date = COALESCE(@inspection_date, inspection_date), inspections = COALESCE(@inspections, inspections), remarks = COALESCE(@remarks, remarks) WHERE trial_id = @trial_id';
             await trx.query(sql, { inspection_date, inspections: inspectionsJson, remarks, trial_id });
 
@@ -52,8 +55,9 @@ export const updateMachineShop = async (req, res, next) => {
                 action: 'Machine shop updated',
                 remarks: `Machine shop ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`
             });
+            logger.info('Machine shop updated', { trial_id, updatedBy: req.user.username });
         }
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
         }
     });

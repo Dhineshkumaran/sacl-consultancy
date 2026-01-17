@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 import { createDepartmentProgress, updateDepartment, updateRole } from '../services/departmentProgress.js';
 import { updateTrialStatus } from '../services/trial.js';
+import logger from '../config/logger.js';
 
 export const createTrial = async (req, res, next) => {
     const { trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, disa, sample_traceability, mould_correction, tooling_modification, remarks } = req.body || {};
@@ -47,6 +48,7 @@ export const createTrial = async (req, res, next) => {
         }
     });
 
+    logger.info('Trial created successfully', { trial_id, part_name, createdBy: req.user.username });
     res.status(201).json({ success: true, message: 'Trial created successfully.' });
 };
 
@@ -151,6 +153,7 @@ export const updateTrial = async (req, res, next) => {
                 action: 'Trial updated',
                 remarks: `Trial ${trial_id} updated by ${req.user.username}`
             });
+            logger.info('Trial updated', { trial_id, updatedBy: req.user.username });
         }
         if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
@@ -178,6 +181,8 @@ export const deleteTrialReports = async (req, res, next) => {
         action: 'Trial report deleted',
         remarks: `Trial report deleted by ${req.user.username}: ${trial_id}`
     });
+
+    logger.info('Trial report deleted', { trial_id, deletedBy: req.user.username });
 
     res.status(200).json({ success: true, message: 'Trial report deleted successfully.' });
 };

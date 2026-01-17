@@ -1,5 +1,6 @@
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
+import logger from '../config/logger.js';
 
 export const getMasterList = async (req, res, next) => {
     let query = `
@@ -204,6 +205,7 @@ export const createMasterList = async (req, res, next) => {
                     yield_label, remarks
                 });
             } catch (err) {
+                logger.error('Failed to insert tooling data', err);
                 throw new CustomError(`Failed to insert tooling data: ${err.message}`, 500);
             }
         }
@@ -216,6 +218,8 @@ export const createMasterList = async (req, res, next) => {
         action: 'Master list created',
         remarks: `Master list ${pattern_code} created by ${req.user.username} with part name ${part_name}`
     });
+
+    logger.info('Master list created', { pattern_code, part_name, createdBy: req.user.username });
 
     res.status(201).json({
         success: true,
@@ -324,6 +328,7 @@ export const updateMasterList = async (req, res, next) => {
                 });
             }
         } catch (err) {
+            logger.error('Failed to update tooling data', err);
             throw new CustomError(`Failed to update tooling data: ${err.message}`, 500);
         }
     });
@@ -335,6 +340,8 @@ export const updateMasterList = async (req, res, next) => {
         action: 'Master list updated',
         remarks: `Master list ${pattern_code} updated by ${req.user.username}`
     });
+
+    logger.info('Master list updated', { pattern_code, updatedBy: req.user.username });
 
     res.status(200).json({
         success: true,
@@ -366,6 +373,8 @@ export const bulkDeleteMasterList = async (req, res, next) => {
         action: 'Master list bulk delete',
         remarks: `Deleted ${ids.length} master list items by ${req.user.username}`
     });
+
+    logger.info('Master list bulk delete', { count: ids.length, deletedBy: req.user.username, ids });
 
     res.status(200).json({
         success: true,
@@ -403,6 +412,8 @@ export const toggleMasterListStatus = async (req, res, next) => {
         action: 'Master list status updated',
         remarks: `Master list items [${ids.join(', ')}] status changed to ${is_active ? 'Active' : 'Inactive'} by ${req.user.username}`
     });
+
+    logger.info('Master list status updated', { ids, isActive: is_active, updatedBy: req.user.username });
 
     res.status(200).json({
         success: true,

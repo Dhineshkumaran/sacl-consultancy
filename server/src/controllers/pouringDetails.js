@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 
 import { updateDepartment, updateRole } from '../services/departmentProgress.js';
+import logger from '../config/logger.js';
 
 export const createPouringDetails = async (req, res, next) => {
     const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks, no_of_mould_poured } = req.body || {};
@@ -40,10 +41,12 @@ export const createPouringDetails = async (req, res, next) => {
             action: 'Pouring details created',
             remarks: `Pouring details ${trial_id} created by ${req.user.username} with trial id ${trial_id}`
         });
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateRole(trial_id, req.user, trx);
         }
     });
+
+    logger.info('Pouring details created', { trial_id, createdBy: req.user.username });
 
     res.status(201).json({ success: true, message: 'Pouring details created successfully.' });
 };
@@ -60,7 +63,7 @@ export const updatePouringDetails = async (req, res, next) => {
     const inoculationJson = inoculation ? JSON.stringify(inoculation) : null;
 
     await Client.transaction(async (trx) => {
-        if(is_edit){
+        if (is_edit) {
             const sql = `UPDATE pouring_details SET 
                 pour_date = COALESCE(@pour_date, pour_date),
                 heat_code = COALESCE(@heat_code, heat_code),
@@ -102,8 +105,9 @@ export const updatePouringDetails = async (req, res, next) => {
                 action: 'Pouring details updated',
                 remarks: `Pouring details ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`
             });
+            logger.info('Pouring details updated', { trial_id, updatedBy: req.user.username });
         }
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
         }
     });

@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
 import transporter from '../utils/mailSender.js';
+import logger from '../config/logger.js';
 
 export const getAllUsers = async (req, res, next) => {
     const [rows] = await Client.execute(`
@@ -21,6 +22,7 @@ export const createUser = async (req, res, next) => {
     }
     const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE username = @username', { username });
     if (existing && existing.length > 0) {
+        logger.warn('User creation failed: Username exists', { username });
         throw new CustomError('Username already in use', 409);
     }
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
@@ -34,6 +36,8 @@ export const createUser = async (req, res, next) => {
         action: 'User created',
         remarks: `User ${username} created by ${req.user.username}`
     });
+
+    logger.info('User created', { username, createdBy: req.user.username });
     res.status(201).json({ success: true, message: 'User created successfully.' });
 };
 
@@ -50,6 +54,8 @@ export const deleteUser = async (req, res, next) => {
         action: 'User deleted',
         remarks: `User ${userId} deleted by ${user.username}`
     });
+
+    logger.info('User deleted', { userId, deletedBy: user.username });
     res.status(200).json({ success: true, message: 'User deleted successfully.' });
 };
 
@@ -69,6 +75,7 @@ export const sendOtp = async (req, res, next) => {
     try {
         await Client.query(sql, { user_id: user.user_id || null, email, otp_code: otp });
     } catch (err) {
+        logger.error('Error storing OTP', err);
         throw new CustomError('Server error storing OTP', 500);
     }
 
@@ -78,7 +85,9 @@ export const sendOtp = async (req, res, next) => {
             subject: 'Your verification code',
             text: `Your OTP code is: ${otp}. It expires in 5 minutes.`
         });
+        logger.info('OTP sent', { email, userId: user.user_id });
     } catch (err) {
+        logger.error('Failed to send verification email', err);
         throw new CustomError('Failed to send verification email', 500);
     }
 
@@ -94,6 +103,7 @@ export const verifyOtp = async (req, res, next) => {
     ORDER BY created_at DESC`;
     const [rows] = await Client.query(selectSql, { user_id: user.user_id || null, email });
     if (!rows || rows.length === 0) {
+        logger.warn('OTP verification failed: Not found or expired', { email, userId: user.user_id });
         throw new CustomError('OTP not found or expired', 400);
     }
 
@@ -105,6 +115,7 @@ export const verifyOtp = async (req, res, next) => {
         const attempts = (record.attempts || 0) + 1;
         if (attempts >= 5) {
             await Client.query('UPDATE email_otps SET used = 1 WHERE otp_id = @otp_id', { otp_id: otpId });
+            logger.warn('OTP invalidated due to max attempts', { otpId });
         }
         throw new CustomError('Invalid OTP', 400);
     }
@@ -113,11 +124,13 @@ export const verifyOtp = async (req, res, next) => {
         await Client.query('UPDATE users SET email = @email WHERE user_id = @user_id', { email, user_id: user.user_id });
     } catch (err) {
         await Client.query('UPDATE email_otps SET used = 1 WHERE otp_id = @otp_id', { otp_id: otpId });
+        logger.error('Error updating user email', err);
         return next(new CustomError('Email already in use', 409));
     }
 
     await Client.query('UPDATE email_otps SET used = 1 WHERE otp_id = @otp_id', { otp_id: otpId });
 
+    logger.info('Email verified and updated', { userId: user.user_id, email });
     return res.json({ success: true, message: 'Email verified and updated' });
 };
 
@@ -135,6 +148,7 @@ export const changePassword = async (req, res, next) => {
 
     await Client.query('UPDATE users SET password_hash = @password_hash WHERE user_id = @user_id', { password_hash: hash, user_id: user.user_id });
 
+    logger.info('Password updated', { userId: user.user_id });
     return res.json({ success: true, message: 'Password updated' });
 };
 
@@ -146,7 +160,6 @@ export const updateUsername = async (req, res, next) => {
     if (typeof username !== 'string' || username.trim().length === 0) throw new CustomError('Username cannot be empty', 400);
     if (username === user.username) throw new CustomError('New username must be different from current username', 400);
 
-    // Check if username already exists
     const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE username = @username', { username });
     if (existing && existing.length > 0) {
         throw new CustomError('Username already in use', 409);
@@ -162,6 +175,7 @@ export const updateUsername = async (req, res, next) => {
         remarks: `Username changed from ${user.username} to ${username}`
     });
 
+    logger.info('Username updated', { userId: user.user_id, oldUsername: user.username, newUsername: username });
     return res.json({ success: true, message: 'Username updated successfully' });
 };
 
@@ -172,6 +186,7 @@ export const changeStatus = async (req, res, next) => {
 
     await Client.query('UPDATE users SET is_active = @is_active WHERE user_id = @user_id', { is_active: status, user_id: userId });
 
+    logger.info('User status updated', { userId, status, updatedBy: req.user.username });
     return res.json({ success: true, message: 'User status updated' });
 };
 
@@ -182,10 +197,8 @@ export const uploadProfilePhoto = async (req, res, next) => {
     if (!photoBase64) throw new CustomError('Photo is required', 400);
     if (typeof photoBase64 !== 'string') throw new CustomError('Photo must be a base64 string', 400);
 
-    // Validate base64 format (basic check)
     if (!photoBase64.startsWith('data:image')) throw new CustomError('Invalid image format. Please upload a valid image.', 400);
 
-    // Optional: Limit photo size (max 5MB = 5242880 bytes)
     const maxPhotoSize = 5242880;
     if (photoBase64.length > maxPhotoSize) {
         throw new CustomError('Photo size exceeds maximum limit of 5MB', 400);
@@ -204,6 +217,7 @@ export const uploadProfilePhoto = async (req, res, next) => {
         remarks: `Profile photo updated by ${user.username}`
     });
 
+    logger.info('Profile photo updated', { userId: user.user_id });
     return res.json({ success: true, message: 'Profile photo uploaded successfully' });
 };
 
@@ -225,18 +239,14 @@ export const adminUpdateUser = async (req, res, next) => {
     const { userId } = req.params;
     const { username, full_name, email, department_id, role, password } = req.body;
 
-    // Ensure userId is valid
     if (!userId || isNaN(userId)) {
         throw new CustomError('Valid User ID is required', 400);
     }
-
-    // Check if user exists
     const [existingUser] = await Client.query('SELECT * FROM users WHERE user_id = @userId', { userId });
     if (!existingUser || existingUser.length === 0) {
         throw new CustomError('User not found', 404);
     }
 
-    // Check unique username if updated
     if (username && username !== existingUser[0].username) {
         const [duplicate] = await Client.query('SELECT user_id FROM users WHERE username = @username AND user_id != @userId', { username, userId });
         if (duplicate && duplicate.length > 0) {
@@ -244,7 +254,6 @@ export const adminUpdateUser = async (req, res, next) => {
         }
     }
 
-    // Build update query dynamically
     let sql = 'UPDATE users SET ';
     const params = { userId };
     const updates = [];
@@ -265,7 +274,6 @@ export const adminUpdateUser = async (req, res, next) => {
         sql += updates.join(', ') + ' WHERE user_id = @userId';
         await Client.query(sql, params);
 
-        // Audit log
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@admin_id, @admin_dept, @action, @remarks)';
         await Client.query(audit_sql, {
             admin_id: req.user.user_id,
@@ -273,6 +281,8 @@ export const adminUpdateUser = async (req, res, next) => {
             action: 'Admin Update User',
             remarks: `Admin ${req.user.username} updated user ${username || existingUser[0].username} (ID: ${userId})`
         });
+
+        logger.info('Admin updated user', { adminId: req.user.user_id, targetUserId: userId });
     }
 
     res.json({ success: true, message: 'User updated successfully' });

@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 
 import { updateDepartment, updateRole } from '../services/departmentProgress.js';
+import logger from '../config/logger.js';
 
 export const createInspection = async (req, res, next) => {
     const { trial_id, inspections, visual_ok, remarks } = req.body || {};
@@ -21,11 +22,12 @@ export const createInspection = async (req, res, next) => {
             action: 'Visual inspection created',
             remarks: `Visual inspection ${trial_id} created by ${req.user.username}`
         });
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateRole(trial_id, req.user, trx);
         }
     });
 
+    logger.info('Visual inspection created', { trial_id, createdBy: req.user.username });
     res.status(201).json({ success: true, message: 'Visual inspection created successfully.' });
 };
 
@@ -39,7 +41,7 @@ export const updateInspection = async (req, res, next) => {
     const inspectionsJson = inspections ? JSON.stringify(inspections) : null;
 
     await Client.transaction(async (trx) => {
-        if(is_edit){
+        if (is_edit) {
             const sql = `UPDATE visual_inspection SET 
                 inspections = COALESCE(@inspections, inspections),
                 visual_ok = COALESCE(@visual_ok, visual_ok),
@@ -61,8 +63,9 @@ export const updateInspection = async (req, res, next) => {
                 action: 'Visual inspection updated',
                 remarks: `Visual inspection ${trial_id} updated by ${req.user.username} with trial id ${trial_id}`
             });
+            logger.info('Visual inspection updated', { trial_id, updatedBy: req.user.username });
         }
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
         }
     });

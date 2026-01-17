@@ -1,6 +1,7 @@
 import sql from 'mssql';
 import dotenv from 'dotenv';
 import CustomError from '../utils/customError.js';
+import logger from './logger.js';
 dotenv.config();
 
 const config = {
@@ -19,11 +20,11 @@ const config = {
 const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {
-    console.log('Connected to SQL Server successfully!');
+    logger.info('Connected to SQL Server successfully!');
     return pool;
   })
   .catch(err => {
-    console.error('Database Connection Failed:', err);
+    logger.error('Database Connection Failed:', err);
     throw err;
   });
 
@@ -45,7 +46,7 @@ const client = {
       const result = await request.query(sqlText);
       return [result.recordset || result.rowsAffected, result.output];
     } catch (error) {
-      console.error('SQL Execution Error:', error);
+      logger.error('SQL Execution Error:', error);
       throw new CustomError(error);
     }
   },
@@ -72,7 +73,7 @@ const client = {
       return result;
     } catch (error) {
       await transaction.rollback();
-      console.error('Transaction Rolled Back:', error);
+      logger.error('Transaction Rolled Back:', error);
       throw new CustomError(error);
     }
   }

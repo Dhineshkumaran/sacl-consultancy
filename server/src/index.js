@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import Client from './config/connection.js';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 import getClientIp from './utils/getClientIp.js';
 dotenv.config();
 
@@ -23,20 +24,47 @@ import machineShop from './routes/machineShop.js';
 import document from './routes/documents.js';
 import stats from './routes/stats.js';
 import forgotPasswordRoutes from './routes/forgotPassword.js';
+import logger from './config/logger.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+const logDirs = [
+  path.join(__dirname, "../logs"),
+  path.join(__dirname, "../logs/combined"),
+  path.join(__dirname, "../logs/error")
+];
+
+logDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://sacl-consultancy-proj.vercel.app', 'https://sacl-consultancy-proj.onrender.com', 'https://digitaltrialcard-sakthiauto.vercel.app'],
-    credentials: true
+  origin: ['http://localhost:5173', 'https://sacl-consultancy-proj.onrender.com', 'https://digitaltrialcard-sakthiauto.vercel.app'],
+  credentials: true
 }))
 
+app.use(
+  morgan("combined", {
+    stream: {
+      write: message => logger.info(message.trim())
+    }
+  })
+);
+
 app.use((req, res, next) => {
-    req.clientIp = getClientIp(req);
-    next();
+  req.clientIp = getClientIp(req);
+  next();
 })
 
 app.use('/api/master-list', masterListRoutes);
@@ -58,7 +86,7 @@ app.use('/api/stats', stats);
 app.use('/api/forgot-password', forgotPasswordRoutes);
 
 app.use('/health', (req, res) => {
-    res.status(200).json({ status: 'OK' });
+  res.status(200).json({ status: 'OK' });
 });
 
 // app.all('*', (req, res, next)=>{
@@ -67,32 +95,31 @@ app.use('/health', (req, res) => {
 // });
 
 app.use((error, req, res, next) => {
-    console.error(error.stack);
-    error.statusCode = error.statusCode || 500;
-    res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-        error: process.env.NODE_ENV == 'production' ? {} : error
-    });
+  logger.error(`Error: ${error.message}`, {
+    stack: error.stack,
+    url: req.originalUrl,
+    method: req.method,
+    ip: req.clientIp
+  });
+  error.statusCode = error.statusCode || 500;
+  res.status(error.statusCode).json({
+    success: false,
+    message: error.message,
+    error: process.env.NODE_ENV == 'production' ? {} : error
+  });
 });
 
 async function query(arg) {
-    try {
-        const res = await Client.query(arg);
-        return res;
-    } catch (err) {
-        throw err;
-    }
+  try {
+    const res = await Client.query(arg);
+    return res;
+  } catch (err) {
+    throw err;
+  }
 }
 
 const port = process.env.PORT || 3000;
 
 app.listen(port, async () => {
-    try {
-        const res = await query('SELECT GETDATE()');
-        console.log(res[0]);
-    } catch (err) {
-        console.error(`${err}`);
-    }
-    console.log(`Server is listening on port ${port}`);
+  console.log(`Server is listening on port ${port}`);
 });

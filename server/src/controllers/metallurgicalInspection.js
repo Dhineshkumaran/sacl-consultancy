@@ -1,6 +1,7 @@
 import Client from '../config/connection.js';
 
 import { updateDepartment, updateRole } from '../services/departmentProgress.js';
+import logger from '../config/logger.js';
 
 export const createInspection = async (req, res, next) => {
     const {
@@ -94,10 +95,12 @@ export const createInspection = async (req, res, next) => {
             action: 'Metallurgical inspection created',
             remarks: `Metallurgical inspection for trial ${trial_id} created by ${req.user.username}`
         });
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateRole(trial_id, req.user, trx);
         }
     });
+
+    logger.info('Metallurgical inspection created', { trial_id, createdBy: req.user.username });
 
     res.status(201).json({ success: true, message: 'Metallurgical inspection created successfully.' });
 };
@@ -135,7 +138,7 @@ export const updateInspection = async (req, res, next) => {
     const ndtInspectionJson = ndt_inspection ? JSON.stringify(ndt_inspection) : null;
 
     await Client.transaction(async (trx) => {
-        if(is_edit){
+        if (is_edit) {
             const sql = `UPDATE metallurgical_inspection SET 
             inspection_date = COALESCE(@inspection_date, inspection_date),
             micro_structure = COALESCE(@micro_structure, micro_structure),
@@ -183,8 +186,9 @@ export const updateInspection = async (req, res, next) => {
                 action: 'Metallurgical inspection updated',
                 remarks: `Metallurgical inspection for trial ${trial_id} updated by ${req.user.username}`
             });
+            logger.info('Metallurgical inspection updated', { trial_id, updatedBy: req.user.username });
         }
-        if(req.user.role !== 'Admin'){
+        if (req.user.role !== 'Admin') {
             await updateDepartment(trial_id, req.user, trx);
         }
     });
