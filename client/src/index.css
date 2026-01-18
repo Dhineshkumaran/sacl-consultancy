@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Trebuchet MS', 'Lucida Grande', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -13,9 +13,7 @@ body {
   background: linear-gradient(
     135deg,
     #FF9C00 0%,
-    #FFB84D 30%,
-    #FFFFFF 50%,
-    #8A8F94 70%,
+    #FFFFFF 45%,
     #6C757D 100%
   );
   /* overflow-x: hidden; */
