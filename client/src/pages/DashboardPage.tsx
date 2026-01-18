@@ -75,7 +75,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
+    <div className="dashboard" style={{ background: 'linear-gradient(135deg, #FF9C00 0%, #FFB84D 30%, #FFFFFF 50%, #8A8F94 70%, #6C757D 100%)', minHeight: '100vh', fontFamily: "'Poppins', sans-serif" }}>
       {/* Load Poppins Font Global */}
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <style>
