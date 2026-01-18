@@ -52,6 +52,7 @@ export const appTheme = createTheme({
             letterSpacing: 0.5,
             textTransform: 'uppercase'
         },
+        body1: { fontFamily: '"Trebuchet MS", "Lucida Grande", sans-serif' },
         body2: {
             fontFamily: '"Trebuchet MS", "Lucida Grande", sans-serif',
             fontSize: '0.875rem'
