@@ -74,12 +74,26 @@ body {
   font-size: 14px;
   font-weight: var(--font-weight-regular);
   color: var(--color-text-primary);
-  background-color: var(--color-background);
+  background: linear-gradient(
+    135deg,
+    #FF9C00 0%,
+    #FFB84D 30%,
+    #FFFFFF 50%,
+    #8A8F94 70%,
+    #6C757D 100%
+  );
 }
 
 .app {
   min-height: 100vh;
-  background-color: var(--color-background);
+  background: linear-gradient(
+    135deg,
+    #FF9C00 0%,
+    #FFB84D 30%,
+    #FFFFFF 50%,
+    #8A8F94 70%,
+    #6C757D 100%
+  );
 }
 
 .main-content {
