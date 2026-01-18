@@ -38,8 +38,13 @@ export const appTheme = createTheme({
         text: { primary: COLORS.textPrimary, secondary: COLORS.textSecondary },
     },
     typography: {
-        fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-        h6: { fontWeight: 700, color: COLORS.primary },
+        fontFamily: '"Trebuchet MS", "Lucida Grande", sans-serif',
+        h1: { fontFamily: '"Futura", "Century Gothic", sans-serif', fontWeight: 700, color: COLORS.primary },
+        h2: { fontFamily: '"Futura", "Century Gothic", sans-serif', fontWeight: 700, color: COLORS.primary },
+        h3: { fontFamily: '"Futura", "Century Gothic", sans-serif', fontWeight: 700, color: COLORS.primary },
+        h4: { fontFamily: '"Futura", "Century Gothic", sans-serif', fontWeight: 700, color: COLORS.primary },
+        h5: { fontFamily: '"Futura", "Century Gothic", sans-serif', fontWeight: 700, color: COLORS.primary },
+        h6: { fontFamily: '"Futura", "Century Gothic", sans-serif', fontWeight: 700, color: COLORS.primary },
         subtitle1: { fontWeight: 600, color: COLORS.primary },
         subtitle2: {
             fontWeight: 600,
@@ -48,7 +53,7 @@ export const appTheme = createTheme({
             textTransform: 'uppercase'
         },
         body2: {
-            fontFamily: '"Roboto Mono", monospace',
+            fontFamily: '"Trebuchet MS", "Lucida Grande", sans-serif',
             fontSize: '0.875rem'
         },
         caption: {
