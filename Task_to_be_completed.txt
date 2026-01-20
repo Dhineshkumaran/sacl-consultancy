@@ -18,7 +18,11 @@
 
 ->fdyqa need critical dimension attachment mandatory
 
-by hr sir
+->Add zod validation in both frontend and backend
+
+->Remove unwanted comments in frontend except services folder
+
+----------------------------------------------------------------------BY HR SIR-------------------------------------------------------------------------------------
 
 ->login page color code
 
