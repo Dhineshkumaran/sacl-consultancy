@@ -33,6 +33,7 @@ export const createDepartmentProgress = async (trial_id, user, part_name, trx) =
 };
 
 const assignToNextDepartmentUser = async (current_department_id, trial_id, trial_type, next_department_id, user, trx) => {
+    let nextDepartmentId = next_department_id;
     await trx.query(
         `UPDATE department_progress SET completed_at = @completed_at, approval_status = @approval_status, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id`,
         { department_id: current_department_id, trial_id, completed_at: new Date(), approval_status: 'approved', remarks: `Approved by ${user.role}` }
@@ -48,24 +49,26 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
     });
 
     let next_department_user_result;
-    if (next_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END') {
+    if (nextDepartmentId == 8 && trial_type == 'MACHINING - CUSTOMER END') {
+        nextDepartmentId = 9;
         next_department_user_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'User' AND is_active = 1`,
+            `SELECT TOP 1 * FROM users WHERE department_id = @nextDepartmentId AND role = 'User' AND is_active = 1`,
+            { nextDepartmentId }
         );
-    } else if (next_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)') {
+    } else if (nextDepartmentId == 8 && trial_type == 'INHOUSE MACHINING(NPD)') {
         next_department_user_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
-            { next_department_id }
+            `SELECT TOP 1 * FROM users WHERE department_id = @nextDepartmentId AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
+            { nextDepartmentId }
         );
-    } else if (next_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)') {
+    } else if (nextDepartmentId == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)') {
         next_department_user_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
-            { next_department_id }
+            `SELECT TOP 1 * FROM users WHERE department_id = @nextDepartmentId AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
+            { nextDepartmentId }
         );
     } else {
         next_department_user_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1`,
-            { next_department_id }
+            `SELECT TOP 1 * FROM users WHERE department_id = @nextDepartmentId AND role = 'User' AND is_active = 1`,
+            { nextDepartmentId }
         );
     }
     const [next_department_user] = next_department_user_result;
@@ -77,13 +80,13 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
     const next_department_username = next_department_user[0].username;
 
     await trx.query(
-        `INSERT INTO department_progress (department_id, username, remarks, approval_status, trial_id) VALUES (@next_department_id, @next_department_username, 'User submission pending', 'pending', @trial_id)`,
-        { next_department_id, next_department_username, trial_id }
+        `INSERT INTO department_progress (department_id, username, remarks, approval_status, trial_id) VALUES (@nextDepartmentId, @next_department_username, 'User submission pending', 'pending', @trial_id)`,
+        { nextDepartmentId, next_department_username, trial_id }
     );
 
     await trx.query(
-        `UPDATE trial_cards SET current_department_id = @next_department_id, status = 'IN_PROGRESS' WHERE trial_id = @trial_id`,
-        { next_department_id, trial_id }
+        `UPDATE trial_cards SET current_department_id = @nextDepartmentId, status = 'IN_PROGRESS' WHERE trial_id = @trial_id`,
+        { nextDepartmentId, trial_id }
     );
 
     const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
