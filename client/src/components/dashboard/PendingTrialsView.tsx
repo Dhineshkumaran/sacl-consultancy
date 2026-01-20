@@ -93,15 +93,7 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
 
     return (
         <Box sx={{ p: 3 }}>
-            {/* Header */}
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#2c3e50', mb: 0.5 }}>
-                   Pending Sample Cards
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#7f8c8d' }}>
-                   Trials awaiting your department's action
-                </Typography>
-            </Box>
+
 
             {/* Loading State */}
             {loading && (

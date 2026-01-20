@@ -53,15 +53,7 @@ const CompletedTrialsView: React.FC<CompletedTrialsViewProps> = ({ username }) =
 
     return (
         <Box sx={{ p: 3 }}>
-            {/* Header */}
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#2c3e50', mb: 0.5 }}>
-                    Completed Trials
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#7f8c8d' }}>
-                    History of trials processed by your department
-                </Typography>
-            </Box>
+
 
             {/* Loading State */}
             {loading && (
