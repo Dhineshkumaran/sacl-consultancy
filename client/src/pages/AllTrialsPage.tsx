@@ -274,7 +274,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                 >
                                     <TableHead>
                                         <TableRow>
-                                            <TableCell />
+                                            {user?.role === 'Admin' && <TableCell />}
 
                                             <TableCell sx={{
                                                 fontWeight: 'bold',
@@ -326,15 +326,17 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                     <TableRow
                                                         hover
                                                     >
-                                                        <TableCell>
-                                                            <IconButton
-                                                                aria-label="expand row"
-                                                                size="small"
-                                                                onClick={() => handleExpandRow(trial.trial_id)}
-                                                            >
-                                                                {expandedTrialId === trial.trial_id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                                            </IconButton>
-                                                        </TableCell>
+                                                        {user?.role === 'Admin' && (
+                                                            <TableCell>
+                                                                <IconButton
+                                                                    aria-label="expand row"
+                                                                    size="small"
+                                                                    onClick={() => handleExpandRow(trial.trial_id)}
+                                                                >
+                                                                    {expandedTrialId === trial.trial_id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                                </IconButton>
+                                                            </TableCell>
+                                                        )}
 
                                                         <TableCell sx={{
                                                             fontWeight: 'bold',
@@ -408,7 +410,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                     </TableRow>
 
                                                     <TableRow>
-                                                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={9}>
+                                                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={user?.role === 'Admin' ? 9 : 8}>
                                                             <Collapse in={expandedTrialId === trial.trial_id} timeout="auto" unmountOnExit>
                                                                 <Box sx={{ margin: 2, bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
                                                                     <Typography variant="h6" gutterBottom component="div" sx={{ fontSize: '1rem', fontWeight: 'bold', mb: 2 }}>
