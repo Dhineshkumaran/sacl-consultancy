@@ -108,7 +108,6 @@ export const trialService = {
     async getAllTrialReports(): Promise<any[]> {
         try {
             const data = await apiService.request('/trial/trial-reports');
-            console.log(data.data);
             return data.data || [];
         } catch (error) {
             console.error('Failed to fetch all trial reports:', error);
