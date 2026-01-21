@@ -81,6 +81,7 @@ const Dashboard: React.FC = () => {
       case 'pending-cards': return 'Pending Actions';
       case 'completed-trials': return 'Completed History';
       case 'all-trials': return 'Trial History';
+      case 'consolidated-reports': return 'Consolidated Reports';
       default: return 'Dashboard';
     }
   }
@@ -94,6 +95,7 @@ const Dashboard: React.FC = () => {
       case 'pending-cards': return 'Sample cards waiting for your action';
       case 'completed-trials': return 'View history of processed trials';
       case 'all-trials': return 'Browse all trial records';
+      case 'consolidated-reports': return 'View consolidated history of trials by pattern code';
       default: return '';
     }
   }
@@ -238,6 +240,12 @@ const Dashboard: React.FC = () => {
 
           {(user?.role === 'Admin' || user?.department_id == 2 || user?.department_id == 3) && currentView === 'manage-trials' && (
             <AllTrialsPage embedded={true} />
+          )}
+
+          {(user?.role === 'Admin' || user?.department_id == 2 || user?.department_id == 3) && currentView === 'consolidated-reports' && (
+            <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+              <ConsolidatedReportsTable />
+            </Box>
           )}
 
           {user?.role === 'Admin' && currentView === 'employees' && (

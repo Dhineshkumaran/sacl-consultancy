@@ -2,7 +2,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import CustomError from '../utils/customError.js';
 import transporter from '../utils/mailSender.js';
-import { generateAndStoreReport } from './pdfGenerator.js';
+import { generateAndStoreTrialReport } from './trialReportGenerator.js';
+import { generateAndStoreConsolidatedReport } from './consolidatedReportGenerator.js';
 import { updateTrialStatus } from './trial.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -109,8 +110,8 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
             </div>
         `,
         attachments: [{
-            filename: 'SACL-LOGO-01.svg',
-            path: path.resolve(__dirname, '../../assets/SACL-LOGO-01.svg'),
+            filename: 'SACL-LOGO.jpg',
+            path: path.resolve(__dirname, '../../assets/SACL-LOGO.jpg'),
             cid: 'sacllogo'
         }]
     };
@@ -232,8 +233,8 @@ export const updateRole = async (trial_id, user, trx) => {
                 </div>
             `,
             attachments: [{
-                filename: 'SACL-LOGO-01.svg',
-                path: path.resolve(__dirname, '../../assets/SACL-LOGO-01.svg'),
+                filename: 'SACL-LOGO.jpg',
+                path: path.resolve(__dirname, '../../assets/SACL-LOGO.jpg'),
                 cid: 'sacllogo'
             }]
         };
@@ -264,7 +265,8 @@ export const approveProgress = async (department_id, trial_id, user, trx) => {
         `UPDATE department_progress SET approval_status = 'approved', completed_at = @completed_at, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id`,
         { department_id, trial_id, completed_at: new Date(), remarks: `Approved by ${user.role}` }
     );
-    await generateAndStoreReport(trial_id, trx);
+    await generateAndStoreTrialReport(trial_id, trx);
+    await generateAndStoreConsolidatedReport(trial_id, trx);
     await updateTrialStatus(trial_id, 'CLOSED', user, trx);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     await trx.query(audit_sql, {

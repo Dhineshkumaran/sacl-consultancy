@@ -72,6 +72,11 @@ export const getTrialReports = async (req, res, next) => {
     res.status(200).json({ success: true, data: rows });
 };
 
+export const getConsolidatedReports = async (req, res, next) => {
+    const [rows] = await Client.query("SELECT c.document_id, c.file_base64, c.file_name, c.pattern_code, m.part_name FROM consolidated_reports c JOIN master_card m ON c.pattern_code = m.pattern_code");
+    res.status(200).json({ success: true, data: rows });
+};
+
 export const generateTrialId = async (req, res, next) => {
     let part_name = req.query.part_name;
     if (!part_name) {

@@ -153,7 +153,7 @@ const drawSectionTitle = (doc, title, x, y) => {
     return y + 20;
 };
 
-export const generateAndStoreReport = async (trial_id, trx) => {
+export const generateAndStoreTrialReport = async (trial_id, trx) => {
     const data = await fetchTrialData(trial_id, trx);
     if (!data) throw new Error("No data found for trial id " + trial_id);
 

@@ -60,6 +60,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
             show: user?.role === 'Admin' || user?.department_id == 2 || user?.department_id == 3
         },
         {
+            id: 'consolidated-reports',
+            label: 'Consolidated Reports',
+            subLabel: 'View full trial history',
+            icon: <LibraryBooksIcon />,
+            view: 'consolidated-reports' as const,
+            show: user?.role === 'Admin' || user?.department_id == 2 || user?.department_id == 3
+        },
+        {
             id: 'master-list',
             label: 'Master List',
             subLabel: 'Manage pattern codes',

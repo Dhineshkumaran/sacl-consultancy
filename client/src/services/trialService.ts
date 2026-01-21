@@ -166,4 +166,18 @@ export const trialService = {
             throw error;
         }
     },
+
+    /**
+     * Fetches all consolidated reports
+     * @returns Promise resolving to array of consolidated reports
+     */
+    async getConsolidatedReports(): Promise<any[]> {
+        try {
+            const data = await apiService.request('/trial/consolidated-reports');
+            return data.data || [];
+        } catch (error) {
+            console.error('Failed to fetch consolidated reports:', error);
+            throw error;
+        }
+    },
 };

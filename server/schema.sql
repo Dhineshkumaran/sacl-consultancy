@@ -366,6 +366,21 @@ CREATE INDEX idx_trial_reports_trial ON trial_reports(trial_id);
 CREATE INDEX idx_trial_reports_type ON trial_reports(document_type);
 GO
 
+CREATE TABLE consolidated_reports (
+    document_id INT IDENTITY(1,1) PRIMARY KEY,
+    pattern_code NVARCHAR(255) NOT NULL,
+    document_type VARCHAR(50) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_base64 NVARCHAR(MAX),
+    uploaded_at DATETIME2 DEFAULT GETDATE(),
+    remarks NVARCHAR(MAX)
+);
+GO
+
+CREATE INDEX idx_consolidated_reports_pattern ON consolidated_reports(pattern_code);
+CREATE INDEX idx_consolidated_reports_type ON consolidated_reports(document_type);
+GO
+
 CREATE TABLE department_flow (
     id INT PRIMARY KEY IDENTITY,
     department_id INT,
