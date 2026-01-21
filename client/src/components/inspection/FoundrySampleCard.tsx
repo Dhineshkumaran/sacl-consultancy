@@ -45,7 +45,6 @@ import ConstructionIcon from '@mui/icons-material/Construction';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FactoryIcon from '@mui/icons-material/Factory';
 import SaveIcon from '@mui/icons-material/Save';
-import PrintIcon from '@mui/icons-material/Print';
 import EditIcon from '@mui/icons-material/Edit';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import PersonIcon from "@mui/icons-material/Person";
@@ -485,10 +484,6 @@ function FoundrySampleCard() {
   const handlePartChange = (v: PartData | null) => { setSelectedPart(v); };
   const handlePatternChange = (v: PartData | null) => { setSelectedPattern(v); if (v) setSelectedPart(v); };
 
-  const handleExportPDF = () => {
-    if (!submitted) return;
-    window.print();
-  };
 
   const handleSaveAndContinue = () => {
     if (!selectedPart) { showAlert("error", "Please select a Part Name first."); return; }
@@ -621,34 +616,6 @@ function FoundrySampleCard() {
 
   return (
     <ThemeProvider theme={appTheme}>
-      <GlobalStyles styles={{
-        "@media print": {
-          "html, body": {
-            height: "initial !important",
-            overflow: "initial !important",
-            backgroundColor: "white !important",
-          },
-          "body *": {
-            visibility: "hidden",
-          },
-          ".print-section, .print-section *": {
-            visibility: "visible",
-          },
-          ".print-section": {
-            display: "block !important",
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: "100%",
-            color: "black",
-            backgroundColor: "white",
-            padding: "20px",
-          },
-          ".MuiModal-root": {
-            display: "none !important",
-          }
-        }
-      }} />
 
       <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
         <Container maxWidth="xl" disableGutters>
@@ -850,7 +817,6 @@ function FoundrySampleCard() {
               setPreviewMode(false)
             }}
             onSubmit={handleFinalSave}
-            onExport={handleExportPDF}
             title="Verify Specification"
             subtitle="Foundry Sample Card - Review your data"
             submitted={submitted}
@@ -1410,155 +1376,10 @@ function FoundrySampleCard() {
 
             </React.Fragment>
           )}
-          {previewPayload && (
-            <Box className="print-section" sx={{ display: 'none' }}>
-              <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-                <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>FOUNDRY SAMPLE CARD</Typography>
-                  <Typography variant="body1">Trial Report & Specification Sheet</Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="body2">Date: {formatDate(new Date().toISOString())}</Typography>
-                  <Typography variant="body2">IP: {userIP}</Typography>
-                </Box>
-              </Box>
 
-              <Box sx={{ mb: 4, display: 'flex', gap: 4 }}>
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'grey.700' }}>PATTERN:</Typography>
-                  <Typography variant="h6">{previewPayload.pattern_code}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'grey.700' }}>PART NAME:</Typography>
-                  <Typography variant="h6">{previewPayload.part_name}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: 'grey.700' }}>TRIAL NO:</Typography>
-                  <Typography variant="h6">{previewPayload.trial_no}</Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ borderBottom: "1px solid #ccc", mb: 1 }}>Sampling Details</Typography>
-                <div style={{ display: 'flex', gap: 24, marginBottom: 12 }}>
-                  <div>
-                    <strong>Date:</strong> {formatDate(previewPayload.samplingDate) || '-'}
-                  </div>
-                  <div>
-                    <strong>No. of Moulds:</strong> <br />
-                    Plan: {previewPayload.plan_moulds || previewPayload.planMoulds || '-'} <br />
-                    Actual: {previewPayload.actual_moulds || previewPayload.actualMoulds || '-'}
-                  </div>
-                  <div>
-                    <strong>Machine:</strong> {previewPayload.machine || '-'}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 24, marginBottom: 12 }}>
-                  <div>
-                    <strong>Reason:</strong> {previewPayload.reason || '-'}
-                  </div>
-                  <div>
-                    <strong>Traceability:</strong> {previewPayload.sampleTraceability || '-'}
-                  </div>
-                </div>
-              </Box>
-
-              <h3 style={{ borderBottom: "1px solid #ccc", marginBottom: "10px", marginTop: "20px" }}>Tooling Modification</h3>
-              <p>
-                <strong>Details:</strong> {previewPayload.toolingModification || "-"}
-              </p>
-              <h3 style={{ borderBottom: "1px solid #ccc", marginBottom: "10px", marginTop: "20px" }}>Mould Corrections</h3>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", marginBottom: 16 }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#f0f0f0" }}>
-                    <th style={{ border: "1px solid black", padding: "5px" }}>#</th>
-                    <th style={{ border: "1px solid black", padding: "5px" }}>Compressibility</th>
-                    <th style={{ border: "1px solid black", padding: "5px" }}>Squeeze Pressure</th>
-                    <th style={{ border: "1px solid black", padding: "5px" }}>Filler Size</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(previewPayload.mouldCorrections || []).map((row: any, i: number) => (
-                    <tr key={i}>
-                      <td style={{ border: "1px solid black", padding: "5px", textAlign: "center" }}>{i + 1}</td>
-                      <td style={{ border: "1px solid black", padding: "5px", textAlign: "center" }}>{row.compressibility}</td>
-                      <td style={{ border: "1px solid black", padding: "5px", textAlign: "center" }}>{row.squeezePressure}</td>
-                      <td style={{ border: "1px solid black", padding: "5px", textAlign: "center" }}>{row.fillerSize}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <Typography variant="h6" sx={{ borderBottom: "1px solid #ccc", mb: 1 }}>Chemical Composition</Typography>
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f0f0f0' }}>
-                    {["C", "Si", "Mn", "P", "S", "Mg", "Cr", "Cu"].map(h => (
-                      <th key={h} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {["c", "si", "mn", "p", "s", "mg", "cr", "cu"].map(k => (
-                      <td key={k} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>
-                        {previewPayload.chemical_composition[k] || "-"}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-
-              <Typography variant="h6" sx={{ borderBottom: "1px solid #ccc", mb: 1 }}>Microstructure</Typography>
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f0f0f0' }}>
-                    <th style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>Nodularity</th>
-                    <th style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>Pearlite</th>
-                    <th style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>Carbide</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.micro_structure.nodularity || "-"}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.micro_structure.pearlite || "-"}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.micro_structure.carbide || "-"}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <Typography variant="h6" sx={{ borderBottom: "1px solid #ccc", mb: 1, mt: 3 }}>Mechanical Properties</Typography>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f0f0f0' }}>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>Tensile</th>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>Yield</th>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>Elongation</th>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>Impact (Cold)</th>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>Impact (Room)</th>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>Hardness (Surf)</th>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>Hardness (Core)</th>
-                    <th style={{ border: '1px solid #999', padding: '6px' }}>X-Ray / MPI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.tensile.tensileStrength}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.tensile.yieldStrength}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.tensile.elongation}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.tensile.impactCold}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.tensile.impactRoom}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.hardness.surface}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.hardness.core}</td>
-                    <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.x_ray_inspection} / {previewPayload.mpi}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </Box>
-          )}
 
         </Container>
-      </Box>
+      </Box >
 
       <Dialog open={showPatternDialog} onClose={() => setShowPatternDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ bgcolor: COLORS.primary, color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

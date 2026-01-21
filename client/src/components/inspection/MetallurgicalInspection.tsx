@@ -39,7 +39,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import FactoryIcon from '@mui/icons-material/Factory';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
-import PrintIcon from '@mui/icons-material/Print';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ScienceIcon from '@mui/icons-material/Science';
 import PersonIcon from "@mui/icons-material/Person";
@@ -1103,9 +1102,6 @@ export default function MetallurgicalInspection() {
     }
   };
 
-  const handleExportPDF = () => {
-    window.print();
-  };
 
   const PreviewSectionTable = ({ title, rows }: { title: string, rows: any[] }) => {
     const hasTotal = rows.some(r => typeof r.total === 'number' && !isNaN(r.total));
@@ -1269,15 +1265,6 @@ export default function MetallurgicalInspection() {
 
   return (
     <ThemeProvider theme={appTheme}>
-      <GlobalStyles styles={{
-        "@media print": {
-          "html, body": { height: "initial !important", overflow: "initial !important", backgroundColor: "white !important" },
-          "body *": { visibility: "hidden" },
-          ".print-section, .print-section *": { visibility: "visible" },
-          ".print-section": { display: "block !important", position: "absolute", left: 0, top: 0, width: "100%", color: "black", backgroundColor: "white", padding: "20px" },
-          ".MuiModal-root": { display: "none !important" }
-        }
-      }} />
 
       <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
         <Container maxWidth="xl" disableGutters>
@@ -1437,7 +1424,6 @@ export default function MetallurgicalInspection() {
             open={previewMode && previewPayload}
             onClose={() => setPreviewMode(false)}
             onSubmit={handleFinalSave}
-            onExport={handleExportPDF}
             title="Verify Inspection Data"
             subtitle="Metallurgical Inspection Report"
             submitted={previewSubmitted}
@@ -1468,26 +1454,6 @@ export default function MetallurgicalInspection() {
             </Box>
           </PreviewModal>
 
-          <Box className="print-section" sx={{ display: 'none' }}>
-            <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>METALLURGICAL INSPECTION REPORT</Typography>
-              </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="body2">Date: {formatDate(date)}</Typography>
-              </Box>
-            </Box>
-
-            {previewPayload && (
-              <>
-                <PrintMicroTable data={previewPayload.microRows} />
-                <PrintSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload.mechRows} />
-                <PrintSectionTable title="IMPACT STRENGTH" rows={previewPayload.impactRows} />
-                <PrintSectionTable title="HARDNESS" rows={previewPayload.hardRows} />
-                <PrintSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload.ndtRows} />
-              </>
-            )}
-          </Box>
 
         </Container>
       </Box>

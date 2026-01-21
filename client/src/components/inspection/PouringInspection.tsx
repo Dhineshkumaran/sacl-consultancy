@@ -31,7 +31,6 @@ import Swal from 'sweetalert2';
 import FactoryIcon from '@mui/icons-material/Factory';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PrintIcon from '@mui/icons-material/Print';
 import EditIcon from '@mui/icons-material/Edit';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloseIcon from '@mui/icons-material/Close';
@@ -442,21 +441,11 @@ function PouringDetailsTable() {
         }
     };
 
-    const handleExportPDF = () => { window.print(); };
 
     const dataFontStyle = { fontFamily: '"Roboto Mono", monospace', fontWeight: 500 };
 
     return (
         <ThemeProvider theme={theme}>
-            <GlobalStyles styles={{
-                "@media print": {
-                    "html, body": { height: "initial !important", overflow: "initial !important", backgroundColor: "white !important" },
-                    "body *": { visibility: "hidden" },
-                    ".print-section, .print-section *": { visibility: "visible" },
-                    ".print-section": { display: "block !important", position: "absolute", left: 0, top: 0, width: "100%", color: "black", backgroundColor: "white", padding: "20px" },
-                    ".MuiModal-root": { display: "none !important" }
-                }
-            }} />
 
             <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Container maxWidth="xl" disableGutters>
@@ -750,12 +739,11 @@ function PouringDetailsTable() {
                         open={previewMode}
                         onClose={() => setPreviewMode(false)}
                         onSubmit={handleFinalSave}
-                        onExport={handleExportPDF}
                         title="POURING DETAILS:"
                         submitted={submitted}
                         isSubmitting={loading}
                     >
-                        <Box sx={{ p: 4 }} className="print-section">
+                        <Box sx={{ p: 4 }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', border: '2px solid black', fontFamily: theme.typography.fontFamily }}>
                                 <thead>
                                     <tr style={{ backgroundColor: '#FDE68A', color: '#854d0e' }}>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Paper, IconButton, Button, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import PrintIcon from '@mui/icons-material/Print';
 import { COLORS } from '../../theme/appTheme';
 import GearSpinner from './GearSpinner';
 
@@ -9,7 +8,6 @@ interface PreviewModalProps {
     open: boolean;
     onClose: () => void;
     onSubmit?: () => void;
-    onExport?: () => void;
     title: string;
     subtitle?: string;
     submitted?: boolean;
@@ -21,7 +19,6 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
     open,
     onClose,
     onSubmit,
-    onExport,
     title,
     subtitle,
     submitted,

@@ -28,7 +28,6 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import ScienceIcon from '@mui/icons-material/Science';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
-import PrintIcon from '@mui/icons-material/Print';
 import EditIcon from '@mui/icons-material/Edit';
 
 import { appTheme, COLORS } from "../../theme/appTheme";
@@ -166,10 +165,6 @@ export default function MaterialCorrection() {
         setAttachedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleExportPDF = () => {
-        if (!submitted) return;
-        window.print();
-    };
 
     const handleSaveAndContinue = () => {
         const payload = {
@@ -279,15 +274,6 @@ export default function MaterialCorrection() {
 
     return (
         <ThemeProvider theme={appTheme}>
-            <GlobalStyles styles={{
-                "@media print": {
-                    "html, body": { height: "initial !important", overflow: "initial !important", backgroundColor: "white !important" },
-                    "body *": { visibility: "hidden" },
-                    ".print-section, .print-section *": { visibility: "visible" },
-                    ".print-section": { display: "block !important", position: "absolute", left: 0, top: 0, width: "100%", color: "black", backgroundColor: "white", padding: "20px" },
-                    ".MuiModal-root": { display: "none !important" }
-                }
-            }} />
 
             <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Container maxWidth="xl" disableGutters>
@@ -462,7 +448,6 @@ export default function MaterialCorrection() {
                                 open={previewOpen}
                                 onClose={() => setPreviewOpen(false)}
                                 onSubmit={handleFinalSave}
-                                onExport={handleExportPDF}
                                 title="Verify Specification"
                                 subtitle="Composition & Process Check"
                                 submitted={submitted}
@@ -514,70 +499,6 @@ export default function MaterialCorrection() {
                                 )}
                             </PreviewModal>
 
-                            {previewPayload && (
-                                <Box className="print-section" sx={{ display: 'none' }}>
-                                    <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-                                        <Box>
-                                            <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>FOUNDRY SAMPLE CARD</Typography>
-                                            <Typography variant="body1">Trial Report & Specification Sheet</Typography>
-                                        </Box>
-                                        <Box sx={{ textAlign: 'right' }}>
-                                            <Typography variant="body2">Date: {formatDate(new Date().toISOString())}</Typography>
-                                            <Typography variant="body2">IP: {userIP}</Typography>
-                                        </Box>
-                                    </Box>
-
-                                    <Typography variant="h6" sx={{ borderBottom: "1px solid #ccc", mb: 1 }}>Material Correction Details</Typography>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                                        <thead>
-                                            <tr>
-                                                <th colSpan={8} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center', backgroundColor: '#f0f0f0' }}>Chemical Composition</th>
-                                                <th colSpan={3} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center', backgroundColor: '#f0f0f0' }}>Process Parameters</th>
-                                            </tr>
-                                            <tr style={{ backgroundColor: '#f9f9f9' }}>
-                                                {["C", "Si", "Mn", "P", "S", "Mg", "Cu", "Cr"].map(h => (
-                                                    <th key={h} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{h}</th>
-                                                ))}
-                                                <th style={{ border: '1px solid #999', padding: '6px' }}>Pouring Temp</th>
-                                                <th style={{ border: '1px solid #999', padding: '6px' }}>Inoculant/Sec</th>
-                                                <th style={{ border: '1px solid #999', padding: '6px' }}>Type</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                {["c", "si", "mn", "p", "s", "mg", "cu", "cr"].map(k => (
-                                                    <td key={k} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>
-                                                        {previewPayload.chemical_composition[k] || "-"}
-                                                    </td>
-                                                ))}
-                                                <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.process_parameters.pouringTemp}</td>
-                                                <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.process_parameters.inoculantPerSec}</td>
-                                                <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{previewPayload.process_parameters.inoculantType}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    {remarks && (
-                                        <div style={{ marginTop: "20px" }}>
-                                            <h3 style={{ margin: 0, paddingBottom: "5px", borderBottom: "1px solid #ccc" }}>Remarks</h3>
-                                            <p style={{ whiteSpace: "pre-line", marginTop: "5px" }}>{remarks}</p>
-                                        </div>
-                                    )}
-                                    {attachedFiles.length > 0 && (
-                                        <div style={{ marginTop: "20px" }}>
-                                            <h3 style={{ margin: 0, paddingBottom: "5px", borderBottom: "1px solid #ccc" }}>
-                                                Attached Files
-                                            </h3>
-                                            <ul style={{ marginTop: "5px" }}>
-                                                {attachedFiles.map((file, i) => (
-                                                    <li key={i} style={{ fontSize: "14px" }}>{file.name}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-
-                                </Box>
-                            )}
                         </>
                     )}
 

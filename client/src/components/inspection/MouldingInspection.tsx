@@ -26,7 +26,6 @@ import {
 import Swal from 'sweetalert2';
 
 import FactoryIcon from '@mui/icons-material/Factory';
-import PrintIcon from '@mui/icons-material/Print';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from "@mui/icons-material/Close";
 import ScienceIcon from '@mui/icons-material/Science';
@@ -163,7 +162,6 @@ function MouldingTable() {
     setPreviewMode(true);
   };
 
-  const handleExportPDF = () => { window.print(); };
 
   const GridValueBox = ({ label, value }: { label: string, value: string }) => (
     <Box sx={{
@@ -288,15 +286,6 @@ function MouldingTable() {
 
   return (
     <ThemeProvider theme={appTheme}>
-      <GlobalStyles styles={{
-        "@media print": {
-          "html, body": { height: "initial !important", overflow: "initial !important", backgroundColor: "white !important" },
-          "body *": { visibility: "hidden" },
-          ".print-section, .print-section *": { visibility: "visible" },
-          ".print-section": { display: "block !important", position: "absolute", left: 0, top: 0, width: "100%", color: "black", backgroundColor: "white", padding: "20px" },
-          ".MuiModal-root": { display: "none !important" }
-        }
-      }} />
 
       <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
         <Container maxWidth="xl" disableGutters>
@@ -435,7 +424,6 @@ function MouldingTable() {
             open={previewMode}
             onClose={() => setPreviewMode(false)}
             onSubmit={handleFinalSave}
-            onExport={handleExportPDF}
             title="Verify Moulding Details"
             subtitle="Review your moulding parameters"
             submitted={submitted}
@@ -492,64 +480,6 @@ function MouldingTable() {
               </Box>
             </Box>
           </PreviewModal>
-          <Box className="print-section" sx={{ display: 'none', fontFamily: appTheme.typography.fontFamily }}>
-            <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>FOUNDRY SAMPLE CARD</Typography>
-                <Typography variant="body1">Moulding Correction Report</Typography>
-              </Box>
-              <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="body2">Date: {formatDate(new Date().toISOString())}</Typography>
-                <Typography variant="body2">IP: {userIP}</Typography>
-              </Box>
-            </Box>
-
-            <Typography variant="h6" sx={{ borderBottom: "1px solid #ccc", mb: 1 }}>Moulding Details</Typography>
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-              <thead>
-                <tr>
-                  <th colSpan={4} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center', backgroundColor: '#f0f0f0' }}>Moulding Parameters</th>
-                  <th colSpan={1} style={{ border: '1px solid #999', padding: '6px', textAlign: 'center', backgroundColor: '#f0f0f0' }}>Log Data</th>
-                </tr>
-                <tr style={{ backgroundColor: '#f9f9f9' }}>
-                  <th style={{ border: '1px solid #999', padding: '6px' }}>Thickness</th>
-                  <th style={{ border: '1px solid #999', padding: '6px' }}>Compressability</th>
-                  <th style={{ border: '1px solid #999', padding: '6px' }}>Pressure</th>
-                  <th style={{ border: '1px solid #999', padding: '6px' }}>Hardness</th>
-                  <th style={{ border: '1px solid #999', padding: '6px' }}>Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{mouldState.thickness}</td>
-                  <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{mouldState.compressability}</td>
-                  <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{mouldState.pressure}</td>
-                  <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{mouldState.hardness}</td>
-                  <td style={{ border: '1px solid #999', padding: '6px', textAlign: 'center' }}>{mouldState.remarks || "-"}</td>
-                </tr>
-              </tbody>
-            </table>
-            {/* Attached Files - Print Version */}
-            {attachedFiles.length > 0 && (
-              <div style={{ marginTop: "20px" }}>
-                <h3 style={{
-                  margin: 0,
-                  paddingBottom: "5px",
-                  borderBottom: "1px solid #999"
-                }}>
-                  Attached Files
-                </h3>
-
-                <ul style={{ marginTop: "5px" }}>
-                  {attachedFiles.map((file, index) => (
-                    <li key={index} style={{ fontSize: "14px" }}>{file.name}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-          </Box>
-
         </Container>
       </Box >
     </ThemeProvider >

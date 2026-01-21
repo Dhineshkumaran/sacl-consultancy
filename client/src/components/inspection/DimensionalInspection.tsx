@@ -31,12 +31,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import FactoryIcon from '@mui/icons-material/Factory';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ScienceIcon from '@mui/icons-material/Science';
 import CloseIcon from "@mui/icons-material/Close";
-import PrintIcon from '@mui/icons-material/Print';
-import PersonIcon from "@mui/icons-material/Person";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaclHeader from "../common/SaclHeader";
 import { apiService } from '../../services/commonService';
 import { inspectionService } from '../../services/inspectionService';
@@ -397,23 +395,10 @@ export default function DimensionalInspection({
         }
     };
 
-    const handleExportPDF = () => {
-        window.print();
-    };
 
 
     return (
         <ThemeProvider theme={appTheme}>
-            <GlobalStyles styles={{
-                "@media print": {
-                    "html, body": { height: "initial !important", overflow: "initial !important", backgroundColor: "white !important" },
-                    "body *": { visibility: "hidden" },
-                    ".print-section, .print-section *": { visibility: "visible" },
-                    ".print-section": { display: "block !important", position: "absolute", left: 0, top: 0, width: "100%", color: "black", backgroundColor: "white", padding: "20px" },
-                    ".MuiModal-root": { display: "none !important" }
-                }
-            }} />
-
             <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
                 <Container maxWidth="xl" disableGutters>
 
@@ -643,7 +628,6 @@ export default function DimensionalInspection({
                         open={previewMode && previewPayload}
                         onClose={() => setPreviewMode(false)}
                         onSubmit={handleFinalSave}
-                        onExport={handleExportPDF}
                         title="Verify Inspection Data"
                         submitted={previewSubmitted}
                         isSubmitting={saving}
@@ -731,54 +715,6 @@ export default function DimensionalInspection({
                         </Box>
                     </PreviewModal>
 
-                    <Box className="print-section" sx={{ display: 'none' }}>
-                        <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>DIMENSIONAL INSPECTION REPORT</Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'right' }}>
-                                <Typography variant="body2">IP: {userIP}</Typography>
-                                {previewPayload && <Typography variant="body2">Date: {formatDate(previewPayload.inspection_date)}</Typography>}
-                            </Box>
-                        </Box>
-
-                        {previewPayload && (
-                            <>
-                                <Box sx={{ mb: 3, display: 'flex', gap: 4 }}>
-                                    <Typography><strong>Target Weight:</strong> {previewPayload.weight_target} Kg</Typography>
-                                    <Typography><strong>Bunch Weight:</strong> {previewPayload.bunch_weight} Kg</Typography>
-                                </Box>
-
-                                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black', fontSize: '12px' }}>
-                                    <thead>
-                                        <tr style={{ backgroundColor: '#f0f0f0' }}>
-                                            <th style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>Parameter</th>
-                                            {previewPayload.cavities.map((c: string, i: number) => (
-                                                <th key={i} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{c}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {previewPayload.cavity_rows.map((r: any, idx: number) => (
-                                            <tr key={idx}>
-                                                <td style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{r.label}</td>
-                                                {r.values.map((v: any, j: number) => (
-                                                    <td key={j} style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>
-                                                        {v === null ? "" : String(v)}
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-
-                                <div style={{ marginTop: "20px", padding: "10px", border: "1px solid black" }}>
-                                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>General Remarks</div>
-                                    <div>{previewPayload.dimensional_remarks || '-'}</div>
-                                </div>
-                            </>
-                        )}
-                    </Box>
                 </Container>
             </Box>
         </ThemeProvider>

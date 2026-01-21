@@ -27,7 +27,6 @@ import Swal from 'sweetalert2';
 
 // Icons
 import FactoryIcon from '@mui/icons-material/Factory';
-import PrintIcon from '@mui/icons-material/Print';
 import EditIcon from '@mui/icons-material/Edit';
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -278,19 +277,9 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
     }
   };
 
-  const handleExportPDF = () => { window.print(); };
 
   return (
     <ThemeProvider theme={appTheme}>
-      <GlobalStyles styles={{
-        "@media print": {
-          "html, body": { height: "initial !important", overflow: "initial !important", backgroundColor: "white !important" },
-          "body *": { visibility: "hidden" },
-          ".print-section, .print-section *": { visibility: "visible" },
-          ".print-section": { display: "block !important", position: "absolute", left: 0, top: 0, width: "100%", color: "black", backgroundColor: "white", padding: "20px" },
-          ".MuiModal-root": { display: "none !important" }
-        }
-      }} />
 
       <Box sx={{ minHeight: "100vh", bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
         <Container maxWidth="xl" disableGutters>
@@ -490,7 +479,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
             open={previewMode}
             onClose={() => setPreviewMode(false)}
             onSubmit={handleFinalSave}
-            onExport={handleExportPDF}
             title="Verify Sand Properties"
             subtitle="Review your sand test data"
             submitted={submitted}
@@ -549,68 +537,8 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           </PreviewModal>
 
         </Container>
-
-        {/* PRINT LAYOUT */}
-        <Box className="print-section" sx={{ display: 'none', fontFamily: appTheme.typography.fontFamily }}>
-          <Box sx={{ mb: 3, borderBottom: "2px solid black", pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 0 }}>FOUNDRY LAB REPORT</Typography>
-              <Typography variant="body1">Sand Properties Specification Sheet</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="body2">Report Date: {formatDate(new Date().toISOString())}</Typography>
-              <Typography variant="body2">IP: {userIP}</Typography>
-            </Box>
-          </Box>
-
-          <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid black', fontSize: '12px' }}>
-            <thead>
-              <tr style={{ backgroundColor: COLORS.headerBg }}>
-                <th colSpan={10} style={{ textAlign: 'left', padding: '10px', border: '1px solid black', fontWeight: 'bold' }}>SAND PROPERTIES:</th>
-              </tr>
-              <tr>
-                <td colSpan={9} style={{ border: '1px solid black', borderRight: 'none', backgroundColor: '#fff' }}></td>
-                <td style={{ border: '1px solid black', padding: '10px', backgroundColor: COLORS.headerBg }}>
-                  <strong>Date:</strong> {formatDate(sandDate)}
-                </td>
-              </tr>
-              <tr style={{ backgroundColor: COLORS.headerBg, textAlign: 'center' }}>
-                {["T.Clay", "A.Clay", "VCM", "LOI", "AFS", "G.C.S", "MOI", "Compactability", "Perm", "Other Remarks"].map((h, i) => (
-                  <th key={i} style={{ border: '1px solid black', padding: '8px', fontWeight: 'bold' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ textAlign: 'center', height: '60px', verticalAlign: 'middle' }}>
-                {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((k) => (
-                  <td key={k} style={{ border: '1px solid black', padding: '8px' }}>
-                    {(sandProps as any)[k]}
-                  </td>
-                ))}
-                <td style={{ border: '1px solid black', padding: '8px', textAlign: 'left' }}>
-                  {sandProps.remarks}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          {/* Attached Files in Print */}
-          {attachedFiles.length > 0 && (
-            <div style={{ marginTop: "25px" }}>
-              <h3 style={{ margin: 0, paddingBottom: "5px", borderBottom: "1px solid #ccc" }}>
-                Attached Files
-              </h3>
-              <ul style={{ marginTop: "5px" }}>
-                {attachedFiles.map((file, i) => (
-                  <li key={i} style={{ fontSize: "14px" }}>{file.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-        </Box>
-
       </Box>
-    </ThemeProvider >
+    </ThemeProvider>
   );
 }
 
