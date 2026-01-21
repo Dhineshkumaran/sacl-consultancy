@@ -53,7 +53,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaclHeader from "../common/SaclHeader";
 import { appTheme, COLORS } from "../../theme/appTheme";
 import { trialService } from "../../services/trialService";
-import { ipService } from "../../services/ipService";
+import { apiService } from "../../services/commonService";
 import departmentProgressService from "../../services/departmentProgressService";
 import { uploadFiles } from '../../services/fileUploadHelper';
 import { validateFileSizes, fileToBase64 } from '../../utils/fileHelpers';
@@ -421,7 +421,7 @@ function FoundrySampleCard() {
 
   useEffect(() => {
     const fetchIP = async () => {
-      const ip = await ipService.getUserIP();
+      const ip = await apiService.getIP();
       setUserIP(ip);
     };
     fetchIP();

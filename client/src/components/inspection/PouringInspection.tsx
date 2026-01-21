@@ -37,7 +37,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "../common/SaclHeader";
-import { ipService } from '../../services/ipService';
+import { apiService } from '../../services/commonService';
+
 import { inspectionService } from '../../services/inspectionService';
 import { trialService } from '../../services/trialService';
 import { useAlert } from '../../hooks/useAlert';
@@ -193,7 +194,7 @@ function PouringDetailsTable() {
 
     useEffect(() => {
         const fetchIP = async () => {
-            const ip = await ipService.getUserIP();
+            const ip = await apiService.getIP();
             setUserIP(ip);
         };
         fetchIP();

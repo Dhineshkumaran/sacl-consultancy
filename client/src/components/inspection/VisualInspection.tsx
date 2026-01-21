@@ -39,7 +39,8 @@ import ScienceIcon from '@mui/icons-material/Science';
 import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaclHeader from "../common/SaclHeader";
-import { ipService } from '../../services/ipService';
+import { apiService } from '../../services/commonService';
+
 import { inspectionService } from '../../services/inspectionService';
 import { documentService } from '../../services/documentService';
 import { uploadFiles } from '../../services/fileUploadHelper';
@@ -230,11 +231,11 @@ export default function VisualInspection({
 
 
     useEffect(() => {
-        const fetchUserIP = async () => {
-            const ip = await ipService.getUserIP();
+        const fetchIP = async () => {
+            const ip = await apiService.getIP();
             setUserIP(ip);
         };
-        fetchUserIP();
+        fetchIP();
     }, []);
 
 

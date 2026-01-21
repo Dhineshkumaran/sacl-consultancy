@@ -43,13 +43,13 @@ import {
 } from "../common";
 import BasicInfo from "../dashboard/BasicInfo";
 import { useAuth } from "../../context/AuthContext";
-import { ipService } from "../../services/ipService";
 import { inspectionService } from "../../services/inspectionService";
 import { uploadFiles } from "../../services/fileUploadHelper";
 import { formatDate } from "../../utils";
 import { ActionButtons, EmptyState } from "../common";
 import departmentProgressService from "../../services/departmentProgressService";
 import { useAlert } from "../../hooks/useAlert";
+import { apiService } from "../../services/commonService";
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: string, color: string }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${color}`, width: '100%' }}>
@@ -106,7 +106,7 @@ export default function MaterialCorrection() {
 
     useEffect(() => {
         const fetchIP = async () => {
-            const ip = await ipService.getUserIP();
+            const ip = await apiService.getIP();
             setUserIP(ip);
         };
         fetchIP();

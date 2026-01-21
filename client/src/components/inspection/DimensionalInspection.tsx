@@ -38,7 +38,7 @@ import PrintIcon from '@mui/icons-material/Print';
 import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaclHeader from "../common/SaclHeader";
-import { ipService } from '../../services/ipService';
+import { apiService } from '../../services/commonService';
 import { inspectionService } from '../../services/inspectionService';
 import { uploadFiles } from '../../services/fileUploadHelper';
 import departmentProgressService from "../../services/departmentProgressService";
@@ -166,7 +166,7 @@ export default function DimensionalInspection({
 
     useEffect(() => {
         const fetchUserIP = async () => {
-            const ip = await ipService.getUserIP();
+            const ip = await apiService.getIP();
             setUserIP(ip);
         };
         fetchUserIP();

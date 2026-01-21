@@ -34,7 +34,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "../common/SaclHeader";
-import { ipService } from '../../services/ipService';
+import { apiService } from '../../services/commonService';
+
 import { inspectionService } from '../../services/inspectionService';
 import { uploadFiles } from '../../services/fileUploadHelper';
 import { COLORS, appTheme } from '../../theme/appTheme';
@@ -146,7 +147,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
   useEffect(() => {
     const fetchIP = async () => {
-      const ip = await ipService.getUserIP();
+      const ip = await apiService.getIP();
       setUserIP(ip);
     };
     fetchIP();

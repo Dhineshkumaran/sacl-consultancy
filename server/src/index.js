@@ -85,6 +85,10 @@ app.use('/api/documents', document);
 app.use('/api/stats', stats);
 app.use('/api/forgot-password', forgotPasswordRoutes);
 
+app.get('/api/ip', (req, res) => {
+  res.status(200).json({ ip: req.clientIp });
+});
+
 app.use('/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
@@ -108,15 +112,6 @@ app.use((error, req, res, next) => {
     error: process.env.NODE_ENV == 'production' ? {} : error
   });
 });
-
-async function query(arg) {
-  try {
-    const res = await Client.query(arg);
-    return res;
-  } catch (err) {
-    throw err;
-  }
-}
 
 const port = process.env.PORT || 3000;
 

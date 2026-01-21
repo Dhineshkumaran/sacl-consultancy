@@ -56,7 +56,8 @@ import SaclHeader from "../common/SaclHeader";
 import DepartmentHeader from "../common/DepartmentHeader";
 import { LoadingState, EmptyState, ActionButtons, PreviewModal, FileUploadSection, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
-import { ipService } from "../../services/ipService";
+import { apiService } from "../../services/commonService";
+
 
 interface Row {
   id: string;
@@ -768,7 +769,7 @@ export default function MetallurgicalInspection() {
 
   useEffect(() => {
     const fetchIP = async () => {
-      const ip = await ipService.getUserIP();
+      const ip = await apiService.getIP();
       setUserIP(ip);
     };
     fetchIP();

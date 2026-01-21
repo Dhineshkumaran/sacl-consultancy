@@ -195,6 +195,14 @@ class ApiService {
     });
     return response.data || [];
   }
+
+  async getIP(): Promise<string> {
+    const response = await this.request('/ip', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
+    });
+    return response.ip || 'Unknown';
+  }
 }
 
 export const apiService = new ApiService();
