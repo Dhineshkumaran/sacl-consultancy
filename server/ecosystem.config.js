@@ -18,7 +18,7 @@ module.exports = {
 
             env: {
                 NODE_ENV: "production",
-                PORT: 3000
+                PORT: 9012
             },
 
             error_file: path.join(__dirname, "logs/backend-error.log"),

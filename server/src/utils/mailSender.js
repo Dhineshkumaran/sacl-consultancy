@@ -1,8 +1,8 @@
 // import nodemailer from 'nodemailer';
 
 // const transporter = nodemailer.createTransport({
-//   host: 'smtp.gmail.com',
-//   port: 587,
+//   host: process.env.SMTP_HOST,
+//   port: process.env.SMTP_PORT,
 //   secure: false,
 //   auth: {
 //     user: process.env.SMTP_USER,
@@ -24,7 +24,7 @@ const transporter = {
   sendMail: async ({ to, subject, text, html }) => {
     try {
       const { data, error } = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'SACL Consultancy <onboarding@resend.dev>',
+        from: process.env.EMAIL_FROM,
         to: 'dhineshkumarans.22cse@kongu.edu',
         subject,
         text,

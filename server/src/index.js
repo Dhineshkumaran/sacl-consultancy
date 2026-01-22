@@ -113,7 +113,7 @@ app.use((error, req, res, next) => {
   });
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 9012;
 
 app.listen(port, async () => {
   console.log(`Server is listening on port ${port}`);
