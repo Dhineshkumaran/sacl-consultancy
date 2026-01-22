@@ -316,7 +316,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                 bgcolor: '#f8fafc',
                                                 textAlign: 'center',
                                                 fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                            }}>Actions</TableCell>
+                                            }}>Report</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -378,7 +378,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                             </Box>
                                                         </TableCell>
                                                         <TableCell align="center" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                                                            {trial.status === 'CLOSED' && trial.file_base64 && (
+                                                            {trial.status === 'CLOSED' && trial.file_base64 ? (
                                                                 <Button
                                                                     variant="outlined"
                                                                     size="small"
@@ -393,9 +393,9 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                                 >
                                                                     Report
                                                                 </Button>
-                                                            )}
+                                                            ) : "Report not available"}
                                                             {user.role === 'Admin' && trial.file_base64 && (
-                                                                <Tooltip title="Delete Trial">
+                                                                <Tooltip title="Delete Trial Report">
                                                                     <IconButton
                                                                         size="small"
                                                                         color="error"

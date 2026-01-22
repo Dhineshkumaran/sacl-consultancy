@@ -19,7 +19,6 @@ import FoundrySampleCard from './components/inspection/FoundrySampleCard';
 import PouringDetailsTable from './components/inspection/PouringInspection';
 import SandTable from './components/inspection/SandPlantInspection';
 import MaterialCorrection from './components/inspection/MaterialCorrectionInspection';
-import AllTrialsPage from './pages/AllTrialsPage';
 
 const AppRoutes: React.FC = () => {
     const { isAuthenticated, loading } = useAuth();
@@ -48,10 +47,6 @@ const AppRoutes: React.FC = () => {
 
             <Route path="/visual-inspection" element={
                 <ProtectedRoute requiredDepartment={[1, 5]}><VisualInspection /></ProtectedRoute>
-            } />
-
-            <Route path="/trials" element={
-                <ProtectedRoute requiredDepartment={[1, 2, 3]}><AllTrialsPage /></ProtectedRoute>
             } />
 
             <Route path="/dimensional-inspection" element={

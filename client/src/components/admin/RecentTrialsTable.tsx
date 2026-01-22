@@ -144,7 +144,7 @@ const RecentTrialsTable: React.FC = () => {
                   </TableCell>
                   <TableCell align="center">
                     {
-                      trial.status === 'CLOSED' && trial.file_base64 && (
+                      trial.status === 'CLOSED' && trial.file_base64 ? (
                         <Button
                           variant="outlined"
                           size="small"
@@ -165,7 +165,7 @@ const RecentTrialsTable: React.FC = () => {
                         >
                           View
                         </Button>
-                      )
+                      ) : "Report not available"
                     }
                   </TableCell>
                 </TableRow>
