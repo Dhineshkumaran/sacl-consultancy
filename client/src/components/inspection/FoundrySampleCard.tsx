@@ -475,7 +475,7 @@ function FoundrySampleCard() {
   };
 
   useEffect(() => {
-    if (user?.role === 'HOD' && trialIdFromUrl) {
+    if ((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) {
       return;
     }
     if (selectedPart) fetchTrialId();
