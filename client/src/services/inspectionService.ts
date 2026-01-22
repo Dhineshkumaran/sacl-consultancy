@@ -1,14 +1,16 @@
-/**
- * Inspection Service
- * Handles API calls for all inspection types (Metallurgical, Visual, Dimensional, etc.)
- */
-
-/**
- * Inspection Service
- * Handles API calls for all inspection types (Metallurgical, Visual, Dimensional, etc.)
- */
-
 import { apiService } from './commonService';
+import {
+    sandPropertiesSchema,
+    pouringDetailsSchema,
+    mouldCorrectionSchema,
+    metallurgicalInspectionSchema,
+    visualInspectionSchema,
+    dimensionalInspectionSchema,
+    machineShopSchema,
+    materialCorrectionSchema
+} from '../schemas/inspections';
+
+import { validate } from '../utils';
 
 export const inspectionService = {
     /**
@@ -18,9 +20,10 @@ export const inspectionService = {
      */
     async submitMetallurgicalInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(metallurgicalInspectionSchema, payload);
             return await apiService.request('/metallurgical-inspection', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) {
             console.error('Error submitting metallurgical inspection:', error);
@@ -35,9 +38,10 @@ export const inspectionService = {
      */
     async submitVisualInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(visualInspectionSchema, payload);
             return await apiService.request('/visual-inspection', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) {
             console.error('Error submitting visual inspection:', error);
@@ -52,9 +56,10 @@ export const inspectionService = {
      */
     async submitDimensionalInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(dimensionalInspectionSchema, payload);
             return await apiService.request('/dimensional-inspection', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) {
             console.error('Error submitting dimensional inspection:', error);
@@ -69,9 +74,10 @@ export const inspectionService = {
      */
     async submitMachineShopInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(machineShopSchema, payload);
             return await apiService.request('/machine-shop', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) {
             console.error('Error submitting machine shop inspection:', error);
@@ -86,9 +92,10 @@ export const inspectionService = {
      */
     async submitPouringDetails(payload: any): Promise<any> {
         try {
+            const validatedData = validate(pouringDetailsSchema, payload);
             const data = await apiService.request('/pouring-details', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
 
             if (!data.success) {
@@ -109,9 +116,10 @@ export const inspectionService = {
      */
     async submitSandProperties(payload: any): Promise<any> {
         try {
+            const validatedData = validate(sandPropertiesSchema, payload);
             const data = await apiService.request('/sand-properties', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
 
             if (!data?.success) {
@@ -132,9 +140,10 @@ export const inspectionService = {
      */
     async submitMouldingCorrection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(mouldCorrectionSchema, payload);
             const data = await apiService.request('/moulding-correction', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
 
             if (!data?.success) {
@@ -156,9 +165,10 @@ export const inspectionService = {
     },
     async updateSandProperties(payload: any): Promise<any> {
         try {
+            const validatedData = validate(sandPropertiesSchema.partial(), payload);
             return await apiService.request('/sand-properties', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating sand properties:', error); throw error; }
     },
@@ -171,9 +181,10 @@ export const inspectionService = {
     },
     async updateMouldingCorrection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(mouldCorrectionSchema.partial(), payload);
             return await apiService.request('/moulding-correction', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating moulding correction:', error); throw error; }
     },
@@ -186,9 +197,10 @@ export const inspectionService = {
     },
     async updateVisualInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(visualInspectionSchema.partial(), payload);
             return await apiService.request('/visual-inspection', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating visual inspection:', error); throw error; }
     },
@@ -201,9 +213,10 @@ export const inspectionService = {
     },
     async updateDimensionalInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(dimensionalInspectionSchema.partial(), payload);
             return await apiService.request('/dimensional-inspection', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating dimensional inspection:', error); throw error; }
     },
@@ -216,9 +229,10 @@ export const inspectionService = {
     },
     async updateMetallurgicalInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(metallurgicalInspectionSchema.partial(), payload);
             return apiService.request('/metallurgical-inspection', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating metallurgical inspection:', error); throw error; }
     },
@@ -231,9 +245,10 @@ export const inspectionService = {
     },
     async updatePouringDetails(payload: any): Promise<any> {
         try {
+            const validatedData = validate(pouringDetailsSchema.partial(), payload);
             return await apiService.request('/pouring-details', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating pouring details:', error); throw error; }
     },
@@ -246,18 +261,20 @@ export const inspectionService = {
     },
     async updateMachineShopInspection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(machineShopSchema.partial(), payload);
             return await apiService.request('/machine-shop', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating machine shop inspection:', error); throw error; }
     },
     // Material Correction
     async submitMaterialCorrection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(materialCorrectionSchema, payload);
             return await apiService.request('/material-correction', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) {
             console.error('Error submitting material correction:', error);
@@ -273,9 +290,10 @@ export const inspectionService = {
 
     async updateMaterialCorrection(payload: any): Promise<any> {
         try {
+            const validatedData = validate(materialCorrectionSchema.partial(), payload);
             return await apiService.request('/material-correction', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) { console.error('Error updating material correction:', error); throw error; }
     }

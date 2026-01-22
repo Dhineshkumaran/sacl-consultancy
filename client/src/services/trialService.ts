@@ -1,12 +1,6 @@
-/**
- * Trial Management Service
- * Handles API calls related to trials, master lists, and sample cards
- */
-/**
- * Trial Management Service
- * Handles API calls related to trials, master lists, and sample cards
- */
 import { apiService } from './commonService';
+import { trialCardSchema } from '../schemas/trialCard';
+import { validate } from '../utils';
 
 export const trialService = {
     /**
@@ -77,9 +71,10 @@ export const trialService = {
      */
     async submitTrial(payload: any): Promise<any> {
         try {
+            const validatedData = validate(trialCardSchema, payload);
             return await apiService.request('/trial', {
                 method: 'POST',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) {
             console.error('Failed to submit trial :', error);
@@ -154,9 +149,10 @@ export const trialService = {
      */
     async updateTrial(payload: any): Promise<any> {
         try {
+            const validatedData = validate(trialCardSchema.partial(), payload);
             return await apiService.request('/trial/update', {
                 method: 'PUT',
-                body: JSON.stringify(payload)
+                body: JSON.stringify(validatedData)
             });
         } catch (error) {
             console.error('Failed to update trial:', error);

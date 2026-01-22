@@ -450,11 +450,11 @@ export default function VisualInspection({
                     text: 'Visual Inspection updated successfully.'
                 });
                 navigate('/dashboard');
-            } catch (err) {
+            } catch (err: any) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to update. Please try again.'
+                    text: err.message || 'Failed to update. Please try again.'
                 });
             } finally {
                 setSaving(false);

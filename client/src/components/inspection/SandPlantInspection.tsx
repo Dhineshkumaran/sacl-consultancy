@@ -266,11 +266,11 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         });
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch (err: any) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to approve sand properties. Please try again.' : 'Failed to save sand properties. Please try again.'
+        text: err.message || (user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to approve sand properties. Please try again.' : 'Failed to save sand properties. Please try again.')
       });
     } finally {
       setLoading(false);

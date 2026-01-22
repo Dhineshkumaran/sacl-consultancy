@@ -191,8 +191,8 @@ function MouldingTable() {
       await inspectionService.submitMouldingCorrection(body);
       setMouldCorrectionSubmitted(true);
       return { ok: true, data: {} };
-    } catch (err) {
-      showAlert('error', 'Failed to save moulding details. Please try again.');
+    } catch (err: any) {
+      showAlert('error', err.message || 'Failed to save moulding details. Please try again.');
       return { ok: false, message: 'Failed to save mould correction' };
     } finally {
       setMouldCorrectionLoading(false);
@@ -273,11 +273,11 @@ function MouldingTable() {
         });
         navigate('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to update moulding correction. Please try again.' : 'Failed to save moulding details. Please try again.'
+        text: error.message || (user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to update moulding correction. Please try again.' : 'Failed to save moulding details. Please try again.')
       });
     } finally {
       setLoading(false);

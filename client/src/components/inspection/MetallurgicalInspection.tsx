@@ -1025,11 +1025,11 @@ export default function MetallurgicalInspection() {
           text: 'Metallurgical Inspection updated successfully.'
         });
         navigate('/dashboard');
-      } catch (err) {
+      } catch (err: any) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to update Metallurgical Inspection. Please try again.'
+          text: err.message || 'Failed to update Metallurgical Inspection. Please try again.'
         });
         console.error(err);
       } finally {
@@ -1091,11 +1091,11 @@ export default function MetallurgicalInspection() {
 
       navigate('/dashboard');
     } catch (err: any) {
-      setMessage('Failed to submit inspection data');
+      setMessage(err.message || 'Failed to submit inspection data');
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Failed to submit inspection data. Please try again.'
+        text: err.message || 'Failed to submit inspection data. Please try again.'
       });
     } finally {
       setSending(false);

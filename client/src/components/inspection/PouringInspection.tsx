@@ -355,7 +355,7 @@ function PouringDetailsTable() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Failed to update pouring details. Please try again.'
+                        text: err.message || 'Failed to update pouring details. Please try again.'
                     });
                     console.error(err);
                 }
@@ -429,12 +429,12 @@ function PouringDetailsTable() {
                 text: 'Pouring details created successfully.'
             });
             navigate('/dashboard');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving pouring details:", error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Failed to create pouring details. Please try again.'
+                text: error.message || 'Failed to create pouring details. Please try again.'
             });
         } finally {
             setLoading(false);

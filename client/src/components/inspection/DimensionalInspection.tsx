@@ -312,11 +312,11 @@ export default function DimensionalInspection({
                     text: 'Dimensional Inspection updated successfully.'
                 });
                 navigate('/dashboard');
-            } catch (err) {
+            } catch (err: any) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to update Dimensional Inspection. Please try again.'
+                    text: err.message || 'Failed to update Dimensional Inspection. Please try again.'
                 });
             } finally {
                 setSaving(false);
@@ -388,7 +388,7 @@ export default function DimensionalInspection({
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Failed to save dimensional inspection. Please try again.'
+                text: err.message || 'Failed to save dimensional inspection. Please try again.'
             });
         } finally {
             setSaving(false);

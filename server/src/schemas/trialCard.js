@@ -1,0 +1,22 @@
+import { z } from 'zod';
+
+export const trialCardSchema = z.object({
+    trial_id: z.string().min(1, "Trial ID is required").max(255),
+    part_name: z.string().min(1, "Part Name is required").max(100),
+    pattern_code: z.string().min(1, "Pattern Code is required").max(150),
+    material_grade: z.string().min(1, "Material Grade is required").max(50),
+    trial_type: z.enum(['INHOUSE MACHINING(NPD)', 'INHOUSE MACHINING(REGULAR)', 'MACHINING - CUSTOMER END']).default('INHOUSE MACHINING(NPD)'),
+    initiated_by: z.string().min(1, "Initiated by is required").max(50),
+    date_of_sampling: z.string().or(z.date()),
+    plan_moulds: z.union([z.number(), z.string()]).transform(v => Number(v)).refine(n => n > 0, "Plan moulds must be greater than 0").optional().nullable(),
+    reason_for_sampling: z.string().optional().nullable(),
+    status: z.enum(['CREATED', 'IN_PROGRESS', 'CLOSED']).default('CREATED'),
+    tooling_modification: z.string().optional().nullable(),
+    remarks: z.string().optional().nullable(),
+    current_department_id: z.number().int().optional().nullable(),
+    disa: z.string().max(50).optional().nullable(),
+    sample_traceability: z.string().max(50).optional().nullable(),
+    mould_correction: z.any().optional().nullable() // JSON structure
+});
+
+export const updateTrialCardSchema = trialCardSchema.partial();

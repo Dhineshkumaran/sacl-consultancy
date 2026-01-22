@@ -59,6 +59,8 @@ import { validateFileSizes, fileToBase64 } from '../../utils/fileHelpers';
 import { useAlert } from '../../hooks/useAlert';
 import { formatDate } from '../../utils/dateUtils';
 import { AlertMessage } from '../common/AlertMessage';
+import { trialCardSchema } from "../../schemas/trialCard";
+import { z } from "zod";
 import { useAuth } from '../../context/AuthContext';
 import DepartmentHeader from "../common/DepartmentHeader";
 import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
@@ -259,7 +261,6 @@ function FoundrySampleCard() {
   const TRIAL_TYPES = ["INHOUSE MACHINING(NPD)", "INHOUSE MACHINING(REGULAR)", "MACHINING - CUSTOMER END"];
   const [samplingDate, setSamplingDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [planMoulds, setPlanMoulds] = useState("");
-  const [actualMoulds, setActualMoulds] = useState("");
   const [machine, setMachine] = useState("");
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
@@ -298,6 +299,7 @@ function FoundrySampleCard() {
   const [editingOnlyMetallurgical, setEditingOnlyMetallurgical] = useState<boolean>(false);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
 
   const trialIdFromUrl = new URLSearchParams(window.location.search).get('trial_id') || "";
@@ -349,7 +351,6 @@ function FoundrySampleCard() {
             setTrialNo(data.trial_id?.split('-').pop() || '');
             setSamplingDate(data.date_of_sampling?.split('T')[0] || new Date().toISOString().split("T")[0]);
             setPlanMoulds(data.plan_moulds || '');
-            setActualMoulds(data.actual_moulds || '');
             setMachine(data.disa || '');
             setReason(data.reason_for_sampling || '');
             setSampleTraceability(data.sample_traceability && data.sample_traceability !== 'null' && data.sample_traceability !== 'undefined' ? data.sample_traceability : '');
@@ -487,10 +488,9 @@ function FoundrySampleCard() {
 
   const handleSaveAndContinue = () => {
     if (!selectedPart) { showAlert("error", "Please select a Part Name first."); return; }
-    if (reason === 'Others' && !customReason.trim()) {
-      showAlert("error", "Please specify the reason for sampling.");
-      return;
-    }
+
+    const reasonFinal = reason === 'Others' ? `Others (${customReason})` : reason;
+
     const payload = {
       trial_id: trialId,
       pattern_code: selectedPart.pattern_code,
@@ -499,8 +499,7 @@ function FoundrySampleCard() {
       date_of_sampling: samplingDate,
       status: "CREATED",
       plan_moulds: planMoulds,
-      actual_moulds: actualMoulds,
-      reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
+      reason_for_sampling: reasonFinal,
       sample_traceability: sampleTraceability,
       trial_type: trialType,
       mould_correction: mouldCorrections,
@@ -531,7 +530,6 @@ function FoundrySampleCard() {
             material_grade: selectedPart?.material_grade,
             date_of_sampling: samplingDate,
             plan_moulds: planMoulds,
-            actual_moulds: actualMoulds,
             reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
             disa: machine,
             sample_traceability: sampleTraceability,
@@ -551,11 +549,11 @@ function FoundrySampleCard() {
           });
           navigate('/dashboard');
           return;
-        } catch (err) {
+        } catch (err: any) {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to update Trial Specification. Please try again.'
+            text: err.message || 'Failed to update Trial Specification. Please try again.'
           });
           console.error(err);
           return;
@@ -607,7 +605,7 @@ function FoundrySampleCard() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: "Failed to submit trial data. Please try again."
+        text: err.message || "Failed to submit trial data. Please try again."
       });
     } finally {
       setIsSubmitting(false);
@@ -923,8 +921,7 @@ function FoundrySampleCard() {
                     <Typography variant="caption" color="text.secondary">No. of Moulds</Typography>
                     <Typography variant="caption" color="text.secondary">No. of Moulds</Typography>
                     <Typography variant="subtitle1">
-                      Plan: {previewPayload?.plan_moulds || previewPayload?.planMoulds || "-"} <br />
-                      Actual: {previewPayload?.actual_moulds || previewPayload?.actualMoulds || "-"}
+                      Plan: {previewPayload?.plan_moulds || previewPayload?.planMoulds || "-"}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -1111,23 +1108,6 @@ function FoundrySampleCard() {
                             size="small"
                             placeholder="20"
                             disabled={user?.role === 'HOD' || user?.role === 'Admin' && !isEditing}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{
-                              bgcolor: '#FFF59D',
-                              "& .MuiInputBase-input": { color: "black !important" },
-                              "& .MuiInputLabel-root": { color: "black !important", fontWeight: 600 },
-                              "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "black !important" }
-                            }}
-                          />
-                          <TextField
-                            type="number"
-                            fullWidth
-                            label="Actual"
-                            value={actualMoulds}
-                            onChange={(e) => setActualMoulds(e.target.value)}
-                            size="small"
-                            placeholder="Get from Pouring"
-                            disabled={true}
                             InputLabelProps={{ shrink: true }}
                             sx={{
                               bgcolor: '#FFF59D',

@@ -381,11 +381,11 @@ export default function McShopInspection({
           text: 'Machine Shop Inspection updated successfully.'
         });
         navigate('/dashboard');
-      } catch (err) {
+      } catch (err: any) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to update Machine Shop Inspection. Please try again.'
+          text: err.message || 'Failed to update Machine Shop Inspection. Please try again.'
         });
         console.error(err);
       } finally {
@@ -465,7 +465,7 @@ export default function McShopInspection({
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Failed to save machine shop inspection. Please try again.'
+        text: err.message || 'Failed to save machine shop inspection. Please try again.'
       });
     } finally {
       setSaving(false);

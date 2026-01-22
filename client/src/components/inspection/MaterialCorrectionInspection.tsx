@@ -203,11 +203,11 @@ export default function MaterialCorrection() {
                         text: 'Material correction updated successfully.'
                     });
                     navigate('/dashboard');
-                } catch (err) {
+                } catch (err: any) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Failed to update material correction. Please try again.'
+                        text: err.message || 'Failed to update material correction. Please try again.'
                     });
                     console.error(err);
                 }
@@ -260,12 +260,12 @@ export default function MaterialCorrection() {
             }
 
             navigate('/dashboard');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: "An error occurred during submission. Please try again."
+                text: error.message || "An error occurred during submission. Please try again."
             });
         } finally {
             setLoading(false);
