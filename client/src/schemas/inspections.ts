@@ -19,8 +19,8 @@ export const pouringDetailsSchema = z.object({
         .optional().nullable(),
     pouring_temp_c: z.union([z.number(), z.string()]).transform(v => (v === "" || v === null) ? null : Number(v)).refine(n => n === null || n > 0, "Temperature must be greater than 0").optional().nullable(),
     pouring_time_sec: z.union([z.number(), z.string()]).transform(v => (v === "" || v === null) ? null : Number(v)).refine(n => n === null || n > 0, "Time must be greater than 0").optional().nullable(),
-    inoculation: z.string().optional().nullable(),
-    other_remarks: z.string().optional().nullable(),
+    inoculation: z.any().optional().nullable(),
+    other_remarks: z.any().optional().nullable(),
     remarks: z.string().optional().nullable(),
     is_edit: z.boolean().optional()
 });
