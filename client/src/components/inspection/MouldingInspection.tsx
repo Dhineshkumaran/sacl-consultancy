@@ -113,7 +113,7 @@ function MouldingTable() {
       }
     };
     if (trialId) fetchData();
-  }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, trialId]);
 
   useEffect(() => {
     const fetchIP = async () => {

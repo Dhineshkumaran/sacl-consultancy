@@ -52,13 +52,13 @@ type GroupMeta = GroupMetadata;
 
 export default function McShopInspection({
   initialCavities = ["", "", ""],
-  onSave = async (payload: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  onSave = async (payload: any) => {
 
     return { ok: true };
   },
 }: {
   initialCavities?: string[];
-  onSave?: (payload: any) => Promise<any> | any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  onSave?: (payload: any) => Promise<any> | any;
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -89,7 +89,7 @@ export default function McShopInspection({
   const [message, setMessage] = useState<string | null>(null);
   const { alert, showAlert } = useAlert();
   const [previewMode, setPreviewMode] = useState(false);
-  const [previewPayload, setPreviewPayload] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [previewPayload, setPreviewPayload] = useState<any | null>(null);
   const [previewSubmitted, setPreviewSubmitted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -136,7 +136,7 @@ export default function McShopInspection({
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
             if (data.inspections) {
-              let inspections: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
+              let inspections: any[] = [];
               try {
                 inspections = typeof data.inspections === 'string' ? JSON.parse(data.inspections) : data.inspections;
               } catch (e) {
@@ -146,14 +146,14 @@ export default function McShopInspection({
               if (!Array.isArray(inspections)) inspections = [];
 
               if (inspections.length > 0) {
-                const newCavities = inspections.map((item: any) => item['Cavity Details'] || ""); // eslint-disable-line @typescript-eslint/no-explicit-any
+                const newCavities = inspections.map((item: any) => item['Cavity Details'] || "");
                 setCavities(newCavities);
 
-                const getVals = (key: string) => inspections.map((item: any) => item[key] ?? ""); // eslint-disable-line @typescript-eslint/no-explicit-any
+                const getVals = (key: string) => inspections.map((item: any) => item[key] ?? "");
 
                 setRows(prevRows => {
                   const newRows = [...prevRows];
-                  const updateRowVals = (labelSnippet: string, values: any[]) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                  const updateRowVals = (labelSnippet: string, values: any[]) => {
                     const rIndex = newRows.findIndex(r => r.label.toLowerCase().includes(labelSnippet));
                     if (rIndex !== -1) {
                       newRows[rIndex] = {
@@ -347,7 +347,7 @@ export default function McShopInspection({
         const rejectedRow = rows[4];
         const reasonRow = rows[5];
 
-        const inspections: any[] = cavities.map((cav, idx) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const inspections: any[] = cavities.map((cav, idx) => {
           return {
             'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
             'Received Quantity': receivedRow?.values?.[idx] ?? null,
@@ -376,7 +376,7 @@ export default function McShopInspection({
           text: 'Machine Shop Inspection updated successfully.'
         });
         navigate('/dashboard');
-      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -399,7 +399,7 @@ export default function McShopInspection({
       const rejectedRow = rows[4];
       const reasonRow = rows[5];
 
-      const inspections: any[] = cavities.map((cav, idx) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      const inspections: any[] = cavities.map((cav, idx) => {
         return {
           'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
           'Received Quantity': receivedRow?.values?.[idx] ?? null,
@@ -455,7 +455,7 @@ export default function McShopInspection({
         text: 'Machine shop inspection created successfully.'
       });
       navigate('/dashboard');
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       console.error("Error saving machine shop inspection:", err);
       Swal.fire({
         icon: 'error',
@@ -740,7 +740,7 @@ export default function McShopInspection({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {previewPayload?.rows.map((r: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                      {previewPayload?.rows.map((r: any, idx: number) => (
                         <TableRow key={idx}>
                           <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
                           {r.freeText !== undefined && r.freeText !== null ? (
@@ -749,7 +749,7 @@ export default function McShopInspection({
                             </TableCell>
                           ) : (
                             <>
-                              {r.values.map((v: any, j: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                              {r.values.map((v: any, j: number) => (
                                 <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
                                   {v === null ? "-" : String(v)}
                                 </TableCell>

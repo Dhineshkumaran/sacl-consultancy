@@ -62,7 +62,7 @@ const buildRows = (labels: string[], initialCols: string[]): Row[] =>
         values: initialCols.map(() => ""),
     }));
 
-const viewAttachment = (file: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+const viewAttachment = (file: any) => {
     if (!file) return;
     if (file instanceof File) {
         const url = URL.createObjectURL(file);
@@ -92,13 +92,13 @@ const viewAttachment = (file: any) => { // eslint-disable-line @typescript-eslin
 export default function VisualInspection({
     initialRows = ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage (%)", "Reason for rejection:"],
     initialCols = [""],
-    onSave = async (payload: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    onSave = async (payload: any) => {
         return new Promise(resolve => setTimeout(() => resolve({ ok: true }), 1000));
     },
 }: {
     initialRows?: string[];
     initialCols?: string[];
-    onSave?: (payload: any) => Promise<any> | any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    onSave?: (payload: any) => Promise<any> | any;
 }) {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -115,7 +115,7 @@ export default function VisualInspection({
     const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
     const [additionalRemarks, setAdditionalRemarks] = useState<string>("");
     const [previewMode, setPreviewMode] = useState(false);
-    const [previewPayload, setPreviewPayload] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const [previewPayload, setPreviewPayload] = useState<any | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [userIP, setUserIP] = useState<string>("Loading...");
     const [isEditing, setIsEditing] = useState(false);
@@ -154,11 +154,11 @@ export default function VisualInspection({
                 try {
                     const response = await inspectionService.getVisualInspection(trialId);
 
-                    const docsMap: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+                    const docsMap: Record<string, any> = {};
                     try {
                         const docRes = await documentService.getDocument(trialId);
                         if (docRes && docRes.success && Array.isArray(docRes.data)) {
-                            docRes.data.forEach((d: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                            docRes.data.forEach((d: any) => {
                                 if (d.document_type === 'VISUAL_INSPECTION') docsMap[d.file_name] = d;
                             });
                         }
@@ -179,14 +179,14 @@ export default function VisualInspection({
                         }
 
                         if (inspections && Array.isArray(inspections)) {
-                            const loadedCols = inspections.map((item: any) => item['Cavity Number'] || ''); // eslint-disable-line @typescript-eslint/no-explicit-any
+                            const loadedCols = inspections.map((item: any) => item['Cavity Number'] || '');
 
                             setCols(loadedCols);
                             setRows(prevRows => prevRows.map(row => {
                                 const fieldName = "Reason for rejection";
                                 return {
                                     ...row,
-                                    values: inspections.map((item: any) => String(item[fieldName] || '')) // eslint-disable-line @typescript-eslint/no-explicit-any
+                                    values: inspections.map((item: any) => String(item[fieldName] || ''))
                                 };
                             }));
                         }
@@ -388,7 +388,7 @@ export default function VisualInspection({
             setPreviewPayload(payload);
             setPreviewMode(true);
             setSubmitted(false);
-        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
             showAlert('error', 'Failed to prepare preview. Please try again.');
         } finally {
             setSaving(false);
@@ -447,7 +447,7 @@ export default function VisualInspection({
                     text: 'Visual Inspection updated successfully.'
                 });
                 navigate('/dashboard');
-            } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            } catch (err: any) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -527,7 +527,7 @@ export default function VisualInspection({
                 text: 'Visual inspection created successfully.'
             });
             navigate('/dashboard');
-        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -895,10 +895,10 @@ export default function VisualInspection({
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
-                                                    {previewPayload?.rows.map((r: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                                                    {previewPayload?.rows.map((r: any, idx: number) => (
                                                         <TableRow key={idx}>
                                                             <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
-                                                            {r.values.map((v: any, j: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                                                            {r.values.map((v: any, j: number) => (
                                                                 <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
                                                                     {v === null ? "-" : String(v)}
                                                                 </TableCell>

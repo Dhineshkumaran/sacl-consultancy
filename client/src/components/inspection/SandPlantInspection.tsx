@@ -44,8 +44,8 @@ import BasicInfo from "../dashboard/BasicInfo";
 
 interface SandTableProps {
   submittedData?: {
-    selectedPart?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    selectedPattern?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    selectedPart?: any;
+    selectedPattern?: any;
     machine?: string;
     reason?: string;
     trialNo?: string;
@@ -53,7 +53,7 @@ interface SandTableProps {
     mouldCount?: string;
     sampleTraceability?: string;
   };
-  onSave?: (data: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  onSave?: (data: any) => void;
   onComplete?: () => void;
   fromPendingCards?: boolean;
 }
@@ -185,16 +185,16 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         const payload = {
           trial_id: trialId,
           date: sandDate,
-          t_clay: Number((sandProps as any).tClay) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          a_clay: Number((sandProps as any).aClay) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          vcm: Number((sandProps as any).vcm) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          loi: Number((sandProps as any).loi) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          afs: Number((sandProps as any).afs) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          gcs: Number((sandProps as any).gcs) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          moi: Number((sandProps as any).moi) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          compactability: Number((sandProps as any).compactability) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          permeability: Number((sandProps as any).perm) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          remarks: (sandProps as any).remarks || "", // eslint-disable-line @typescript-eslint/no-explicit-any
+          t_clay: Number((sandProps as any).tClay) || 0,
+          a_clay: Number((sandProps as any).aClay) || 0,
+          vcm: Number((sandProps as any).vcm) || 0,
+          loi: Number((sandProps as any).loi) || 0,
+          afs: Number((sandProps as any).afs) || 0,
+          gcs: Number((sandProps as any).gcs) || 0,
+          moi: Number((sandProps as any).moi) || 0,
+          compactability: Number((sandProps as any).compactability) || 0,
+          permeability: Number((sandProps as any).perm) || 0,
+          remarks: (sandProps as any).remarks || "",
           is_edit: isEditing
         };
 
@@ -212,16 +212,16 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         const payload = {
           trial_id: trialId,
           date: sandDate,
-          t_clay: Number((sandProps as any).tClay) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          a_clay: Number((sandProps as any).aClay) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          vcm: Number((sandProps as any).vcm) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          loi: Number((sandProps as any).loi) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          afs: Number((sandProps as any).afs) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          gcs: Number((sandProps as any).gcs) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          moi: Number((sandProps as any).moi) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          compactability: Number((sandProps as any).compactability) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          permeability: Number((sandProps as any).perm) || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-          remarks: (sandProps as any).remarks || "" // eslint-disable-line @typescript-eslint/no-explicit-any
+          t_clay: Number((sandProps as any).tClay) || 0,
+          a_clay: Number((sandProps as any).aClay) || 0,
+          vcm: Number((sandProps as any).vcm) || 0,
+          loi: Number((sandProps as any).loi) || 0,
+          afs: Number((sandProps as any).afs) || 0,
+          gcs: Number((sandProps as any).gcs) || 0,
+          moi: Number((sandProps as any).moi) || 0,
+          compactability: Number((sandProps as any).compactability) || 0,
+          permeability: Number((sandProps as any).perm) || 0,
+          remarks: (sandProps as any).remarks || ""
         };
 
         await inspectionService.submitSandProperties(payload);
@@ -262,7 +262,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         });
         navigate('/dashboard');
       }
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -376,8 +376,8 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                           {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((key) => (
                             <TableCell key={key} sx={{ p: 2, verticalAlign: 'middle' }}>
                               <SpecInput
-                                value={(sandProps as any)[key]} // eslint-disable-line @typescript-eslint/no-explicit-any
-                                onChange={(e: any) => handleChange(key, e.target.value)} // eslint-disable-line @typescript-eslint/no-explicit-any
+                                value={(sandProps as any)[key]}
+                                onChange={(e: any) => handleChange(key, e.target.value)}
                                 disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                               />
                             </TableCell>
@@ -502,7 +502,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                   <tr style={{ textAlign: 'center' }}>
                     {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((k) => (
                       <td key={k} style={{ border: '1px solid black', padding: '12px' }}>
-                        {(sandProps as any)[k] || "-"} // eslint-disable-line @typescript-eslint/no-explicit-any
+                        {(sandProps as any)[k] || "-"}
                       </td>
                     ))}
                     <td style={{ border: '1px solid black', padding: '12px', textAlign: 'left' }}>

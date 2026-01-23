@@ -70,7 +70,7 @@ export default function MaterialCorrection() {
     const [processState, setProcessState] = useState({ pouringTemp: "", inoculantPerSec: "", inoculantType: "" });
 
     const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewPayload, setPreviewPayload] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const [previewPayload, setPreviewPayload] = useState<any | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [userIP, setUserIP] = useState<string>("");
     const [loading, setLoading] = useState(false);
@@ -202,7 +202,7 @@ export default function MaterialCorrection() {
                         text: 'Material correction updated successfully.'
                     });
                     navigate('/dashboard');
-                } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+                } catch (err: any) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
@@ -259,7 +259,7 @@ export default function MaterialCorrection() {
             }
 
             navigate('/dashboard');
-        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
             console.error(error);
             Swal.fire({
                 icon: 'error',
@@ -351,20 +351,20 @@ export default function MaterialCorrection() {
                                                 </TableHead>
                                                 <TableBody>
                                                     <TableRow>
-                                                        <TableCell><SpecInput value={chemState.c} onChange={(e: any) => setChemState({ ...chemState, c: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={chemState.si} onChange={(e: any) => setChemState({ ...chemState, si: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={chemState.mn} onChange={(e: any) => setChemState({ ...chemState, mn: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={chemState.p} onChange={(e: any) => setChemState({ ...chemState, p: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={chemState.s} onChange={(e: any) => setChemState({ ...chemState, s: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={chemState.mg} onChange={(e: any) => setChemState({ ...chemState, mg: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={chemState.cu} onChange={(e: any) => setChemState({ ...chemState, cu: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
+                                                        <TableCell><SpecInput value={chemState.c} onChange={(e: any) => setChemState({ ...chemState, c: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={chemState.si} onChange={(e: any) => setChemState({ ...chemState, si: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={chemState.mn} onChange={(e: any) => setChemState({ ...chemState, mn: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={chemState.p} onChange={(e: any) => setChemState({ ...chemState, p: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={chemState.s} onChange={(e: any) => setChemState({ ...chemState, s: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={chemState.mg} onChange={(e: any) => setChemState({ ...chemState, mg: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={chemState.cu} onChange={(e: any) => setChemState({ ...chemState, cu: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
                                                         <TableCell sx={{ borderRight: `2px solid ${COLORS.border} !important` }}>
-                                                            <SpecInput value={chemState.cr} onChange={(e: any) => setChemState({ ...chemState, cr: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /> // eslint-disable-line @typescript-eslint/no-explicit-any
+                                                            <SpecInput value={chemState.cr} onChange={(e: any) => setChemState({ ...chemState, cr: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
                                                         </TableCell>
 
-                                                        <TableCell><SpecInput value={processState.pouringTemp} onChange={(e: any) => setProcessState({ ...processState, pouringTemp: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={processState.inoculantPerSec} onChange={(e: any) => setProcessState({ ...processState, inoculantPerSec: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
-                                                        <TableCell><SpecInput value={processState.inoculantType} onChange={(e: any) => setProcessState({ ...processState, inoculantType: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell> // eslint-disable-line @typescript-eslint/no-explicit-any
+                                                        <TableCell><SpecInput value={processState.pouringTemp} onChange={(e: any) => setProcessState({ ...processState, pouringTemp: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={processState.inoculantPerSec} onChange={(e: any) => setProcessState({ ...processState, inoculantPerSec: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
+                                                        <TableCell><SpecInput value={processState.inoculantType} onChange={(e: any) => setProcessState({ ...processState, inoculantType: e.target.value })} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} /></TableCell>
                                                     </TableRow>
                                                 </TableBody>
                                             </Table>

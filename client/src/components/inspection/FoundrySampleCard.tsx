@@ -64,7 +64,7 @@ interface PartData {
   pattern_code: string;
   part_name: string;
   material_grade: string;
-  chemical_composition: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  chemical_composition: any;
   micro_structure: string;
   tensile: string;
   impact?: string;
@@ -74,10 +74,10 @@ interface PartData {
   created_at: string;
 }
 
-const parseChemicalComposition = (composition: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+const parseChemicalComposition = (composition: any) => {
   const blank = { c: "", si: "", mn: "", p: "", s: "", mg: "", cr: "", cu: "" };
   if (!composition) return blank;
-  let obj: any = composition; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let obj: any = composition;
   if (typeof composition === "string") {
     try {
       obj = JSON.parse(composition);
@@ -103,7 +103,7 @@ const parseChemicalComposition = (composition: any) => { // eslint-disable-line 
     }
   }
   if (typeof obj !== "object" || obj === null) return blank;
-  const map: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const map: Record<string, any> = {};
   Object.keys(obj).forEach((k) => {
     if (typeof k === "string") { map[k.toLowerCase().replace(/\s+/g, "")] = obj[k]; }
   });
@@ -212,7 +212,7 @@ const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: s
   </Box>
 );
 
-const SpecInput = (props: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+const SpecInput = (props: any) => (
   <TextField
     {...props}
     variant="outlined"
@@ -273,7 +273,7 @@ function FoundrySampleCard() {
 
   const [remarks, setRemarks] = useState("");
 
-  const [mouldCorrections, setMouldCorrections] = useState<any[]>([ // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [mouldCorrections, setMouldCorrections] = useState<any[]>([
     { id: 1, compressibility: "", squeezePressure: "", fillerSize: "" },
   ]);
   const handleMouldCorrectionChange = (id: number, field: string, value: string) => {
@@ -287,7 +287,7 @@ function FoundrySampleCard() {
   const [microState, setMicroState] = useState({ nodularity: "", pearlite: "", carbide: "" });
   const [hardnessState, setHardnessState] = useState({ surface: "", core: "" });
 
-  const [submittedData, setSubmittedData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [submittedData, setSubmittedData] = useState<any>(null);
   const [editingOnlyMetallurgical, setEditingOnlyMetallurgical] = useState<boolean>(false);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -297,7 +297,7 @@ function FoundrySampleCard() {
   const trialIdFromUrl = new URLSearchParams(window.location.search).get('trial_id') || "";
 
   const [previewMode, setPreviewMode] = useState(false);
-  const [previewPayload, setPreviewPayload] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [previewPayload, setPreviewPayload] = useState<any | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [previewMessage, setPreviewMessage] = useState<string | null>(null);
   const [userIP, setUserIP] = useState<string>("");
@@ -392,7 +392,7 @@ function FoundrySampleCard() {
                 ? JSON.parse(data.mould_correction)
                 : data.mould_correction;
               if (Array.isArray(mouldCorr) && mouldCorr.length > 0) {
-                setMouldCorrections(mouldCorr.map((m: any, i: number) => ({ id: i + 1, ...m }))); // eslint-disable-line @typescript-eslint/no-explicit-any
+                setMouldCorrections(mouldCorr.map((m: any, i: number) => ({ id: i + 1, ...m })));
               }
             }
 
@@ -541,7 +541,7 @@ function FoundrySampleCard() {
           });
           navigate('/dashboard');
           return;
-        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
           Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -592,7 +592,7 @@ function FoundrySampleCard() {
       });
       navigate("/dashboard");
 
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       console.error("Submission Error:", err);
       Swal.fire({
         icon: 'error',
@@ -733,7 +733,7 @@ function FoundrySampleCard() {
                           {Object.keys(chemState).map((key) => (
                             <TableCell key={key}>
                               <SpecInput
-                                value={(chemState as any)[key]} // eslint-disable-line @typescript-eslint/no-explicit-any
+                                value={(chemState as any)[key]}
                                 onChange={() => { }}
                                 readOnly={true}
                               />
@@ -743,7 +743,7 @@ function FoundrySampleCard() {
                           {Object.keys(microState).map((key) => (
                             <TableCell key={key}>
                               <SpecInput
-                                value={(microState as any)[key]} // eslint-disable-line @typescript-eslint/no-explicit-any
+                                value={(microState as any)[key]}
                                 onChange={() => { }}
                                 readOnly={true}
                               />
@@ -948,7 +948,7 @@ function FoundrySampleCard() {
                   <Box sx={{ mb: 1.5 }}>
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>TOOLING FILES</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 0.5 }}>
-                      {previewPayload.toolingFiles.map((file: any, idx: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                      {previewPayload.toolingFiles.map((file: any, idx: number) => {
                         const fileUrl = file.url || file.path || '#';
                         const fileName = file.name || file.fileName || `File ${idx + 1}`;
                         const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
@@ -985,7 +985,7 @@ function FoundrySampleCard() {
                 <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: '#e3f2fd', border: `1.5px solid ${COLORS.accentBlue}` }}>
                   <Typography variant="subtitle2" sx={{ mb: 1, color: COLORS.accentBlue, fontWeight: 700, letterSpacing: 0.5 }}>PATTERN DATA SHEET FILES</Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 0.5 }}>
-                    {previewPayload.patternDataSheetFiles.map((file: any, idx: number) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                    {previewPayload.patternDataSheetFiles.map((file: any, idx: number) => {
                       const fileUrl = file.url || file.path || '#';
                       const fileName = file.name || file.fileName || `File ${idx + 1}`;
                       const isPdf = fileUrl.toLowerCase().endsWith('.pdf');
@@ -1027,7 +1027,7 @@ function FoundrySampleCard() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(previewPayload?.mould_correction || previewPayload?.mouldCorrections || []).map((r: any, i: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                  {(previewPayload?.mould_correction || previewPayload?.mouldCorrections || []).map((r: any, i: number) => (
                     <TableRow key={i}>
                       <TableCell sx={{ textAlign: 'center' }}>{r.compressibility || "-"}</TableCell>
                       <TableCell sx={{ textAlign: 'center' }}>{r.squeezePressure || "-"}</TableCell>
@@ -1373,12 +1373,12 @@ function FoundrySampleCard() {
                     </TableHead>
                     <TableBody>
                       {[
-                        { l: "Number of cavity in pattern", v: (selectedPattern as any).number_of_cavity }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Cavity identification number", v: (selectedPattern as any).cavity_identification }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Pattern material", v: (selectedPattern as any).pattern_material }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Core weight in kgs", v: (selectedPattern as any).core_weight }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Core mask thickness in mm", v: (selectedPattern as any).core_mask_thickness }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Estimated casting weight", v: (selectedPattern as any).estimated_casting_weight }, // eslint-disable-line @typescript-eslint/no-explicit-any
+                        { l: "Number of cavity in pattern", v: (selectedPattern as any).number_of_cavity },
+                        { l: "Cavity identification number", v: (selectedPattern as any).cavity_identification },
+                        { l: "Pattern material", v: (selectedPattern as any).pattern_material },
+                        { l: "Core weight in kgs", v: (selectedPattern as any).core_weight },
+                        { l: "Core mask thickness in mm", v: (selectedPattern as any).core_mask_thickness },
+                        { l: "Estimated casting weight", v: (selectedPattern as any).estimated_casting_weight },
                       ].map((r, i) => (
                         <TableRow key={i}>
                           <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>{r.l}</TableCell>
@@ -1403,10 +1403,10 @@ function FoundrySampleCard() {
                     </TableHead>
                     <TableBody>
                       {[
-                        { l: "Pattern plate thickness in mm", sp: (selectedPattern as any).pattern_plate_thickness_sp, pp: (selectedPattern as any).pattern_plate_thickness_pp }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Pattern plate weight in kgs", sp: (selectedPattern as any).pattern_plate_weight_sp, pp: (selectedPattern as any).pattern_plate_weight_pp }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Crush pin height in mm", sp: (selectedPattern as any).crush_pin_height_sp, pp: (selectedPattern as any).crush_pin_height_pp }, // eslint-disable-line @typescript-eslint/no-explicit-any
-                        { l: "Core mask weight in kgs", sp: (selectedPattern as any).core_mask_weight_sp, pp: (selectedPattern as any).core_mask_weight_pp }, // eslint-disable-line @typescript-eslint/no-explicit-any
+                        { l: "Pattern plate thickness in mm", sp: (selectedPattern as any).pattern_plate_thickness_sp, pp: (selectedPattern as any).pattern_plate_thickness_pp },
+                        { l: "Pattern plate weight in kgs", sp: (selectedPattern as any).pattern_plate_weight_sp, pp: (selectedPattern as any).pattern_plate_weight_pp },
+                        { l: "Crush pin height in mm", sp: (selectedPattern as any).crush_pin_height_sp, pp: (selectedPattern as any).crush_pin_height_pp },
+                        { l: "Core mask weight in kgs", sp: (selectedPattern as any).core_mask_weight_sp, pp: (selectedPattern as any).core_mask_weight_pp },
                       ].map((r, i) => (
                         <TableRow key={i}>
                           <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>{r.l}</TableCell>
@@ -1418,9 +1418,9 @@ function FoundrySampleCard() {
                         <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>Estimated Bunch weight</TableCell>
                         <TableCell colSpan={2} sx={{ fontSize: '13px', fontWeight: 500 }}>
                           <Box display="flex" alignItems="center" gap={3}>
-                            <span>{(selectedPattern as any).estimated_bunch_weight || "-"}</span> // eslint-disable-line @typescript-eslint/no-explicit-any
-                            {(selectedPattern as any).yield_label && ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                              <span style={{ fontWeight: 'bold' }}>Yield: {(selectedPattern as any).yield_label}</span> // eslint-disable-line @typescript-eslint/no-explicit-any
+                            <span>{(selectedPattern as any).estimated_bunch_weight || "-"}</span>
+                            {(selectedPattern as any).yield_label && (
+                              <span style={{ fontWeight: 'bold' }}>Yield: {(selectedPattern as any).yield_label}</span>
                             )}
                           </Box>
                         </TableCell>
@@ -1434,7 +1434,7 @@ function FoundrySampleCard() {
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" gutterBottom fontWeight="bold">Remarks:</Typography>
                 <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb', minHeight: '60px' }}>
-                  <Typography variant="body2">{(selectedPattern as any).remarks || "-"}</Typography> // eslint-disable-line @typescript-eslint/no-explicit-any
+                  <Typography variant="body2">{(selectedPattern as any).remarks || "-"}</Typography>
                 </Paper>
               </Grid>
             </Grid>
