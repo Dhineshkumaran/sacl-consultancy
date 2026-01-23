@@ -45,8 +45,9 @@ const SpecInput = (props: any) => ( // eslint-disable-line @typescript-eslint/no
       style: { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' }
     }}
     sx={{
-      minWidth: "70px",
-      "& .MuiOutlinedInput-root": { backgroundColor: props.readOnly ? "#f8fafc" : "#fff" }
+      minWidth: { xs: "50px", sm: "70px" },
+      "& .MuiOutlinedInput-root": { backgroundColor: props.readOnly ? "#f8fafc" : "#fff" },
+      "& .MuiInputBase-input": { fontSize: { xs: '0.75rem', sm: '0.85rem' } }
     }}
   />
 );
@@ -86,9 +87,9 @@ type TrialData = {
 };
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode; title: string; color: string }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${color}`, width: '100%' }}>
-    <Box sx={{ color: color, display: "flex" }}>{icon}</Box>
-    <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1 }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mb: 2, pb: 1, borderBottom: `2px solid ${color}`, width: '100%', flexWrap: 'wrap' }}>
+    <Box sx={{ color: color, display: "flex", fontSize: { xs: '20px', sm: '24px' } }}>{icon}</Box>
+    <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1, fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}>
       {title}
     </Typography>
   </Box>
@@ -465,8 +466,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
 
   return (
     <ThemeProvider theme={appTheme}>
-      <Box sx={{ bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
-        <Container maxWidth="xl" disableGutters>
+      <Box sx={{ bgcolor: COLORS.background, py: { xs: 1.5, sm: 2.5, md: 3.5 }, px: { xs: 0.5, sm: 1.5, md: 3 } }}>
+        <Container maxWidth="xl" disableGutters sx={{ px: { xs: 0.5, sm: 1.5 } }}>
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
@@ -487,29 +488,32 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                         <SectionHeader icon={<PrecisionManufacturingIcon />} title="Part Identification" color={COLORS.primary} />
                         <Grid container spacing={2}>
                           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary }}>PATTERN CODE</Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>PATTERN CODE</Typography>
                             <TextField
                               fullWidth
+                              size="small"
                               value={data?.pattern_code || ''}
-                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc" } }}
+                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc", fontSize: { xs: '0.8rem', sm: '0.9rem' } } }}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, sm: 6, md: 5 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary }}>COMPONENT NAME</Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>COMPONENT NAME</Typography>
                             <TextField
                               fullWidth
+                              size="small"
                               value={data?.part_name || ''}
-                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc" } }}
+                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc", fontSize: { xs: '0.8rem', sm: '0.9rem' } } }}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary }}>TRIAL REFERENCE</Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>TRIAL REFERENCE</Typography>
                             <TextField
                               fullWidth
+                              size="small"
                               value={initialTrialId || 'No Trial ID'}
                               InputProps={{
                                 readOnly: true,
-                                sx: { bgcolor: "#f1f5f9", fontWeight: 700, color: COLORS.primary }
+                                sx: { bgcolor: "#f1f5f9", fontWeight: 700, color: COLORS.primary, fontSize: { xs: '0.8rem', sm: '0.9rem' } }
                               }}
                             />
                           </Grid>
@@ -522,12 +526,12 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
 
 
               {data && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, px: { xs: 1, sm: 0 } }}>
                   <Button
                     variant="outlined"
                     startIcon={showSpecifications ? <VisibilityOffIcon /> : <VisibilityIcon />}
                     onClick={() => setShowSpecifications(!showSpecifications)}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ textTransform: 'none', fontSize: { xs: '0.8rem', sm: '0.9rem' }, py: { xs: 0.5, sm: 1 }, px: { xs: 1, sm: 2 } }}
                   >
                     {showSpecifications ? 'Hide' : 'Show'} Basic Information
                   </Button>
@@ -542,7 +546,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
                         <SectionHeader icon={<FactoryIcon />} title="Pattern Datasheet Details" color={COLORS.primary} />
-                        <PatternDatasheetSection patternCode={data.pattern_code} data={masterListTooling} />
+                        <Box sx={{ overflowX: 'auto', width: '100%' }}>
+                          <PatternDatasheetSection patternCode={data.pattern_code} data={masterListTooling} />
+                        </Box>
                       </Paper>
                     </Grid>
                   )}
@@ -552,8 +558,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
                         <SectionHeader icon={<ScienceIcon />} title="Metallurgical Composition" color={COLORS.accentBlue} />
-                        <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
-                          <Table size="small" sx={{ minWidth: 800, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd' } }}>
+                        <Box sx={{ overflowX: "auto", width: "100%", pb: 1, minHeight: '200px' }}>
+                          <Table size="small" sx={{ minWidth: { xs: '100%', md: 800 }, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd', fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, p: { xs: 0.5, sm: 1 } } }}>
                             <TableHead>
                               <TableRow>
                                 <TableCell colSpan={8} align="center" sx={{ bgcolor: "#f0f9ff", color: COLORS.accentBlue, border: '1px solid #ddd' }}>Chemical Elements (%)</TableCell>
@@ -701,9 +707,9 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
 
               {data && (
                 <>
-
-                  <Paper sx={{ overflowX: "auto", p: 2, mb: 3 }}>
-                    <Table size="small" sx={{ minWidth: 900 }}>
+                  {/* Sampling Details Table */}
+                  <Paper sx={{ overflowX: "auto", p: { xs: 1, sm: 2 }, mb: 3 }}>
+                    <Table size="small" sx={{ minWidth: { xs: '100%', md: 900 }, '& th': { fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, p: { xs: 0.5, sm: 1 } }, '& td': { fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, p: { xs: 0.5, sm: 1 } } }}>
                       <TableHead>
                         <TableRow>
                           {[
@@ -722,7 +728,10 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                                 backgroundColor: '#f1f5f9',
                                 color: 'black',
                                 fontWeight: 600,
-                                borderBottom: `1px solid ${COLORS.headerBg}`
+                                borderBottom: `1px solid ${COLORS.headerBg}`,
+                                fontSize: { xs: '0.6rem', sm: '0.75rem', md: '0.875rem' },
+                                p: { xs: 0.5, sm: 1 },
+                                whiteSpace: 'nowrap'
                               }}
                             >
                               {head}
