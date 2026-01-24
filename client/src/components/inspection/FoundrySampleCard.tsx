@@ -314,7 +314,7 @@ function FoundrySampleCard() {
 
       if (trialIdFromUrl) {
         try {
-          const pending = await departmentProgressService.getProgress(user.username);
+          const pending = await departmentProgressService.getProgress(user.username, user.department_id);
           const found = pending.find(p => p.trial_id === trialIdFromUrl);
           setIsAssigned(!!found);
         } catch (error) {

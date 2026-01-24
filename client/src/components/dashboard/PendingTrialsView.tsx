@@ -33,9 +33,10 @@ interface PendingTrials {
 
 interface PendingTrialsViewProps {
     username: string;
+    department_id: number;
 }
 
-const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
+const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username, department_id }) => {
     const [pendingTrials, setPendingTrials] = useState<PendingTrials[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -53,7 +54,7 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
     const fetchPendingTrials = async () => {
         try {
             setLoading(true);
-            const pendingTrials = await departmentProgressService.getProgress(username);
+            const pendingTrials = await departmentProgressService.getProgress(username, department_id);
             setPendingTrials(pendingTrials);
             setError(null);
         } catch (err) {

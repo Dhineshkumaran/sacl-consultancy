@@ -201,7 +201,7 @@ const Dashboard: React.FC = () => {
           )}
 
           {(user.role === 'User' || user.role === 'HOD') && currentView === 'pending-cards' && (
-            <PendingTrialsView username={user?.username || ''} />
+            <PendingTrialsView username={user?.username || ''} department_id={user?.department_id || 0}/>
           )}
 
           {(user.role === 'User' || user.role === 'HOD') && currentView === 'completed-trials' && (

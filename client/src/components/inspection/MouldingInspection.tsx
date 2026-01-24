@@ -77,7 +77,7 @@ function MouldingTable() {
           return;
         }
         try {
-          const pending = await departmentProgressService.getProgress(user.username);
+          const pending = await departmentProgressService.getProgress(user.username, user.department_id);
           const found = pending.find(p => p.trial_id === trialId);
           setIsAssigned(!!found);
         } catch (error) {
@@ -172,28 +172,6 @@ function MouldingTable() {
     </Box>
   );
 
-  const postMouldCorrection = async (payload: {
-    mould_thickness: string;
-    compressability: string;
-    squeeze_pressure: string;
-    mould_hardness: string;
-    remarks: string;
-    trial_id?: string;
-  }) => {
-    setMouldCorrectionLoading(true);
-    try {
-      const body = { ...payload, trial_id: 'Sample1', date: mouldDate };
-      await inspectionService.submitMouldingCorrection(body);
-      setMouldCorrectionSubmitted(true);
-      return { ok: true, data: {} };
-    } catch (err: any) {
-      showAlert('error', err.message || 'Failed to save moulding details. Please try again.');
-      return { ok: false, message: 'Failed to save mould correction' };
-    } finally {
-      setMouldCorrectionLoading(false);
-    }
-  };
-
   const handleFinalSave = async () => {
     setLoading(true);
     try {
@@ -236,7 +214,7 @@ function MouldingTable() {
           try {
             const uploadResults = await uploadFiles(
               attachedFiles,
-              trialId || "trial_id",
+              trialId || "",
               "MOULDING",
               user?.username || "system",
               "MOULDING"
