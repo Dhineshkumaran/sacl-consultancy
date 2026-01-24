@@ -358,6 +358,8 @@ CREATE TABLE trial_reports (
     file_name VARCHAR(255) NOT NULL,
     file_base64 NVARCHAR(MAX),
     uploaded_at DATETIME2 DEFAULT GETDATE(),
+    deleted_at DATETIME2,
+    deleted_by VARCHAR(50),
     remarks NVARCHAR(MAX),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );

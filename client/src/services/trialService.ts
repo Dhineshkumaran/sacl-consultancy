@@ -190,4 +190,52 @@ export const trialService = {
             throw error;
         }
     },
+
+    /**
+     * Fetches all soft-deleted trial reports
+     * @returns Promise resolving to array of deleted trial reports
+     */
+    async getDeletedTrialReports(): Promise<any[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            const data = await apiService.request('/trial/deleted-reports');
+            return data.data || [];
+        } catch (error) {
+            console.error('Failed to fetch deleted trial reports:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Restores a soft-deleted trial report
+     * @param trialId - Trial ID to restore
+     * @returns Promise resolving to API response
+     */
+    async restoreTrialReport(trialId: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            return await apiService.request('/trial/restore-report', {
+                method: 'POST',
+                body: JSON.stringify({ trial_id: trialId })
+            });
+        } catch (error) {
+            console.error('Failed to restore trial report:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Permanently deletes a trial report
+     * @param trialId - Trial ID to permanently delete
+     * @returns Promise resolving to API response
+     */
+    async permanentlyDeleteTrialReport(trialId: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            return await apiService.request('/trial/permanent-delete-report', {
+                method: 'DELETE',
+                body: JSON.stringify({ trial_id: trialId })
+            });
+        } catch (error) {
+            console.error('Failed to permanently delete trial report:', error);
+            throw error;
+        }
+    },
 };

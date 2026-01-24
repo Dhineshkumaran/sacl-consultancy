@@ -21,6 +21,7 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import TaskIcon from '@mui/icons-material/Task';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
@@ -87,6 +88,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
             subLabel: 'Manage users & roles',
             icon: <PeopleIcon />,
             view: 'employees' as const,
+            show: user?.role === 'Admin'
+        },
+        {
+            id: 'recycle-bin',
+            label: 'Recycle Bin',
+            subLabel: 'Recover deleted reports',
+            icon: <DeleteSweepIcon />,
+            view: 'recycle-bin' as const,
             show: user?.role === 'Admin'
         }
     ];

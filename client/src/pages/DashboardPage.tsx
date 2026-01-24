@@ -6,6 +6,7 @@ import UserManagement from '../components/admin/UserManagement';
 import MasterListTable from '../components/admin/MasterListTable';
 import RecentTrialsTable from '../components/admin/RecentTrialsTable';
 import ConsolidatedReportsTable from '../components/admin/ConsolidatedReportsTable';
+import RecycleBinTable from '../components/admin/RecycleBinTable';
 import AllTrialsPage from './AllTrialsPage';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/dashboard/Header';
@@ -82,6 +83,7 @@ const Dashboard: React.FC = () => {
       case 'completed-trials': return 'Completed History';
       case 'all-trials': return 'Trial History';
       case 'consolidated-reports': return 'Consolidated Reports';
+      case 'recycle-bin': return 'Recycle Bin';
       default: return 'Dashboard';
     }
   }
@@ -96,6 +98,7 @@ const Dashboard: React.FC = () => {
       case 'completed-trials': return 'View history of processed trials';
       case 'all-trials': return 'Browse all trial records';
       case 'consolidated-reports': return 'View consolidated history of trials by pattern code';
+      case 'recycle-bin': return 'Manage soft-deleted reports';
       default: return '';
     }
   }
@@ -201,7 +204,7 @@ const Dashboard: React.FC = () => {
           )}
 
           {(user.role === 'User' || user.role === 'HOD') && currentView === 'pending-cards' && (
-            <PendingTrialsView username={user?.username || ''} department_id={user?.department_id || 0}/>
+            <PendingTrialsView username={user?.username || ''} department_id={user?.department_id || 0} />
           )}
 
           {(user.role === 'User' || user.role === 'HOD') && currentView === 'completed-trials' && (
@@ -250,6 +253,17 @@ const Dashboard: React.FC = () => {
 
           {user?.role === 'Admin' && currentView === 'employees' && (
             <UserManagement />
+          )}
+
+          {user?.role === 'Admin' && currentView === 'recycle-bin' && (
+            <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+              <Box sx={{ px: 3, py: 2, borderBottom: '1px solid #f0f0f0', bgcolor: '#fafafa' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333' }}>
+                  Deleted Trial Reports
+                </Typography>
+              </Box>
+              <RecycleBinTable />
+            </Box>
           )}
 
         </Box>
