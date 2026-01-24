@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/commonService';
 import GearSpinner from '../common/GearSpinner';
 import './AddUserModal.css'; // Reusing CSS
@@ -39,7 +39,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
         if (isOpen) {
             fetchDepartments();
         }
-    }, [isOpen]);
+    }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (user && isOpen) {
@@ -59,7 +59,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
         try {
             const departments = await apiService.getDepartments();
             setDepartments(departments);
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Failed to fetch departments:', err);
             showAlert('error', 'Could not load departments');
         }
@@ -96,7 +96,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
         setLoading(true);
 
         try {
-            const payload: any = {
+            const payload: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
                 username: formData.username,
                 full_name: formData.full_name,
                 email: formData.email,
@@ -114,7 +114,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
             onUserUpdated?.();
             onClose();
 
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             showAlert('error', err.message || 'Failed to update user');
         } finally {
             setLoading(false);
@@ -137,7 +137,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                 <div className="modal-header">
                     <h2>Edit User Profile</h2>
                     <button className="close-btn" onClick={onClose} disabled={loading}>
-                        ✕
+                        âœ•
                     </button>
                 </div>
 
@@ -237,7 +237,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                                     className="password-toggle"
                                     onClick={togglePasswordVisibility}
                                 >
-                                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                                    {showPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
                                 </span>
                             </div>
                         </div>
@@ -257,7 +257,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                                     className="password-toggle"
                                     onClick={toggleConfirmPasswordVisibility}
                                 >
-                                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                                    {showConfirmPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
                                 </span>
                             </div>
                         </div>

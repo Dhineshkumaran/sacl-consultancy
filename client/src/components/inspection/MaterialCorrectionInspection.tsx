@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { trialService } from "../../services/trialService";
 import { useNavigate } from "react-router-dom";
 import {
@@ -23,7 +23,6 @@ import {
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
-import CloseIcon from "@mui/icons-material/Close";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import ScienceIcon from '@mui/icons-material/Science';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -89,7 +88,7 @@ export default function MaterialCorrection() {
                     return;
                 }
                 try {
-                    const pending = await departmentProgressService.getProgress(user.username);
+                    const pending = await departmentProgressService.getProgress(user.username, user.department_id);
                     const found = pending.find(p => p.trial_id === trialId);
                     setIsAssigned(!!found);
                 } catch (error) {
@@ -153,7 +152,7 @@ export default function MaterialCorrection() {
             }
         };
         if (trialId) fetchData();
-    }, [user, trialId]);
+    }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const { showAlert, alert } = useAlert();
 
@@ -203,11 +202,11 @@ export default function MaterialCorrection() {
                         text: 'Material correction updated successfully.'
                     });
                     navigate('/dashboard');
-                } catch (err) {
+                } catch (err: any) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Failed to update material correction. Please try again.'
+                        text: err.message || 'Failed to update material correction. Please try again.'
                     });
                     console.error(err);
                 }
@@ -260,12 +259,12 @@ export default function MaterialCorrection() {
             }
 
             navigate('/dashboard');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: "An error occurred during submission. Please try again."
+                text: error.message || "An error occurred during submission. Please try again."
             });
         } finally {
             setLoading(false);
@@ -345,7 +344,7 @@ export default function MaterialCorrection() {
                                                                 {h}
                                                             </TableCell>
                                                         ))}
-                                                        <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Pouring temp °C</TableCell>
+                                                        <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Pouring temp Â°C</TableCell>
                                                         <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Inoculant per Sec</TableCell>
                                                         <TableCell align="center" sx={{ backgroundColor: '#f1f5f9', color: 'black', fontWeight: 600, borderBottom: `1px solid ${COLORS.headerBg}` }}>Inoculant type</TableCell>
                                                     </TableRow>
@@ -370,7 +369,7 @@ export default function MaterialCorrection() {
                                                 </TableBody>
                                             </Table>
                                         </Box>
-                                        {isMobile && <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}>← Swipe to view more →</Typography>}
+                                        {isMobile && <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}>â† Swipe to view more â†’</Typography>}
                                     </Paper>
                                 </Grid>
 
@@ -468,7 +467,7 @@ export default function MaterialCorrection() {
                                         <Box sx={{ mb: 3, p: 2, bgcolor: "white", border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
                                             <Typography variant="caption" color="text.secondary" display="block" mb={1}>PROCESS PARAMETERS</Typography>
                                             <Grid container spacing={2}>
-                                                <Grid size={{ xs: 4 }}><Typography variant="body2">Temp <b>{previewPayload.process_parameters.pouringTemp || "-"}°C</b></Typography></Grid>
+                                                <Grid size={{ xs: 4 }}><Typography variant="body2">Temp <b>{previewPayload.process_parameters.pouringTemp || "-"}Â°C</b></Typography></Grid>
                                                 <Grid size={{ xs: 4 }}><Typography variant="body2">Inoc/Sec <b>{previewPayload.process_parameters.inoculantPerSec || "-"}</b></Typography></Grid>
                                                 <Grid size={{ xs: 4 }}><Typography variant="body2">Type <b>{previewPayload.process_parameters.inoculantType || "-"}</b></Typography></Grid>
                                             </Grid>
@@ -480,7 +479,7 @@ export default function MaterialCorrection() {
                                                     ATTACHED FILES
                                                 </Typography>
                                                 {attachedFiles.map((file, i) => (
-                                                    <Typography key={i} variant="body2">• {file.name}</Typography>
+                                                    <Typography key={i} variant="body2">â€¢ {file.name}</Typography>
                                                 ))}
                                             </Box>
                                         )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import type { User } from '../../types/user';
 import { apiService } from '../../services/commonService';
 import UserTable from './UserTable';
@@ -21,7 +21,7 @@ const UserManagement: React.FC = () => {
       setLoading(true);
       const userList = await apiService.getUsers();
       setUsers(userList);
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       Swal.fire({
         title: 'Error',
         text: err.message || 'Failed to load users',
@@ -49,7 +49,7 @@ const UserManagement: React.FC = () => {
         timer: 2000,
         showConfirmButton: false
       });
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       Swal.fire({
         title: 'Error',
         text: err.message || 'Failed to update user status',
@@ -97,7 +97,7 @@ const UserManagement: React.FC = () => {
         timer: 2000,
         showConfirmButton: false
       });
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       Swal.fire({
         title: 'Error',
         text: err.message || `Failed to update user status`,
@@ -133,7 +133,7 @@ const UserManagement: React.FC = () => {
           'Users have been deleted.',
           'success'
         );
-      } catch (err: any) {
+      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         Swal.fire({
           title: 'Error',
           text: err.message || 'Failed to delete users',
@@ -189,7 +189,7 @@ const UserManagement: React.FC = () => {
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
           >
-            ✓ Activate
+            âœ“ Activate
           </button>
           <button
             onClick={() => handleBulkStatusChange(false)}
@@ -207,7 +207,7 @@ const UserManagement: React.FC = () => {
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e0a800')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffc107')}
           >
-            ✕ Deactivate
+            âœ• Deactivate
           </button>
           <button
             onClick={handleBulkDelete}

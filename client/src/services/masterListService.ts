@@ -1,16 +1,21 @@
 import { apiService } from './commonService';
+import { masterCardSchema } from '../schemas/masterCard';
+
+import { validate } from '../utils';
 
 export const masterListService = {
   submitMasterListJson(payload: Record<string, unknown>) {
+    const validatedData = validate(masterCardSchema, payload);
     return apiService.request('/master-list', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(validatedData),
     });
   },
 
   submitMasterListFormData(payload: Record<string, unknown>, attachments: File[]) {
+    const validatedData = validate(masterCardSchema, payload);
     const formData = new FormData();
-    formData.append('payload', JSON.stringify(payload));
+    formData.append('payload', JSON.stringify(validatedData));
     attachments.forEach((file) => {
       formData.append('attachments', file, file.name);
     });
@@ -28,9 +33,10 @@ export const masterListService = {
   },
 
   updateMasterList(id: string | number, payload: Record<string, unknown>) {
+    const validatedData = validate(masterCardSchema.partial(), payload);
     return apiService.request(`/master-list/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(validatedData)
     });
   },
 

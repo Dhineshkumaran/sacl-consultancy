@@ -15,8 +15,8 @@ export interface ProgressItem {
   status?: string;
 }
 
-export async function getProgress(username: string): Promise<ProgressItem[]> {
-  const data = await apiService.request(`/department-progress/get-progress?username=${encodeURIComponent(username || "")}`, {
+export async function getProgress(username: string, department_id: number): Promise<ProgressItem[]> {
+  const data = await apiService.request(`/department-progress/get-progress?username=${encodeURIComponent(username || "")}&department_id=${department_id}`, {
     method: "GET"
   });
   return Array.isArray(data.data) ? data.data as ProgressItem[] : [];

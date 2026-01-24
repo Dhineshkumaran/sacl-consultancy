@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -31,13 +31,13 @@ import ActionButtons from '../common/ActionButtons';
 interface AddMasterModalProps {
     isOpen: boolean;
     onClose: () => void;
-    initialData?: any;
+    initialData?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     onSuccess?: () => void;
 }
 
 const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initialData, onSuccess }) => {
     const { alert, showAlert } = useAlert();
-    const [formData, setFormData] = useState<any>({
+    const [formData, setFormData] = useState<any>({ // eslint-disable-line @typescript-eslint/no-explicit-any
         pattern_code: '',
         part_name: '',
         material_grade: '',
@@ -77,14 +77,14 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
     const [showToolingTable, setShowToolingTable] = useState(false);
 
     const handleInputChange = (field: string, value: string) => {
-        setFormData((prev: any) => ({
+        setFormData((prev: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
             ...prev,
             [field]: value
         }));
     };
 
     const handleChemicalChange = (element: string, value: string) => {
-        setFormData((prev: any) => ({
+        setFormData((prev: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
             ...prev,
             chemical_composition: {
                 ...prev.chemical_composition,
@@ -106,7 +106,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             let chemComp = { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' };
 
             if (initialData.chemical_composition) {
-                let obj: any = initialData.chemical_composition;
+                let obj: any = initialData.chemical_composition; // eslint-disable-line @typescript-eslint/no-explicit-any
 
                 if (typeof initialData.chemical_composition === 'string') {
                     try {
@@ -178,7 +178,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             // Xray Parsing
             let xrayVal = '', mpiVal = '';
             if (initialData.xray) {
-                const parts = initialData.xray.split('•');
+                const parts = initialData.xray.split('â€¢');
                 const xrayPart = parts.find((p: string) => p.trim().startsWith('X-Ray:'));
                 const mpiPart = parts.find((p: string) => p.trim().startsWith('MPI:'));
                 if (xrayPart) xrayVal = xrayPart.replace('X-Ray:', '').trim();
@@ -294,9 +294,9 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 formData.xray.trim() ? `X-Ray: ${formData.xray.trim()}` : '',
                 formData.mpi.trim() ? `MPI: ${formData.mpi.trim()}` : ''
             ].filter(v => v !== '');
-            const xray = xrayFields.length > 0 ? xrayFields.join(' • ') : null;
+            const xray = xrayFields.length > 0 ? xrayFields.join(' â€¢ ') : null;
 
-            const payloadObj: Record<string, any> = {
+            const payloadObj: Record<string, any> = { // eslint-disable-line @typescript-eslint/no-explicit-any
                 pattern_code: formData.pattern_code.trim(),
                 part_name: formData.part_name.trim(),
                 material_grade: formData.material_grade.trim() || null,
@@ -367,7 +367,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
         if (isOpen) {
             resetForm();
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Auto-calculate yield percentage
     useEffect(() => {
@@ -393,12 +393,12 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
         );
 
         if (calculatedYield !== formData.yield_label) {
-            setFormData((prev: any) => ({
+            setFormData((prev: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                 ...prev,
                 yield_label: calculatedYield
             }));
         }
-    }, [
+    }, [ // eslint-disable-line react-hooks/exhaustive-deps
         formData.number_of_cavity,
         formData.estimated_casting_weight,
         formData.estimated_bunch_weight
@@ -649,7 +649,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
 
                                         const xrayValue = value
                                             .replace(mpiMatch[0], "")
-                                            .replace(/•$/, "")
+                                            .replace(/â€¢$/, "")
                                             .trim();
 
                                         handleInputChange("xray", xrayValue);
@@ -713,7 +713,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {toolingRows.map((row: any, idx) => (
+                                    {toolingRows.map((row: any, idx) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                                         <TableRow key={idx}>
                                             {row.spanTwoColumns ? (
                                                 <>

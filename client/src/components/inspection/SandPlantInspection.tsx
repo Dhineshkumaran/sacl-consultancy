@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 
 import { useAuth } from "../../context/AuthContext";
@@ -26,15 +26,11 @@ import {
 import Swal from 'sweetalert2';
 
 // Icons
-import FactoryIcon from '@mui/icons-material/Factory';
-import EditIcon from '@mui/icons-material/Edit';
-import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
-import PersonIcon from "@mui/icons-material/Person";
+
 import SaclHeader from "../common/SaclHeader";
 import { apiService } from '../../services/commonService';
-
 import { inspectionService } from '../../services/inspectionService';
 import { uploadFiles } from '../../services/fileUploadHelper';
 import { COLORS, appTheme } from '../../theme/appTheme';
@@ -99,7 +95,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
           return;
         }
         try {
-          const pending = await departmentProgressService.getProgress(user.username);
+          const pending = await departmentProgressService.getProgress(user.username, user.department_id);
           const found = pending.find(p => p.trial_id === trialId);
           setIsAssigned(!!found);
         } catch (error) {
@@ -142,7 +138,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
       }
     };
     if (trialId) fetchData();
-  }, [user, trialId]);
+  }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const fetchIP = async () => {
@@ -266,11 +262,11 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         });
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch (err: any) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to approve sand properties. Please try again.' : 'Failed to save sand properties. Please try again.'
+        text: err.message || (user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to approve sand properties. Please try again.' : 'Failed to save sand properties. Please try again.')
       });
     } finally {
       setLoading(false);
@@ -523,7 +519,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                   </Typography>
 
                   {attachedFiles.map((file, i) => (
-                    <Typography key={i} variant="body2">• {file.name}</Typography>
+                    <Typography key={i} variant="body2">â€¢ {file.name}</Typography>
                   ))}
                 </Box>
               )}

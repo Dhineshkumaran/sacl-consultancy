@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 
 import { useAuth } from "../../context/AuthContext";
@@ -28,13 +28,11 @@ import Swal from 'sweetalert2';
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
-import FactoryIcon from '@mui/icons-material/Factory';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ScienceIcon from '@mui/icons-material/Science';
-import CloseIcon from "@mui/icons-material/Close";
 import SaclHeader from "../common/SaclHeader";
 import { apiService } from '../../services/commonService';
 import { inspectionService } from '../../services/inspectionService';
@@ -101,7 +99,7 @@ export default function DimensionalInspection({
                     return;
                 }
                 try {
-                    const pending = await departmentProgressService.getProgress(user.username);
+                    const pending = await departmentProgressService.getProgress(user.username, user.department_id);
                     const found = pending.find(p => p.trial_id === trialId);
                     setIsAssigned(!!found);
                 } catch (error) {
@@ -158,7 +156,7 @@ export default function DimensionalInspection({
             }
         };
         if (trialId) fetchData();
-    }, [user, trialId]);
+    }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -179,7 +177,7 @@ export default function DimensionalInspection({
             const totalCastingWeight = castingWeight * numCavity;
             if (totalCastingWeight > bunch) {
                 setIsYieldInvalid(true);
-                showAlert('warning', 'Yield exceeds 100%! Total casting weight (casting weight × no. of cavities) cannot exceed bunch weight. Please adjust the values.');
+                showAlert('warning', 'Yield exceeds 100%! Total casting weight (casting weight Ã— no. of cavities) cannot exceed bunch weight. Please adjust the values.');
             } else {
                 setIsYieldInvalid(false);
             }
@@ -312,11 +310,11 @@ export default function DimensionalInspection({
                     text: 'Dimensional Inspection updated successfully.'
                 });
                 navigate('/dashboard');
-            } catch (err) {
+            } catch (err: any) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to update Dimensional Inspection. Please try again.'
+                    text: err.message || 'Failed to update Dimensional Inspection. Please try again.'
                 });
             } finally {
                 setSaving(false);
@@ -388,7 +386,7 @@ export default function DimensionalInspection({
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Failed to save dimensional inspection. Please try again.'
+                text: err.message || 'Failed to save dimensional inspection. Please try again.'
             });
         } finally {
             setSaving(false);
@@ -497,7 +495,7 @@ export default function DimensionalInspection({
                                         />
                                         {isYieldInvalid && (
                                             <Typography variant="caption" sx={{ color: '#d32f2f', mt: 0.5, display: 'block' }}>
-                                                ⚠ Yield exceeds 100%. Please adjust values.
+                                                âš  Yield exceeds 100%. Please adjust values.
                                             </Typography>
                                         )}
                                     </Grid>

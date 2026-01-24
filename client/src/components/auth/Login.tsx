@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/commonService';
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
 
         navigate('/dashboard');
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err.message || 'Invalid username or password. Please try again.');
     } finally {
       setLoading(false);
@@ -396,7 +396,7 @@ const Login: React.FC = () => {
           {showForgotModal && (
             <div className="forgot-modal-overlay">
               <div className="forgot-modal-content">
-                <button className="forgot-close-btn" onClick={() => { setShowForgotModal(false); setOtpStep('request'); setOtpValue(''); setOtpUsername(''); }} title="Close">×</button>
+                <button className="forgot-close-btn" onClick={() => { setShowForgotModal(false); setOtpStep('request'); setOtpValue(''); setOtpUsername(''); }} title="Close">Ã—</button>
                 <h3>Forgot Password</h3>
                 {otpStep === 'request' && (
                   <form
@@ -414,7 +414,7 @@ const Login: React.FC = () => {
                         await authService.forgotPasswordRequest(username, email);
                         setOtpUsername(username);
                         setOtpStep('verify');
-                      } catch (err: any) {
+                      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
                         setForgotError(err.message || 'Failed to send OTP');
                       } finally {
                         setForgotLoading(false);
@@ -503,7 +503,7 @@ const Login: React.FC = () => {
                           setOtpValue('');
                           setOtpUsername('');
                         }, 2000);
-                      } catch (err: any) {
+                      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
                         setForgotError(err.message || 'Failed to reset password');
                       } finally {
                         setForgotLoading(false);

@@ -18,26 +18,15 @@
 
 ->fdyqa need critical dimension attachment mandatory
 
-->Add zod validation in both frontend and backend
-
 ->Remove unwanted comments in frontend except services folder
 
 ----------------------------------------------------------------------BY HR SIR-------------------------------------------------------------------------------------
 
 ->login page color code
 
-->welcome remove digital trial card
-
-->dashboard grey color orange hoover
-
-->remove sakthi auto header admin ideas
-remove remove admin admin
-
 ->Grey orange silver - color code
 
 ->font - trebuchet (inside) futura (heading)
-
-->remove view trials keep like clicking
 
 ->keep it generally master inside keep create
 view bring all those down
@@ -47,8 +36,6 @@ vback to dashboard keep it static
 ->keep delete in master list create view delete
 
 ->user profile keep one
-
-->view trial cards bring down
 
 ->active deactive
 

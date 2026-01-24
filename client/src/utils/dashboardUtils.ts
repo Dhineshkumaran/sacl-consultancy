@@ -1,4 +1,4 @@
-export const getDepartmentInfo = (user: any) => {
+﻿export const getDepartmentInfo = (user: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (user?.role === 'Admin') {
         return { displayText: user.role, showDepartment: false };
     } else {

@@ -68,7 +68,7 @@ export const getTrialById = async (req, res, next) => {
 };
 
 export const getTrialReports = async (req, res, next) => {
-    const [rows] = await Client.query("SELECT t.document_id, t.file_base64, t.file_name, c.trial_id, c.part_name, c.pattern_code, d.department_name AS department, c.current_department_id, c.material_grade, c.date_of_sampling, c.status FROM trial_cards c LEFT JOIN trial_reports t ON c.trial_id = t.trial_id LEFT JOIN departments d ON c.current_department_id = d.department_id");
+    const [rows] = await Client.query("SELECT t.document_id, t.file_base64, t.file_name, c.trial_id, c.part_name, c.pattern_code, d.department_name AS department, c.current_department_id, c.material_grade, c.date_of_sampling, c.status FROM trial_cards c LEFT JOIN trial_reports t ON c.trial_id = t.trial_id AND t.deleted_at IS NULL LEFT JOIN departments d ON c.current_department_id = d.department_id");
     res.status(200).json({ success: true, data: rows });
 };
 
@@ -78,7 +78,7 @@ export const getConsolidatedReports = async (req, res, next) => {
 };
 
 export const getRecentTrialReports = async (req, res, next) => {
-    const [rows] = await Client.query("SELECT t.document_id, t.file_base64, t.file_name, c.trial_id, c.part_name, c.pattern_code, d.department_name AS department, c.current_department_id, c.material_grade, c.date_of_sampling, c.status FROM trial_cards c LEFT JOIN trial_reports t ON c.trial_id = t.trial_id LEFT JOIN departments d ON c.current_department_id = d.department_id ORDER BY c.date_of_sampling DESC LIMIT 10");
+    const [rows] = await Client.query("SELECT TOP 10 t.document_id, t.file_base64, t.file_name, c.trial_id, c.part_name, c.pattern_code, d.department_name AS department, c.current_department_id, c.material_grade, c.date_of_sampling, c.status FROM trial_cards c LEFT JOIN trial_reports t ON c.trial_id = t.trial_id AND t.deleted_at IS NULL LEFT JOIN departments d ON c.current_department_id = d.department_id ORDER BY c.date_of_sampling DESC");
     res.status(200).json({ success: true, data: rows });
 };
 
@@ -180,19 +180,66 @@ export const deleteTrialReports = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'No trial ID provided for deletion.' });
     }
 
-    const sql = `DELETE FROM trial_reports WHERE trial_id = @trial_id`;
+    const sql = `UPDATE trial_reports SET deleted_at = GETDATE(), deleted_by = @username WHERE trial_id = @trial_id AND deleted_at IS NULL`;
 
-    await Client.query(sql, { trial_id });
+    await Client.query(sql, { trial_id, username: req.user.username });
 
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
     await Client.query(audit_sql, {
         user_id: req.user.user_id,
         department_id: req.user.department_id,
         action: 'Trial report deleted',
-        remarks: `Trial report deleted by ${req.user.username}: ${trial_id}`
+        remarks: `Trial report soft deleted by ${req.user.username}: ${trial_id}`
     });
 
     logger.info('Trial report deleted', { trial_id, deletedBy: req.user.username });
 
     res.status(200).json({ success: true, message: 'Trial report deleted successfully.' });
+};
+
+export const getDeletedTrialReports = async (req, res, next) => {
+    const [rows] = await Client.query("SELECT t.document_id, t.file_base64, t.file_name, t.deleted_at, t.deleted_by, c.trial_id, c.part_name, c.pattern_code, d.department_name AS department, c.current_department_id, c.material_grade, c.date_of_sampling, c.status FROM trial_cards c JOIN trial_reports t ON c.trial_id = t.trial_id AND t.deleted_at IS NOT NULL LEFT JOIN departments d ON c.current_department_id = d.department_id");
+    res.status(200).json({ success: true, data: rows });
+};
+
+export const restoreTrialReport = async (req, res, next) => {
+    const { trial_id } = req.body;
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'No trial ID provided for restoration.' });
+    }
+
+    const sql = `UPDATE trial_reports SET deleted_at = NULL, deleted_by = NULL WHERE trial_id = @trial_id`;
+    await Client.query(sql, { trial_id });
+
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+    await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        action: 'Trial report restored',
+        remarks: `Trial report restored by ${req.user.username}: ${trial_id}`
+    });
+
+    logger.info('Trial report restored', { trial_id, restoredBy: req.user.username });
+    res.status(200).json({ success: true, message: 'Trial report restored successfully.' });
+};
+
+export const permanentlyDeleteTrialReport = async (req, res, next) => {
+    const { trial_id } = req.body;
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'No trial ID provided for permanent deletion.' });
+    }
+
+    const sql = `DELETE FROM trial_reports WHERE trial_id = @trial_id AND deleted_at IS NOT NULL`;
+    await Client.query(sql, { trial_id });
+
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
+    await Client.query(audit_sql, {
+        user_id: req.user.user_id,
+        department_id: req.user.department_id,
+        action: 'Trial report permanently deleted',
+        remarks: `Trial report permanently deleted by ${req.user.username}: ${trial_id}`
+    });
+
+    logger.info('Trial report permanently deleted', { trial_id, deletedBy: req.user.username });
+    res.status(200).json({ success: true, message: 'Trial report permanently deleted.' });
 };

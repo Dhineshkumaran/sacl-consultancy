@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -16,7 +16,6 @@ import {
   TableContainer,
   Chip,
   ThemeProvider,
-  createTheme,
   Button,
   Alert,
   IconButton,
@@ -26,7 +25,6 @@ import {
   CardContent,
   InputAdornment,
   useMediaQuery,
-  GlobalStyles,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -39,31 +37,27 @@ import Swal from 'sweetalert2';
 import Autocomplete from "@mui/material/Autocomplete";
 
 import CloseIcon from "@mui/icons-material/Close";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import ScienceIcon from '@mui/icons-material/Science';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import FactoryIcon from '@mui/icons-material/Factory';
-import SaveIcon from '@mui/icons-material/Save';
-import EditIcon from '@mui/icons-material/Edit';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
-import PersonIcon from "@mui/icons-material/Person";
-import DeleteIcon from '@mui/icons-material/Delete';
 import SaclHeader from "../common/SaclHeader";
 import { appTheme, COLORS } from "../../theme/appTheme";
 import { trialService } from "../../services/trialService";
 import { apiService } from "../../services/commonService";
 import departmentProgressService from "../../services/departmentProgressService";
 import { uploadFiles } from '../../services/fileUploadHelper';
-import { validateFileSizes, fileToBase64 } from '../../utils/fileHelpers';
 import { useAlert } from '../../hooks/useAlert';
 import { formatDate } from '../../utils/dateUtils';
 import { AlertMessage } from '../common/AlertMessage';
 import { useAuth } from '../../context/AuthContext';
 import DepartmentHeader from "../common/DepartmentHeader";
-import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
+import { LoadingState, EmptyState, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
 import GearSpinner from '../common/GearSpinner';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SaveIcon from '@mui/icons-material/Save';
 
 interface PartData {
   id: number;
@@ -129,29 +123,29 @@ const parseChemicalComposition = (composition: any) => {
 const parseTensileData = (tensile: string) => {
   if (!tensile) return { tensileStrength: "", yieldStrength: "", elongation: "", impactCold: "", impactRoom: "" };
   let tensileStrength = "", yieldStrength = "", elongation = "", impactCold = "", impactRoom = "";
-  const spaceSepMatches = tensile.match(/([≥>=]+)?\s*(\d+)\s*(?:MPa|N\/mm²|N\/mm2)?/g);
+  const spaceSepMatches = tensile.match(/([â‰¥>=]+)?\s*(\d+)\s*(?:MPa|N\/mmÂ²|N\/mm2)?/g);
   if (spaceSepMatches && spaceSepMatches.length >= 2) {
-    const first = spaceSepMatches[0].match(/([≥>=]+)?\s*(\d+)/);
-    if (first) tensileStrength = (first[1] || "≥") + first[2];
-    const second = spaceSepMatches[1].match(/([≥>=]+)?\s*(\d+)/);
-    if (second) yieldStrength = (second[1] || "≥") + second[2];
+    const first = spaceSepMatches[0].match(/([â‰¥>=]+)?\s*(\d+)/);
+    if (first) tensileStrength = (first[1] || "â‰¥") + first[2];
+    const second = spaceSepMatches[1].match(/([â‰¥>=]+)?\s*(\d+)/);
+    if (second) yieldStrength = (second[1] || "â‰¥") + second[2];
     if (spaceSepMatches.length >= 3) {
-      const third = spaceSepMatches[2].match(/([≥>=]+)?\s*(\d+)/);
-      if (third) elongation = (third[1] || "≥") + third[2];
+      const third = spaceSepMatches[2].match(/([â‰¥>=]+)?\s*(\d+)/);
+      if (third) elongation = (third[1] || "â‰¥") + third[2];
     }
     return { tensileStrength, yieldStrength, elongation, impactCold, impactRoom };
   }
   const lines = tensile.split("\n");
   lines.forEach((line) => {
     const cleanLine = line.trim();
-    if (cleanLine.match(/\d+\s*(MPa|N\/mm²)/) || cleanLine.includes("Tensile") || cleanLine.match(/[≥>]\s*\d+/)) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !tensileStrength) tensileStrength = `${match[1]}${match[2]}`;
+    if (cleanLine.match(/\d+\s*(MPa|N\/mmÂ²)/) || cleanLine.includes("Tensile") || cleanLine.match(/[â‰¥>]\s*\d+/)) {
+      const match = cleanLine.match(/([â‰¥>]?)\s*(\d+)/); if (match && !tensileStrength) tensileStrength = `${match[1]}${match[2]}`;
     }
     if (cleanLine.includes("Yield")) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !yieldStrength) yieldStrength = `${match[1]}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥>]?)\s*(\d+)/); if (match && !yieldStrength) yieldStrength = `${match[1]}${match[2]}`;
     }
     if (cleanLine.includes("Elongation") || cleanLine.includes("%")) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !elongation) elongation = `${match[1]}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥>]?)\s*(\d+)/); if (match && !elongation) elongation = `${match[1]}${match[2]}`;
     }
   });
   return { tensileStrength, yieldStrength, elongation, impactCold, impactRoom };
@@ -164,23 +158,23 @@ const parseMicrostructureData = (microstructure: string) => {
   lines.forEach((line) => {
     const cleanLine = line.trim().toLowerCase();
     if (cleanLine.includes("nodularity") || cleanLine.includes("spheroidization")) {
-      const match = cleanLine.match(/([≥≤]?)\s*(\d+)/);
+      const match = cleanLine.match(/([â‰¥â‰¤]?)\s*(\d+)/);
       if (match) nodularity = `${match[1]}${match[2]}`;
     }
     else if (cleanLine.includes("shape") && cleanLine.match(/(\d+)\s*%/)) {
-      const match = cleanLine.match(/([≥≤<>]?)\s*(\d+)\s*%/);
-      if (match && !nodularity) nodularity = `${match[1] || "≥"}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥â‰¤<>]?)\s*(\d+)\s*%/);
+      if (match && !nodularity) nodularity = `${match[1] || "â‰¥"}${match[2]}`;
     }
     if (cleanLine.includes("pearlite") || cleanLine.includes("pearlitic")) {
-      const match = cleanLine.match(/([≥≤<>]?)\s*(\d+)/);
+      const match = cleanLine.match(/([â‰¥â‰¤<>]?)\s*(\d+)/);
       if (match) pearlite = `${match[1]}${match[2]}`;
     }
     else if (cleanLine.includes("matrix") && cleanLine.includes("ferrite")) {
-      const match = cleanLine.match(/([≥≤<>=]?)\s*(\d+)\s*%/);
-      if (match && !pearlite) pearlite = `${match[1] || "≥"}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥â‰¤<>=]?)\s*(\d+)\s*%/);
+      if (match && !pearlite) pearlite = `${match[1] || "â‰¥"}${match[2]}`;
     }
     if (cleanLine.includes("carbide")) {
-      const match = cleanLine.match(/([≥≤<>=]?)\s*(\d+)/);
+      const match = cleanLine.match(/([â‰¥â‰¤<>=]?)\s*(\d+)/);
       if (match) carbide = `${match[1]}${match[2]}`;
     }
   });
@@ -194,15 +188,15 @@ const parseHardnessData = (hardness: string) => {
   lines.forEach((line) => {
     const cleanLine = line.trim().toLowerCase();
     if (cleanLine.includes("surface")) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
+      const match = cleanLine.match(/(\d+\s*[-â€“]\s*\d+|\d+)/);
       if (match) surface = match[1].replace(/\s+/g, ' ');
     }
     else if (cleanLine.includes("core")) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
+      const match = cleanLine.match(/(\d+\s*[-â€“]\s*\d+|\d+)/);
       if (match) core = match[1].replace(/\s+/g, ' ');
     }
     else if (!surface) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
+      const match = cleanLine.match(/(\d+\s*[-â€“]\s*\d+|\d+)/);
       if (match) surface = match[1].replace(/\s+/g, ' ');
     }
   });
@@ -259,7 +253,6 @@ function FoundrySampleCard() {
   const TRIAL_TYPES = ["INHOUSE MACHINING(NPD)", "INHOUSE MACHINING(REGULAR)", "MACHINING - CUSTOMER END"];
   const [samplingDate, setSamplingDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [planMoulds, setPlanMoulds] = useState("");
-  const [actualMoulds, setActualMoulds] = useState("");
   const [machine, setMachine] = useState("");
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
@@ -298,6 +291,7 @@ function FoundrySampleCard() {
   const [editingOnlyMetallurgical, setEditingOnlyMetallurgical] = useState<boolean>(false);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
 
   const trialIdFromUrl = new URLSearchParams(window.location.search).get('trial_id') || "";
@@ -320,7 +314,7 @@ function FoundrySampleCard() {
 
       if (trialIdFromUrl) {
         try {
-          const pending = await departmentProgressService.getProgress(user.username);
+          const pending = await departmentProgressService.getProgress(user.username, user.department_id);
           const found = pending.find(p => p.trial_id === trialIdFromUrl);
           setIsAssigned(!!found);
         } catch (error) {
@@ -349,7 +343,6 @@ function FoundrySampleCard() {
             setTrialNo(data.trial_id?.split('-').pop() || '');
             setSamplingDate(data.date_of_sampling?.split('T')[0] || new Date().toISOString().split("T")[0]);
             setPlanMoulds(data.plan_moulds || '');
-            setActualMoulds(data.actual_moulds || '');
             setMachine(data.disa || '');
             setReason(data.reason_for_sampling || '');
             setSampleTraceability(data.sample_traceability && data.sample_traceability !== 'null' && data.sample_traceability !== 'undefined' ? data.sample_traceability : '');
@@ -416,7 +409,7 @@ function FoundrySampleCard() {
       }
     };
     if (trialIdFromUrl && masterParts.length > 0) fetchTrialDataForHOD();
-  }, [user, trialIdFromUrl, masterParts]);
+  }, [user, trialIdFromUrl, masterParts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const fetchIP = async () => {
@@ -440,7 +433,7 @@ function FoundrySampleCard() {
       }
     };
     getMasterParts();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedPart) {
@@ -474,12 +467,12 @@ function FoundrySampleCard() {
   };
 
   useEffect(() => {
-    if (user?.role === 'HOD' && trialIdFromUrl) {
+    if ((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) {
       return;
     }
     if (selectedPart) fetchTrialId();
     else setTrialNo("");
-  }, [selectedPart, user, trialIdFromUrl]);
+  }, [selectedPart, user, trialIdFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePartChange = (v: PartData | null) => { setSelectedPart(v); };
   const handlePatternChange = (v: PartData | null) => { setSelectedPattern(v); if (v) setSelectedPart(v); };
@@ -487,10 +480,9 @@ function FoundrySampleCard() {
 
   const handleSaveAndContinue = () => {
     if (!selectedPart) { showAlert("error", "Please select a Part Name first."); return; }
-    if (reason === 'Others' && !customReason.trim()) {
-      showAlert("error", "Please specify the reason for sampling.");
-      return;
-    }
+
+    const reasonFinal = reason === 'Others' ? `Others (${customReason})` : reason;
+
     const payload = {
       trial_id: trialId,
       pattern_code: selectedPart.pattern_code,
@@ -499,8 +491,7 @@ function FoundrySampleCard() {
       date_of_sampling: samplingDate,
       status: "CREATED",
       plan_moulds: planMoulds,
-      actual_moulds: actualMoulds,
-      reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
+      reason_for_sampling: reasonFinal,
       sample_traceability: sampleTraceability,
       trial_type: trialType,
       mould_correction: mouldCorrections,
@@ -531,7 +522,6 @@ function FoundrySampleCard() {
             material_grade: selectedPart?.material_grade,
             date_of_sampling: samplingDate,
             plan_moulds: planMoulds,
-            actual_moulds: actualMoulds,
             reason_for_sampling: reason === 'Others' ? `Others (${customReason})` : reason,
             disa: machine,
             sample_traceability: sampleTraceability,
@@ -551,11 +541,11 @@ function FoundrySampleCard() {
           });
           navigate('/dashboard');
           return;
-        } catch (err) {
+        } catch (err: any) {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to update Trial Specification. Please try again.'
+            text: err.message || 'Failed to update Trial Specification. Please try again.'
           });
           console.error(err);
           return;
@@ -607,7 +597,7 @@ function FoundrySampleCard() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: "Failed to submit trial data. Please try again."
+        text: err.message || "Failed to submit trial data. Please try again."
       });
     } finally {
       setIsSubmitting(false);
@@ -923,8 +913,7 @@ function FoundrySampleCard() {
                     <Typography variant="caption" color="text.secondary">No. of Moulds</Typography>
                     <Typography variant="caption" color="text.secondary">No. of Moulds</Typography>
                     <Typography variant="subtitle1">
-                      Plan: {previewPayload?.plan_moulds || previewPayload?.planMoulds || "-"} <br />
-                      Actual: {previewPayload?.actual_moulds || previewPayload?.actualMoulds || "-"}
+                      Plan: {previewPayload?.plan_moulds || previewPayload?.planMoulds || "-"}
                     </Typography>
                   </Paper>
                 </Grid>
@@ -1119,23 +1108,6 @@ function FoundrySampleCard() {
                               "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "black !important" }
                             }}
                           />
-                          <TextField
-                            type="number"
-                            fullWidth
-                            label="Actual"
-                            value={actualMoulds}
-                            onChange={(e) => setActualMoulds(e.target.value)}
-                            size="small"
-                            placeholder="Get from Pouring"
-                            disabled={true}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{
-                              bgcolor: '#FFF59D',
-                              "& .MuiInputBase-input": { color: "black !important" },
-                              "& .MuiInputLabel-root": { color: "black !important", fontWeight: 600 },
-                              "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "black !important" }
-                            }}
-                          />
                         </Box>
                       </TableCell>
                       <TableCell>
@@ -1212,7 +1184,7 @@ function FoundrySampleCard() {
                                 value={type}
                                 control={<Radio size="small" />}
                                 label={<Typography variant="caption">{type}</Typography>}
-                                disabled={user?.role === 'HOD' || user?.role === 'Admin' && !isEditing}
+                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                 sx={{ mb: 0.5 }}
                               />
                             ))}

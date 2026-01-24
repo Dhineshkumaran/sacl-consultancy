@@ -2,16 +2,27 @@ import Client from '../config/connection.js';
 
 export const getProgress = async (req, res, next) => {
     const username = req.query.username;
-    const [result] = await Client.query(
-        `SELECT department_progress.*, departments.department_name, t.part_name, t.pattern_code, t.disa, t.date_of_sampling FROM department_progress 
-         JOIN departments ON department_progress.department_id = departments.department_id 
-         JOIN trial_cards t ON department_progress.trial_id = t.trial_id 
-         WHERE department_progress.username = @username AND department_progress.approval_status = 'pending'`,
+    const department_id = req.query.department_id;
+    let result;
+    if (department_id === 3 || department_id === 4 || department_id === 6) {
+        result = await Client.query(
+            `SELECT department_progress.*, departments.department_name, t.part_name, t.pattern_code, t.disa, t.date_of_sampling FROM department_progress 
+             JOIN departments ON department_progress.department_id = departments.department_id 
+             JOIN trial_cards t ON department_progress.trial_id = t.trial_id 
+             WHERE department_progress.department_id IN (3, 4, 6) AND department_progress.approval_status = 'pending'`,
+        );
+    } else {
+        result = await Client.query(
+            `SELECT department_progress.*, departments.department_name, t.part_name, t.pattern_code, t.disa, t.date_of_sampling FROM department_progress 
+             JOIN departments ON department_progress.department_id = departments.department_id 
+             JOIN trial_cards t ON department_progress.trial_id = t.trial_id 
+             WHERE department_progress.username = @username AND department_progress.approval_status = 'pending'`,
         { username }
-    );
+        );
+    }
     res.status(200).json({
         success: true,
-        data: result
+        data: result[0]
     });
 };
 

@@ -71,20 +71,56 @@ const Header: React.FC<HeaderProps> = ({
                         color: white !important;
                         flex-shrink: 0;
                         z-index: 1200;
+                        gap: 16px;
+                        min-height: 64px;
                     }
                     .header-left {
                         display: flex;
                         align-items: center;
                         gap: 24px;
+                        flex: 0 0 auto;
                     }
                     .header-right {
                         display: flex;
                         align-items: center;
                         gap: 20px;
+                        flex: 1;
+                        justify-content: flex-end;
                     }
-                    @media (max-width: 900px) {
+                    .profile-username {
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                    @media (max-width: 1024px) {
                         .dashboard-header {
                             padding: 12px 20px;
+                            min-height: 60px;
+                        }
+                        .header-left {
+                            gap: 16px;
+                        }
+                    }
+                    @media (max-width: 768px) {
+                        .dashboard-header {
+                            padding: 10px 16px;
+                            min-height: 56px;
+                        }
+                        .profile-username {
+                            display: none;
+                        }
+                        .header-right {
+                            gap: 12px;
+                        }
+                    }
+                    @media (max-width: 480px) {
+                        .dashboard-header {
+                            padding: 8px 12px;
+                            min-height: 52px;
+                            gap: 12px;
+                        }
+                        .header-left {
+                            gap: 10px;
                         }
                     }
                 `}
@@ -102,33 +138,30 @@ const Header: React.FC<HeaderProps> = ({
                     >
                         {/* Placeholder Logo Box if image fails, or use image */}
                         <Box sx={{
-                            width: 40,
-                            height: 40,
+                            width: { xs: 120, sm: 150 },
+                            height: { xs: 50, sm: 60 },
                             bgcolor: 'white',
                             borderRadius: 1,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            flexShrink: 0
                         }}>
                             <img
                                 src="/assets/SACL-LOGO-01.svg"
                                 alt="Logo"
-                                style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+                                style={{ 
+                                    height: '100%', 
+                                    width: '100%', 
+                                    
+                                
+                                }}
                                 onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    console.error('Logo failed to load:', e);
                                 }}
                             />
                             {/* Fallback Text if needed, currently hidden if img works */}
-                        </Box>
-
-                        <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1, color: 'white', fontSize: '1rem' }}>
-                                Sakthi Auto Component Limited
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem' }}>
-                                {departmentInfo.displayText}
-                            </Typography>
                         </Box>
                     </Box>
                 </Box>
@@ -143,18 +176,19 @@ const Header: React.FC<HeaderProps> = ({
                                 alignItems: 'center',
                                 gap: '12px',
                                 cursor: 'pointer',
-                                padding: '6px 12px',
+                                padding: '8px 12px',
                                 borderRadius: '4px',
                                 transition: 'background-color 0.2s',
-
+                                minHeight: '44px',
+                                minWidth: '44px',
                             }}
                             onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)')}
                             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                         >
                             <div style={{
-                                width: '36px',
-                                height: '36px',
+                                width: '40px',
+                                height: '40px',
                                 backgroundColor: '#E67E22', // Orange for profile
                                 borderRadius: '50%',
                                 display: 'flex',
@@ -167,7 +201,9 @@ const Header: React.FC<HeaderProps> = ({
                                 backgroundImage: profilePhoto ? `url(${profilePhoto})` : 'none',
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
-                                border: '2px solid rgba(255,255,255,0.2)'
+                                border: '2px solid rgba(255,255,255,0.2)',
+                                flexShrink: 0,
+                                minWidth: '40px'
                             }}>
                                 {!profilePhoto && (user?.username?.charAt(0).toUpperCase() || 'U')}
                             </div>
@@ -201,6 +237,7 @@ const Header: React.FC<HeaderProps> = ({
                                 borderRadius: '4px',
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                                 minWidth: '220px',
+                                maxWidth: 'calc(100vw - 20px)',
                                 zIndex: 1300,
                             }}>
                                 <div style={{ height: '4px', backgroundColor: '#E67E22', width: '100%', borderTopLeftRadius: '4px', borderTopRightRadius: '4px' }}></div>
@@ -208,17 +245,17 @@ const Header: React.FC<HeaderProps> = ({
                                     padding: '16px',
                                     borderBottom: '1px solid #f0f0f0'
                                 }}>
-                                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#333' }}>
+                                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#333', wordBreak: 'break-word' }}>
                                         {user?.username}
                                     </div>
-                                    <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                                    <div style={{ fontSize: '13px', color: '#666', marginTop: '4px', wordBreak: 'break-word' }}>
                                         {user?.role}
                                     </div>
                                 </div>
                                 {setShowProfile && (
                                     <div
                                         style={{
-                                            padding: '12px 16px',
+                                            padding: '14px 16px',
                                             cursor: 'pointer',
                                             fontSize: '14px',
                                             color: '#333',
@@ -226,7 +263,9 @@ const Header: React.FC<HeaderProps> = ({
                                             borderBottom: '1px solid #f0f0f0',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: '10px'
+                                            gap: '10px',
+                                            minHeight: '44px',
+                                            alignContent: 'center'
                                         }}
                                         onClick={() => {
                                             setShowProfile(true);
@@ -240,17 +279,20 @@ const Header: React.FC<HeaderProps> = ({
                                 )}
                                 <div
                                     style={{
-                                        padding: '12px 16px',
+                                        padding: '14px 16px',
                                         cursor: 'pointer',
                                         fontSize: '14px',
                                         color: '#d32f2f',
+                                        fontWeight: 600,
                                         transition: 'background-color 0.2s',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '10px'
+                                        gap: '10px',
+                                        minHeight: '44px',
+                                        alignContent: 'center'
                                     }}
                                     onClick={logout}
-                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ffebee')}
                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                                 >
                                     <span>🚪</span> Logout

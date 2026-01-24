@@ -26,7 +26,7 @@ import { apiService } from '../services/commonService';
 import { useNavigate } from 'react-router-dom';
 import { appTheme, COLORS } from '../theme/appTheme';
 
-// Password validation helper
+
 const validatePassword = (password: string): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
@@ -49,7 +49,7 @@ const validatePassword = (password: string): { isValid: boolean; errors: string[
   return { isValid: errors.length === 0, errors };
 };
 
-// Password strength calculator
+
 const calculatePasswordStrength = (password: string): { strength: number; color: string; label: string } => {
   let strength = 0;
   if (password.length >= 6) strength += 16;
@@ -70,18 +70,6 @@ const calculatePasswordStrength = (password: string): { strength: number; color:
   }
 
   return { strength: Math.min(strength, 100), color, label };
-};
-
-const SAKTHI_COLORS = {
-  primary: '#2950bbff',
-  secondary: '#DC2626',
-  accent: '#F59E0B',
-  background: '#F8FAFC',
-  lightBlue: '#3B82F6',
-  darkGray: '#374151',
-  lightGray: '#E5E7EB',
-  white: '#FFFFFF',
-  success: '#10B981',
 };
 
 const DECORATIVE_ICONS = [
@@ -175,7 +163,7 @@ const ChangePassword: React.FC = () => {
       return;
     }
 
-    // Validate password requirements
+
     if (!passwordValidation.isValid) {
       setError(passwordValidation.errors.join('. '));
       return;
@@ -184,10 +172,10 @@ const ChangePassword: React.FC = () => {
     setLoading(true);
     try {
       await apiService.changePassword(newPassword);
-      setMessage('✅ Password updated successfully. Redirecting...');
+      setMessage('Password updated successfully. Redirecting...');
       setTimeout(() => navigate('/dashboard'), 1500);
-    } catch (err: any) {
-      setError(err.message || 'Failed to change password');
+    } catch (err) {
+      setError((err as Error).message || 'Failed to change password');
     } finally {
       setLoading(false);
     }
@@ -201,7 +189,7 @@ const ChangePassword: React.FC = () => {
 
   return (
     <ThemeProvider theme={appTheme}>
-      {/* Manual SACL Header */}
+
       <Box sx={{ minHeight: '100vh', background: `linear-gradient(135deg, #fffbe6 0%, #fff 100%)` }}>
         <Paper
           sx={{
@@ -263,7 +251,7 @@ const ChangePassword: React.FC = () => {
                   zIndex: 2,
                 }}
               >
-                {/* Header */}
+
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
                   <Typography
                     variant="h4"
@@ -286,7 +274,7 @@ const ChangePassword: React.FC = () => {
                   </Typography>
                 </Box>
 
-                {/* New Password Input */}
+
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     variant="subtitle1"
@@ -328,7 +316,7 @@ const ChangePassword: React.FC = () => {
                     }}
                   />
 
-                  {/* Password Strength Indicator */}
+
                   {newPassword && (
                     <Box sx={{ mt: 2 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -433,7 +421,7 @@ const ChangePassword: React.FC = () => {
                   )}
                 </Box>
 
-                {/* Confirm Password Input */}
+
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     variant="subtitle1"
@@ -475,7 +463,7 @@ const ChangePassword: React.FC = () => {
                     }}
                   />
 
-                  {/* Password Match Indicator */}
+
                   {confirm && (
                     <Typography
                       variant="caption"
@@ -492,7 +480,7 @@ const ChangePassword: React.FC = () => {
                   )}
                 </Box>
 
-                {/* Submit Button */}
+
                 <Button
                   fullWidth
                   variant="contained"
@@ -520,7 +508,7 @@ const ChangePassword: React.FC = () => {
                   )}
                 </Button>
 
-                {/* Messages */}
+
                 {message && (
                   <Alert
                     severity="success"
@@ -550,7 +538,7 @@ const ChangePassword: React.FC = () => {
                   </Alert>
                 )}
 
-                {/* Footer Note */}
+
                 <Typography
                   variant="caption"
                   sx={{

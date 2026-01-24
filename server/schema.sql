@@ -124,15 +124,15 @@ GO
 CREATE TABLE sand_properties (
     trial_id NVARCHAR(255) PRIMARY KEY,
     date DATE NOT NULL,
-    t_clay DECIMAL(6,3) CHECK (t_clay >= 0),
-    a_clay DECIMAL(6,3) CHECK (a_clay >= 0),
-    vcm DECIMAL(6,3) CHECK (vcm >= 0),
-    loi DECIMAL(6,3) CHECK (loi >= 0),
-    afs DECIMAL(6,3) CHECK (afs >= 0),
-    gcs DECIMAL(6,3) CHECK (gcs >= 0),
-    moi DECIMAL(6,3) CHECK (moi >= 0),
-    compactability DECIMAL(6,3) CHECK (compactability >= 0),
-    permeability DECIMAL(6,3) CHECK (permeability >= 0),
+    t_clay INT CHECK (t_clay >= 0),
+    a_clay INT CHECK (a_clay >= 0),
+    vcm INT CHECK (vcm >= 0),
+    loi INT CHECK (loi >= 0),
+    afs INT CHECK (afs >= 0),
+    gcs INT CHECK (gcs >= 0),
+    moi INT CHECK (moi >= 0),
+    compactability INT CHECK (compactability >= 0),
+    permeability INT CHECK (permeability >= 0),
     remarks NVARCHAR(MAX),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );
@@ -358,6 +358,8 @@ CREATE TABLE trial_reports (
     file_name VARCHAR(255) NOT NULL,
     file_base64 NVARCHAR(MAX),
     uploaded_at DATETIME2 DEFAULT GETDATE(),
+    deleted_at DATETIME2,
+    deleted_by VARCHAR(50),
     remarks NVARCHAR(MAX),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );
@@ -402,3 +404,8 @@ INSERT INTO department_flow(department_id, sequence_no) VALUES
 (9, 6),
 (10, 8);
 GO
+
+-------------------------------MIGRATIONS----------------------------------
+rm sql.bacpac
+Import sql.bacpac
+Export sql.bacpac

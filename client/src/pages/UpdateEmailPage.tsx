@@ -76,7 +76,7 @@ const theme = createTheme({
   }
 });
 
-// Decorative icons will be scattered around the main form box only
+
 const DECORATIVE_ICONS = [
   EmailIcon,
   VerifiedIcon,
@@ -89,14 +89,14 @@ const DECORATIVE_ICONS = [
 ];
 
 const DecorativeBackground: React.FC<{ boxRef?: React.RefObject<HTMLDivElement> }> = ({ boxRef }) => {
-  // More positions for icons around the box
+
   const positions = [
-    // Corners
+
     { top: '-38px', left: '-38px' },
     { top: '-38px', right: '-38px' },
     { bottom: '-38px', left: '-38px' },
     { bottom: '-38px', right: '-38px' },
-    // Sides
+
     { top: '10%', left: '-38px' },
     { top: '10%', right: '-38px' },
     { bottom: '10%', left: '-38px' },
@@ -105,7 +105,7 @@ const DecorativeBackground: React.FC<{ boxRef?: React.RefObject<HTMLDivElement> 
     { top: '50%', right: '-38px' },
     { top: '-38px', left: '50%' },
     { bottom: '-38px', left: '50%' },
-    // Extra scatter
+
     { top: '-50px', left: '10%' },
     { top: '-24px', left: '80%' },
     { bottom: '-24px', left: '15%' },
@@ -163,10 +163,10 @@ const UpdateEmail: React.FC = () => {
     setLoading(true);
     try {
       await apiService.sendEmailOtp(email);
-      setMessage('✅ OTP sent to your email. Check your inbox.');
+      setMessage('OTP sent to your email. Check your inbox.');
       setOtpSent(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to send OTP');
+    } catch (err) {
+      setError((err as Error).message || 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
@@ -182,8 +182,7 @@ const UpdateEmail: React.FC = () => {
     setLoading(true);
     try {
       await apiService.verifyEmailOtp(email, otp);
-      setMessage('✅ Email verified successfully');
-      // update local stored user
+      setMessage('Email verified successfully');
       try {
         const stored = localStorage.getItem('user');
         if (stored) {
@@ -192,10 +191,9 @@ const UpdateEmail: React.FC = () => {
           localStorage.setItem('user', JSON.stringify(parsed));
         }
       } catch { }
-      // After verifying email, require user to change default password
       setTimeout(() => navigate('/change-password'), 1500);
-    } catch (err: any) {
-      setError(err.message || 'Failed to verify OTP');
+    } catch (err) {
+      setError((err as Error).message || 'Failed to verify OTP');
     } finally {
       setLoading(false);
     }
@@ -203,7 +201,7 @@ const UpdateEmail: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      {/* Manual SACL Header */}
+
       <Box sx={{ minHeight: '100vh', background: `linear-gradient(135deg, #fffbe6 0%, #fff 100%)` }}>
         <Paper
           sx={{
@@ -265,7 +263,7 @@ const UpdateEmail: React.FC = () => {
                   zIndex: 2,
                 }}
               >
-                {/* Header */}
+
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
                   <Typography
                     variant="h4"
@@ -290,7 +288,7 @@ const UpdateEmail: React.FC = () => {
                   </Typography>
                 </Box>
 
-                {/* Email Input Section */}
+
                 <Box sx={{ mb: 3 }}>
                   <Typography
                     variant="subtitle1"
@@ -321,7 +319,7 @@ const UpdateEmail: React.FC = () => {
                   </Button>
                 </Box>
 
-                {/* Divider */}
+
                 {otpSent && (
                   <Box sx={{ display: 'flex', alignItems: 'center', my: 3, gap: 2 }}>
                     <Box sx={{ flex: 1, height: 1, backgroundColor: '#E5E7EB' }} />
@@ -330,7 +328,7 @@ const UpdateEmail: React.FC = () => {
                   </Box>
                 )}
 
-                {/* OTP Input Section */}
+
                 {otpSent && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 600, color: '#374151' }}>
@@ -360,7 +358,7 @@ const UpdateEmail: React.FC = () => {
                   </Box>
                 )}
 
-                {/* Messages */}
+
                 {message && (
                   <Alert severity="success" sx={{ mt: 3, backgroundColor: '#f39b0315', color: '#10B981', border: '1px solid #10B981', borderRadius: 2 }}>
                     {message}
@@ -372,7 +370,7 @@ const UpdateEmail: React.FC = () => {
                   </Alert>
                 )}
 
-                {/* Footer Note */}
+
                 {!otpSent && (
                   <Typography variant="caption" sx={{ display: 'block', mt: 3, textAlign: 'center', color: '#374151', fontSize: '0.85rem' }}>
                     We'll send a verification code to your email address

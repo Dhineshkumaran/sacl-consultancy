@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -15,7 +15,6 @@ import {
   DialogActions,
   Box,
 } from '@mui/material';
-import DescriptionIcon from '@mui/icons-material/Description';
 import { trialService } from '../../services/trialService';
 import DocumentViewer from '../common/DocumentViewer';
 
@@ -35,7 +34,7 @@ interface Trial {
 const RecentTrialsTable: React.FC = () => {
   const [trials, setTrials] = useState<Trial[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewReport, setViewReport] = useState<any>(null);
+  const [viewReport, setViewReport] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   useEffect(() => {
     const fetchTrials = async () => {
@@ -144,7 +143,7 @@ const RecentTrialsTable: React.FC = () => {
                   </TableCell>
                   <TableCell align="center">
                     {
-                      trial.status === 'CLOSED' && trial.file_base64 && (
+                      trial.status === 'CLOSED' && trial.file_base64 ? (
                         <Button
                           variant="outlined"
                           size="small"
@@ -165,7 +164,7 @@ const RecentTrialsTable: React.FC = () => {
                         >
                           View
                         </Button>
-                      )
+                      ) : "Report not available"
                     }
                   </TableCell>
                 </TableRow>

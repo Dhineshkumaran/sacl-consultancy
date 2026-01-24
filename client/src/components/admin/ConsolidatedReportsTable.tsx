@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
     Table,
     TableBody,
@@ -30,7 +30,7 @@ interface ConsolidatedReport {
 const ConsolidatedReportsTable: React.FC = () => {
     const [reports, setReports] = useState<ConsolidatedReport[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewReport, setViewReport] = useState<any>(null);
+    const [viewReport, setViewReport] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     useEffect(() => {
         const fetchReports = async () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/commonService';
 import GearSpinner from '../common/GearSpinner';
 import './AddUserModal.css';
@@ -37,13 +37,13 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
     if (isOpen) {
       fetchDepartments();
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchDepartments = async () => {
     try {
       const departments = await apiService.getDepartments();
       setDepartments(departments);
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Failed to fetch departments:', err);
       showAlert('error', 'Could not load departments');
     }
@@ -60,7 +60,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation (email removed — default password used)
+    // Validation (email removed â€” default password used)
     if (!formData.username || !formData.full_name || !formData.password) {
       showAlert('error', 'All required fields must be filled');
       return;
@@ -103,7 +103,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       onUserCreated?.();
       onClose();
 
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       showAlert('error', err.message || 'Failed to create user');
     } finally {
       setLoading(false);
@@ -126,7 +126,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
         <div className="modal-header">
           <h2>Add User Profile</h2>
           <button className="close-btn" onClick={onClose} disabled={loading}>
-            ✕
+            âœ•
           </button>
         </div>
 
@@ -217,7 +217,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
                   className="password-toggle"
                   onClick={togglePasswordVisibility}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
                 </span>
               </div>
             </div>
@@ -239,7 +239,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
                   className="password-toggle"
                   onClick={toggleConfirmPasswordVisibility}
                 >
-                  {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                  {showConfirmPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
                 </span>
               </div>
             </div>

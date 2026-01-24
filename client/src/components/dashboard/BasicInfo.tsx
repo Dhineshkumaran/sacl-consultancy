@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -34,7 +34,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { trialService } from "../../services/trialService";
 import { formatDate } from "../../utils/dateUtils";
 
-const SpecInput = (props: any) => (
+const SpecInput = (props: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
   <TextField
     {...props}
     variant="outlined"
@@ -45,8 +45,9 @@ const SpecInput = (props: any) => (
       style: { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' }
     }}
     sx={{
-      minWidth: "70px",
-      "& .MuiOutlinedInput-root": { backgroundColor: props.readOnly ? "#f8fafc" : "#fff" }
+      minWidth: { xs: "50px", sm: "70px" },
+      "& .MuiOutlinedInput-root": { backgroundColor: props.readOnly ? "#f8fafc" : "#fff" },
+      "& .MuiInputBase-input": { fontSize: { xs: '0.75rem', sm: '0.85rem' } }
     }}
   />
 );
@@ -77,28 +78,28 @@ type TrialData = {
   mould_correction?: MouldCorrection[];
   tooling_files?: { name: string }[];
   pattern_data_sheet_files?: { name: string }[];
-  chemical_composition?: any;
-  micro_structure?: any;
-  tensile?: any;
-  hardness?: any;
+  chemical_composition?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  micro_structure?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  tensile?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  hardness?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   xray?: string;
   mpi?: string;
 };
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode; title: string; color: string }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${color}`, width: '100%' }}>
-    <Box sx={{ color: color, display: "flex" }}>{icon}</Box>
-    <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1 }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mb: 2, pb: 1, borderBottom: `2px solid ${color}`, width: '100%', flexWrap: 'wrap' }}>
+    <Box sx={{ color: color, display: "flex", fontSize: { xs: '20px', sm: '24px' } }}>{icon}</Box>
+    <Typography variant="subtitle2" sx={{ color: COLORS.primary, flexGrow: 1, fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' } }}>
       {title}
     </Typography>
   </Box>
 );
 
-// Parsing utility functions for master list data
-const parseChemicalComposition = (composition: any) => {
+
+const parseChemicalComposition = (composition: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const blank = { c: "", si: "", mn: "", p: "", s: "", mg: "", cr: "", cu: "" };
   if (!composition) return blank;
-  let obj: any = composition;
+  let obj: any = composition; // eslint-disable-line @typescript-eslint/no-explicit-any
   if (typeof composition === "string") {
     try {
       obj = JSON.parse(composition);
@@ -124,7 +125,7 @@ const parseChemicalComposition = (composition: any) => {
     }
   }
   if (typeof obj !== "object" || obj === null) return blank;
-  const map: Record<string, any> = {};
+  const map: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
   Object.keys(obj).forEach((k) => {
     if (typeof k === "string") { map[k.toLowerCase().replace(/\s+/g, "")] = obj[k]; }
   });
@@ -144,29 +145,29 @@ const parseChemicalComposition = (composition: any) => {
 const parseTensileData = (tensile: string) => {
   if (!tensile) return { tensileStrength: "", yieldStrength: "", elongation: "", impactCold: "", impactRoom: "" };
   let tensileStrength = "", yieldStrength = "", elongation = "", impactCold = "", impactRoom = "";
-  const spaceSepMatches = tensile.match(/([≥>=]+)?\s*(\d+)\s*(?:MPa|N\/mm²|N\/mm2)?/g);
+  const spaceSepMatches = tensile.match(/([â‰¥>=]+)?\s*(\d+)\s*(?:MPa|N\/mmÂ²|N\/mm2)?/g);
   if (spaceSepMatches && spaceSepMatches.length >= 2) {
-    const first = spaceSepMatches[0].match(/([≥>=]+)?\s*(\d+)/);
-    if (first) tensileStrength = (first[1] || "≥") + first[2];
-    const second = spaceSepMatches[1].match(/([≥>=]+)?\s*(\d+)/);
-    if (second) yieldStrength = (second[1] || "≥") + second[2];
+    const first = spaceSepMatches[0].match(/([â‰¥>=]+)?\s*(\d+)/);
+    if (first) tensileStrength = (first[1] || "â‰¥") + first[2];
+    const second = spaceSepMatches[1].match(/([â‰¥>=]+)?\s*(\d+)/);
+    if (second) yieldStrength = (second[1] || "â‰¥") + second[2];
     if (spaceSepMatches.length >= 3) {
-      const third = spaceSepMatches[2].match(/([≥>=]+)?\s*(\d+)/);
-      if (third) elongation = (third[1] || "≥") + third[2];
+      const third = spaceSepMatches[2].match(/([â‰¥>=]+)?\s*(\d+)/);
+      if (third) elongation = (third[1] || "â‰¥") + third[2];
     }
     return { tensileStrength, yieldStrength, elongation, impactCold, impactRoom };
   }
   const lines = tensile.split("\n");
   lines.forEach((line) => {
     const cleanLine = line.trim();
-    if (cleanLine.match(/\d+\s*(MPa|N\/mm²)/) || cleanLine.includes("Tensile") || cleanLine.match(/[≥>]\s*\d+/)) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !tensileStrength) tensileStrength = `${match[1]}${match[2]}`;
+    if (cleanLine.match(/\d+\s*(MPa|N\/mmÂ²)/) || cleanLine.includes("Tensile") || cleanLine.match(/[â‰¥>]\s*\d+/)) {
+      const match = cleanLine.match(/([â‰¥>]?)\s*(\d+)/); if (match && !tensileStrength) tensileStrength = `${match[1]}${match[2]}`;
     }
     if (cleanLine.includes("Yield")) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !yieldStrength) yieldStrength = `${match[1]}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥>]?)\s*(\d+)/); if (match && !yieldStrength) yieldStrength = `${match[1]}${match[2]}`;
     }
     if (cleanLine.includes("Elongation") || cleanLine.includes("%")) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !elongation) elongation = `${match[1]}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥>]?)\s*(\d+)/); if (match && !elongation) elongation = `${match[1]}${match[2]}`;
     }
   });
   return { tensileStrength, yieldStrength, elongation, impactCold, impactRoom };
@@ -179,23 +180,23 @@ const parseMicrostructureData = (microstructure: string) => {
   lines.forEach((line) => {
     const cleanLine = line.trim().toLowerCase();
     if (cleanLine.includes("nodularity") || cleanLine.includes("spheroidization")) {
-      const match = cleanLine.match(/([≥≤]?)\s*(\d+)/);
+      const match = cleanLine.match(/([â‰¥â‰¤]?)\s*(\d+)/);
       if (match) nodularity = `${match[1]}${match[2]}`;
     }
     else if (cleanLine.includes("shape") && cleanLine.match(/(\d+)\s*%/)) {
-      const match = cleanLine.match(/([≥≤<>]?)\s*(\d+)\s*%/);
-      if (match && !nodularity) nodularity = `${match[1] || "≥"}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥â‰¤<>]?)\s*(\d+)\s*%/);
+      if (match && !nodularity) nodularity = `${match[1] || "â‰¥"}${match[2]}`;
     }
     if (cleanLine.includes("pearlite") || cleanLine.includes("pearlitic")) {
-      const match = cleanLine.match(/([≥≤<>]?)\s*(\d+)/);
+      const match = cleanLine.match(/([â‰¥â‰¤<>]?)\s*(\d+)/);
       if (match) pearlite = `${match[1]}${match[2]}`;
     }
     else if (cleanLine.includes("matrix") && cleanLine.includes("ferrite")) {
-      const match = cleanLine.match(/([≥≤<>=]?)\s*(\d+)\s*%/);
-      if (match && !pearlite) pearlite = `${match[1] || "≥"}${match[2]}`;
+      const match = cleanLine.match(/([â‰¥â‰¤<>=]?)\s*(\d+)\s*%/);
+      if (match && !pearlite) pearlite = `${match[1] || "â‰¥"}${match[2]}`;
     }
     if (cleanLine.includes("carbide")) {
-      const match = cleanLine.match(/([≥≤<>=]?)\s*(\d+)/);
+      const match = cleanLine.match(/([â‰¥â‰¤<>=]?)\s*(\d+)/);
       if (match) carbide = `${match[1]}${match[2]}`;
     }
   });
@@ -209,23 +210,23 @@ const parseHardnessData = (hardness: string) => {
   lines.forEach((line) => {
     const cleanLine = line.trim().toLowerCase();
     if (cleanLine.includes("surface")) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
+      const match = cleanLine.match(/(\d+\s*[-â€“]\s*\d+|\d+)/);
       if (match) surface = match[1].replace(/\s+/g, ' ');
     }
     else if (cleanLine.includes("core")) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
+      const match = cleanLine.match(/(\d+\s*[-â€“]\s*\d+|\d+)/);
       if (match) core = match[1].replace(/\s+/g, ' ');
     }
     else if (!surface) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
+      const match = cleanLine.match(/(\d+\s*[-â€“]\s*\d+|\d+)/);
       if (match) surface = match[1].replace(/\s+/g, ' ');
     }
   });
   return { surface: surface || "--", core: core || "--" };
 };
 
-const PatternDatasheetSection = ({ patternCode, data }: { patternCode: string, data?: any }) => {
-  const [patternData, setPatternData] = useState<any | null>(data || null);
+const PatternDatasheetSection = ({ patternCode, data }: { patternCode: string, data?: any }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [patternData, setPatternData] = useState<any | null>(data || null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -265,7 +266,7 @@ const PatternDatasheetSection = ({ patternCode, data }: { patternCode: string, d
 
   return (
     <Grid container spacing={3}>
-      {/* Left Column */}
+
       <Grid size={{ xs: 12, md: 5 }}>
         <Paper elevation={0} variant="outlined">
           <Table size="small">
@@ -294,7 +295,7 @@ const PatternDatasheetSection = ({ patternCode, data }: { patternCode: string, d
         </Paper>
       </Grid>
 
-      {/* Right Column */}
+
       <Grid size={{ xs: 12, md: 7 }}>
         <Paper elevation={0} variant="outlined">
           <Table size="small">
@@ -334,7 +335,7 @@ const PatternDatasheetSection = ({ patternCode, data }: { patternCode: string, d
         </Paper>
       </Grid>
 
-      {/* Remarks */}
+
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle2" gutterBottom fontWeight="bold">Remarks:</Typography>
         <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb', minHeight: '60px' }}>
@@ -357,7 +358,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<TrialData | null>(null);
-  const [masterListTooling, setMasterListTooling] = useState<any | null>(null);
+  const [masterListTooling, setMasterListTooling] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [userIP, setUserIP] = useState<string>("");
   const [showSpecifications, setShowSpecifications] = useState(false);
 
@@ -385,7 +386,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
     try {
       const trial = await trialService.getTrialByTrialId(id);
       if (trial) {
-        // Parse JSON fields if they are strings
+
         const parsedTrial = { ...trial };
         ['chemical_composition', 'micro_structure', 'tensile', 'hardness', 'mould_correction', 'pattern_data_sheet_files', 'tooling_files'].forEach(key => {
           if (typeof parsedTrial[key] === 'string') {
@@ -397,7 +398,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
           }
         });
 
-        // Fetch Master List Data for Specification
+
         if (parsedTrial.pattern_code) {
           try {
             const masterData = await trialService.getMasterListByPatternCode(parsedTrial.pattern_code);
@@ -406,41 +407,37 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
               setMasterListTooling(masterData);
 
               if (masterData.chemical_composition) {
-                console.log("Raw Chemical Composition:", masterData.chemical_composition);
                 parsedTrial.chemical_composition = parseChemicalComposition(masterData.chemical_composition);
-                console.log("Parsed Chemical Composition:", parsedTrial.chemical_composition);
-              } else {
-                console.log("No Chemical Composition in Master Data");
-              }
 
-              if (masterData.micro_structure) {
-                try {
-                  const parsedMicro = typeof masterData.micro_structure === 'string'
-                    ? JSON.parse(masterData.micro_structure)
-                    : masterData.micro_structure;
-                  if (parsedMicro && typeof parsedMicro === 'object') {
-                    parsedTrial.micro_structure = {
-                      nodularity: parsedMicro.nodularity || "--",
-                      pearlite: parsedMicro.pearlite || "--",
-                      carbide: parsedMicro.carbide || "--"
-                    };
-                  } else {
+                if (masterData.micro_structure) {
+                  try {
+                    const parsedMicro = typeof masterData.micro_structure === 'string'
+                      ? JSON.parse(masterData.micro_structure)
+                      : masterData.micro_structure;
+                    if (parsedMicro && typeof parsedMicro === 'object') {
+                      parsedTrial.micro_structure = {
+                        nodularity: parsedMicro.nodularity || "--",
+                        pearlite: parsedMicro.pearlite || "--",
+                        carbide: parsedMicro.carbide || "--"
+                      };
+                    } else {
+                      parsedTrial.micro_structure = parseMicrostructureData(String(masterData.micro_structure));
+                    }
+                  } catch (e) {
                     parsedTrial.micro_structure = parseMicrostructureData(String(masterData.micro_structure));
                   }
-                } catch (e) {
-                  parsedTrial.micro_structure = parseMicrostructureData(String(masterData.micro_structure));
                 }
-              }
 
-              if (masterData.tensile) {
-                parsedTrial.tensile = parseTensileData(masterData.tensile);
-              }
-              if (masterData.hardness) {
-                parsedTrial.hardness = parseHardnessData(masterData.hardness);
-              }
+                if (masterData.tensile) {
+                  parsedTrial.tensile = parseTensileData(masterData.tensile);
+                }
+                if (masterData.hardness) {
+                  parsedTrial.hardness = parseHardnessData(masterData.hardness);
+                }
 
-              if (masterData.xray) {
-                parsedTrial.xray = masterData.xray;
+                if (masterData.xray) {
+                  parsedTrial.xray = masterData.xray;
+                }
               }
             }
           } catch (masterError) {
@@ -453,7 +450,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
         setData(null);
         setError('No trial found');
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(err?.message || 'Failed to fetch trial');
       setData(null);
     } finally {
@@ -469,8 +466,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
 
   return (
     <ThemeProvider theme={appTheme}>
-      <Box sx={{ bgcolor: COLORS.background, py: { xs: 2, md: 4 }, px: { xs: 1, sm: 3 } }}>
-        <Container maxWidth="xl" disableGutters>
+      <Box sx={{ bgcolor: COLORS.background, py: { xs: 1.5, sm: 2.5, md: 3.5 }, px: { xs: 0.5, sm: 1.5, md: 3 } }}>
+        <Container maxWidth="xl" disableGutters sx={{ px: { xs: 0.5, sm: 1.5 } }}>
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
@@ -482,7 +479,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
             </Box>
           ) : (
             <>
-              {/* Part Identification - Always Visible */}
+
               {data && (
                 <Grid container spacing={3} sx={{ mb: 3, mt: 2 }}>
                   <Grid size={12}>
@@ -491,29 +488,32 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                         <SectionHeader icon={<PrecisionManufacturingIcon />} title="Part Identification" color={COLORS.primary} />
                         <Grid container spacing={2}>
                           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary }}>PATTERN CODE</Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>PATTERN CODE</Typography>
                             <TextField
                               fullWidth
+                              size="small"
                               value={data?.pattern_code || ''}
-                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc" } }}
+                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc", fontSize: { xs: '0.8rem', sm: '0.9rem' } } }}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, sm: 6, md: 5 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary }}>COMPONENT NAME</Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>COMPONENT NAME</Typography>
                             <TextField
                               fullWidth
+                              size="small"
                               value={data?.part_name || ''}
-                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc" } }}
+                              InputProps={{ readOnly: true, sx: { bgcolor: "#f8fafc", fontSize: { xs: '0.8rem', sm: '0.9rem' } } }}
                             />
                           </Grid>
                           <Grid size={{ xs: 12, md: 4 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary }}>TRIAL REFERENCE</Typography>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>TRIAL REFERENCE</Typography>
                             <TextField
                               fullWidth
+                              size="small"
                               value={initialTrialId || 'No Trial ID'}
                               InputProps={{
                                 readOnly: true,
-                                sx: { bgcolor: "#f1f5f9", fontWeight: 700, color: COLORS.primary }
+                                sx: { bgcolor: "#f1f5f9", fontWeight: 700, color: COLORS.primary, fontSize: { xs: '0.8rem', sm: '0.9rem' } }
                               }}
                             />
                           </Grid>
@@ -524,14 +524,14 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                 </Grid>
               )}
 
-              {/* Show/Hide Specifications Button */}
+
               {data && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, px: { xs: 1, sm: 0 } }}>
                   <Button
                     variant="outlined"
                     startIcon={showSpecifications ? <VisibilityOffIcon /> : <VisibilityIcon />}
                     onClick={() => setShowSpecifications(!showSpecifications)}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ textTransform: 'none', fontSize: { xs: '0.8rem', sm: '0.9rem' }, py: { xs: 0.5, sm: 1 }, px: { xs: 1, sm: 2 } }}
                   >
                     {showSpecifications ? 'Hide' : 'Show'} Basic Information
                   </Button>
@@ -541,23 +541,25 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
               <Collapse in={showSpecifications} timeout="auto" unmountOnExit>
                 <Grid container spacing={3} sx={{ mb: 3, mt: 0 }}>
 
-                  {/* Pattern Datasheet Details */}
+
                   {data && data.pattern_code && (
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
                         <SectionHeader icon={<FactoryIcon />} title="Pattern Datasheet Details" color={COLORS.primary} />
-                        <PatternDatasheetSection patternCode={data.pattern_code} data={masterListTooling} />
+                        <Box sx={{ overflowX: 'auto', width: '100%' }}>
+                          <PatternDatasheetSection patternCode={data.pattern_code} data={masterListTooling} />
+                        </Box>
                       </Paper>
                     </Grid>
                   )}
 
-                  {/* Metallurgical Composition */}
+
                   {data && (
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
                         <SectionHeader icon={<ScienceIcon />} title="Metallurgical Composition" color={COLORS.accentBlue} />
-                        <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
-                          <Table size="small" sx={{ minWidth: 800, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd' } }}>
+                        <Box sx={{ overflowX: "auto", width: "100%", pb: 1, minHeight: '200px' }}>
+                          <Table size="small" sx={{ minWidth: { xs: '100%', md: 800 }, border: '1px solid #ddd', '& td, & th': { border: '1px solid #ddd', fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, p: { xs: 0.5, sm: 1 } } }}>
                             <TableHead>
                               <TableRow>
                                 <TableCell colSpan={8} align="center" sx={{ bgcolor: "#f0f9ff", color: COLORS.accentBlue, border: '1px solid #ddd' }}>Chemical Elements (%)</TableCell>
@@ -621,7 +623,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                     </Grid>
                   )}
 
-                  {/* Mechanical Properties & NDT */}
+
                   {data && (
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
@@ -706,8 +708,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
               {data && (
                 <>
                   {/* Sampling Details Table */}
-                  <Paper sx={{ overflowX: "auto", p: 2, mb: 3 }}>
-                    <Table size="small" sx={{ minWidth: 900 }}>
+                  <Paper sx={{ overflowX: "auto", p: { xs: 1, sm: 2 }, mb: 3 }}>
+                    <Table size="small" sx={{ minWidth: { xs: '100%', md: 900 }, '& th': { fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, p: { xs: 0.5, sm: 1 } }, '& td': { fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.875rem' }, p: { xs: 0.5, sm: 1 } } }}>
                       <TableHead>
                         <TableRow>
                           {[
@@ -726,7 +728,10 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                                 backgroundColor: '#f1f5f9',
                                 color: 'black',
                                 fontWeight: 600,
-                                borderBottom: `1px solid ${COLORS.headerBg}`
+                                borderBottom: `1px solid ${COLORS.headerBg}`,
+                                fontSize: { xs: '0.6rem', sm: '0.75rem', md: '0.875rem' },
+                                p: { xs: 0.5, sm: 1 },
+                                whiteSpace: 'nowrap'
                               }}
                             >
                               {head}
@@ -790,7 +795,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                     </Table>
                   </Paper>
 
-                  {/* Tooling Modification */}
+
                   <Paper sx={{ p: 3, mb: 3 }}>
                     <SectionHeader
                       icon={<ConstructionIcon />}

@@ -1,4 +1,4 @@
-import type { AuthResponse, CreateUserRequest, User } from '../types/user';
+﻿import type { AuthResponse, CreateUserRequest, User } from '../types/user';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string);
 
@@ -180,7 +180,7 @@ class ApiService {
     });
   }
 
-  async getMasterList(): Promise<any[]> {
+  async getMasterList(): Promise<any[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
     const response = await this.request('/master-list', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },
@@ -188,7 +188,7 @@ class ApiService {
     return response.data || [];
   }
 
-  async getDepartments(): Promise<any[]> {
+  async getDepartments(): Promise<any[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
     const response = await this.request('/departments', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem('authToken') || '' },

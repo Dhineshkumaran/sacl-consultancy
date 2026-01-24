@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 
 import { useAuth } from "../../context/AuthContext";
@@ -27,17 +27,12 @@ import {
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
-
 import FactoryIcon from '@mui/icons-material/Factory';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EditIcon from '@mui/icons-material/Edit';
-import DownloadIcon from '@mui/icons-material/Download';
-import CloseIcon from '@mui/icons-material/Close';
-import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "../common/SaclHeader";
 import { apiService } from '../../services/commonService';
-
 import { inspectionService } from '../../services/inspectionService';
 import { trialService } from '../../services/trialService';
 import { useAlert } from '../../hooks/useAlert';
@@ -47,8 +42,6 @@ import DepartmentHeader from "../common/DepartmentHeader";
 import { FileUploadSection, PreviewModal, SpecInput, FormSection, ActionButtons, EmptyState, LoadingState, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
 import { formatDate } from "../../utils";
-
-
 
 const COLORS = {
     primary: "#1e293b",
@@ -170,7 +163,7 @@ function PouringDetailsTable() {
                     return;
                 }
                 try {
-                    const pending = await departmentProgressService.getProgress(user.username);
+                    const pending = await departmentProgressService.getProgress(user.username, user.department_id);
                     const found = pending.find(p => p.trial_id === trialId);
                     setIsAssigned(!!found);
                 } catch (error) {
@@ -282,7 +275,7 @@ function PouringDetailsTable() {
             }
         };
         if (trialId) fetchData();
-    }, [user, trialId]);
+    }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -355,7 +348,7 @@ function PouringDetailsTable() {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Failed to update pouring details. Please try again.'
+                        text: err.message || 'Failed to update pouring details. Please try again.'
                     });
                     console.error(err);
                 }
@@ -429,12 +422,12 @@ function PouringDetailsTable() {
                 text: 'Pouring details created successfully.'
             });
             navigate('/dashboard');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving pouring details:", error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Failed to create pouring details. Please try again.'
+                text: error.message || 'Failed to create pouring details. Please try again.'
             });
         } finally {
             setLoading(false);
@@ -576,7 +569,7 @@ function PouringDetailsTable() {
                                                                         value={pouringTemp}
                                                                         onChange={(e: any) => setPouringTemp(e.target.value)}
                                                                         InputProps={{
-                                                                            endAdornment: <InputAdornment position="end">°C</InputAdornment>,
+                                                                            endAdornment: <InputAdornment position="end">Â°C</InputAdornment>,
                                                                         }}
                                                                         disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                     />
@@ -772,7 +765,7 @@ function PouringDetailsTable() {
                                         </td>
                                         <td style={{ border: '1px solid black', padding: '12px' }}>
                                             <div style={{ fontSize: '18px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
-                                                <span style={dataFontStyle}>{previewPayload?.pouringTemp}°C</span>
+                                                <span style={dataFontStyle}>{previewPayload?.pouringTemp}Â°C</span>
                                             </div>
                                             <div style={{ borderTop: '1px dashed black', paddingTop: '10px' }}>
                                                 <u style={{ fontWeight: 'bold' }}>Inoculation: <span style={{ ...dataFontStyle, fontWeight: 'normal' }}>{previewPayload?.inoculation?.text}</span></u><br />
@@ -797,7 +790,7 @@ function PouringDetailsTable() {
                                 <Box sx={{ mt: 3, p: 2, border: "1px solid #ccc", borderRadius: 1, bgcolor: "white" }}>
                                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>ATTACHED FILES:</Typography>
                                     {previewPayload.attachedFiles.map((file: File, i: number) => (
-                                        <Typography key={i} variant="body2">• {file.name}</Typography>
+                                        <Typography key={i} variant="body2">â€¢ {file.name}</Typography>
                                     ))}
                                 </Box>
                             )}

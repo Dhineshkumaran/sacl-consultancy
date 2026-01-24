@@ -1,9 +1,13 @@
 import { apiService } from './commonService';
+import { loginSchema } from '../schemas/user';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string);
 
+import { validate } from '../utils';
+
 export const authService = {
   async login(username: string, password: string, role?: string, department_id?: string) {
+    validate(loginSchema, { username, password });
     const response = await apiService.login(username, password, role, department_id);
     localStorage.setItem('authToken', response.token);
     if (response.refreshToken) {

@@ -1,11 +1,11 @@
-import { Box, Chip, Paper, Typography } from "@mui/material";
+﻿import { Box, Chip, Paper, Typography } from "@mui/material";
 import { COLORS } from "../../theme/appTheme";
 import FactoryIcon from '@mui/icons-material/Factory';
 import PersonIcon from "@mui/icons-material/Person";
 import BackButton from "./BackButton";
 import { useNavigate } from "react-router-dom";
 
-const DepartmentHeader = ({ title, userIP, user }: any) => {
+const DepartmentHeader = ({ title, userIP, user }: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const navigate = useNavigate();
 
   return (

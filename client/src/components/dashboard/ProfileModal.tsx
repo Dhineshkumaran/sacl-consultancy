@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/commonService';
 import { getDepartmentInfo } from '../../utils/dashboardUtils';
@@ -12,13 +12,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
   const { user, updateUser } = useAuth();
   const departmentInfo = getDepartmentInfo(user);
 
-  // Photo upload states
+
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [photoSuccess, setPhotoSuccess] = useState('');
 
-  // Load profile photo on mount
+
   useEffect(() => {
     loadProfilePhoto();
   }, []);
@@ -29,8 +29,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
       if (response && response.profilePhoto) {
         setProfilePhoto(response.profilePhoto);
       }
-    } catch (err: any) {
-      // Silently fail if endpoint doesn't exist yet (404) - backend not deployed
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+
       if (err.message && !err.message.includes('404')) {
         console.error('Error loading profile photo:', err);
       }
@@ -41,13 +41,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
+
     if (!file.type.startsWith('image/')) {
       setPhotoError('Please select a valid image file');
       return;
     }
 
-    // Validate file size (max 5MB)
     const maxFileSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxFileSize) {
       setPhotoError('Image size must be less than 5MB');
@@ -66,27 +65,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
           await apiService.uploadProfilePhoto(base64String);
           setProfilePhoto(base64String);
           setPhotoSuccess('Profile photo updated successfully!');
-          // Trigger Header refresh
+
           if (onPhotoUpdate) {
             onPhotoUpdate();
           }
           setTimeout(() => {
             setPhotoSuccess('');
           }, 3000);
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
           setPhotoError(err.message || 'Failed to upload photo');
         } finally {
           setPhotoLoading(false);
         }
       };
       reader.readAsDataURL(file);
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setPhotoError(err.message || 'Failed to process image');
       setPhotoLoading(false);
     }
   };
 
-  // Username editing states
+
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [usernameLoading, setUsernameLoading] = useState(false);
@@ -94,7 +93,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
   const [usernameSuccess, setUsernameSuccess] = useState('');
 
 
-  // Email editing states
+
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -104,7 +103,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
   const [emailSuccess, setEmailSuccess] = useState('');
   const [otpTimer, setOtpTimer] = useState(0);
 
-  // Start OTP countdown timer
+
   const startOtpTimer = () => {
     setOtpTimer(300); // 5 minutes = 300 seconds
     const interval = setInterval(() => {
@@ -140,7 +139,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
       setOtpSent(true);
       setEmailSuccess('OTP sent to your email. Valid for 5 minutes.');
       startOtpTimer();
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setEmailError(err.message || 'Failed to send OTP');
     } finally {
       setEmailLoading(false);
@@ -160,7 +159,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
         body: JSON.stringify({ email: newEmail, otp })
       });
       setEmailSuccess('Email updated successfully!');
-      // Update user in context and localStorage
+
       if (updateUser) {
         updateUser({ ...user, email: newEmail });
       }
@@ -170,7 +169,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
         parsed.email = newEmail;
         localStorage.setItem('user', JSON.stringify(parsed));
       }
-      // Reset states after success
+
       setTimeout(() => {
         setIsEditingEmail(false);
         setOtpSent(false);
@@ -179,7 +178,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
         setEmailSuccess('');
         setOtpTimer(0);
       }, 2000);
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setEmailError(err.message || 'Invalid OTP');
     } finally {
       setEmailLoading(false);
@@ -211,7 +210,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
     try {
       await apiService.updateUsername(newUsername);
       setUsernameSuccess('Username updated successfully!');
-      // Update user in context and localStorage
+
       if (updateUser) {
         updateUser({ ...user, username: newUsername });
       }
@@ -221,13 +220,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
         parsed.username = newUsername;
         localStorage.setItem('user', JSON.stringify(parsed));
       }
-      // Reset states after success
+
       setTimeout(() => {
         setIsEditingUsername(false);
         setNewUsername('');
         setUsernameSuccess('');
       }, 2000);
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Username update error:', err);
       setUsernameError(err.message || 'Failed to update username. Please try again.');
     } finally {
@@ -263,7 +262,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
         width: '90%',
         overflow: 'hidden'
       }} onClick={(e) => e.stopPropagation()}>
-        {/* Header with gradient background */}
+
         <div style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           padding: '30px',
@@ -292,9 +291,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
             onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.3)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
           >
-            ×
+            Ã—
           </button>
-          {/* Avatar with Photo Upload */}
+
           <div style={{ position: 'relative', margin: '0 auto 15px', display: 'inline-block' }}>
             <div style={{
               width: '80px',
@@ -315,7 +314,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
             }}>
               {!profilePhoto && (user?.username?.charAt(0).toUpperCase() || 'U')}
             </div>
-            {/* Photo Upload Button */}
+
             <input
               type="file"
               accept="image/*"
@@ -349,7 +348,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
                 pointerEvents: 'none'
               }}
             >
-              📷
+              ðŸ“·
             </div>
           </div>
           {photoError && (
@@ -395,9 +394,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
           </span>
         </div>
 
-        {/* Profile Details */}
+
         <div style={{ padding: '25px 30px' }}>
-          {/* Change Profile Photo Button */}
+
           <div style={{ marginBottom: '20px' }}>
             <label style={{
               display: 'inline-block',
@@ -414,10 +413,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
               opacity: photoLoading ? 0.6 : 1,
               transition: 'background-color 0.2s'
             }}
-            onMouseEnter={(e) => !photoLoading && (e.currentTarget.style.backgroundColor = '#5568d3')}
-            onMouseLeave={(e) => !photoLoading && (e.currentTarget.style.backgroundColor = '#667eea')}
+              onMouseEnter={(e) => !photoLoading && (e.currentTarget.style.backgroundColor = '#5568d3')}
+              onMouseLeave={(e) => !photoLoading && (e.currentTarget.style.backgroundColor = '#667eea')}
             >
-              {photoLoading ? '⏳ Uploading...' : '📷 Change Profile Picture'}
+              {photoLoading ? 'â³ Uploading...' : 'ðŸ“· Change Profile Picture'}
               <input
                 type="file"
                 accept="image/*"
@@ -431,7 +430,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
           </div>
 
           <div style={{ marginBottom: '20px' }}>
-            {/* Username Section */}
+
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -451,7 +450,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
                 marginRight: '15px',
                 fontSize: '18px'
               }}>
-                👤
+                ðŸ‘¤
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '12px', color: '#888', fontWeight: 500, marginBottom: '2px' }}>
@@ -529,7 +528,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
               </div>
             </div>
 
-            {/* Email Section - Editable */}
+
             <div style={{
               padding: '15px',
               backgroundColor: '#f8f9fa',
@@ -548,7 +547,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
                   marginRight: '15px',
                   fontSize: '18px'
                 }}>
-                  📧
+                  ðŸ“§
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '12px', color: '#888', fontWeight: 500, marginBottom: '2px' }}>
@@ -705,7 +704,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
               </div>
             </div>
 
-            {/* Department */}
+
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -725,7 +724,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
                 marginRight: '15px',
                 fontSize: '18px'
               }}>
-                🏢
+                ðŸ¢
               </div>
               <div>
                 <div style={{ fontSize: '12px', color: '#888', fontWeight: 500, marginBottom: '2px' }}>

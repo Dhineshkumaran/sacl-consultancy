@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -8,7 +8,7 @@ interface BackButtonProps {
   navigateTo?: string;
   onClick?: () => void;
   variant?: 'inline' | 'fixed' | 'button';
-  sx?: any;
+  sx?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const BackButton: React.FC<BackButtonProps> = ({

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 
 import { useAuth } from "../../context/AuthContext";
@@ -29,13 +29,8 @@ import Swal from 'sweetalert2';
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
-import FactoryIcon from '@mui/icons-material/Factory';
-import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import ScienceIcon from '@mui/icons-material/Science';
-import CloseIcon from "@mui/icons-material/Close";
-import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaclHeader from "../common/SaclHeader";
 import { apiService } from '../../services/commonService';
@@ -109,7 +104,7 @@ export default function McShopInspection({
           return;
         }
         try {
-          const pending = await departmentProgressService.getProgress(user.username);
+          const pending = await departmentProgressService.getProgress(user.username, user.department_id);
           const found = pending.find(p => p.trial_id === trialId);
           setIsAssigned(!!found);
         } catch (error) {
@@ -191,7 +186,7 @@ export default function McShopInspection({
       }
     };
     if (trialId) fetchData();
-  }, [user, trialId]);
+  }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   const addColumn = () => {
@@ -381,11 +376,11 @@ export default function McShopInspection({
           text: 'Machine Shop Inspection updated successfully.'
         });
         navigate('/dashboard');
-      } catch (err) {
+      } catch (err: any) {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to update Machine Shop Inspection. Please try again.'
+          text: err.message || 'Failed to update Machine Shop Inspection. Please try again.'
         });
         console.error(err);
       } finally {
@@ -465,7 +460,7 @@ export default function McShopInspection({
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'Failed to save machine shop inspection. Please try again.'
+        text: err.message || 'Failed to save machine shop inspection. Please try again.'
       });
     } finally {
       setSaving(false);

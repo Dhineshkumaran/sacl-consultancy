@@ -1,9 +1,9 @@
-// Common reusable components
+
 export { default as DepartmentHeader } from './DepartmentHeader';
 export { default as SaclHeader } from './SaclHeader';
 export { default as AlertMessage } from './AlertMessage';
 
-// New reusable components
+
 export { default as FileUploadSection } from './FileUploadSection';
 export { default as FormSection } from './FormSection';
 export { default as ActionButtons } from './ActionButtons';

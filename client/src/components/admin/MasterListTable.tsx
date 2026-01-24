@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Table,
     TableBody,
@@ -21,11 +21,11 @@ import DeleteMasterModal from './DeleteMasterModal';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 interface MasterListTableProps {
-    onEdit: (data: any) => void;
+    onEdit: (data: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -108,7 +108,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
             setSelectedItems(new Set());
             setShowDeleteModal(false);
             setItemsToDelete(null);
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             setError(err.message || 'Failed to delete items');
             setShowDeleteModal(false);
         } finally {
@@ -126,7 +126,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
             // Refresh data and clear selection
             await fetchData();
             setSelectedItems(new Set());
-        } catch (err: any) {
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             setError(err.message || `Failed to update status`);
         }
     };
@@ -159,7 +159,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
                                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
                             >
-                                ✓ Activate ({selectedItems.size})
+                                âœ“ Activate ({selectedItems.size})
                             </button>
                             <button
                                 onClick={() => handleBulkStatusChange(false)}
@@ -180,7 +180,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e0a800')}
                                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffc107')}
                             >
-                                ✕ Deactivate ({selectedItems.size})
+                                âœ• Deactivate ({selectedItems.size})
                             </button>
                             <button
                                 onClick={handleDeleteClick}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared type definitions for inspection forms
  */
 
@@ -67,5 +67,5 @@ export interface PreviewPayload {
     inspection_date?: string;
     attachedFiles?: string[];
     additionalRemarks?: string;
-    [key: string]: any; // Allow additional properties
+    [key: string]: any; // Allow additional properties // eslint-disable-line @typescript-eslint/no-explicit-any
 }

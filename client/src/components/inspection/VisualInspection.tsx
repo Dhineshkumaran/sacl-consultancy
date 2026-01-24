@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -30,16 +30,13 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
-import FactoryIcon from '@mui/icons-material/Factory';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ScienceIcon from '@mui/icons-material/Science';
-import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaclHeader from "../common/SaclHeader";
 import { apiService } from '../../services/commonService';
-
 import { inspectionService } from '../../services/inspectionService';
 import { documentService } from '../../services/documentService';
 import { uploadFiles } from '../../services/fileUploadHelper';
@@ -137,7 +134,7 @@ export default function VisualInspection({
                     return;
                 }
                 try {
-                    const pending = await departmentProgressService.getProgress(user.username);
+                    const pending = await departmentProgressService.getProgress(user.username, user.department_id);
                     const found = pending.find(p => p.trial_id === trialId);
                     setIsAssigned(!!found);
                 } catch (error) {
@@ -157,7 +154,7 @@ export default function VisualInspection({
                 try {
                     const response = await inspectionService.getVisualInspection(trialId);
 
-                    let docsMap: Record<string, any> = {};
+                    const docsMap: Record<string, any> = {};
                     try {
                         const docRes = await documentService.getDocument(trialId);
                         if (docRes && docRes.success && Array.isArray(docRes.data)) {
@@ -209,7 +206,7 @@ export default function VisualInspection({
             }
         };
         if (trialId) fetchData();
-    }, [user, trialId]);
+    }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const calculateRejectionPercentage = (colIndex: number): string => {
         const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
@@ -450,11 +447,11 @@ export default function VisualInspection({
                     text: 'Visual Inspection updated successfully.'
                 });
                 navigate('/dashboard');
-            } catch (err) {
+            } catch (err: any) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to update. Please try again.'
+                    text: err.message || 'Failed to update. Please try again.'
                 });
             } finally {
                 setSaving(false);

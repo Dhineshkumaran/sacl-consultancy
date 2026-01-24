@@ -33,9 +33,10 @@ interface PendingTrials {
 
 interface PendingTrialsViewProps {
     username: string;
+    department_id: number;
 }
 
-const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
+const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username, department_id }) => {
     const [pendingTrials, setPendingTrials] = useState<PendingTrials[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -53,7 +54,7 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
     const fetchPendingTrials = async () => {
         try {
             setLoading(true);
-            const pendingTrials = await departmentProgressService.getProgress(username);
+            const pendingTrials = await departmentProgressService.getProgress(username, department_id);
             setPendingTrials(pendingTrials);
             setError(null);
         } catch (err) {
@@ -92,7 +93,7 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
     };
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: { xs: 1, sm: 2.5, md: 3 } }}>
 
 
             {/* Loading State */}
@@ -104,24 +105,24 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
 
             {/* Error State */}
             {error && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
+                <Alert severity="warning" sx={{ mb: 3, fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>
                     {error}
                 </Alert>
             )}
 
             {/* Pending Cards Table */}
             {!loading && (
-                <Paper variant="outlined" sx={{ border: `1px solid #e0e0e0`, overflow: 'hidden', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <Paper variant="outlined" sx={{ border: `1px solid #e0e0e0`, overflow: 'auto', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                     <Table size={isMobile ? "small" : "medium"}>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#fafafa' }}>
-                                <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' }, whiteSpace: 'nowrap' }}>Trial ID</TableCell>
-                                {!isMobile && <TableCell sx={{ fontWeight: 600, color: '#333' }}>Pattern Code</TableCell>}
-                                <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Part Name</TableCell>
-                                {!isTablet && <TableCell sx={{ fontWeight: 600, color: '#333' }}>Machine</TableCell>}
-                                {!isTablet && <TableCell sx={{ fontWeight: 600, color: '#333' }}>Sampling Date</TableCell>}
-                                <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>Status</TableCell>
-                                {!isMobile && <TableCell sx={{ fontWeight: 600, color: '#333' }}>Department</TableCell>}
+                                <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, whiteSpace: 'nowrap', p: { xs: 0.75, sm: 1 } }}>Trial ID</TableCell>
+                                {!isMobile && <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>Pattern Code</TableCell>}
+                                <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>Part Name</TableCell>
+                                {!isTablet && <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>Machine</TableCell>}
+                                {!isTablet && <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 }, whiteSpace: 'nowrap' }}>Sampling Date</TableCell>}
+                                <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>Status</TableCell>
+                                {!isMobile && <TableCell sx={{ fontWeight: 600, color: '#333', fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>Department</TableCell>}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -137,12 +138,12 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
                                             }
                                         }}
                                     >
-                                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{card.trial_id}</TableCell>
-                                        {!isMobile && <TableCell>{card.pattern_code}</TableCell>}
-                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.875rem' } }}>{card.part_name}</TableCell>
-                                        {!isTablet && <TableCell>{card.disa}</TableCell>}
-                                        {!isTablet && <TableCell>{card.date_of_sampling ? formatDate(card.date_of_sampling) : ''}</TableCell>}
-                                        <TableCell>
+                                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>{card.trial_id}</TableCell>
+                                        {!isMobile && <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>{card.pattern_code}</TableCell>}
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>{card.part_name}</TableCell>
+                                        {!isTablet && <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>{card.disa}</TableCell>}
+                                        {!isTablet && <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 }, whiteSpace: 'nowrap' }}>{card.date_of_sampling ? formatDate(card.date_of_sampling) : ''}</TableCell>}
+                                        <TableCell sx={{ p: { xs: 0.75, sm: 1 } }}>
                                             <Chip
                                                 label={getStatusLabel(card.approval_status || 'pending')}
                                                 size="small"
@@ -150,11 +151,11 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
                                                     backgroundColor: getStatusColor(card.approval_status || 'pending'),
                                                     color: card.approval_status == 'pending' || card.approval_status == 'completed' ? '#FFFFFF' : COLORS.textPrimary,
                                                     fontWeight: 600,
-                                                    fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                                                    fontSize: { xs: '0.65rem', sm: '0.75rem', md: '0.8rem' }
                                                 }}
                                             />
                                         </TableCell>
-                                        {!isMobile && <TableCell>
+                                        {!isMobile && <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' }, p: { xs: 0.75, sm: 1 } }}>
                                             {card.department_name}
                                         </TableCell>}
                                     </TableRow>
@@ -162,7 +163,7 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username }) => {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={isMobile ? 3 : isTablet ? 5 : 7} sx={{ textAlign: 'center', py: 4 }}>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                                             No pending sample cards at the moment
                                         </Typography>
                                     </TableCell>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 
 import { useAuth } from "../../context/AuthContext";
@@ -25,14 +25,9 @@ import {
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
-import FactoryIcon from '@mui/icons-material/Factory';
-import EditIcon from '@mui/icons-material/Edit';
-import CloseIcon from "@mui/icons-material/Close";
-import ScienceIcon from '@mui/icons-material/Science';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
-import PersonIcon from "@mui/icons-material/Person";
 import SaclHeader from "../common/SaclHeader";
 import { apiService } from '../../services/commonService';
 
@@ -82,7 +77,7 @@ function MouldingTable() {
           return;
         }
         try {
-          const pending = await departmentProgressService.getProgress(user.username);
+          const pending = await departmentProgressService.getProgress(user.username, user.department_id);
           const found = pending.find(p => p.trial_id === trialId);
           setIsAssigned(!!found);
         } catch (error) {
@@ -177,28 +172,6 @@ function MouldingTable() {
     </Box>
   );
 
-  const postMouldCorrection = async (payload: {
-    mould_thickness: string;
-    compressability: string;
-    squeeze_pressure: string;
-    mould_hardness: string;
-    remarks: string;
-    trial_id?: string;
-  }) => {
-    setMouldCorrectionLoading(true);
-    try {
-      const body = { ...payload, trial_id: 'Sample1', date: mouldDate };
-      await inspectionService.submitMouldingCorrection(body);
-      setMouldCorrectionSubmitted(true);
-      return { ok: true, data: {} };
-    } catch (err) {
-      showAlert('error', 'Failed to save moulding details. Please try again.');
-      return { ok: false, message: 'Failed to save mould correction' };
-    } finally {
-      setMouldCorrectionLoading(false);
-    }
-  };
-
   const handleFinalSave = async () => {
     setLoading(true);
     try {
@@ -241,7 +214,7 @@ function MouldingTable() {
           try {
             const uploadResults = await uploadFiles(
               attachedFiles,
-              trialId || "trial_id",
+              trialId || "",
               "MOULDING",
               user?.username || "system",
               "MOULDING"
@@ -273,11 +246,11 @@ function MouldingTable() {
         });
         navigate('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to update moulding correction. Please try again.' : 'Failed to save moulding details. Please try again.'
+        text: error.message || (user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to update moulding correction. Please try again.' : 'Failed to save moulding details. Please try again.')
       });
     } finally {
       setLoading(false);
@@ -470,7 +443,7 @@ function MouldingTable() {
                   </Typography>
 
                   {attachedFiles.map((file, i) => (
-                    <Typography key={i} variant="body2">• {file.name}</Typography>
+                    <Typography key={i} variant="body2">â€¢ {file.name}</Typography>
                   ))}
                 </Box>
               )}
