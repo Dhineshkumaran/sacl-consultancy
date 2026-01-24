@@ -800,7 +800,7 @@ export default function MetallurgicalInspection() {
           return;
         }
         try {
-          const pending = await getProgress(user.username);
+          const pending = await getProgress(user.username, user.department_id);
           const found = pending.find(p => p.trial_id === trialId);
           setIsAssigned(!!found);
         } catch (error) {
