@@ -35,7 +35,7 @@ export const createDepartmentProgress = async (trial_id, user, part_name, trx) =
 
 const assignToNextDepartmentUser = async (current_department_id, trial_id, trial_type, next_department_id, user, trx) => {
     await trx.query(
-        `UPDATE department_progress SET completed_at = @completed_at, approval_status = @approval_status, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id`,
+        `UPDATE department_progress SET completed_at = @completed_at, approval_status = @approval_status, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id AND approval_status = 'pending'`,
         { department_id: current_department_id, trial_id, completed_at: new Date(), approval_status: 'approved', remarks: `Approved by ${user.role}` }
     );
 
@@ -49,20 +49,22 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
     });
 
     let next_department_user_result;
-    if (next_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END') {
-        next_department_user_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'User' AND is_active = 1`,
-        );
-    } else if (next_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)') {
-        next_department_user_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
-            { next_department_id }
-        );
-    } else if (next_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)') {
-        next_department_user_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
-            { next_department_id }
-        );
+    if(next_department_id == 8) {
+        if (trial_type == 'MACHINING - CUSTOMER END') {
+            next_department_user_result = await trx.query(
+                `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'User' AND is_active = 1`,
+            );
+        } else if (trial_type == 'INHOUSE MACHINING(NPD)') {
+            next_department_user_result = await trx.query(
+                `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
+                { next_department_id }
+            );
+        } else if (trial_type == 'INHOUSE MACHINING(REGULAR)') {
+            next_department_user_result = await trx.query(
+                `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
+                { next_department_id }
+            );
+        }
     } else {
         next_department_user_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = @next_department_id AND role = 'User' AND is_active = 1`,
@@ -129,7 +131,7 @@ export const updateDepartment = async (trial_id, user, trx) => {
     const trial_type = currentDepartment[0].trial_type;
 
     await trx.query(
-        `UPDATE department_progress SET completed_at = @completed_at, approval_status = @approval_status, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id`,
+        `UPDATE department_progress SET completed_at = @completed_at, approval_status = @approval_status, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id AND approval_status = 'pending'`,
         { department_id: current_department_id, trial_id, completed_at: new Date(), approval_status: 'approved', remarks: `Approved by HOD` }
     );
 
@@ -177,20 +179,22 @@ export const updateRole = async (trial_id, user, trx) => {
     const trial_type = currentDepartment[0].trial_type;
 
     let current_department_hod_result;
-    if (current_department_id == 8 && trial_type == 'MACHINING - CUSTOMER END') {
-        current_department_hod_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'HOD' AND is_active = 1`,
-        );
-    } else if (current_department_id == 8 && trial_type == 'INHOUSE MACHINING(NPD)') {
-        current_department_hod_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
-            { current_department_id }
-        );
-    } else if (current_department_id == 8 && trial_type == 'INHOUSE MACHINING(REGULAR)') {
-        current_department_hod_result = await trx.query(
-            `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
-            { current_department_id }
-        );
+    if(current_department_id == 8) {
+        if (trial_type == 'MACHINING - CUSTOMER END') {
+            current_department_hod_result = await trx.query(
+                `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'HOD' AND is_active = 1`,
+            );
+        } else if (trial_type == 'INHOUSE MACHINING(NPD)') {
+            current_department_hod_result = await trx.query(
+                `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'NPD'`,
+                { current_department_id }
+            );
+        } else if (trial_type == 'INHOUSE MACHINING(REGULAR)') {
+            current_department_hod_result = await trx.query(
+                `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1 AND machine_shop_user_type = 'REGULAR'`,
+                { current_department_id }
+            );
+        }
     } else {
         current_department_hod_result = await trx.query(
             `SELECT TOP 1 * FROM users WHERE department_id = @current_department_id AND role = 'HOD' AND is_active = 1`,
@@ -203,7 +207,7 @@ export const updateRole = async (trial_id, user, trx) => {
     if (current_department_hod && current_department_hod.length > 0) {
         const current_department_hod_username = current_department_hod[0].username;
         await trx.query(
-            `UPDATE department_progress SET username = @current_department_hod_username, remarks = 'HOD approval pending', approval_status = 'pending' WHERE department_id = @department_id AND trial_id = @trial_id`,
+            `UPDATE department_progress SET username = @current_department_hod_username, remarks = 'HOD approval pending', approval_status = 'pending' WHERE department_id = @department_id AND trial_id = @trial_id AND approval_status = 'pending'`,
             { current_department_hod_username, department_id: current_department_id, trial_id }
         );
         const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
