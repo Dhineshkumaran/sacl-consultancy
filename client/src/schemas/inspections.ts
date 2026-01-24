@@ -5,7 +5,7 @@ export const materialCorrectionSchema = z.object({
     chemical_composition: z.any().optional().nullable(),
     process_parameters: z.any().optional().nullable(),
     remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional()
+    is_edit: z.boolean().default(true)
 });
 
 export const pouringDetailsSchema = z.object({
@@ -22,7 +22,7 @@ export const pouringDetailsSchema = z.object({
     inoculation: z.any().optional().nullable(),
     other_remarks: z.any().optional().nullable(),
     remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional()
+    is_edit: z.boolean().default(true)
 });
 
 export const sandPropertiesSchema = z.object({
@@ -38,7 +38,7 @@ export const sandPropertiesSchema = z.object({
     compactability: z.union([z.number(), z.string()]).transform(v => (v === "" || v === null) ? null : Number(v)).refine(n => n === null || n > 0, "Must be greater than 0").optional().nullable(),
     permeability: z.union([z.number(), z.string()]).transform(v => (v === "" || v === null) ? null : Number(v)).refine(n => n === null || n > 0, "Must be greater than 0").optional().nullable(),
     remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional()
+    is_edit: z.boolean().default(true)
 });
 
 export const mouldCorrectionSchema = z.object({
@@ -48,7 +48,7 @@ export const mouldCorrectionSchema = z.object({
     squeeze_pressure: z.string().optional().nullable(),
     mould_hardness: z.string().optional().nullable(),
     remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional(),
+    is_edit: z.boolean().default(true),
     date: z.string().min(1, "Date is required").or(z.date())
 });
 
@@ -70,7 +70,7 @@ export const metallurgicalInspectionSchema = z.object({
     ndt_inspection: z.any().optional().nullable(),
     ndt_inspection_ok: z.boolean().optional().nullable(),
     ndt_inspection_remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional()
+    is_edit: z.boolean().default(true)
 });
 
 export const visualInspectionSchema = z.object({
@@ -78,7 +78,7 @@ export const visualInspectionSchema = z.object({
     inspections: z.any().optional().nullable(),
     visual_ok: z.boolean().or(z.string().transform(v => v === 'true')),
     remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional()
+    is_edit: z.boolean().default(true)
 });
 
 export const dimensionalInspectionSchema = z.object({
@@ -90,7 +90,7 @@ export const dimensionalInspectionSchema = z.object({
     yields: z.union([z.number(), z.string()]).transform(v => (v === "" || v === null) ? null : Number(v)).refine(n => n === null || n > 0, "Must be greater than 0").optional().nullable(),
     inspections: z.any().optional().nullable(),
     remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional()
+    is_edit: z.boolean().default(true)
 });
 
 export const machineShopSchema = z.object({
@@ -98,7 +98,7 @@ export const machineShopSchema = z.object({
     inspection_date: z.string().min(1, "Inspection Date is required").or(z.date()),
     inspections: z.any().optional().nullable(),
     remarks: z.string().optional().nullable(),
-    is_edit: z.boolean().optional()
+    is_edit: z.boolean().default(true)
 });
 
 export type MaterialCorrectionInput = z.infer<typeof materialCorrectionSchema>;
