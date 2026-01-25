@@ -87,25 +87,14 @@ export const getDashboardStats = async (req, res, next) => {
         );
         const completedCurrentMonth = completedCurrentMonthResult[0].count;
 
-        let pendingCardsResult;
-        if (userDepartmentId === 3 || userDepartmentId === 4 || userDepartmentId === 6) {
-            pendingCardsResult = await Client.query(
-                `SELECT COUNT(*) as count 
-                 FROM department_progress 
-                 WHERE department_id = @department_id 
-                 AND approval_status = 'pending'`,
-                { department_id: userDepartmentId }
-            );
-        } else {
-            pendingCardsResult = await Client.query(
-                `SELECT COUNT(*) as count 
-                 FROM department_progress 
-                 WHERE username = @username 
-                 AND approval_status = 'pending'`,
-                { username }
-            );
-        }
-        const pendingCards = pendingCardsResult[0][0]?.count || 0;
+        const [pendingCardsResult] = await Client.query(
+            `SELECT COUNT(*) as count 
+             FROM department_progress 
+             WHERE username = @username 
+             AND approval_status = 'pending'`,
+            { username }
+        );
+        const pendingCards = pendingCardsResult[0].count;
 
         stats = [
             { label: `Completed (${new Date().getFullYear() - 1})`, value: completedLastYear.toString(), color: '#6c757d', description: 'Trials completed in previous year' },

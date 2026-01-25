@@ -1,11 +1,8 @@
 import bcrypt from 'bcrypt';
 import Client from '../config/connection.js';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
 import CustomError from '../utils/customError.js';
 import logger from '../config/logger.js';
-
-dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 

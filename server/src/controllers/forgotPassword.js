@@ -1,10 +1,8 @@
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
-import transporter from '../utils/mailSender.js';
+import sendMail from '../utils/mailSender.js';
 import bcrypt from 'bcrypt';
-import dotenv from 'dotenv';
 import logger from '../config/logger.js';
-dotenv.config();
 
 const otpStore = {};
 
@@ -22,7 +20,7 @@ export const requestReset = async (req, res, next) => {
     otpStore[username] = { otp, expires: Date.now() + 10 * 60 * 1000 };
 
     try {
-        await transporter.sendMail({
+        await sendMail({
             to: email,
             subject: 'Your Password Reset OTP',
             text: `Your OTP for password reset is: ${otp}`,

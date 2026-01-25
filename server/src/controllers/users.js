@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import Client from '../config/connection.js';
 import CustomError from '../utils/customError.js';
-import transporter from '../utils/mailSender.js';
+import sendMail from '../utils/mailSender.js';
 import logger from '../config/logger.js';
 
 export const getAllUsers = async (req, res, next) => {
@@ -80,7 +80,7 @@ export const sendOtp = async (req, res, next) => {
     }
 
     try {
-        await transporter.sendMail({
+        await sendMail({
             to: email,
             subject: 'Your verification code',
             text: `Your OTP code is: ${otp}. It expires in 5 minutes.`

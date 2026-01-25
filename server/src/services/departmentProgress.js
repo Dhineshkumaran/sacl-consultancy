@@ -1,7 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import CustomError from '../utils/customError.js';
-import transporter from '../utils/mailSender.js';
+import sendMail from '../utils/mailSender.js';
 import { generateAndStoreTrialReport } from './trialReportGenerator.js';
 import { generateAndStoreConsolidatedReport } from './consolidatedReportGenerator.js';
 import { updateTrialStatus } from './trial.js';
@@ -49,7 +49,7 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
     });
 
     let next_department_user_result;
-    if(next_department_id == 8) {
+    if (next_department_id == 8) {
         if (trial_type == 'MACHINING - CUSTOMER END') {
             next_department_user_result = await trx.query(
                 `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'User' AND is_active = 1`,
@@ -117,7 +117,7 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
             cid: 'sacllogo'
         }]
     };
-    await transporter.sendMail(mailOptions);
+    await sendMail(mailOptions);
     return "Department progress added successfully";
 };
 
@@ -179,7 +179,7 @@ export const updateRole = async (trial_id, user, trx) => {
     const trial_type = currentDepartment[0].trial_type;
 
     let current_department_hod_result;
-    if(current_department_id == 8) {
+    if (current_department_id == 8) {
         if (trial_type == 'MACHINING - CUSTOMER END') {
             current_department_hod_result = await trx.query(
                 `SELECT TOP 1 * FROM users WHERE department_id = 9 AND role = 'HOD' AND is_active = 1`,
@@ -242,7 +242,7 @@ export const updateRole = async (trial_id, user, trx) => {
                 cid: 'sacllogo'
             }]
         };
-        await transporter.sendMail(mailOptions);
+        await sendMail(mailOptions);
         return "Department progress updated successfully";
     } else {
         const [rows] = await trx.query(

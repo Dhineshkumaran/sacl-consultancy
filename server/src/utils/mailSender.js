@@ -1,4 +1,5 @@
 // import nodemailer from 'nodemailer';
+// import CustomError from './customError.js';
 
 // const transporter = nodemailer.createTransport({
 //   host: process.env.SMTP_HOST,
@@ -13,7 +14,15 @@
 //   }
 // });
 
-// export default transporter;
+// const sendMail = ({ to, subject, text, html }) => {
+//   transporter.sendMail({ from: `"SACL Digital Trial Card" <${process.env.SMTP_USER}>`, to, subject, text, html }, (error, info) => {
+//     if (error) {
+//       throw new CustomError(error.message, error.statusCode || 500);
+//     }
+//   });
+// };
+
+// export default sendMail;
 
 import { Resend } from 'resend';
 import CustomError from './customError.js';
@@ -42,4 +51,4 @@ const transporter = {
   }
 };
 
-export default transporter;
+export default transporter.sendMail;
