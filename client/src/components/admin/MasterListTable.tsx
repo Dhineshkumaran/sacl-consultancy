@@ -1,4 +1,9 @@
 ﻿import React, { useState, useEffect } from 'react';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import SearchIcon from '@mui/icons-material/Search';
 import {
     Table,
     TableBody,
@@ -6,16 +11,15 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper,
     IconButton,
     Alert,
     TextField,
     Box,
-    Typography,
-    Checkbox
+    Checkbox,
+    Button,
+    Stack,
+    InputAdornment
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { masterListService } from '../../services/masterListService';
 import DeleteMasterModal from './DeleteMasterModal';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -135,100 +139,75 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
     if (error) return <Alert severity="error">{error}</Alert>;
 
     return (
-        <Paper elevation={2} sx={{ p: 2, mt: 3 }}>
+        <Box sx={{ p: 2 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
                 <Box display="flex" alignItems="center" gap={2}>
                     {selectedItems.size > 0 && (
-                        <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
-                            <button
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <Button
+                                variant="contained"
+                                color="success"
+                                size="small"
+                                startIcon={<CheckCircleIcon fontSize="small" />}
                                 onClick={() => handleBulkStatusChange(true)}
-                                style={{
-                                    padding: '6px 16px',
-                                    backgroundColor: '#28a745',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: 500,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '5px',
-                                    transition: 'background-color 0.2s'
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
-                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
+                                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
                             >
-                                âœ“ Activate ({selectedItems.size})
-                            </button>
-                            <button
+                                Activate ({selectedItems.size})
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="warning"
+                                size="small"
+                                startIcon={<CancelIcon fontSize="small" />}
                                 onClick={() => handleBulkStatusChange(false)}
-                                style={{
-                                    padding: '6px 16px',
-                                    backgroundColor: '#ffc107',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: 500,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '5px',
-                                    transition: 'background-color 0.2s'
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e0a800')}
-                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffc107')}
+                                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1, color: 'white' }}
                             >
-                                âœ• Deactivate ({selectedItems.size})
-                            </button>
-                            <button
+                                Deactivate ({selectedItems.size})
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="error"
+                                size="small"
+                                startIcon={<DeleteIcon fontSize="small" />}
                                 onClick={handleDeleteClick}
-                                style={{
-                                    padding: '6px 16px',
-                                    backgroundColor: '#dc3545',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: 500,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '5px',
-                                    transition: 'background-color 0.2s'
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#c82333')}
-                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc3545')}
+                                sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 1 }}
                             >
-                                <DeleteIcon fontSize="small" />
                                 Delete ({selectedItems.size})
-                            </button>
-                        </Box>
+                            </Button>
+                        </Stack>
                     )}
                 </Box>
                 <TextField
                     size="small"
-                    placeholder="Search..."
+                    placeholder="Search master list..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{ width: 250, bgcolor: 'white' }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon sx={{ color: '#95a5a6', fontSize: '1.2rem' }} />
+                            </InputAdornment>
+                        ),
+                    }}
                 />
             </Box>
             <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)', overflow: 'auto' }}>
                 <Table size="small" stickyHeader>
                     <TableHead>
-                        <TableRow sx={{ bgcolor: '#eee' }}>
-                            <TableCell padding="checkbox" sx={{ backgroundColor: '#eee', position: 'sticky', top: 0, zIndex: 10 }}>
+                        <TableRow>
+                            <TableCell padding="checkbox" sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>
                                 <Checkbox
                                     checked={filteredData.length > 0 && selectedItems.size === filteredData.length}
                                     indeterminate={selectedItems.size > 0 && selectedItems.size < filteredData.length}
                                     onChange={handleSelectAll}
+                                    size="small"
                                 />
                             </TableCell>
-                            <TableCell sx={{ backgroundColor: '#eee', position: 'sticky', top: 0, zIndex: 10 }}><b>Pattern Code</b></TableCell>
-                            <TableCell sx={{ backgroundColor: '#eee', position: 'sticky', top: 0, zIndex: 10 }}><b>Part Name</b></TableCell>
-                            <TableCell sx={{ backgroundColor: '#eee', position: 'sticky', top: 0, zIndex: 10 }}><b>Material Grade</b></TableCell>
-                            <TableCell align="center" sx={{ backgroundColor: '#eee', position: 'sticky', top: 0, zIndex: 10 }}><b>Status</b></TableCell>
+                            <TableCell sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>PATTERN CODE</TableCell>
+                            <TableCell sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>PART NAME</TableCell>
+                            <TableCell sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>GRADE</TableCell>
+                            <TableCell align="center" sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>STATUS</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -249,36 +228,44 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                     <TableCell>{row.part_name}</TableCell>
                                     <TableCell>{row.material_grade}</TableCell>
                                     <TableCell align="center">
-                                        <button
-                                            onClick={async (e) => {
-                                                e.stopPropagation();
-                                                try {
-                                                    const newStatus = !row.is_active;
-                                                    await masterListService.toggleStatus(row.id, newStatus);
-                                                    await fetchData(); // Refresh list
-                                                } catch (err) {
-                                                    console.error(err);
-                                                    alert('Failed to update status');
-                                                }
-                                            }}
-                                            style={{
-                                                padding: '6px 12px',
-                                                borderRadius: '20px',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                fontSize: '12px',
-                                                fontWeight: 600,
-                                                backgroundColor: (row.is_active === true || Number(row.is_active) === 1) ? '#e6f4ea' : '#fce8e6',
-                                                color: (row.is_active === true || Number(row.is_active) === 1) ? '#1e7e34' : '#c62828',
-                                                transition: 'all 0.2s',
-                                                marginRight: '8px'
-                                            }}
-                                        >
-                                            {(row.is_active === true || Number(row.is_active) === 1) ? 'Active' : 'Inactive'}
-                                        </button>
-                                        <IconButton size="small" color="primary" onClick={() => onEdit(row)}>
-                                            <EditIcon />
-                                        </IconButton>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                            <span
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    try {
+                                                        const newStatus = !row.is_active;
+                                                        await masterListService.toggleStatus(row.id, newStatus);
+                                                        await fetchData();
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '4px 12px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    backgroundColor: (row.is_active === true || Number(row.is_active) === 1) ? '#e6f4ea' : '#fce8e6',
+                                                    color: (row.is_active === true || Number(row.is_active) === 1) ? '#1e7e34' : '#c62828',
+                                                    display: 'inline-block',
+                                                    whiteSpace: 'nowrap',
+                                                    transition: 'all 0.2s',
+                                                }}
+                                            >
+                                                {(row.is_active === true || Number(row.is_active) === 1) ? 'ACTIVE' : 'INACTIVE'}
+                                            </span>
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => onEdit(row)}
+                                                sx={{
+                                                    color: '#3498db',
+                                                    '&:hover': { bgcolor: '#ebf5fb' }
+                                                }}
+                                            >
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -299,7 +286,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                 itemName={itemsToDelete?.names[0]}
                 count={itemsToDelete?.ids.length}
             />
-        </Paper>
+        </Box>
     );
 };
 

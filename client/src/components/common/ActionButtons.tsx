@@ -56,8 +56,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
                     onClick={onSave}
                     startIcon={saveIcon}
                     variant="contained"
-                    color="secondary"
                     disabled={disabled || loading}
+                    sx={{
+                        bgcolor: '#E67E22',
+                        '&:hover': { bgcolor: '#d35400' },
+                        textTransform: 'none',
+                        fontWeight: 600
+                    }}
                 >
                     {loading ? (
                         <>
@@ -77,8 +82,13 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
                     onClick={onSubmit}
                     startIcon={loading ? undefined : <SendIcon />}
                     variant="contained"
-                    color="secondary"
                     disabled={disabled || loading}
+                    sx={{
+                        bgcolor: '#E67E22',
+                        '&:hover': { bgcolor: '#d35400' },
+                        textTransform: 'none',
+                        fontWeight: 600
+                    }}
                 >
                     {loading ? (
                         <>

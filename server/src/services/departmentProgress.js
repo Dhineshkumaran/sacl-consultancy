@@ -4,7 +4,6 @@ import CustomError from '../utils/customError.js';
 import sendMail from '../utils/mailSender.js';
 import { generateAndStoreTrialReport } from './trialReportGenerator.js';
 import { generateAndStoreConsolidatedReport } from './consolidatedReportGenerator.js';
-import { updateTrialStatus } from './trial.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -271,14 +270,17 @@ export const approveProgress = async (department_id, trial_id, user, trx) => {
     );
     await generateAndStoreTrialReport(trial_id, trx);
     await generateAndStoreConsolidatedReport(trial_id, trx);
-    await updateTrialStatus(trial_id, 'CLOSED', user, trx);
+    await trx.query(
+        `UPDATE trial_cards SET status = 'CLOSED' WHERE trial_id = @trial_id`,
+        { trial_id }
+    );
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     await trx.query(audit_sql, {
         user_id: user.user_id,
         department_id: user.department_id,
         trial_id,
-        action: 'Department progress approved',
-        remarks: `Department progress for trial ${trial_id} approved by ${user.username}`
+        action: 'Department progress completed',
+        remarks: `Department progress for trial ${trial_id} completed by ${user.username} and trial is closed`
     });
-    return "Department progress approved successfully";
+    return "Department progress completed successfully";
 };

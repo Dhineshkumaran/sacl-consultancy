@@ -1,6 +1,5 @@
 import Client from '../config/connection.js';
 import { createDepartmentProgress, updateDepartment, updateRole } from '../services/departmentProgress.js';
-import { updateTrialStatus } from '../services/trial.js';
 import logger from '../config/logger.js';
 
 export const createTrial = async (req, res, next) => {

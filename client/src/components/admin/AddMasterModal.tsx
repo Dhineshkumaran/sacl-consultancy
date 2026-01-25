@@ -460,8 +460,17 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             PaperProps={{ sx: { maxHeight: '90vh' } }}
         >
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-                <Typography component="div" variant="h6" fontWeight={700}>Add to Master List</Typography>
-                <IconButton onClick={onClose} size="small">
+                <Typography component="div" variant="h6" fontWeight={700}>
+                    {initialData ? "Update Master List" : "Add to Master List"}
+                </Typography>
+                <IconButton
+                    onClick={onClose}
+                    size="small"
+                    sx={{
+                        color: '#7f8c8d',
+                        '&:hover': { color: '#2c3e50' }
+                    }}
+                >
                     <CloseIcon />
                 </IconButton>
             </DialogTitle>
@@ -805,7 +814,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 <ActionButtons
                     onSubmit={handleSubmit}
                     loading={loading}
-                    submitLabel="Add to Master List"
+                    submitLabel={initialData ? "Update Master List" : "Add to Master List"}
                     showReset={false}
                     showSave={false}
                 />
