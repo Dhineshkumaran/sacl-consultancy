@@ -253,7 +253,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                                     transition: 'all 0.2s',
                                                 }}
                                             >
-                                                {(row.is_active === true || Number(row.is_active) === 1) ? 'ACTIVE' : 'INACTIVE'}
+                                                {(row.is_active === true || Number(row.is_active) === 1) ? 'Active' : 'Inactive'}
                                             </span>
                                             <IconButton
                                                 size="small"
