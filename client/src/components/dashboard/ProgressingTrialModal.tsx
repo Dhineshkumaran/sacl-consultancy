@@ -34,8 +34,8 @@ const ProgressingTrialModal: React.FC<ProgressingTrialModalProps> = ({ isOpen, o
             <DialogTitle sx={{
                 m: 0,
                 p: 2,
-                bgcolor: '#FFF3E0',
-                color: '#E67E22',
+                bgcolor: '#424242',
+                color: '#FFFFFF',
                 fontWeight: 700,
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -45,7 +45,7 @@ const ProgressingTrialModal: React.FC<ProgressingTrialModalProps> = ({ isOpen, o
                 <IconButton
                     aria-label="close"
                     onClick={onClose}
-                    sx={{ color: '#E67E22' }}
+                    sx={{ color: '#FFFFFF' }}
                 >
                     <CloseIcon />
                 </IconButton>

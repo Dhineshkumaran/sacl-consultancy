@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
 
     useEffect(() => {
         const fetchProgressing = async () => {
-            if (user?.role === 'Admin' || user?.department_id === 4 || user?.department_id === 6 || user?.department_id === 7) {
+            if (user?.department_id === 4 || user?.department_id === 6 || user?.department_id === 7) {
                 setLoadingTrials(true);
                 try {
                     const data = await trialService.getProgressingTrials();
@@ -242,7 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
                 })}
             </List>
 
-            {(user?.role === 'Admin' || user?.department_id === 4 || user?.department_id === 6 || user?.department_id === 7) && (
+            {(user?.department_id === 4 || user?.department_id === 6 || user?.department_id === 7) && (
                 <Box sx={{
                     mt: 2,
                     px: 2,
