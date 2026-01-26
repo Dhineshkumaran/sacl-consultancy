@@ -22,8 +22,10 @@ import SecurityIcon from '@mui/icons-material/Security';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import ShieldIcon from '@mui/icons-material/Shield';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import { apiService } from '../services/commonService';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { appTheme, COLORS } from '../theme/appTheme';
 
 
@@ -143,6 +145,7 @@ const ChangePassword: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
+  const { updateUser, user } = useAuth();
 
   const passwordStrength = calculatePasswordStrength(newPassword);
   const passwordValidation = validatePassword(newPassword);
@@ -172,8 +175,15 @@ const ChangePassword: React.FC = () => {
     setLoading(true);
     try {
       await apiService.changePassword(newPassword);
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const updatedUser = { ...storedUser, needsPasswordChange: false };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      updateUser(updatedUser);
       setMessage('Password updated successfully. Redirecting...');
-      setTimeout(() => navigate('/dashboard'), 1500);
+      setTimeout(() => {
+        navigate('/dashboard');
+        window.location.reload();
+      }, 1500);
     } catch (err) {
       setError((err as Error).message || 'Failed to change password');
     } finally {
@@ -254,14 +264,10 @@ const ChangePassword: React.FC = () => {
 
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
                   <Typography
-                    variant="h4"
-                    sx={{
-                      color: COLORS.primary,
-                      mb: 1,
-                      fontWeight: 700,
-                    }}
                   >
-                    🔑 Set New Password
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                      <KeyIcon /> Set New Password
+                    </Box>
                   </Typography>
                   <Typography
                     variant="body1"
@@ -540,15 +546,16 @@ const ChangePassword: React.FC = () => {
 
 
                 <Typography
-                  variant="caption"
                   sx={{
-                    display: 'block',
-                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.5,
                     color: COLORS.textSecondary,
                     fontSize: '0.8rem',
                   }}
                 >
-                  💡 Use a strong password with uppercase, lowercase, numbers, and symbols for maximum security
+                  <LightbulbIcon sx={{ fontSize: '0.9rem', color: '#f39b03' }} /> Use a strong password with uppercase, lowercase, numbers, and symbols for maximum security
                 </Typography>
               </Paper>
             </Box>

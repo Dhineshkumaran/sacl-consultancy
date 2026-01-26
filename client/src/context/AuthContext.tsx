@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         updateUser,
         isAuthenticated: !!token,
+        needsPasswordChange: user?.needsPasswordChange || false,
         loading
       }}
     >

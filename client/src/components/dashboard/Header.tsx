@@ -3,6 +3,8 @@ import { Paper, Chip, Typography, Box } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/commonService';
 import { COLORS } from '../../theme/appTheme';
+import PersonIcon from '@mui/icons-material/Person';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 interface HeaderProps {
     departmentInfo: {
@@ -151,11 +153,11 @@ const Header: React.FC<HeaderProps> = ({
                             <img
                                 src="/assets/SACL-LOGO-01.svg"
                                 alt="Logo"
-                                style={{ 
-                                    height: '100%', 
-                                    width: '100%', 
-                                    
-                                
+                                style={{
+                                    height: '100%',
+                                    width: '100%',
+
+
                                 }}
                                 onError={(e) => {
                                     console.error('Logo failed to load:', e);
@@ -274,7 +276,7 @@ const Header: React.FC<HeaderProps> = ({
                                         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
                                         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                                     >
-                                        <span>👤</span> View Profile
+                                        <PersonIcon sx={{ fontSize: '18px', color: '#333' }} /> View Profile
                                     </div>
                                 )}
                                 <div
@@ -295,7 +297,7 @@ const Header: React.FC<HeaderProps> = ({
                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#ffebee')}
                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                                 >
-                                    <span>🚪</span> Logout
+                                    <LogoutIcon sx={{ fontSize: '18px', color: '#d32f2f' }} /> Logout
                                 </div>
                             </div>
                         )}

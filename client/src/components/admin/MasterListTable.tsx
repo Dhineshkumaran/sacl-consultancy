@@ -248,12 +248,18 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                                     cursor: 'pointer',
                                                     backgroundColor: (row.is_active === true || Number(row.is_active) === 1) ? '#e6f4ea' : '#fce8e6',
                                                     color: (row.is_active === true || Number(row.is_active) === 1) ? '#1e7e34' : '#c62828',
-                                                    display: 'inline-block',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
                                                     whiteSpace: 'nowrap',
                                                     transition: 'all 0.2s',
                                                 }}
                                             >
-                                                {(row.is_active === true || Number(row.is_active) === 1) ? 'Active' : 'Inactive'}
+                                                {(row.is_active === true || Number(row.is_active) === 1) ? (
+                                                    <><CheckCircleIcon sx={{ fontSize: '13px' }} /> Active</>
+                                                ) : (
+                                                    <><CancelIcon sx={{ fontSize: '13px' }} /> Inactive</>
+                                                )}
                                             </span>
                                             <IconButton
                                                 size="small"

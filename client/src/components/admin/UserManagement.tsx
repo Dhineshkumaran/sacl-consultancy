@@ -7,6 +7,8 @@ import EditUserModal from './EditUserModal';
 import LoadingSpinner from '../common/LoadingSpinner';
 import './UserManagement.css';
 import Swal from 'sweetalert2';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -184,12 +186,15 @@ const UserManagement: React.FC = () => {
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 500,
-              transition: 'background-color 0.2s'
+              transition: 'background-color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#218838')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#28a745')}
           >
-            âœ“ Activate
+            <CheckCircleIcon sx={{ fontSize: '18px' }} /> Activate
           </button>
           <button
             onClick={() => handleBulkStatusChange(false)}
@@ -202,12 +207,15 @@ const UserManagement: React.FC = () => {
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 500,
-              transition: 'background-color 0.2s'
+              transition: 'background-color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e0a800')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffc107')}
           >
-            âœ• Deactivate
+            <CancelIcon sx={{ fontSize: '18px' }} /> Deactivate
           </button>
           <button
             onClick={handleBulkDelete}

@@ -1,6 +1,9 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/commonService';
 import GearSpinner from '../common/GearSpinner';
+import CloseIcon from '@mui/icons-material/Close';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import './AddUserModal.css'; // Reusing CSS
 import { useAlert } from '../../hooks/useAlert';
 import type { User } from '../../types/user';
@@ -137,7 +140,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                 <div className="modal-header">
                     <h2>Edit User Profile</h2>
                     <button className="close-btn" onClick={onClose} disabled={loading}>
-                        âœ•
+                        <CloseIcon fontSize="small" />
                     </button>
                 </div>
 
@@ -236,8 +239,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                                 <span
                                     className="password-toggle"
                                     onClick={togglePasswordVisibility}
+                                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }}
                                 >
-                                    {showPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
+                                    {showPassword ? <VisibilityOff sx={{ fontSize: 20 }} /> : <Visibility sx={{ fontSize: 20 }} />}
                                 </span>
                             </div>
                         </div>
@@ -256,8 +260,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                                 <span
                                     className="password-toggle"
                                     onClick={toggleConfirmPasswordVisibility}
+                                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.7 }}
                                 >
-                                    {showConfirmPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
+                                    {showConfirmPassword ? <VisibilityOff sx={{ fontSize: 20 }} /> : <Visibility sx={{ fontSize: 20 }} />}
                                 </span>
                             </div>
                         </div>

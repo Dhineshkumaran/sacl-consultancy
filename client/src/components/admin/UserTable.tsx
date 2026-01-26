@@ -3,6 +3,8 @@ import type { User } from '../../types/user';
 import './UserTable.css';
 import { IconButton, Checkbox, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 interface UserTableProps {
   users: User[];
@@ -193,10 +195,18 @@ const UserTable: React.FC<UserTableProps> = ({
                       fontWeight: 600,
                       backgroundColor: user.is_active ? '#e6f4ea' : '#fce8e6',
                       color: user.is_active ? '#1e7e34' : '#c62828',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      margin: '0 auto'
                     }}
                   >
-                    {user.is_active ? 'Active' : 'Inactive'}
+                    {user.is_active ? (
+                      <><CheckCircleIcon sx={{ fontSize: '14px' }} /> Active</>
+                    ) : (
+                      <><CancelIcon sx={{ fontSize: '14px' }} /> Inactive</>
+                    )}
                   </button>
                 </TableCell>
                 <TableCell sx={{ textAlign: 'center' }}>

@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/commonService';
 import GearSpinner from '../common/GearSpinner';
+import CloseIcon from '@mui/icons-material/Close';
 import './AddUserModal.css';
 import { useAlert } from '../../hooks/useAlert';
 
@@ -21,15 +22,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   const [formData, setFormData] = useState({
     username: '',
     full_name: '',
-    password: 'Sacl@123',
-    confirmPassword: 'Sacl@123',
     department_id: '',
     role: 'User',
   });
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { showAlert } = useAlert();
 
   // Fetch departments on mount or when modal opens
@@ -60,19 +57,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation (email removed â€” default password used)
-    if (!formData.username || !formData.full_name || !formData.password) {
+    if (!formData.username || !formData.full_name) {
       showAlert('error', 'All required fields must be filled');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      showAlert('error', 'Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      showAlert('error', 'Password must be at least 6 characters');
       return;
     }
 
@@ -82,8 +68,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       const payload = {
         username: formData.username,
         full_name: formData.full_name,
-        // email removed as per admin flow
-        password: formData.password || 'Sacl@123',
         department_id: formData.department_id ? parseInt(formData.department_id) : null,
         role: formData.role,
       };
@@ -93,8 +77,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       setFormData({
         username: '',
         full_name: '',
-        password: 'Sacl@123',
-        confirmPassword: 'Sacl@123',
         department_id: '',
         role: 'User',
       });
@@ -110,14 +92,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -126,7 +100,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
         <div className="modal-header">
           <h2>Add User Profile</h2>
           <button className="close-btn" onClick={onClose} disabled={loading}>
-            âœ•
+            <CloseIcon fontSize="small" />
           </button>
         </div>
 
@@ -198,54 +172,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
             )}
           </div>
 
-          <div className="form-row">
-            <div className="form-group password-field">
-              <label htmlFor="password">Password</label>
-              <div className="password-input-container">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Enter password (min 6 characters)"
-                  disabled={loading}
-                  required
-                  readOnly
-                />
-                <span
-                  className="password-toggle"
-                  onClick={togglePasswordVisibility}
-                >
-                  {showPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
-                </span>
-              </div>
-            </div>
-            <div className="form-group password-field">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <div className="password-input-container">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm password"
-                  disabled={loading}
-                  required
-                  readOnly
-                />
-                <span
-                  className="password-toggle"
-                  onClick={toggleConfirmPasswordVisibility}
-                >
-                  {showConfirmPassword ? 'ðŸ‘ï¸' : 'ðŸ‘ï¸â€ðŸ—¨ï¸'}
-                </span>
-              </div>
-            </div>
+          <div className="form-info" style={{ marginBottom: '20px', padding: '12px', backgroundColor: '#fff8e1', borderRadius: '8px', border: '1px solid #ffe082' }}>
+            <p style={{ margin: 0, fontSize: '13.5px', color: '#795548', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>💡</span> The user's <strong>username</strong> will be set as their initial password.
+            </p>
           </div>
-
-
 
           <div className="form-actions">
             <button type="submit" className="btn-primary" disabled={loading}>

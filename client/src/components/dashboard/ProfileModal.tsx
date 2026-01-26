@@ -8,6 +8,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import BusinessIcon from '@mui/icons-material/Business';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import Box from '@mui/material/Box';
 
 interface ProfileModalProps {
   onClose: () => void;
@@ -424,7 +425,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
               onMouseEnter={(e) => !photoLoading && (e.currentTarget.style.backgroundColor = '#d35400')}
               onMouseLeave={(e) => !photoLoading && (e.currentTarget.style.backgroundColor = '#E67E22')}
             >
-              {photoLoading ? 'â³ Uploading...' : 'ðŸ“· Change Profile Picture'}
+              {photoLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <HourglassEmptyIcon sx={{ animation: 'spin 2s linear infinite', fontSize: '18px' }} /> Uploading...
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <PhotoCameraIcon sx={{ fontSize: '18px' }} /> Change Profile Picture
+                </Box>
+              )}
               <input
                 type="file"
                 accept="image/*"
@@ -435,6 +444,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, onPhotoUpdate }) =
                 }}
               />
             </label>
+            <style>
+              {`
+                @keyframes spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}
+            </style>
           </div>
 
           <div style={{ marginBottom: '20px' }}>

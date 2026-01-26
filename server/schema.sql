@@ -250,6 +250,7 @@ CREATE TABLE users (
     role VARCHAR(20) NOT NULL,
     machine_shop_user_type VARCHAR(50) DEFAULT 'N/A',
     is_active BIT DEFAULT 1,
+    needs_password_change BIT DEFAULT 1,
     created_at DATETIME2 NULL DEFAULT GETDATE(),
     last_login DATETIME2 NULL DEFAULT NULL,
     remarks NVARCHAR(MAX),

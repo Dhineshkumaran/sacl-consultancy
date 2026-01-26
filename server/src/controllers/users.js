@@ -16,8 +16,8 @@ export const getAllUsers = async (req, res, next) => {
 };
 
 export const createUser = async (req, res, next) => {
-    const { username, full_name, password, department_id, role } = req.body;
-    if (!username || !password || !full_name || !department_id || !role) {
+    const { username, full_name, department_id, role } = req.body;
+    if (!username || !full_name || !department_id || !role) {
         throw new CustomError('Missing required fields', 400);
     }
     const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE username = @username', { username });
@@ -26,8 +26,8 @@ export const createUser = async (req, res, next) => {
         throw new CustomError('Username already in use', 409);
     }
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
-    const hash = await bcrypt.hash(password, saltRounds);
-    const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role) VALUES (@username, @full_name, @password_hash, @department_id, @role)';
+    const hash = await bcrypt.hash(username, saltRounds);
+    const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role, needs_password_change) VALUES (@username, @full_name, @password_hash, @department_id, @role, 1)';
     await Client.query(sql, { username, full_name, password_hash: hash, department_id, role });
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
     await Client.query(audit_sql, {
@@ -140,13 +140,12 @@ export const changePassword = async (req, res, next) => {
     if (!newPassword) throw new CustomError('New password is required', 400);
     if (typeof newPassword !== 'string' || newPassword.length < 6) throw new CustomError('Password must be at least 6 characters', 400);
 
-    const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'sacl123';
-    if (newPassword === DEFAULT_PASSWORD) throw new CustomError('New password must not be the default password', 400);
+    if (newPassword === user.username) throw new CustomError('New password must not be your username', 400);
 
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
     const hash = await bcrypt.hash(newPassword, saltRounds);
 
-    await Client.query('UPDATE users SET password_hash = @password_hash WHERE user_id = @user_id', { password_hash: hash, user_id: user.user_id });
+    await Client.query('UPDATE users SET password_hash = @password_hash, needs_password_change = 0 WHERE user_id = @user_id', { password_hash: hash, user_id: user.user_id });
 
     logger.info('Password updated', { userId: user.user_id });
     return res.json({ success: true, message: 'Password updated' });
@@ -254,36 +253,46 @@ export const adminUpdateUser = async (req, res, next) => {
         }
     }
 
-    let sql = 'UPDATE users SET ';
-    const params = { userId };
-    const updates = [];
-
-    if (username) { updates.push('username = @username'); params.username = username; }
-    if (full_name) { updates.push('full_name = @full_name'); params.full_name = full_name; }
-    if (email !== undefined) { updates.push('email = @email'); params.email = email; }
-    if (department_id) { updates.push('department_id = @department_id'); params.department_id = department_id; }
-    if (role) { updates.push('role = @role'); params.role = role; }
+    let passwordHash = null;
+    let needsChange = null;
     if (password) {
         const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
-        const hash = await bcrypt.hash(password, saltRounds);
-        updates.push('password_hash = @password_hash');
-        params.password_hash = hash;
+        passwordHash = await bcrypt.hash(password, saltRounds);
+        needsChange = 1;
     }
 
-    if (updates.length > 0) {
-        sql += updates.join(', ') + ' WHERE user_id = @userId';
-        await Client.query(sql, params);
+    const sql = `
+        UPDATE users 
+        SET username = COALESCE(@username, username),
+            full_name = COALESCE(@full_name, full_name),
+            email = COALESCE(@email, email),
+            department_id = COALESCE(@department_id, department_id),
+            role = COALESCE(@role, role),
+            password_hash = COALESCE(@password_hash, password_hash),
+            needs_password_change = COALESCE(@needs_password_change, needs_password_change)
+        WHERE user_id = @userId
+    `;
 
-        const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@admin_id, @admin_dept, @action, @remarks)';
-        await Client.query(audit_sql, {
-            admin_id: req.user.user_id,
-            admin_dept: req.user.department_id,
-            action: 'Admin Update User',
-            remarks: `Admin ${req.user.username} updated user ${username || existingUser[0].username} (ID: ${userId})`
-        });
+    await Client.query(sql, {
+        userId,
+        username: username || null,
+        full_name: full_name || null,
+        email: email === undefined ? null : email,
+        department_id: department_id || null,
+        role: role || null,
+        password_hash: passwordHash,
+        needs_password_change: needsChange
+    });
 
-        logger.info('Admin updated user', { adminId: req.user.user_id, targetUserId: userId });
-    }
+    const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@admin_id, @admin_dept, @action, @remarks)';
+    await Client.query(audit_sql, {
+        admin_id: req.user.user_id,
+        admin_dept: req.user.department_id,
+        action: 'Admin Update User',
+        remarks: `Admin ${req.user.username} updated user ${username || existingUser[0].username}`
+    });
+
+    logger.info('Admin updated user', { adminId: req.user.user_id, targetUserId: userId });
 
     res.json({ success: true, message: 'User updated successfully' });
 };

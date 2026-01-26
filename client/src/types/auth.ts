@@ -12,5 +12,6 @@ export interface AuthContextType {
   logout: () => void;
   updateUser: (user: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
   isAuthenticated: boolean;
+  needsPasswordChange: boolean;
   loading: boolean;
 }

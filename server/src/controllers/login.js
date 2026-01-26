@@ -61,8 +61,7 @@ export const login = async (req, res, next) => {
         const refreshToken = generateRefreshToken(user.user_id, user.username);
 
         const needsEmailVerification = !user.email;
-        const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'sacl123';
-        const needsPasswordChange = await bcrypt.compare(DEFAULT_PASSWORD, user.password_hash);
+        const needsPasswordChange = user.needs_password_change === true || user.needs_password_change === 1;
 
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
         await Client.query(audit_sql, {
@@ -85,7 +84,8 @@ export const login = async (req, res, next) => {
                 email: user.email,
                 department_id: user.department_id,
                 department: user.department,
-                role: user.role
+                role: user.role,
+                needsPasswordChange
             },
             needsEmailVerification,
             needsPasswordChange,

@@ -14,7 +14,6 @@ export interface User {
 export interface CreateUserRequest {
   username: string;
   full_name: string;
-  password: string;
   email?: string;
   department_name?: string | null;
   department_id?: number | null;

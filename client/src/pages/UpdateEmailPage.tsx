@@ -22,6 +22,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 import { apiService } from '../services/commonService';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SAKTHI_COLORS = {
   primary: '#2950bbff',
@@ -151,6 +152,7 @@ const UpdateEmail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const formBoxRef = React.useRef<HTMLDivElement>(null);
 
   const sendOtp = async () => {
@@ -188,7 +190,7 @@ const UpdateEmail: React.FC = () => {
         if (stored) {
           const parsed = JSON.parse(stored);
           parsed.email = email;
-          localStorage.setItem('user', JSON.stringify(parsed));
+          updateUser(parsed);
         }
       } catch { }
       setTimeout(() => navigate('/change-password'), 1500);
