@@ -190,6 +190,8 @@ const UpdateEmail: React.FC = () => {
         if (stored) {
           const parsed = JSON.parse(stored);
           parsed.email = email;
+          parsed.needsEmailVerification = false;
+          localStorage.setItem('user', JSON.stringify(parsed));
           updateUser(parsed);
         }
       } catch { }

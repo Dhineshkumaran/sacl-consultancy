@@ -1,8 +1,6 @@
 ﻿export interface LoginCredentials {
   username: string;
   password: string;
-  role?: string;
-  department_id?: string;
 }
 
 export interface AuthContextType {
@@ -12,6 +10,5 @@ export interface AuthContextType {
   logout: () => void;
   updateUser: (user: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
   isAuthenticated: boolean;
-  needsPasswordChange: boolean;
   loading: boolean;
 }

@@ -7,6 +7,8 @@ export interface User {
   department_name?: string;
   role: string;
   is_active?: boolean;
+  needsEmailVerification?: boolean;
+  needsPasswordChange?: boolean;
   created_at?: string;
   last_login?: string;
 }
@@ -18,6 +20,7 @@ export interface CreateUserRequest {
   department_name?: string | null;
   department_id?: number | null;
   role?: string;
+  password: string;
 }
 
 export interface LoginCredentials {
@@ -27,13 +30,6 @@ export interface LoginCredentials {
 
 export interface AuthResponse {
   token: string;
-  user: {
-    user_id: number;
-    username: string;
-    department_id: number;
-    role: string;
-  };
+  user: User;
   refreshToken?: string;
-  needsEmailVerification?: boolean;
-  needsPasswordChange?: boolean;
 }

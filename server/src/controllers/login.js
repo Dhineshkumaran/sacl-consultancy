@@ -31,7 +31,7 @@ export const login = async (req, res, next) => {
     }
 
     try {
-        const [rows] = await Client.query('SELECT TOP 1 * FROM users WHERE username = @username', { username });
+        const [rows] = await Client.query('SELECT TOP 1 users.*, departments.department_name as department FROM users LEFT JOIN departments ON users.department_id = departments.department_id WHERE username = @username', { username });
 
         if (!rows || rows.length === 0) {
             logger.warn('Login failed: Invalid credentials', { username });
@@ -39,16 +39,6 @@ export const login = async (req, res, next) => {
         }
 
         let user = rows[0];
-        const departmentQuery = `SELECT TOP 1 department_name FROM departments WHERE department_id = @department_id`;
-        if (user.department_id) {
-            const [deptRows] = await Client.query(departmentQuery, { department_id: user.department_id });
-            if (deptRows && deptRows.length > 0) {
-                user.department = deptRows[0].department_name;
-            } else {
-                logger.warn('Login failed: Invalid department', { username, department_id: user.department_id });
-                return next(new CustomError('Invalid department', 400));
-            }
-        }
 
         const match = await bcrypt.compare(password, user.password_hash);
 
@@ -60,7 +50,7 @@ export const login = async (req, res, next) => {
         const token = generateToken(user.user_id, user.username, user.department_id, user.role);
         const refreshToken = generateRefreshToken(user.user_id, user.username);
 
-        const needsEmailVerification = !user.email;
+        const needsEmailVerification = user.email_verified === false || user.email_verified === 0;
         const needsPasswordChange = user.needs_password_change === true || user.needs_password_change === 1;
 
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
@@ -85,10 +75,9 @@ export const login = async (req, res, next) => {
                 department_id: user.department_id,
                 department: user.department,
                 role: user.role,
-                needsPasswordChange
+                needsPasswordChange,
+                needsEmailVerification
             },
-            needsEmailVerification,
-            needsPasswordChange,
             expiresIn: '24h',
             message: `Login successful as ${user.role}`
         });

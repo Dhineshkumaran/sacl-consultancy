@@ -251,6 +251,7 @@ CREATE TABLE users (
     machine_shop_user_type VARCHAR(50) DEFAULT 'N/A',
     is_active BIT DEFAULT 1,
     needs_password_change BIT DEFAULT 1,
+    email_verified BIT DEFAULT 0,
     created_at DATETIME2 NULL DEFAULT GETDATE(),
     last_login DATETIME2 NULL DEFAULT NULL,
     remarks NVARCHAR(MAX),
@@ -297,12 +298,12 @@ INSERT INTO departments(department_name) VALUES
 ('NPD METHODS'), --1
 ('NPD QC'), --2
 ('SANDPLANT'), --5
-('FETTLING & VISUAL INSPECTION'), --6
+('FETTLING & VISUAL INSPECTION'), --7
 ('MOULDING'), --3
 ('PROCESS CONTROL(QC)'), --4
-('MACHINESHOP'), --7
-('METALLURGICAL INSPECTION(QC)'), --8
-('QA'); --9
+('MACHINESHOP'), --9
+('METALLURGICAL INSPECTION(QC)'), --6
+('QA'); --8
 GO
 
 CREATE TABLE audit_log (
@@ -398,12 +399,12 @@ INSERT INTO department_flow(department_id, sequence_no) VALUES
 (2, 1),
 (3, 2),
 (4, 5),
-(5, 6),
+(5, 7),
 (6, 3),
 (7, 4),
-(8, 7),
-(9, 8),
-(10, 9);
+(8, 9),
+(9, 6),
+(10, 8);
 GO
 
 -------------------------------MIGRATIONS----------------------------------

@@ -27,7 +27,7 @@ export const createUser = async (req, res, next) => {
     }
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
     const hash = await bcrypt.hash(username, saltRounds);
-    const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role, needs_password_change) VALUES (@username, @full_name, @password_hash, @department_id, @role, 1)';
+    const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role, needs_password_change, email_verified) VALUES (@username, @full_name, @password_hash, @department_id, @role, 1, 0)';
     await Client.query(sql, { username, full_name, password_hash: hash, department_id, role });
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
     await Client.query(audit_sql, {
@@ -64,9 +64,9 @@ export const sendOtp = async (req, res, next) => {
     const user = req.user;
     if (!email) throw new CustomError('Email is required', 400);
 
-    const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE email = @email', { email });
+    const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE email = @email AND user_id != @user_id', { email, user_id: user.user_id });
     if (existing && existing.length > 0) {
-        throw new CustomError('Email already in use', 409);
+        throw new CustomError('Email already in use by another account', 409);
     }
 
     const otp = crypto.randomInt(100000, 1000000).toString();
@@ -121,7 +121,7 @@ export const verifyOtp = async (req, res, next) => {
     }
 
     try {
-        await Client.query('UPDATE users SET email = @email WHERE user_id = @user_id', { email, user_id: user.user_id });
+        await Client.query('UPDATE users SET email = @email, email_verified = 1 WHERE user_id = @user_id', { email, user_id: user.user_id });
     } catch (err) {
         await Client.query('UPDATE email_otps SET used = 1 WHERE otp_id = @otp_id', { otp_id: otpId });
         logger.error('Error updating user email', err);
@@ -261,11 +261,17 @@ export const adminUpdateUser = async (req, res, next) => {
         needsChange = 1;
     }
 
+    let emailVerified = existingUser[0].email_verified;
+    if (email !== undefined && email !== existingUser[0].email) {
+        emailVerified = 0;
+    }
+
     const sql = `
         UPDATE users 
         SET username = COALESCE(@username, username),
             full_name = COALESCE(@full_name, full_name),
             email = COALESCE(@email, email),
+            email_verified = @email_verified,
             department_id = COALESCE(@department_id, department_id),
             role = COALESCE(@role, role),
             password_hash = COALESCE(@password_hash, password_hash),
@@ -278,6 +284,7 @@ export const adminUpdateUser = async (req, res, next) => {
         username: username || null,
         full_name: full_name || null,
         email: email === undefined ? null : email,
+        email_verified: emailVerified,
         department_id: department_id || null,
         role: role || null,
         password_hash: passwordHash,

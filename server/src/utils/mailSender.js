@@ -28,8 +28,8 @@ const sendMail = async ({ to, subject, text, html }) => {
   }else{
     transporter.sendMail({ from: `"SACL Digital Trial Card" <${process.env.SMTP_USER}>`, to: to, subject, text, html }, (error, info) => {
       if (error) {
-         logger.error('Email sending unexpected error:', err.message);
-         return { success: false, error: err.message };
+         logger.error('Email sending unexpected error:', error.message);
+         return { success: false, error: error.message };
       }
     });
   }

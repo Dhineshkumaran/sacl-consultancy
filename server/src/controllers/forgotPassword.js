@@ -47,7 +47,7 @@ export const resetPassword = async (req, res, next) => {
     }
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
     const hash = await bcrypt.hash(newPassword, saltRounds);
-    await Client.query('UPDATE users SET password_hash = @hash WHERE username = @username', { hash, username });
+    await Client.query('UPDATE users SET password_hash = @hash, email_verified = 1 WHERE username = @username', { hash, username });
     delete otpStore[username];
 
     logger.info('Password reset successful', { username });

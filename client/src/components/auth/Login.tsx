@@ -38,10 +38,6 @@ const Login: React.FC = () => {
       setError('Password is required');
       return false;
     }
-    if (credentials.password.length < 4) {
-      setError('Password must be at least 4 characters');
-      return false;
-    }
     return true;
   };
 
@@ -58,11 +54,11 @@ const Login: React.FC = () => {
     try {
       const res = await login(credentials);
       if (res) {
-        if (res.needsEmailVerification) {
+        if (res.user.needsEmailVerification) {
           navigate('/update-email');
           return;
         }
-        if (res.needsPasswordChange) {
+        if (res.user.needsPasswordChange) {
           navigate('/change-password');
           return;
         }

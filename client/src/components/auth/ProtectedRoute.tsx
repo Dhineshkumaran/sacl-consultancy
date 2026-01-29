@@ -28,7 +28,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole,
     return <Navigate to="/unauthorized" replace />;
   }
 
-  if (user?.needsPasswordChange && window.location.pathname !== '/change-password') {
+  if (user?.needsEmailVerification && window.location.pathname !== '/update-email') {
+    return <Navigate to="/update-email" replace />;
+  }
+
+  if (user?.needsPasswordChange && window.location.pathname !== '/change-password' && window.location.pathname !== '/update-email') {
     return <Navigate to="/change-password" replace />;
   }
 

@@ -23,9 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     const response = await authService.login(
       credentials.username,
-      credentials.password,
-      credentials.role,
-      credentials.department_id
+      credentials.password
     );
     setUser(response.user);
     setToken(response.token);
@@ -52,7 +50,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         updateUser,
         isAuthenticated: !!token,
-        needsPasswordChange: user?.needsPasswordChange || false,
         loading
       }}
     >

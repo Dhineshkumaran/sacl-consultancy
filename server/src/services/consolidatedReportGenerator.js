@@ -158,7 +158,7 @@ export const fetchAllTrialsDataForPatternCode = async (pattern_code, trx) => {
     if (!pattern_code) return [];
 
     const [trials] = await trx.query(
-        `SELECT trial_id FROM trial_cards WHERE pattern_code = @pattern_code ORDER BY date_of_sampling ASC`,
+        `SELECT trial_id FROM trial_cards WHERE pattern_code = @pattern_code AND status = 'CLOSED' ORDER BY date_of_sampling ASC`,
         { pattern_code }
     );
 
