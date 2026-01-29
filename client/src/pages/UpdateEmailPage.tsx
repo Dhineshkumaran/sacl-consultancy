@@ -23,59 +23,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { apiService } from '../services/commonService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Header from '../components/dashboard/Header';
+import ProfileModal from '../components/dashboard/ProfileModal';
+import { getDepartmentInfo } from '../utils/dashboardUtils';
+import { appTheme, COLORS } from '../theme/appTheme';
 
-const SAKTHI_COLORS = {
-  primary: '#2950bbff',
-  secondary: '#DC2626',
-  accent: '#F59E0B',
-  background: '#F8FAFC',
-  lightBlue: '#3B82F6',
-  darkGray: '#374151',
-  lightGray: '#E5E7EB',
-  white: '#FFFFFF',
-  success: '#10B981',
-};
-
-const theme = createTheme({
-  palette: {
-    primary: { main: SAKTHI_COLORS.primary },
-    secondary: { main: SAKTHI_COLORS.secondary },
-    success: { main: SAKTHI_COLORS.success },
-    background: { default: SAKTHI_COLORS.background },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: { fontWeight: 700 },
-    body1: { fontWeight: 500 },
-  },
-  components: {
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
-          }
-        }
-      }
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
-          fontWeight: 600,
-          fontSize: '1rem',
-        },
-        contained: {
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          '&:hover': {
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          }
-        }
-      }
-    }
-  }
-});
+// Local theme removed in favor of global appTheme
 
 
 const DECORATIVE_ICONS = [
@@ -152,7 +105,10 @@ const UpdateEmail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { updateUser, user } = useAuth();
+  const [showProfile, setShowProfile] = useState(false);
+  const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
+  const departmentInfo = getDepartmentInfo(user);
   const formBoxRef = React.useRef<HTMLDivElement>(null);
 
   const sendOtp = async () => {
@@ -204,41 +160,15 @@ const UpdateEmail: React.FC = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={appTheme}>
 
       <Box sx={{ minHeight: '100vh', background: `linear-gradient(135deg, #fffbe6 0%, #fff 100%)` }}>
-        <Paper
-          sx={{
-            p: { xs: 1.5, sm: 2, md: 3 },
-            mb: { xs: 2, md: 3 },
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'center', sm: 'center' },
-            justifyContent: { xs: 'center', sm: 'space-between' },
-            gap: { xs: 1.5, sm: 2 },
-            borderTop: `4px solid #f39b03`,
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            overflow: 'hidden',
-            position: 'relative',
-            zIndex: 2,
-            background: '#fff',
-          }}
-        >
-          <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }} sx={{ flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-            <Box
-              component="img"
-              src="/assets/SACL-LOGO-01.svg"
-              alt="Sakthi Auto"
-              sx={{ height: { xs: 40, sm: 45, md: 55 }, width: 'auto', objectFit: 'contain' }}
-            />
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 700, color: '#1e293b', fontSize: { xs: '0.8rem', sm: '1rem', md: '1.25rem' }, textAlign: { xs: 'center', sm: 'left' } }}
-            >
-              Sakthi Auto Component Limited
-            </Typography>
-          </Box>
-        </Paper>
+        <Header
+          setShowProfile={setShowProfile}
+          departmentInfo={departmentInfo}
+          photoRefreshKey={headerRefreshKey}
+          showBackButton={true}
+        />
         <Box
           sx={{
             display: 'flex',
@@ -376,7 +306,7 @@ const UpdateEmail: React.FC = () => {
 
 
                 {!otpSent && (
-                  <Typography variant="caption" sx={{ display: 'block', mt: 3, textAlign: 'center', color: '#374151', fontSize: '0.85rem' }}>
+                  <Typography variant="caption" sx={{ display: 'block', mt: 3, textAlign: 'center', color: COLORS.textSecondary, fontSize: '0.85rem' }}>
                     We'll send a verification code to your email address
                   </Typography>
                 )}
@@ -385,6 +315,12 @@ const UpdateEmail: React.FC = () => {
           </Container>
         </Box>
       </Box>
+      {showProfile && (
+        <ProfileModal
+          onClose={() => setShowProfile(false)}
+          onPhotoUpdate={() => setHeaderRefreshKey(prev => prev + 1)}
+        />
+      )}
     </ThemeProvider>
   );
 };

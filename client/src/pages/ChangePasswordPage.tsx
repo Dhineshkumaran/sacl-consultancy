@@ -27,6 +27,9 @@ import { apiService } from '../services/commonService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { appTheme, COLORS } from '../theme/appTheme';
+import Header from '../components/dashboard/Header';
+import ProfileModal from '../components/dashboard/ProfileModal';
+import { getDepartmentInfo } from '../utils/dashboardUtils';
 
 
 const validatePassword = (password: string): { isValid: boolean; errors: string[] } => {
@@ -146,6 +149,9 @@ const ChangePassword: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
   const { updateUser, user } = useAuth();
+  const [showProfile, setShowProfile] = useState(false);
+  const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
+  const departmentInfo = getDepartmentInfo(user);
 
   const passwordStrength = calculatePasswordStrength(newPassword);
   const passwordValidation = validatePassword(newPassword);
@@ -201,38 +207,12 @@ const ChangePassword: React.FC = () => {
     <ThemeProvider theme={appTheme}>
 
       <Box sx={{ minHeight: '100vh', background: `linear-gradient(135deg, #fffbe6 0%, #fff 100%)` }}>
-        <Paper
-          sx={{
-            p: { xs: 1.5, sm: 2, md: 3 },
-            mb: { xs: 2, md: 3 },
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'center', sm: 'center' },
-            justifyContent: { xs: 'center', sm: 'space-between' },
-            gap: { xs: 1.5, sm: 2 },
-            borderTop: `4px solid #f39b03`,
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            overflow: 'hidden',
-            position: 'relative',
-            zIndex: 2,
-            background: '#fff',
-          }}
-        >
-          <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 2 }} sx={{ flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-            <Box
-              component="img"
-              src="/assets/SACL-LOGO-01.svg"
-              alt="Sakthi Auto"
-              sx={{ height: { xs: 40, sm: 45, md: 55 }, width: 'auto', objectFit: 'contain' }}
-            />
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 700, color: '#1e293b', fontSize: { xs: '0.8rem', sm: '1rem', md: '1.25rem' }, textAlign: { xs: 'center', sm: 'left' } }}
-            >
-              Sakthi Auto Component Limited
-            </Typography>
-          </Box>
-        </Paper>
+        <Header
+          setShowProfile={setShowProfile}
+          departmentInfo={departmentInfo}
+          photoRefreshKey={headerRefreshKey}
+          showBackButton={true}
+        />
         <Box
           sx={{
             display: 'flex',
@@ -562,6 +542,12 @@ const ChangePassword: React.FC = () => {
           </Container>
         </Box>
       </Box>
+      {showProfile && (
+        <ProfileModal
+          onClose={() => setShowProfile(false)}
+          onPhotoUpdate={() => setHeaderRefreshKey(prev => prev + 1)}
+        />
+      )}
     </ThemeProvider>
   );
 };
