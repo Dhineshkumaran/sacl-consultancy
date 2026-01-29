@@ -70,6 +70,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
         full_name: formData.full_name,
         department_id: formData.department_id ? parseInt(formData.department_id) : null,
         role: formData.role,
+        password: formData.username,
       };
 
       await apiService.createUser(payload);
