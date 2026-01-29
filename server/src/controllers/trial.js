@@ -276,9 +276,15 @@ export const permanentlyDeleteTrialReport = async (req, res, next) => {
 
 export const getProgressingTrials = async (req, res, next) => {
     const sql = `
-        SELECT t.trial_id, t.part_name, t.pattern_code, t.current_department_id 
-        FROM trial_cards t JOIN department_progress dp ON t.trial_id = dp.trial_id
-        WHERE t.status = 'IN_PROGRESS' AND dp.approval_status = 'pending' AND dp.department_id = @department_id
+        SELECT t.trial_id, t.part_name, t.pattern_code, t.current_department_id
+        FROM trial_cards t
+        WHERE t.status = 'IN_PROGRESS'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM department_progress dp
+            WHERE dp.department_id = @department_id
+            AND dp.trial_id = t.trial_id
+        );
     `;
     const [rows] = await Client.query(sql, { department_id: req.user.department_id });
     res.status(200).json({ success: true, data: rows });
