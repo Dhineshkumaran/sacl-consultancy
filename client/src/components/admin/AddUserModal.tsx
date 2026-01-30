@@ -3,7 +3,7 @@ import { apiService } from '../../services/commonService';
 import GearSpinner from '../common/GearSpinner';
 import CloseIcon from '@mui/icons-material/Close';
 import './AddUserModal.css';
-import { useAlert } from '../../hooks/useAlert';
+import Swal from 'sweetalert2';
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -27,7 +27,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
   });
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
-  const { showAlert } = useAlert();
 
   // Fetch departments on mount or when modal opens
   useEffect(() => {
@@ -42,7 +41,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
       setDepartments(departments);
     } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Failed to fetch departments:', err);
-      showAlert('error', 'Could not load departments');
+      Swal.fire({
+        title: 'Error',
+        text: 'Could not load departments',
+        icon: 'error',
+        confirmButtonColor: '#d33'
+      });
     }
   };
 
@@ -58,7 +62,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
     e.preventDefault();
 
     if (!formData.username || !formData.full_name) {
-      showAlert('error', 'All required fields must be filled');
+      Swal.fire({
+        title: 'Error',
+        text: 'All required fields must be filled',
+        icon: 'error',
+        confirmButtonColor: '#d33'
+      });
       return;
     }
 
@@ -82,12 +91,23 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
         role: 'User',
       });
 
-      await showAlert('success', 'User created successfully!');
+      Swal.fire({
+        title: 'Success',
+        text: 'User created successfully!',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
       onUserCreated?.();
       onClose();
 
     } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      showAlert('error', err.message || 'Failed to create user');
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Failed to create user',
+        icon: 'error',
+        confirmButtonColor: '#d33'
+      });
     } finally {
       setLoading(false);
     }

@@ -178,10 +178,10 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
         `SELECT pattern_code FROM trial_cards WHERE trial_id = @trial_id`,
         { trial_id }
     );
-    if (!pattern_code_result || pattern_code_result.length === 0) throw new Error("No pattern code found for trial id " + trial_id);
+    if (!pattern_code_result || pattern_code_result.length === 0) return;
     const pattern_code = pattern_code_result[0].pattern_code;
     const allTrialsData = await fetchAllTrialsDataForPatternCode(pattern_code, trx);
-    if (allTrialsData.length === 0) throw new Error("No trials found for pattern code " + pattern_code);
+    if (allTrialsData.length === 0) return;
 
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
     const chunks = [];

@@ -21,8 +21,8 @@ import {
     InputAdornment
 } from '@mui/material';
 import { masterListService } from '../../services/masterListService';
-import DeleteMasterModal from './DeleteMasterModal';
 import LoadingSpinner from '../common/LoadingSpinner';
+import Swal from 'sweetalert2';
 
 interface MasterListTableProps {
     onEdit: (data: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -34,11 +34,8 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Selection and Delete state
+    // Selection state
     const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [deleteLoading, setDeleteLoading] = useState(false);
-    const [itemsToDelete, setItemsToDelete] = useState<{ ids: number[], names: string[] } | null>(null);
 
     const fetchData = async () => {
         try {
@@ -87,40 +84,40 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
     };
 
     // Delete Handlers
-    const handleDeleteClick = () => {
+    const handleDeleteClick = async () => {
         const selectedIds = Array.from(selectedItems);
-        const selectedNames = data
-            .filter(item => selectedIds.includes(item.id))
-            .map(item => item.pattern_code);
+        if (selectedIds.length === 0) return;
 
-        setItemsToDelete({
-            ids: selectedIds,
-            names: selectedNames
+        const result = await Swal.fire({
+            title: 'Delete Selected Items?',
+            text: `You are about to delete ${selectedIds.length} item(s) from the master list. This action cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete all!'
         });
-        setShowDeleteModal(true);
-    };
 
-    const confirmDelete = async () => {
-        if (!itemsToDelete) return;
-
-        try {
-            setDeleteLoading(true);
-            await masterListService.deleteMasterLists(itemsToDelete.ids);
-
-            // Refresh data and clear selection
-            await fetchData();
-            setSelectedItems(new Set());
-            setShowDeleteModal(false);
-            setItemsToDelete(null);
-        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-            setError(err.message || 'Failed to delete items');
-            setShowDeleteModal(false);
-        } finally {
-            setDeleteLoading(false);
+        if (result.isConfirmed) {
+            try {
+                setLoading(true);
+                const response = await masterListService.deleteMasterLists(selectedIds);
+                if (response.success) {
+                    Swal.fire('Deleted!', `${selectedIds.length} item(s) have been deleted.`, 'success');
+                    await fetchData();
+                    setSelectedItems(new Set());
+                } else {
+                    Swal.fire('Failed!', response.message || 'Failed to delete items.', 'error');
+                }
+            } catch (error: any) {
+                console.error("Error during bulk delete:", error);
+                Swal.fire('Error!', error.message || 'An error occurred during bulk deletion.', 'error');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
-    // Bulk Status Handlers
     const handleBulkStatusChange = async (status: boolean) => {
         try {
             const selectedIds = Array.from(selectedItems);
@@ -130,8 +127,20 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
             // Refresh data and clear selection
             await fetchData();
             setSelectedItems(new Set());
+            Swal.fire({
+                title: 'Success',
+                text: `Successfully ${status ? 'activated' : 'deactivated'} ${selectedIds.length} items.`,
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-            setError(err.message || `Failed to update status`);
+            Swal.fire({
+                title: 'Error',
+                text: err.message || `Failed to update status`,
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         }
     };
 
@@ -236,8 +245,20 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                                         const newStatus = !row.is_active;
                                                         await masterListService.toggleStatus(row.id, newStatus);
                                                         await fetchData();
-                                                    } catch (err) {
-                                                        console.error(err);
+                                                        Swal.fire({
+                                                            title: 'Success',
+                                                            text: `Successfully ${newStatus ? 'activated' : 'deactivated'} item.`,
+                                                            icon: 'success',
+                                                            timer: 2000,
+                                                            showConfirmButton: false
+                                                        });
+                                                    } catch (err: any) {
+                                                        Swal.fire({
+                                                            title: 'Error',
+                                                            text: err.message || `Failed to update status`,
+                                                            icon: 'error',
+                                                            confirmButtonColor: '#d33'
+                                                        });
                                                     }
                                                 }}
                                                 style={{
@@ -284,14 +305,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                 </Table>
             </TableContainer>
 
-            <DeleteMasterModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={confirmDelete}
-                loading={deleteLoading}
-                itemName={itemsToDelete?.names[0]}
-                count={itemsToDelete?.ids.length}
-            />
+            {/* Modal removed as it is replaced by SweetAlert2 */}
         </Box>
     );
 };

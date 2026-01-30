@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
         {
             id: 'recycle-bin',
             label: 'Recycle Bin',
-            subLabel: 'Recover deleted reports',
+            subLabel: 'Recover deleted cards & reports',
             icon: <DeleteSweepIcon />,
             view: 'recycle-bin' as const,
             show: user?.role === 'Admin'

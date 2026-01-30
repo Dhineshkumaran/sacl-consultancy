@@ -15,14 +15,16 @@ import {
     InputAdornment,
     IconButton,
     Tooltip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    FormControl,
     Select,
     MenuItem,
-    InputLabel
+    InputLabel,
+    Checkbox,
+    FormControl,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle
 } from '@mui/material';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import DocumentViewer from '../components/common/DocumentViewer';
@@ -60,6 +62,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [showProfile, setShowProfile] = useState(false);
     const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const departmentInfo = getDepartmentInfo(user);
 
 
@@ -95,15 +98,15 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
         })
         .sort((a, b) => new Date(b.date_of_sampling).getTime() - new Date(a.date_of_sampling).getTime());
 
-    const handleDelete = async (trialId: string) => {
+    const handleDeleteReport = async (trialId: string) => {
         const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: `You are about to delete trial ${trialId} report. This action cannot be undone!`,
+            title: 'Delete Report?',
+            text: `You are about to delete the generated report for trial ${trialId}. The trial card itself will remain.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!'
+            confirmButtonText: 'Yes, delete report!'
         });
 
         if (result.isConfirmed) {
@@ -111,32 +114,102 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                 setLoading(true);
                 const response = await trialService.deleteTrialReport(trialId);
                 if (response.success) {
-                    Swal.fire(
-                        'Deleted!',
-                        'Trial report has been deleted.',
-                        'success'
-                    );
-                    // Refresh trials
+                    Swal.fire('Deleted!', 'Trial report has been deleted.', 'success');
                     const data = await trialService.getAllTrialReports();
                     setTrials(data);
                 } else {
-                    Swal.fire(
-                        'Failed!',
-                        response.message || 'Failed to delete trial.',
-                        'error'
-                    );
+                    Swal.fire('Failed!', response.message || 'Failed to delete report.', 'error');
                 }
             } catch (error) {
-                console.error("Error deleting trial:", error);
-                Swal.fire(
-                    'Error!',
-                    'An error occurred while deleting trial.',
-                    'error'
-                );
+                console.error("Error deleting report:", error);
+                Swal.fire('Error!', 'An error occurred while deleting report.', 'error');
             } finally {
                 setLoading(false);
             }
         }
+    };
+
+    const handleDeleteTrial = async (trialId: string) => {
+        const result = await Swal.fire({
+            title: 'Delete Trial Card?',
+            text: `You are about to delete trial ${trialId}. This will hide the trial and its reports from all active lists.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete trial!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setLoading(true);
+                const response = await trialService.deleteTrialCard(trialId);
+                if (response.success) {
+                    Swal.fire('Deleted!', 'Trial card has been deleted.', 'success');
+                    const data = await trialService.getAllTrialReports();
+                    setTrials(data);
+                    setSelectedIds(prev => prev.filter(id => id !== trialId));
+                } else {
+                    Swal.fire('Failed!', response.message || 'Failed to delete trial.', 'error');
+                }
+            } catch (error) {
+                console.error("Error deleting trial:", error);
+                Swal.fire('Error!', 'An error occurred while deleting trial.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+
+        const result = await Swal.fire({
+            title: 'Delete Selected Trials?',
+            text: `You are about to delete ${selectedIds.length} trial(s). This action will move them to the recycle bin.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete all!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setLoading(true);
+                const response = await trialService.bulkDeleteTrialCards(selectedIds);
+
+                if (response.success) {
+                    Swal.fire('Deleted!', `${selectedIds.length} trial(s) have been deleted.`, 'success');
+                    const data = await trialService.getAllTrialReports();
+                    setTrials(data);
+                    setSelectedIds([]);
+                } else {
+                    Swal.fire('Failed!', response.message || 'Failed to delete trials.', 'error');
+                }
+            } catch (error) {
+                console.error("Error during bulk delete:", error);
+                Swal.fire('Error!', 'An error occurred during bulk deletion.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    const handleToggleSelectAll = () => {
+        if (selectedIds.length === filteredTrials.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(filteredTrials.map(t => t.trial_id));
+        }
+    };
+
+    const handleToggleSelect = (trialId: string) => {
+        setSelectedIds(prev =>
+            prev.includes(trialId)
+                ? prev.filter(id => id !== trialId)
+                : [...prev, trialId]
+        );
     };
 
     const [viewReport, setViewReport] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -256,6 +329,17 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                         ),
                                     }}
                                 />
+                                {user?.role === 'Admin' && selectedIds.length > 0 && (
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        startIcon={<DeleteIcon />}
+                                        onClick={handleBulkDelete}
+                                        sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+                                    >
+                                        Delete Selected ({selectedIds.length})
+                                    </Button>
+                                )}
                             </Box>
                         </Box>
 
@@ -283,6 +367,16 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                     >
                                         <TableHead>
                                             <TableRow>
+                                                {user?.role === 'Admin' && (
+                                                    <TableCell padding="checkbox">
+                                                        <Checkbox
+                                                            indeterminate={selectedIds.length > 0 && selectedIds.length < filteredTrials.length}
+                                                            checked={filteredTrials.length > 0 && selectedIds.length === filteredTrials.length}
+                                                            onChange={handleToggleSelectAll}
+                                                            size="small"
+                                                        />
+                                                    </TableCell>
+                                                )}
                                                 {user?.role === 'Admin' && <TableCell />}
 
                                                 <TableCell sx={{
@@ -334,7 +428,17 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                     <React.Fragment key={trial.trial_id}>
                                                         <TableRow
                                                             hover
+                                                            selected={selectedIds.includes(trial.trial_id)}
                                                         >
+                                                            {user?.role === 'Admin' && (
+                                                                <TableCell padding="checkbox">
+                                                                    <Checkbox
+                                                                        checked={selectedIds.includes(trial.trial_id)}
+                                                                        onChange={() => handleToggleSelect(trial.trial_id)}
+                                                                        size="small"
+                                                                    />
+                                                                </TableCell>
+                                                            )}
                                                             {user?.role === 'Admin' && (
                                                                 <TableCell>
                                                                     <IconButton
@@ -410,14 +514,13 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                                     </Button>
                                                                 ) : "Report not available"}
                                                                 {user.role === 'Admin' && trial.file_base64 && (
-                                                                    <Tooltip title="Delete Trial Report">
+                                                                    <Tooltip title="Delete Trial Report Only">
                                                                         <IconButton
                                                                             size="small"
-                                                                            color="error"
-                                                                            onClick={() => handleDelete(trial.trial_id)}
-                                                                            sx={{ ml: 1 }}
+                                                                            color="warning"
+                                                                            onClick={() => handleDeleteReport(trial.trial_id)}
                                                                         >
-                                                                            <DeleteIcon fontSize="small" />
+                                                                            <DescriptionIcon fontSize="small" />
                                                                         </IconButton>
                                                                     </Tooltip>
                                                                 )}
@@ -425,7 +528,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                         </TableRow>
 
                                                         <TableRow>
-                                                            <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={user?.role === 'Admin' ? 9 : 8}>
+                                                            <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={user?.role === 'Admin' ? 10 : 8}>
                                                                 <Collapse in={expandedTrialId === trial.trial_id} timeout="auto" unmountOnExit>
                                                                     <Box sx={{ margin: 2, bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
                                                                         <Typography variant="h6" gutterBottom component="div" sx={{ fontSize: '1rem', fontWeight: 'bold', mb: 2 }}>

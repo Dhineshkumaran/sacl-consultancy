@@ -5,7 +5,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import './AddUserModal.css'; // Reusing CSS
-import { useAlert } from '../../hooks/useAlert';
+import Swal from 'sweetalert2';
 import type { User } from '../../types/user';
 
 interface EditUserModalProps {
@@ -36,7 +36,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const { showAlert } = useAlert();
 
     useEffect(() => {
         if (isOpen) {
@@ -64,7 +63,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
             setDepartments(departments);
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error('Failed to fetch departments:', err);
-            showAlert('error', 'Could not load departments');
+            Swal.fire({
+                title: 'Error',
+                text: 'Could not load departments',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         }
     };
 
@@ -81,17 +85,32 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
         if (!user) return;
 
         if (!formData.username || !formData.full_name) {
-            showAlert('error', 'Username and Full Name are required');
+            Swal.fire({
+                title: 'Error',
+                text: 'Username and Full Name are required',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
             return;
         }
 
         if (formData.password) {
             if (formData.password !== formData.confirmPassword) {
-                showAlert('error', 'Passwords do not match');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Passwords do not match',
+                    icon: 'error',
+                    confirmButtonColor: '#d33'
+                });
                 return;
             }
             if (formData.password.length < 6) {
-                showAlert('error', 'Password must be at least 6 characters');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Password must be at least 6 characters',
+                    icon: 'error',
+                    confirmButtonColor: '#d33'
+                });
                 return;
             }
         }
@@ -113,12 +132,23 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
 
             await apiService.adminUpdateUser(user.user_id, payload);
 
-            await showAlert('success', 'User updated successfully!');
+            Swal.fire({
+                title: 'Success',
+                text: 'User updated successfully!',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
             onUserUpdated?.();
             onClose();
 
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-            showAlert('error', err.message || 'Failed to update user');
+            Swal.fire({
+                title: 'Error',
+                text: err.message || 'Failed to update user',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         } finally {
             setLoading(false);
         }

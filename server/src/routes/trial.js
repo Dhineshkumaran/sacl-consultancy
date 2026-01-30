@@ -18,9 +18,15 @@ router.get('/recent-trial-reports', verifyToken, asyncErrorHandler(trialControll
 router.get('/progressing', verifyToken, asyncErrorHandler(trialController.getProgressingTrials));
 router.get('/consolidated-reports', verifyToken, asyncErrorHandler(trialController.getConsolidatedReports));
 router.put('/update', verifyToken, authorizeDepartments(1, 2), authorizeRoles('Admin', 'HOD'), validate(updateTrialCardSchema), asyncErrorHandler(trialController.updateTrial));
+
 router.delete('/delete-reports', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.deleteTrialReports));
 router.get('/deleted-reports', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.getDeletedTrialReports));
 router.post('/restore-report', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.restoreTrialReport));
 router.delete('/permanent-delete-report', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.permanentlyDeleteTrialReport));
+
+router.delete('/delete-trial', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.deleteTrialCard));
+router.get('/deleted-trials', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.getDeletedTrialCards));
+router.post('/restore-trial', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.restoreTrialCard));
+router.delete('/permanent-delete-trial', verifyToken, authorizeRoles('Admin'), asyncErrorHandler(trialController.permanentlyDeleteTrialCard));
 
 export default router;

@@ -172,6 +172,7 @@ export default function McShopInspection({
                   updateRowVals('inspected', getVals('Inspected Quantity'));
                   updateRowVals('accepted', getVals('Accepted Quantity'));
                   updateRowVals('rejected', getVals('Rejected Quantity'));
+                  updateRowVals('rejection percentage', getVals('Rejection Percentage (%)'));
                   updateRowVals('reason', getVals('Reason for rejection'));
 
                   return newRows;
@@ -348,7 +349,8 @@ export default function McShopInspection({
         const inspectedRow = rows[2];
         const acceptedRow = rows[3];
         const rejectedRow = rows[4];
-        const reasonRow = rows[5];
+        const percentageRow = rows[5];
+        const reasonRow = rows[6];
 
         const inspections: any[] = cavities.map((cav, idx) => {
           return {
@@ -357,6 +359,7 @@ export default function McShopInspection({
             'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
             'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
             'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
+            'Rejection Percentage (%)': percentageRow?.values?.[idx] ?? null,
             'Reason for rejection': reasonRow?.values?.[idx] ?? null,
           };
         });
@@ -400,7 +403,8 @@ export default function McShopInspection({
       const inspectedRow = rows[2];
       const acceptedRow = rows[3];
       const rejectedRow = rows[4];
-      const reasonRow = rows[5];
+      const percentageRow = rows[5];
+      const reasonRow = rows[6];
 
       const inspections: any[] = cavities.map((cav, idx) => {
         return {
@@ -409,6 +413,7 @@ export default function McShopInspection({
           'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
           'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
           'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
+          'Rejection Percentage (%)': percentageRow?.values?.[idx] ?? null,
           'Reason for rejection': reasonRow?.values?.[idx] ?? null,
         };
       });

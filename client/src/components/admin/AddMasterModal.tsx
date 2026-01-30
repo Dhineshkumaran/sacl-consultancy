@@ -17,16 +17,15 @@ import {
     Paper,
     Collapse,
     IconButton,
-    Alert,
     Button
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CloseIcon from '@mui/icons-material/Close';
 import { masterListService } from '../../services/masterListService';
-import { useAlert } from '../../hooks/useAlert';
 import FileUploadSection from '../common/FileUploadSection';
 import ActionButtons from '../common/ActionButtons';
+import Swal from 'sweetalert2';
 
 interface AddMasterModalProps {
     isOpen: boolean;
@@ -36,7 +35,6 @@ interface AddMasterModalProps {
 }
 
 const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initialData, onSuccess }) => {
-    const { alert, showAlert } = useAlert();
     const [formData, setFormData] = useState<any>({ // eslint-disable-line @typescript-eslint/no-explicit-any
         pattern_code: '',
         part_name: '',
@@ -350,14 +348,24 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 throw new Error(errorMessage);
             }
 
-            await showAlert('success', initialData ? 'Master list updated successfully!' : 'Successfully added to master list!');
+            Swal.fire({
+                title: 'Success',
+                text: initialData ? 'Master list updated successfully!' : 'Successfully added to master list!',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
             onClose();
             resetForm();
             if (onSuccess) onSuccess();
 
         } catch (err) {
-            console.error('Error submitting form:', err);
-            showAlert('error', err instanceof Error ? err.message : 'An error occurred while submitting the form');
+            Swal.fire({
+                title: 'Error',
+                text: err instanceof Error ? err.message : 'An error occurred while submitting the form',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         } finally {
             setLoading(false);
         }
@@ -476,11 +484,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
             </DialogTitle>
 
             <DialogContent dividers>
-                {alert && (
-                    <Alert severity={alert.severity} sx={{ mb: 2 }}>
-                        {alert.message}
-                    </Alert>
-                )}
 
                 <Box component="form" noValidate>
                     <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ mt: 1 }}>
@@ -694,7 +697,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                             accept=".pdf,image/*"
                             multiple
                             label="Choose Files"
-                            showAlert={showAlert}
                         />
                     </Box>
 

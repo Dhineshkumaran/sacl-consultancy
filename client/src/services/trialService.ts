@@ -252,4 +252,86 @@ export const trialService = {
             throw error;
         }
     },
+
+    /**
+     * Soft deletes a trial card
+     * @param trialId - Trial ID to delete
+     * @returns Promise resolving to API response
+     */
+    async deleteTrialCard(trialId: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            return await apiService.request('/trial/delete-trial', {
+                method: 'DELETE',
+                body: JSON.stringify({ trial_id: trialId })
+            });
+        } catch (error) {
+            console.error('Failed to delete trial card:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Bulk soft deletes trial cards
+     * @param trialIds - Array of trial IDs to delete
+     * @returns Promise resolving to API response
+     */
+    async bulkDeleteTrialCards(trialIds: string[]): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            return await apiService.request('/trial/delete-trial', {
+                method: 'DELETE',
+                body: JSON.stringify({ trial_id: trialIds })
+            });
+        } catch (error) {
+            console.error('Failed to bulk delete trial cards:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Fetches all soft-deleted trial cards
+     * @returns Promise resolving to array of deleted trial cards
+     */
+    async getDeletedTrialCards(): Promise<any[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            const data = await apiService.request('/trial/deleted-trials');
+            return data.data || [];
+        } catch (error) {
+            console.error('Failed to fetch deleted trial cards:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Restores a soft-deleted trial card
+     * @param trialId - Trial ID to restore
+     * @returns Promise resolving to API response
+     */
+    async restoreTrialCard(trialId: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            return await apiService.request('/trial/restore-trial', {
+                method: 'POST',
+                body: JSON.stringify({ trial_id: trialId })
+            });
+        } catch (error) {
+            console.error('Failed to restore trial card:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Permanently deletes a trial card
+     * @param trialId - Trial ID to permanently delete
+     * @returns Promise resolving to API response
+     */
+    async permanentlyDeleteTrialCard(trialId: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            return await apiService.request('/trial/permanent-delete-trial', {
+                method: 'DELETE',
+                body: JSON.stringify({ trial_id: trialId })
+            });
+        } catch (error) {
+            console.error('Failed to permanently delete trial card:', error);
+            throw error;
+        }
+    },
 };

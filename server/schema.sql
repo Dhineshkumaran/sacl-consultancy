@@ -85,6 +85,8 @@ CREATE TABLE trial_cards (
     disa VARCHAR(50),
     sample_traceability VARCHAR(50),
     mould_correction NVARCHAR(MAX),
+    deleted_at DATETIME2,
+    deleted_by VARCHAR(50),
     CONSTRAINT chk_trial_status CHECK (status IN ('CREATED', 'IN_PROGRESS', 'CLOSED')),
     CONSTRAINT chk_trial_type CHECK (trial_type IN ('INHOUSE MACHINING(NPD)', 'INHOUSE MACHINING(REGULAR)', 'MACHINING - CUSTOMER END')),
     FOREIGN KEY (current_department_id) REFERENCES departments(department_id),

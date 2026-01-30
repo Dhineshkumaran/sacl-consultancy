@@ -7,6 +7,7 @@ import MasterListTable from '../components/admin/MasterListTable';
 import RecentTrialsTable from '../components/admin/RecentTrialsTable';
 import ConsolidatedReportsTable from '../components/admin/ConsolidatedReportsTable';
 import RecycleBinTable from '../components/admin/RecycleBinTable';
+import DeletedTrialsTable from '../components/admin/DeletedTrialsTable';
 import AllTrialsPage from './AllTrialsPage';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/dashboard/Header';
@@ -262,13 +263,24 @@ const Dashboard: React.FC = () => {
           )}
 
           {user?.role === 'Admin' && currentView === 'recycle-bin' && (
-            <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
-              <Box sx={{ px: 3, py: 2, borderBottom: '1px solid #f0f0f0', bgcolor: '#fafafa' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333' }}>
-                  Deleted Trial Reports
-                </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+                <Box sx={{ px: 3, py: 2, borderBottom: '1px solid #f0f0f0', bgcolor: '#fafafa' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333' }}>
+                    Deleted Trial Cards
+                  </Typography>
+                </Box>
+                <DeletedTrialsTable />
               </Box>
-              <RecycleBinTable />
+
+              <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+                <Box sx={{ px: 3, py: 2, borderBottom: '1px solid #f0f0f0', bgcolor: '#fafafa' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333' }}>
+                    Deleted Trial Reports
+                  </Typography>
+                </Box>
+                <RecycleBinTable />
+              </Box>
             </Box>
           )}
 

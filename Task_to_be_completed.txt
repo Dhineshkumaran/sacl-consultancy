@@ -1,10 +1,6 @@
 *Tasks to be completed:-*
 
-->Use comments consistently or remove if unnecessary through out the project
-
 ->Remove boiler plate codes
-
-->Create a readme for the project
 
 ->Ask mandatory fields and add validation in frontend and backend
 
@@ -18,8 +14,6 @@
 
 ->fdyqa need critical dimension attachment mandatory
 
-->Remove unwanted comments in frontend except services folder
-
 ----------------------------------------------------------------------BY HR SIR-------------------------------------------------------------------------------------
 
 ->login page color code
@@ -27,19 +21,3 @@
 ->Grey orange silver - color code
 
 ->font - trebuchet (inside) futura (heading)
-
-->keep it generally master inside keep create
-view bring all those down
-
-vback to dashboard keep it static
-
-->keep delete in master list create view delete
-
-->user profile keep one
-
-->active deactive
-
-->click go inside in methods bring down
-initiate inside keep everything inside
-
-->foundry sample card remove title

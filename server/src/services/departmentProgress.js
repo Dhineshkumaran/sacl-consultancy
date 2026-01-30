@@ -268,12 +268,12 @@ export const approveProgress = async (department_id, trial_id, user, trx) => {
         `UPDATE department_progress SET approval_status = 'approved', completed_at = @completed_at, remarks = @remarks WHERE department_id = @department_id AND trial_id = @trial_id`,
         { department_id, trial_id, completed_at: new Date(), remarks: `Approved by ${user.role}` }
     );
-    await generateAndStoreTrialReport(trial_id, trx);
-    await generateAndStoreConsolidatedReport(trial_id, trx);
     await trx.query(
         `UPDATE trial_cards SET status = 'CLOSED' WHERE trial_id = @trial_id`,
         { trial_id }
     );
+    await generateAndStoreTrialReport(trial_id, trx);
+    await generateAndStoreConsolidatedReport(trial_id, trx);
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     await trx.query(audit_sql, {
         user_id: user.user_id,
