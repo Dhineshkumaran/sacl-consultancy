@@ -134,6 +134,7 @@ function SectionTable({
   isEditing: boolean;
   cavityNumbers?: string[];
 }) {
+  const isMachineShop = user?.department_id === 8;
   const [cols, setCols] = useState<MicroCol[]>(() => {
     const maxLen = Math.max(...rows.map(r => (r.value ? r.value.split('|').length : 1)), 1);
     return Array.from({ length: maxLen }, (_, i) => ({ id: `c${i + 1}`, label: '' })); // Labels lost in string storage
@@ -289,9 +290,9 @@ function SectionTable({
                       variant="standard"
                       InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
                       sx={{ input: { textAlign: 'center' } }}
-                      disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                      disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                     />
-                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>
+                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Box>
@@ -321,7 +322,7 @@ function SectionTable({
                     onChange={(e) => cavityRow && updateCell(cavityRow.id, ci, e.target.value)}
                     variant="outlined"
                     sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
-                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                    disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                   />
                 </TableCell>
               ))}
@@ -331,8 +332,8 @@ function SectionTable({
               <TableCell rowSpan={rows.length + (title === "NDT INSPECTION ANALYSIS" ? 2 : 1)} sx={{ bgcolor: COLORS.successBg, verticalAlign: "middle", textAlign: 'center', width: 140, borderBottom: 'none' }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                   <RadioGroup row sx={{ justifyContent: 'center' }} value={groupMeta.ok === null ? "" : String(groupMeta.ok)} onChange={(e) => updateGroupMeta({ ok: e.target.value === "true" })}>
-                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
-                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing} />
+                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing} />
                   </RadioGroup>
                 </Box>
               </TableCell>
@@ -349,13 +350,13 @@ function SectionTable({
                     placeholder="Enter remarks..."
                     variant="outlined"
                     sx={{ bgcolor: 'white' }}
-                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                    disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                   />
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 'auto' }}>
-                    <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`${title}-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateGroupMeta({ attachment: file }); }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                    <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`${title}-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateGroupMeta({ attachment: file }); }} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing} />
                     <label htmlFor={`${title}-group-file`}>
-                      <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>
+                      <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}>
                         Attach PDF
                       </Button>
                     </label>
@@ -372,7 +373,7 @@ function SectionTable({
                           size="small"
                           variant="outlined"
                           sx={{ maxWidth: 120 }}
-                          disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                          disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                         />
                       </Box>
                     )}
@@ -407,7 +408,7 @@ function SectionTable({
                     const rejectedValue = isRejectedQty ? (values[r.id]?.[ci] ?? "") : "";
                     const isRejectedInvalid = rejectedValue === 'Invalid';
 
-                    const isFieldDisabled = ((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) ||
+                    const isFieldDisabled = ((user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing) ||
                       (title === "NDT INSPECTION ANALYSIS" && isAcceptedOrRejected && !inspectedValue) ||
                       (title === "NDT INSPECTION ANALYSIS" && isRejectedQty);
 
@@ -447,7 +448,7 @@ function SectionTable({
                         placeholder="Enter reason for rejection..."
                         variant="outlined"
                         sx={{ "& .MuiInputBase-input": { fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
-                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                        disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                       />
                     </TableCell>
                   )}
@@ -540,7 +541,7 @@ function SectionTable({
         onClick={addColumn}
         startIcon={<AddCircleIcon />}
         sx={{ mt: 1, color: COLORS.secondary }}
-        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+        disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing}
       >
         Add Column
       </Button>
@@ -571,6 +572,7 @@ function MicrostructureTable({
   user: any;
   isEditing: boolean;
 }) {
+  const isMachineShop = user?.department_id === 8;
   const [cavityNumbers, setCavityNumbers] = useState<string[]>(['']);
 
   const addColumn = () => {
@@ -636,9 +638,9 @@ function MicrostructureTable({
                       variant="standard"
                       InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
                       sx={{ input: { textAlign: 'center' } }}
-                      disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                      disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing}
                     />
-                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>
+                    <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Box>
@@ -664,7 +666,7 @@ function MicrostructureTable({
                       onChange={(e) => updateCell(param, ci, e.target.value)}
                       variant="outlined"
                       sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
-                      disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                      disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                     />
                   </TableCell>
                 ))}
@@ -678,8 +680,8 @@ function MicrostructureTable({
                         value={meta["group"]?.ok === null ? "" : String(meta["group"]?.ok)}
                         onChange={(e) => updateMeta("group", { ok: e.target.value === "true" })}
                       >
-                        <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
-                        <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                        <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing} />
+                        <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing} />
                       </RadioGroup>
                     </TableCell>
 
@@ -695,13 +697,13 @@ function MicrostructureTable({
                           placeholder="Enter remarks..."
                           variant="outlined"
                           sx={{ bgcolor: 'white' }}
-                          disabled={user?.role === 'HOD' && !isEditing}
+                          disabled={(user?.role === 'HOD' || isMachineShop) && !isEditing}
                         />
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 'auto' }}>
-                          <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`micro-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateMeta('group', { attachment: file }); }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                          <input accept="image/*,application/pdf" style={{ display: 'none' }} id={`micro-group-file`} type="file" onChange={(e) => { const file = e.target.files?.[0] ?? null; if (file) { const validation = validateFileSizes([file]); if (!validation.isValid) { validation.errors.forEach((error: string) => { if (showAlert) showAlert('error', error); }); e.target.value = ''; return; } } updateMeta('group', { attachment: file }); }} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing} />
                           <label htmlFor={`micro-group-file`}>
-                            <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>
+                            <Button component="span" size="small" variant="outlined" startIcon={<UploadFileIcon />} sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing}>
                               Attach PDF
                             </Button>
                           </label>
@@ -718,7 +720,7 @@ function MicrostructureTable({
                                 size="small"
                                 variant="outlined"
                                 sx={{ maxWidth: 120 }}
-                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                               />
                             </Box>
                           )}
@@ -732,7 +734,7 @@ function MicrostructureTable({
           </TableBody>
         </Table>
       </Box>
-      <Button size="small" onClick={addColumn} startIcon={<AddCircleIcon />} sx={{ mt: 1, color: COLORS.secondary }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>Add Column</Button>
+      <Button size="small" onClick={addColumn} startIcon={<AddCircleIcon />} sx={{ mt: 1, color: COLORS.secondary }} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || isMachineShop) && !isEditing}>Add Column</Button>
     </Box>
   );
 }
@@ -750,10 +752,10 @@ export default function MetallurgicalInspection() {
   const [userIP, setUserIP] = useState<string>("Loading...");
   const { alert, showAlert } = useAlert();
   const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+  const isMachineShop = user?.department_id === 8;
   const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
   const [loadKey, setLoadKey] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
-  const [ndtValidationError, setNdtValidationError] = useState<string | null>(null);
 
   const [previewMode, setPreviewMode] = useState(false);
   const [previewPayload, setPreviewPayload] = useState<any | null>(null);
@@ -778,7 +780,6 @@ export default function MetallurgicalInspection() {
   const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Cavity Number", "Tensile strength", "Yield strength", "Elongation"]));
   const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity Number", "Cold Temp °C", "Room Temp °C"]));
   const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core"]));
-  const [ndtRows, setNdtRows] = useState<Row[]>(initialRows(["Cavity Number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
 
   const handleAttachFiles = (newFiles: File[]) => {
     setAttachedFiles(prev => [...prev, ...newFiles]);
@@ -799,7 +800,7 @@ export default function MetallurgicalInspection() {
   useEffect(() => {
     const checkAssignment = async () => {
       if (user && trialId) {
-        if (user.role === 'Admin') {
+        if (user.role === 'Admin' || user.department_id === 8) {
           setIsAssigned(true);
           return;
         }
@@ -820,7 +821,7 @@ export default function MetallurgicalInspection() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if ((user?.role === 'HOD' || user?.role === 'Admin') && trialId) {
+      if ((user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && trialId) {
         try {
           const response = await inspectionService.getMetallurgicalInspection(trialId);
 
@@ -888,7 +889,6 @@ export default function MetallurgicalInspection() {
             if (data.mech_properties) setMechRows(restoreSection(data.mech_properties));
             if (data.impact_strength) setImpactRows(restoreSection(data.impact_strength));
             if (data.hardness) setHardRows(restoreSection(data.hardness));
-            if (data.ndt_inspection) setNdtRows(restoreSection(data.ndt_inspection));
 
             setLoadKey(prev => prev + 1);
           }
@@ -927,41 +927,12 @@ export default function MetallurgicalInspection() {
       attachment: fileToMeta(microMeta['group']?.attachment ?? null),
     }));
 
-    const ndtMapped = mapRows(ndtRows.filter(r => !r.label.toLowerCase().includes('rejection percentage')));
-    const findByLabel = (arr: any[], key: string) => arr.find((x: any) => (x.label || '').toLowerCase().includes(key));
-    const inspectedMapped = findByLabel(ndtMapped, 'inspected');
-    const rejectedMapped = findByLabel(ndtMapped, 'rejected');
-    if (inspectedMapped && rejectedMapped) {
-      const insValues = (inspectedMapped.value || '').split(' | ').map((s: string) => s.trim());
-      const rejValues = (rejectedMapped.value || '').split(' | ').map((s: string) => s.trim());
-      const maxCols = Math.max(insValues.length, rejValues.length, 1);
-      const percents: string[] = [];
-      for (let i = 0; i < maxCols; i++) {
-        const insN = parseFloat(insValues[i] ?? '');
-        const rejN = parseFloat(rejValues[i] ?? '');
-        if (!isNaN(insN) && insN > 0 && !isNaN(rejN) && rejN <= insN) {
-          percents.push(`${((rejN / insN) * 100).toFixed(2)}%`);
-        } else {
-          percents.push(rejN > insN ? 'Invalid' : '-');
-        }
-      }
-      ndtMapped.push({
-        label: 'Rejection Percentage',
-        value: percents.join(' | '),
-        ok: null,
-        remarks: "",
-        attachment: null,
-        total: null,
-      });
-    }
-
     return {
       inspection_date: date || null,
       microRows: microRowsPayload,
       mechRows: mapRows(mechRows),
       impactRows: mapRows(impactRows),
       hardRows: mapRows(hardRows),
-      ndtRows: ndtMapped,
       status: "draft",
     };
   };
@@ -1002,17 +973,9 @@ export default function MetallurgicalInspection() {
         return hasOk ? true : null;
       };
 
-      const getNdtOk = () => {
-        const hasNotOk = payload.ndtRows?.some((r: any) => r.ok === false);
-        if (hasNotOk) return false;
-        const hasOk = payload.ndtRows?.some((r: any) => r.ok === true);
-        return hasOk ? true : null;
-      };
-
       const getMechRemarks = () => payload.mechRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
       const getImpactRemarks = () => payload.impactRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
       const getHardnessRemarks = () => payload.hardRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
-      const getNdtRemarks = () => payload.ndtRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
 
       return {
         trial_id: trialId,
@@ -1029,9 +992,6 @@ export default function MetallurgicalInspection() {
         hardness: payload.hardRows || [],
         hardness_ok: getHardnessOk(),
         hardness_remarks: getHardnessRemarks(),
-        ndt_inspection: payload.ndtRows || [],
-        ndt_inspection_ok: getNdtOk(),
-        ndt_inspection_remarks: getNdtRemarks(),
         is_edit: isEditing
       };
     };
@@ -1074,7 +1034,6 @@ export default function MetallurgicalInspection() {
       collectRowFiles(mechRows);
       collectRowFiles(impactRows);
       collectRowFiles(hardRows);
-      collectRowFiles(ndtRows);
 
       if (allFiles.length > 0) {
         try {
@@ -1389,20 +1348,6 @@ export default function MetallurgicalInspection() {
                         cavityNumbers={microValues["Cavity Number"] || []}
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <SectionTable
-                        key={`ndt-${loadKey}`}
-                        title="NDT INSPECTION ANALYSIS"
-                        rows={ndtRows}
-                        onChange={updateRow(setNdtRows)}
-                        showTotal={true}
-                        onValidationError={setNdtValidationError}
-                        showAlert={showAlert}
-                        user={user}
-                        isEditing={isEditing}
-                        cavityNumbers={microValues["Cavity Number"] || []}
-                      />
-                    </Grid>
                   </Grid>
 
                   <Box sx={{ mt: 3, p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
@@ -1417,7 +1362,7 @@ export default function MetallurgicalInspection() {
                           onFileRemove={removeAttachedFile}
                           showAlert={showAlert}
                           label="Attach PDF"
-                          disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                          disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                         />
                       </>
                     )}
@@ -1427,23 +1372,25 @@ export default function MetallurgicalInspection() {
 
                   <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
                     <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                      <ActionButtons
-                        {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: () => window.location.reload() } : {})}
-                        onSave={handleSaveAndContinue}
-                        showSubmit={false}
-                        saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                        saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
-                      >
-                        {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                          <Button
-                            variant="outlined"
-                            onClick={() => setIsEditing(!isEditing)}
-                            sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                          >
-                            {isEditing ? "Cancel Edit" : "Edit Details"}
-                          </Button>
-                        )}
-                      </ActionButtons>
+                      {!isMachineShop && (
+                        <ActionButtons
+                          {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: () => window.location.reload() } : {})}
+                          onSave={handleSaveAndContinue}
+                          showSubmit={false}
+                          saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                          saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                        >
+                          {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                            <Button
+                              variant="outlined"
+                              onClick={() => setIsEditing(!isEditing)}
+                              sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                            >
+                              {isEditing ? "Cancel Edit" : "Edit Details"}
+                            </Button>
+                          )}
+                        </ActionButtons>
+                      )}
                     </Box>
                   </Box>
 
@@ -1472,7 +1419,6 @@ export default function MetallurgicalInspection() {
                   <PreviewSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload?.mechRows} />
                   <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} />
                   <PreviewSectionTable title="HARDNESS" rows={previewPayload?.hardRows} />
-                  <PreviewSectionTable title="NDT INSPECTION ANALYSIS" rows={previewPayload?.ndtRows} />
 
                   <Box sx={{ mt: 3 }}>
                     <AlertMessage alert={alert} />

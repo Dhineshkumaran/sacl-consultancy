@@ -38,15 +38,15 @@ const AppRoutes: React.FC = () => {
             } />
 
             <Route path="/metallurgical-inspection" element={
-                <ProtectedRoute requiredDepartment={[1, 9]}><MetallurgicalInspection /></ProtectedRoute>
+                <ProtectedRoute requiredDepartment={[1, 9, 8]}><MetallurgicalInspection /></ProtectedRoute>
             } />
 
             <Route path="/material-correction" element={
-                <ProtectedRoute requiredDepartment={[1, 3]}><MaterialCorrection /></ProtectedRoute>
+                <ProtectedRoute requiredDepartment={[1, 3, 8]}><MaterialCorrection /></ProtectedRoute>
             } />
 
             <Route path="/visual-inspection" element={
-                <ProtectedRoute requiredDepartment={[1, 5]}><VisualInspection /></ProtectedRoute>
+                <ProtectedRoute requiredDepartment={[1, 5, 8]}><VisualInspection /></ProtectedRoute>
             } />
 
             <Route path="/dimensional-inspection" element={

@@ -33,24 +33,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { trialService } from "../../services/trialService";
 import { formatDate } from "../../utils/dateUtils";
-
-const SpecInput = (props: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-  <TextField
-    {...props}
-    variant="outlined"
-    size="small"
-    fullWidth
-    inputProps={{
-      ...props.inputProps,
-      style: { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' }
-    }}
-    sx={{
-      minWidth: { xs: "50px", sm: "70px" },
-      "& .MuiOutlinedInput-root": { backgroundColor: props.readOnly ? "#f8fafc" : "#fff" },
-      "& .MuiInputBase-input": { fontSize: { xs: '0.75rem', sm: '0.85rem' } }
-    }}
-  />
-);
+import { useAuth } from "../../context/AuthContext";
 
 type MouldCorrection = {
   compressibility?: string;
@@ -354,6 +337,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
   const urlParams = new URLSearchParams(window.location.search);
   const urlTrialId = urlParams.get('trial_id') || "";
   const effectiveTrialId = initialTrialId || urlTrialId;
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -542,7 +526,7 @@ const BasicInfo: React.FC<BasicInfoProps> = ({ trialId: initialTrialId = "" }) =
                 <Grid container spacing={3} sx={{ mb: 3, mt: 0 }}>
 
 
-                  {data && data.pattern_code && (
+                  {data && data.pattern_code && user.department_id === 6 && (
                     <Grid size={12}>
                       <Paper sx={{ p: { xs: 2, md: 3 } }}>
                         <SectionHeader icon={<FactoryIcon />} title="Pattern Datasheet Details" color={COLORS.primary} />

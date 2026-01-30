@@ -18,10 +18,7 @@ export const createInspection = async (req, res, next) => {
         impact_strength_remarks,
         hardness,
         hardness_ok,
-        hardness_remarks,
-        ndt_inspection,
-        ndt_inspection_ok,
-        ndt_inspection_remarks
+        hardness_remarks
     } = req.body || {};
 
     if (!trial_id || !inspection_date) {
@@ -43,10 +40,7 @@ export const createInspection = async (req, res, next) => {
             impact_strength_remarks,
             hardness,
             hardness_ok,
-            hardness_remarks,
-            ndt_inspection,
-            ndt_inspection_ok,
-            ndt_inspection_remarks
+            hardness_remarks
         ) VALUES (
             @trial_id, 
             @inspection_date,
@@ -61,10 +55,7 @@ export const createInspection = async (req, res, next) => {
             @impact_strength_remarks,
             @hardness,
             @hardness_ok,
-            @hardness_remarks,
-            @ndt_inspection,
-            @ndt_inspection_ok,
-            @ndt_inspection_remarks
+            @hardness_remarks
         )`;
 
         await trx.query(sql, {
@@ -81,10 +72,7 @@ export const createInspection = async (req, res, next) => {
             impact_strength_remarks: impact_strength_remarks || null,
             hardness: JSON.stringify(hardness || []),
             hardness_ok,
-            hardness_remarks: hardness_remarks || null,
-            ndt_inspection: JSON.stringify(ndt_inspection || []),
-            ndt_inspection_ok,
-            ndt_inspection_remarks: ndt_inspection_remarks || null
+            hardness_remarks: hardness_remarks || null
         });
 
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
@@ -121,9 +109,6 @@ export const updateInspection = async (req, res, next) => {
         hardness,
         hardness_ok,
         hardness_remarks,
-        ndt_inspection,
-        ndt_inspection_ok,
-        ndt_inspection_remarks,
         is_edit
     } = req.body || {};
 
@@ -135,7 +120,6 @@ export const updateInspection = async (req, res, next) => {
     const mechPropertiesJson = mech_properties ? JSON.stringify(mech_properties) : null;
     const impactStrengthJson = impact_strength ? JSON.stringify(impact_strength) : null;
     const hardnessJson = hardness ? JSON.stringify(hardness) : null;
-    const ndtInspectionJson = ndt_inspection ? JSON.stringify(ndt_inspection) : null;
 
     await Client.transaction(async (trx) => {
         if (is_edit) {
@@ -152,10 +136,7 @@ export const updateInspection = async (req, res, next) => {
             impact_strength_remarks = COALESCE(@impact_strength_remarks, impact_strength_remarks),
             hardness = COALESCE(@hardness, hardness),
             hardness_ok = COALESCE(@hardness_ok, hardness_ok),
-            hardness_remarks = COALESCE(@hardness_remarks, hardness_remarks),
-            ndt_inspection = COALESCE(@ndt_inspection, ndt_inspection),
-            ndt_inspection_ok = COALESCE(@ndt_inspection_ok, ndt_inspection_ok),
-            ndt_inspection_remarks = COALESCE(@ndt_inspection_remarks, ndt_inspection_remarks)
+            hardness_remarks = COALESCE(@hardness_remarks, hardness_remarks)
             WHERE trial_id = @trial_id`;
 
             await trx.query(sql, {
@@ -172,9 +153,6 @@ export const updateInspection = async (req, res, next) => {
                 hardness: hardnessJson,
                 hardness_ok: hardness_ok || null,
                 hardness_remarks: hardness_remarks || null,
-                ndt_inspection: ndtInspectionJson,
-                ndt_inspection_ok: ndt_inspection_ok || null,
-                ndt_inspection_remarks: ndt_inspection_remarks || null,
                 trial_id
             });
 

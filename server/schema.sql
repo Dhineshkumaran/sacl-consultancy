@@ -167,9 +167,6 @@ CREATE TABLE metallurgical_inspection (
     hardness NVARCHAR(MAX),
     hardness_ok BIT,
     hardness_remarks NVARCHAR(MAX),
-    ndt_inspection NVARCHAR(MAX),
-    ndt_inspection_ok BIT,
-    ndt_inspection_remarks NVARCHAR(MAX),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );
 GO
@@ -179,6 +176,9 @@ CREATE TABLE visual_inspection (
     inspections NVARCHAR(MAX),
     visual_ok BIT NOT NULL,
     remarks NVARCHAR(MAX),
+    ndt_inspection NVARCHAR(MAX),
+    ndt_inspection_ok BIT,
+    ndt_inspection_remarks NVARCHAR(MAX),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );
 GO

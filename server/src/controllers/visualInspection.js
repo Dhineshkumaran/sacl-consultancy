@@ -4,15 +4,24 @@ import { updateDepartment, updateRole } from '../services/departmentProgress.js'
 import logger from '../config/logger.js';
 
 export const createInspection = async (req, res, next) => {
-    const { trial_id, inspections, visual_ok, remarks } = req.body || {};
+    const { trial_id, inspections, visual_ok, remarks, ndt_inspection, ndt_inspection_ok, ndt_inspection_remarks } = req.body || {};
     if (!trial_id || !inspections || !remarks) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     const inspectionsJson = JSON.stringify(inspections);
+    const ndtInspectionJson = JSON.stringify(ndt_inspection || []);
 
     await Client.transaction(async (trx) => {
-        const sql = 'INSERT INTO visual_inspection (trial_id, inspections, visual_ok, remarks) VALUES (@trial_id, @inspections, @visual_ok, @remarks)';
-        await trx.query(sql, { trial_id, inspections: inspectionsJson, visual_ok, remarks });
+        const sql = 'INSERT INTO visual_inspection (trial_id, inspections, visual_ok, remarks, ndt_inspection, ndt_inspection_ok, ndt_inspection_remarks) VALUES (@trial_id, @inspections, @visual_ok, @remarks, @ndt_inspection, @ndt_inspection_ok, @ndt_inspection_remarks)';
+        await trx.query(sql, { 
+            trial_id, 
+            inspections: inspectionsJson, 
+            visual_ok, 
+            remarks,
+            ndt_inspection: ndtInspectionJson,
+            ndt_inspection_ok: ndt_inspection_ok || null,
+            ndt_inspection_remarks: ndt_inspection_remarks || null
+        });
 
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
         await trx.query(audit_sql, {
@@ -32,26 +41,33 @@ export const createInspection = async (req, res, next) => {
 };
 
 export const updateInspection = async (req, res, next) => {
-    const { trial_id, inspections, visual_ok, remarks, is_edit } = req.body || {};
+    const { trial_id, inspections, visual_ok, remarks, ndt_inspection, ndt_inspection_ok, ndt_inspection_remarks, is_edit } = req.body || {};
 
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'Trial ID is required' });
     }
 
     const inspectionsJson = inspections ? JSON.stringify(inspections) : null;
+    const ndtInspectionJson = ndt_inspection ? JSON.stringify(ndt_inspection) : null;
 
     await Client.transaction(async (trx) => {
         if (is_edit) {
             const sql = `UPDATE visual_inspection SET 
                 inspections = COALESCE(@inspections, inspections),
                 visual_ok = COALESCE(@visual_ok, visual_ok),
-                remarks = COALESCE(@remarks, remarks)
+                remarks = COALESCE(@remarks, remarks),
+                ndt_inspection = COALESCE(@ndt_inspection, ndt_inspection),
+                ndt_inspection_ok = COALESCE(@ndt_inspection_ok, ndt_inspection_ok),
+                ndt_inspection_remarks = COALESCE(@ndt_inspection_remarks, ndt_inspection_remarks)
                 WHERE trial_id = @trial_id`;
 
             await trx.query(sql, {
                 inspections: inspectionsJson,
                 visual_ok: visual_ok || null,
                 remarks: remarks || null,
+                ndt_inspection: ndtInspectionJson,
+                ndt_inspection_ok: ndt_inspection_ok || null,
+                ndt_inspection_remarks: ndt_inspection_remarks || null,
                 trial_id
             });
 

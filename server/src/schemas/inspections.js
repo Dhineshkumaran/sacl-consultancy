@@ -75,9 +75,6 @@ export const metallurgicalInspectionSchema = z.object({
     hardness: jsonValueSchema.optional().nullable(),
     hardness_ok: z.boolean().optional().nullable(),
     hardness_remarks: z.string().optional().nullable(),
-    ndt_inspection: jsonValueSchema.optional().nullable(),
-    ndt_inspection_ok: z.boolean().optional().nullable(),
-    ndt_inspection_remarks: z.string().optional().nullable(),
     is_edit: z.boolean().default(true)
 });
 
@@ -86,6 +83,9 @@ export const visualInspectionSchema = z.object({
     inspections: jsonValueSchema.optional().nullable(),
     visual_ok: z.boolean({ required_error: "Visual Inspection Status is required", invalid_type_error: "Visual Inspection Status must be valid" }),
     remarks: z.string().optional().nullable(),
+    ndt_inspection: jsonValueSchema.optional().nullable(),
+    ndt_inspection_ok: z.boolean().optional().nullable(),
+    ndt_inspection_remarks: z.string().optional().nullable(),
     is_edit: z.boolean().default(true)
 });
 

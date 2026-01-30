@@ -63,6 +63,295 @@ const buildRows = (labels: string[], initialCols: string[]): Row[] =>
         values: initialCols.map(() => ""),
     }));
 
+interface NdtRow {
+    id: string;
+    label: string;
+    attachment: File | null;
+    ok: boolean | null;
+    remarks: string;
+    value?: string;
+    total?: number | null;
+}
+
+interface MicroCol {
+    id: string;
+    label: string;
+}
+
+const initialNdtRows = (labels: string[]): NdtRow[] =>
+    labels.map((label, i) => ({
+        id: `${label}-${i}`,
+        label,
+        attachment: null,
+        ok: null,
+        remarks: "",
+        total: null,
+    }));
+
+function SectionTable({
+    title,
+    rows,
+    onChange,
+    showTotal = false,
+    onValidationError,
+    showAlert,
+    user,
+    isEditing,
+}: {
+    title: string;
+    rows: NdtRow[];
+    onChange: (id: string, patch: Partial<NdtRow>) => void;
+    showTotal?: boolean;
+    onValidationError?: (message: string) => void;
+    showAlert?: (severity: 'success' | 'error', message: string) => void;
+    user: any;
+    isEditing: boolean;
+}) {
+    const [cols, setCols] = useState<MicroCol[]>(() => {
+        const maxLen = Math.max(...rows.map(r => (r.value ? r.value.split('|').length : 1)), 1);
+        return Array.from({ length: maxLen }, (_, i) => ({ id: `c${i + 1}`, label: '' }));
+    });
+
+    const [values, setValues] = useState<Record<string, string[]>>(() => {
+        const init: Record<string, string[]> = {};
+        rows.forEach((r) => {
+            init[r.id] = r.value ? r.value.split('|').map(s => s.trim()) : Array(cols.length).fill('');
+        });
+        return init;
+    });
+
+    const [groupMeta, setGroupMeta] = useState<{ attachment: File | null; ok: boolean | null; remarks: string }>(() => ({ attachment: null, ok: null, remarks: '' }));
+
+    useEffect(() => {
+        if (rows.length > 0) {
+            const firstWithStatus = rows.find(r => r.ok !== null && r.ok !== undefined);
+            if (firstWithStatus) {
+                setGroupMeta(prev => ({
+                    ...prev,
+                    ok: firstWithStatus.ok,
+                    remarks: firstWithStatus.remarks || prev.remarks || ""
+                }));
+            }
+        }
+    }, [rows]);
+
+    useEffect(() => {
+        const maxLen = Math.max(...rows.map(r => (r.value ? r.value.split('|').length : 1)), 1);
+        if (maxLen > cols.length) {
+            setCols(Array.from({ length: maxLen }, (_, i) => ({ id: `c${i + 1}`, label: '' })));
+        }
+    }, [rows]);
+
+    useEffect(() => {
+        setValues((prev) => {
+            const copy: Record<string, string[]> = {};
+            rows.forEach((r) => {
+                const rowVals = r.value ? r.value.split('|').map(s => s.trim()) : [];
+                copy[r.id] = (rowVals.length > 0) ? rowVals : (prev[r.id] ?? Array(cols.length).fill(''));
+
+                if (copy[r.id].length < cols.length) {
+                    copy[r.id] = [...copy[r.id], ...Array(cols.length - copy[r.id].length).fill('')];
+                } else if (copy[r.id].length > cols.length && cols.length > 0) {
+                    copy[r.id] = copy[r.id].slice(0, cols.length);
+                }
+            });
+            return copy;
+        });
+    }, [rows, cols.length]);
+
+    const addColumn = () => {
+        setCols((prev) => [...prev, { id: `c${prev.length + 1}`, label: '' }]);
+        setValues((prev) => {
+            const copy: Record<string, string[]> = {};
+            Object.keys(prev).forEach((k) => { copy[k] = [...prev[k], '']; });
+            return copy;
+        });
+    };
+
+    const removeColumn = (index: number) => {
+        setCols((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+        setValues((prev) => {
+            const copy: Record<string, string[]> = {};
+            Object.keys(prev).forEach((k) => {
+                const arr = [...prev[k]];
+                if (arr.length > index) arr.splice(index, 1);
+                copy[k] = arr;
+            });
+            return copy;
+        });
+    };
+
+    const updateCell = (rowId: string, colIndex: number, val: string) => {
+        setValues((prev) => {
+            const arr = prev[rowId].map((v, i) => (i === colIndex ? val : v));
+            let copy = { ...prev, [rowId]: arr };
+
+            if (title === "NDT INSPECTION ANALYSIS") {
+                const inspectedRow = rows.find(r => r.label.toLowerCase().includes('inspected'));
+                const acceptedRow = rows.find(r => r.label.toLowerCase().includes('accepted'));
+                const rejectedRow = rows.find(r => r.label.toLowerCase().includes('rejected'));
+
+                if (inspectedRow && acceptedRow && rejectedRow) {
+                    const inspectedValues = copy[inspectedRow.id] || [];
+                    const acceptedValues = copy[acceptedRow.id] || [];
+                    const rejectedValues = [...(copy[rejectedRow.id] || [])];
+
+                    const inspectedNum = parseFloat(String(inspectedValues[colIndex] || '').trim());
+                    const acceptedNum = parseFloat(String(acceptedValues[colIndex] || '').trim());
+
+                    if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
+                        if (acceptedNum > inspectedNum) {
+                            rejectedValues[colIndex] = 'Invalid';
+                            if (onValidationError) {
+                                onValidationError(`Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
+                            }
+                        } else {
+                            const calculatedRejected = inspectedNum - acceptedNum;
+                            rejectedValues[colIndex] = calculatedRejected >= 0 ? calculatedRejected.toString() : '';
+                        }
+                        copy = { ...copy, [rejectedRow.id]: rejectedValues };
+
+                        const rejectedCombined = rejectedValues.map(v => v || "").join(' | ');
+                        onChange(rejectedRow.id, { value: rejectedCombined });
+                    }
+                }
+            }
+
+            const combined = arr.map(v => v || "").join(' | ');
+            const total = arr.reduce((acc, s) => {
+                const n = parseFloat(String(s).trim());
+                return acc + (isNaN(n) ? 0 : n);
+            }, 0);
+            onChange(rowId, { value: combined, total });
+            return copy;
+        });
+    };
+
+    const updateGroupMeta = (patch: Partial<{ attachment: File | null; ok: boolean | null; remarks: string }>) => {
+        setGroupMeta((prev) => ({ ...prev, ...patch }));
+        rows.forEach(r => {
+            onChange(r.id, { ...patch });
+        });
+    };
+
+    const cavityRow = rows.find(r => r.label === "Cavity Number");
+    const dataRows = rows.filter(r => r.label !== "Cavity Number" && !r.label.toLowerCase().includes('rejection percentage'));
+
+    return (
+        <Box mb={4}>
+            <Box display="flex" alignItems="center" gap={1} mb={1}>
+                <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
+                <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>{title}</Typography>
+            </Box>
+            <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
+
+            <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ minWidth: 180 }}>Parameter</TableCell>
+                            {cols.map((c, ci) => (
+                                <TableCell key={c.id} sx={{ minWidth: 140 }}>
+                                    <Box display="flex" alignItems="center" gap={1} justifyContent="center">
+                                        <TextField
+                                            size="small"
+                                            value={c.label}
+                                            onChange={(e) => setCols((prev) => prev.map((col, i) => (i === ci ? { ...col, label: e.target.value } : col)))}
+                                            variant="standard"
+                                            InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
+                                            sx={{ input: { textAlign: 'center' } }}
+                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
+                                        />
+                                        <IconButton size="small" onClick={() => removeColumn(ci)} sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </Box>
+                                </TableCell>
+                            ))}
+                            {showTotal && (
+                                <TableCell sx={{ width: 120, bgcolor: '#f1f5f9', fontWeight: 700, textAlign: 'center' }}>Total</TableCell>
+                            )}
+                            <TableCell sx={{ width: 140, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>OK / NOT OK</TableCell>
+                            <TableCell sx={{ bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
+                        </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 700, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>Cavity Number</TableCell>
+                            {cols.map((c, ci) => (
+                                <TableCell key={c.id} sx={{ bgcolor: '#f8fafc' }}>
+                                    <TextField
+                                        size="small"
+                                        fullWidth
+                                        value={cavityRow ? (values[cavityRow.id]?.[ci] ?? "") : ""}
+                                        onChange={(e) => cavityRow && updateCell(cavityRow.id, ci, e.target.value)}
+                                        variant="outlined"
+                                        sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
+                                    />
+                                </TableCell>
+                            ))}
+                            {showTotal && <TableCell sx={{ bgcolor: '#f8fafc' }} />}
+                            <TableCell rowSpan={rows.length + 1} sx={{ bgcolor: COLORS.successBg, verticalAlign: "middle", textAlign: 'center', width: 140, borderBottom: 'none' }}>
+                                <RadioGroup row sx={{ justifyContent: 'center' }} value={groupMeta.ok === null ? "" : String(groupMeta.ok)} onChange={(e) => updateGroupMeta({ ok: e.target.value === "true" })}>
+                                    <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing} />
+                                    <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing} />
+                                </RadioGroup>
+                            </TableCell>
+                            <TableCell rowSpan={rows.length + 1} sx={{ bgcolor: '#fff7ed', verticalAlign: "top", borderBottom: 'none' }}>
+                                <TextField
+                                    size="small"
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    value={groupMeta.remarks}
+                                    onChange={(e) => updateGroupMeta({ remarks: e.target.value })}
+                                    placeholder="Enter remarks..."
+                                    variant="outlined"
+                                    sx={{ bgcolor: 'white' }}
+                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                />
+                            </TableCell>
+                        </TableRow>
+                        {dataRows.map((r: NdtRow) => {
+                            const rowVals = values[r.id] ?? [];
+                            const displayTotal = rowVals.reduce((acc, s) => {
+                                const n = parseFloat(String(s).trim());
+                                return acc + (isNaN(n) ? 0 : n);
+                            }, 0);
+                            const totalToShow = rowVals.some(v => v && !isNaN(parseFloat(String(v)))) ? displayTotal : (r.total ?? null);
+                            const isRejectedQty = r.label.toLowerCase().includes('rejected') && !r.label.toLowerCase().includes('reason');
+                            const isAcceptedQty = r.label.toLowerCase().includes('accepted');
+
+                            return (
+                                <TableRow key={r.id}>
+                                    <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r.label}</TableCell>
+                                    {cols.map((c, ci) => (
+                                        <TableCell key={c.id}>
+                                            <TextField
+                                                size="small"
+                                                fullWidth
+                                                value={values[r.id]?.[ci] ?? ""}
+                                                onChange={(e) => updateCell(r.id, ci, e.target.value)}
+                                                variant="outlined"
+                                                sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
+                                                disabled={((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) || isRejectedQty}
+                                            />
+                                        </TableCell>
+                                    ))}
+                                    {showTotal && <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>{totalToShow !== null ? totalToShow : "-"}</TableCell>}
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </Box>
+            <Button size="small" onClick={addColumn} startIcon={<AddCircleIcon />} sx={{ mt: 1, color: COLORS.secondary }} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}>Add Column</Button>
+        </Box>
+    );
+}
+
 const viewAttachment = (file: any) => {
     if (!file) return;
     if (file instanceof File) {
@@ -123,7 +412,12 @@ export default function VisualInspection({
     const [showProfile, setShowProfile] = useState(false);
     const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
     const departmentInfo = getDepartmentInfo(user);
-    const [ndtData, setNdtData] = useState<any[]>([]);
+    const [ndtRows, setNdtRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
+    const [ndtValidationError, setNdtValidationError] = useState<string | null>(null);
+
+    const handleNdtChange = (id: string, patch: Partial<NdtRow>) => {
+        setNdtRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
+    };
 
 
     const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
@@ -134,7 +428,7 @@ export default function VisualInspection({
     useEffect(() => {
         const checkAssignment = async () => {
             if (user && trialId) {
-                if (user.role === 'Admin') {
+                if (user.role === 'Admin' || user.department_id === 8) {
                     setIsAssigned(true);
                     return;
                 }
@@ -155,7 +449,7 @@ export default function VisualInspection({
 
     useEffect(() => {
         const fetchData = async () => {
-            if ((user?.role === 'HOD' || user?.role === 'Admin') && trialId) {
+            if ((user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && trialId) {
                 try {
                     const response = await inspectionService.getVisualInspection(trialId);
 
@@ -203,6 +497,15 @@ export default function VisualInspection({
                             remarks: data.remarks || "",
                             attachment: linkedAttachment || null
                         });
+
+                        if (data.ndt_inspection) {
+                            try {
+                                const parsed = typeof data.ndt_inspection === 'string' ? JSON.parse(data.ndt_inspection) : data.ndt_inspection;
+                                if (Array.isArray(parsed)) {
+                                    setNdtRows(parsed);
+                                }
+                            } catch (e) { console.error(e); }
+                        }
                     }
                 } catch (error) {
                     console.error("Failed to fetch visual inspection:", error);
@@ -213,109 +516,6 @@ export default function VisualInspection({
         if (trialId) fetchData();
     }, [user, trialId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    useEffect(() => {
-        const fetchNdtData = async () => {
-            if (trialId) {
-                try {
-                    const response = await inspectionService.getMetallurgicalInspection(trialId);
-                    if (response.success && response.data && response.data.length > 0) {
-                        const data = response.data[0];
-                        if (data.ndt_inspection) {
-                            const parsedNdt = typeof data.ndt_inspection === 'string'
-                                ? JSON.parse(data.ndt_inspection)
-                                : data.ndt_inspection;
-                            setNdtData(Array.isArray(parsedNdt) ? parsedNdt : []);
-                        }
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch NDT data:", error);
-                }
-            }
-        };
-        fetchNdtData();
-    }, [trialId]);
-
-    const NDTReadOnlyTable = ({ data }: { data: any[] }) => {
-        if (!data || data.length === 0) return null;
-
-        const tableRows = data.filter(r => r.label);
-        if (tableRows.length === 0) return null;
-
-        const getCols = (val: string) => (val || '').split('|').map(s => s.trim());
-        const maxCols = Math.max(...tableRows.map(r => getCols(r.value).length), 1);
-
-        const okValue = tableRows[0]?.ok;
-        const remarksValue = tableRows[0]?.remarks;
-
-        return (
-            <Box>
-                <Box display="flex" alignItems="center" gap={1} mb={1}>
-                    <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-                    <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>NDT INSPECTION ANALYSIS (READ ONLY)</Typography>
-                </Box>
-                <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
-                <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
-                    <Table size="small">
-                        <TableHead>
-                            <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                <TableCell sx={{ fontWeight: 600 }}>Parameter</TableCell>
-                                {Array.from({ length: maxCols }).map((_, i) => (
-                                    <TableCell key={i} sx={{ fontWeight: 600, textAlign: 'center' }}></TableCell>
-                                ))}
-                                <TableCell sx={{ fontWeight: 600, textAlign: 'center', bgcolor: '#f1f5f9' }}>Total</TableCell>
-                                <TableCell sx={{ fontWeight: 600, textAlign: 'center', width: 100, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>OK / NOT OK</TableCell>
-                                <TableCell sx={{ fontWeight: 600, bgcolor: COLORS.orangeHeaderBg, color: COLORS.orangeHeaderText }}>Remarks</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {tableRows.map((r, i) => {
-                                const vals = getCols(r.value);
-                                return (
-                                    <TableRow key={i}>
-                                        <TableCell sx={{ fontWeight: 500, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r.label}</TableCell>
-                                        {Array.from({ length: maxCols }).map((_, idx) => (
-                                            <TableCell key={idx} sx={{ textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' }}>
-                                                {vals[idx] || '-'}
-                                            </TableCell>
-                                        ))}
-                                        <TableCell sx={{ textAlign: 'center', fontWeight: 700, bgcolor: '#f8fafc' }}>
-                                            {r.total ?? '-'}
-                                        </TableCell>
-                                        {i === 0 && (
-                                            <>
-                                                <TableCell rowSpan={tableRows.length} sx={{ textAlign: 'center', verticalAlign: 'middle', bgcolor: COLORS.successBg }}>
-                                                    {okValue === true || okValue === 1 || String(okValue) === "true" ? (
-                                                        <Chip label="OK" color="success" size="small" variant="filled" />
-                                                    ) : okValue === false || okValue === 0 || String(okValue) === "false" ? (
-                                                        <Chip label="NOT OK" color="error" size="small" variant="filled" />
-                                                    ) : '-'}
-                                                </TableCell>
-                                                <TableCell rowSpan={tableRows.length} sx={{ verticalAlign: 'top', bgcolor: '#fff7ed', minWidth: 200 }}>
-                                                    <TextField
-                                                        fullWidth
-                                                        multiline
-                                                        rows={Math.max(3, tableRows.length)}
-                                                        value={remarksValue || ""}
-                                                        variant="outlined"
-                                                        size="small"
-                                                        InputProps={{
-                                                            readOnly: true,
-                                                            style: { fontSize: '0.85rem', backgroundColor: 'white' }
-                                                        }}
-                                                        placeholder="No remarks"
-                                                    />
-                                                </TableCell>
-                                            </>
-                                        )}
-                                    </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                </Box>
-            </Box>
-        );
-    };
 
     const calculateRejectionPercentage = (colIndex: number): string => {
         const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
@@ -343,8 +543,6 @@ export default function VisualInspection({
         fetchIP();
     }, []);
 
-
-
     const addColumn = () => {
         setCols((c) => [...c, ""]);
         setRows((r) =>
@@ -354,7 +552,6 @@ export default function VisualInspection({
             }))
         );
     };
-
 
     const handleAttachFiles = (newFiles: File[]) => {
         setAttachedFiles(prev => [...prev, ...newFiles]);
@@ -486,6 +683,11 @@ export default function VisualInspection({
             },
             attachedFiles: attachedFiles.map(f => f.name),
             additionalRemarks: additionalRemarks,
+            ndt: {
+                rows: ndtRows.map(r => ({ label: r.label, value: r.value, total: r.total })),
+                ok: ndtRows[0]?.ok,
+                remarks: ndtRows[0]?.remarks
+            }
         };
     };
 
@@ -544,6 +746,9 @@ export default function VisualInspection({
                     inspections,
                     visual_ok: groupMeta.ok,
                     remarks: groupMeta.remarks || null,
+                    ndt_inspection: ndtRows,
+                    ndt_inspection_ok: ndtRows[0]?.ok,
+                    ndt_inspection_remarks: ndtRows[0]?.remarks,
                     is_edit: isEditing
                 };
                 await inspectionService.updateVisualInspection(updatePayload);
@@ -601,7 +806,10 @@ export default function VisualInspection({
                 trial_id: trialId,
                 inspections,
                 visual_ok: previewPayload.group?.ok ?? null,
-                remarks: previewPayload.additionalRemarks || previewPayload.group?.remarks || null,
+                remarks: previewPayload.group?.remarks || null,
+                ndt_inspection: ndtRows,
+                ndt_inspection_ok: ndtRows[0]?.ok,
+                ndt_inspection_remarks: ndtRows[0]?.remarks
             };
 
             await inspectionService.submitVisualInspection(serverPayload);
@@ -676,7 +884,17 @@ export default function VisualInspection({
                                 <BasicInfo trialId={trialId} />
 
                                 <Paper sx={{ p: { xs: 2, md: 4 }, mb: 4, overflow: 'hidden' }}>
-                                    <NDTReadOnlyTable data={ndtData} />
+                                    <SectionTable
+                                        title="NDT INSPECTION ANALYSIS"
+                                        rows={ndtRows}
+                                        onChange={handleNdtChange}
+                                        showTotal={true}
+                                        onValidationError={setNdtValidationError}
+                                        showAlert={showAlert}
+                                        user={user}
+                                        isEditing={isEditing}
+                                    />
+                                    {ndtValidationError && <Alert severity="error" sx={{ mt: 1 }}>{ndtValidationError}</Alert>}
                                 </Paper>
 
                                 <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
@@ -706,13 +924,13 @@ export default function VisualInspection({
                                                                     InputProps={{ disableUnderline: true, style: { fontSize: '0.8rem', fontWeight: 700, color: COLORS.blueHeaderText, textAlign: 'center' } }}
                                                                     size="small"
                                                                     sx={{ input: { textAlign: 'center' } }}
-                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                                                 />
                                                                 <IconButton
                                                                     size="small"
                                                                     onClick={() => removeColumn(ci)}
                                                                     sx={{ color: COLORS.blueHeaderText, opacity: 0.6 }}
-                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                                                 >
                                                                     <DeleteIcon fontSize="small" />
                                                                 </IconButton>
@@ -861,7 +1079,7 @@ export default function VisualInspection({
                                                                             onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
                                                                             variant="outlined"
                                                                             sx={{ bgcolor: 'white' }}
-                                                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                                                         />
 
                                                                         <Box display="flex" alignItems="center" gap={1} mt="auto">
@@ -882,7 +1100,7 @@ export default function VisualInspection({
                                                                                     }
                                                                                     setGroupMeta((g) => ({ ...g, attachment: file }));
                                                                                 }}
-                                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                                                             />
                                                                             <label htmlFor="visual-group-file">
                                                                                 <Button
@@ -891,7 +1109,7 @@ export default function VisualInspection({
                                                                                     component="span"
                                                                                     startIcon={<UploadFileIcon />}
                                                                                     sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
-                                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                                                                 >
                                                                                     Attach PDF
                                                                                 </Button>
@@ -906,7 +1124,7 @@ export default function VisualInspection({
                                                                                         size="small"
                                                                                         variant="outlined"
                                                                                         sx={{ maxWidth: 140 }}
-                                                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                                                                     />
                                                                                     <IconButton size="small" onClick={() => viewAttachment(groupMeta.attachment)}>
                                                                                         <VisibilityIcon fontSize="small" />
@@ -933,7 +1151,7 @@ export default function VisualInspection({
                                         onClick={addColumn}
                                         startIcon={<AddCircleIcon />}
                                         sx={{ mt: 1, color: COLORS.secondary }}
-                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                     >
                                         Add Column
                                     </Button>
@@ -950,7 +1168,7 @@ export default function VisualInspection({
                                                     onFileRemove={removeAttachedFile}
                                                     showAlert={showAlert}
                                                     label="Attach PDF"
-                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
                                                 />
                                             </>
                                         )}
@@ -960,23 +1178,25 @@ export default function VisualInspection({
 
                                     <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
                                         <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                                            <ActionButtons
-                                                {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: reset } : {})}
-                                                onSave={handleSaveAndContinue}
-                                                showSubmit={false}
-                                                saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                                                saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
-                                            >
-                                                {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                                                    <Button
-                                                        variant="outlined"
-                                                        onClick={() => setIsEditing(!isEditing)}
-                                                        sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                                                    >
-                                                        {isEditing ? "Cancel Edit" : "Edit Details"}
-                                                    </Button>
-                                                )}
-                                            </ActionButtons>
+                                            {user?.department_id !== 8 && (
+                                                <ActionButtons
+                                                    {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: reset } : {})}
+                                                    onSave={handleSaveAndContinue}
+                                                    showSubmit={false}
+                                                    saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                                                    saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                                                >
+                                                    {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                                                        <Button
+                                                            variant="outlined"
+                                                            onClick={() => setIsEditing(!isEditing)}
+                                                            sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                                                        >
+                                                            {isEditing ? "Cancel Edit" : "Edit Details"}
+                                                        </Button>
+                                                    )}
+                                                </ActionButtons>
+                                            )}
                                         </Box>
                                     </Box>
 
@@ -1022,6 +1242,39 @@ export default function VisualInspection({
                                                     </TableBody>
                                                 </Table>
                                             </Box>
+
+                                            {/* NDT Preview in Modal */}
+                                            {previewPayload?.ndt && (
+                                                <Box mt={3}>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>NDT INSPECTION ANALYSIS</Typography>
+                                                    <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
+                                                        <Table size="small">
+                                                            <TableHead>
+                                                                <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Values</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
+                                                                </TableRow>
+                                                            </TableHead>
+                                                            <TableBody>
+                                                                {previewPayload.ndt.rows.map((r: any, idx: number) => (
+                                                                    <TableRow key={idx}>
+                                                                        <TableCell sx={{ fontSize: '0.75rem' }}>{r.label}</TableCell>
+                                                                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{r.value}</TableCell>
+                                                                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{r.total ?? "-"}</TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                                <TableRow>
+                                                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
+                                                                    <TableCell colSpan={2} sx={{ textAlign: 'center' }}>
+                                                                        {previewPayload.ndt.ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            </TableBody>
+                                                        </Table>
+                                                    </Box>
+                                                </Box>
+                                            )}
 
                                             <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
                                                 <Typography variant="subtitle2" mb={1} color="textSecondary">FINAL STATUS & REMARKS</Typography>

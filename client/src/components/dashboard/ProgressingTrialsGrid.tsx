@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableRow, TableHead } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableRow, TableHead, Tooltip, IconButton } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { trialService } from '../../services/trialService';
+import departmentProgressService from '../../services/departmentProgressService';
+import { useAuth } from '../../context/AuthContext';
 import ProgressingTrialModal from './ProgressingTrialModal';
 import GearSpinner from '../common/GearSpinner';
 import { formatDate } from '../../utils/dateUtils';
@@ -11,6 +14,8 @@ interface ProgressingTrialsGridProps {
 }
 
 const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmentId }) => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [progressingTrials, setProgressingTrials] = useState<any[]>([]);
     const [loadingTrials, setLoadingTrials] = useState(false);
     const [selectedTrialId, setSelectedTrialId] = useState<string | null>(null);
@@ -18,10 +23,15 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
 
     useEffect(() => {
         const fetchProgressing = async () => {
-            if (departmentId === 4 || departmentId === 6 || departmentId === 7) {
+            if (departmentId === 4 || departmentId === 6 || departmentId === 7 || departmentId === 8) {
                 setLoadingTrials(true);
                 try {
-                    const data = await trialService.getProgressingTrials();
+                    let data;
+                    if (departmentId === 8 && user?.username) {
+                        data = await departmentProgressService.getProgress(user.username, 8);
+                    } else {
+                        data = await trialService.getProgressingTrials();
+                    }
                     setProgressingTrials(data);
                 } catch (error) {
                     console.error('Failed to fetch progressing trials:', error);
@@ -37,7 +47,7 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
         return () => clearInterval(interval);
     }, [departmentId]);
 
-    if (departmentId !== 4 && departmentId !== 6 && departmentId !== 7) {
+    if (departmentId !== 4 && departmentId !== 6 && departmentId !== 7 && departmentId !== 8) {
         return null;
     }
 
@@ -90,12 +100,12 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                                 <TableRow>
                                     <TableCell>Pattern Code</TableCell>
                                     <TableCell>Part Name</TableCell>
-                                    <TableCell>Date of Sampling</TableCell>
-                                    <TableCell>No. of Moulds</TableCell>
+                                    {departmentId !== 8 && <TableCell>Date of Sampling</TableCell>}
+                                    {departmentId !== 8 && <TableCell>No. of Moulds</TableCell>}
                                     <TableCell>DISA / FOUNDRY-A</TableCell>
-                                    <TableCell>Reason For Sampling</TableCell>
-                                    <TableCell>Sample Traceability</TableCell>
-                                    <TableCell>Trial Type</TableCell>
+                                    {departmentId !== 8 && <TableCell>Reason For Sampling</TableCell>}
+                                    {departmentId !== 8 && <TableCell>Sample Traceability</TableCell>}
+                                    {departmentId !== 8 && <TableCell>Trial Type</TableCell>}
                                     <TableCell align="center">Actions</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -114,32 +124,88 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                                     >
                                         <TableCell sx={{ fontWeight: 600 }}>{trial.pattern_code}</TableCell>
                                         <TableCell>{trial.part_name}</TableCell>
-                                        <TableCell>{formatDate(trial.date_of_sampling) || '-'}</TableCell>
-                                        <TableCell>{trial.plan_moulds || '-'}</TableCell>
+                                        {departmentId !== 8 && <TableCell>{formatDate(trial.date_of_sampling) || '-'}</TableCell>}
+                                        {departmentId !== 8 && <TableCell>{trial.plan_moulds || '-'}</TableCell>}
                                         <TableCell>{trial.disa || '-'}</TableCell>
-                                        <TableCell>{trial.reason_for_sampling || '-'}</TableCell>
-                                        <TableCell>{trial.sample_traceability || '-'}</TableCell>
-                                        <TableCell>{trial.trial_type || '-'}</TableCell>
+                                        {departmentId !== 8 && <TableCell>{trial.reason_for_sampling || '-'}</TableCell>}
+                                        {departmentId !== 8 && <TableCell>{trial.sample_traceability || '-'}</TableCell>}
+                                        {departmentId !== 8 && <TableCell>{trial.trial_type || '-'}</TableCell>}
                                         <TableCell align="center">
-                                            <Button
-                                                size="small"
-                                                variant="contained"
-                                                startIcon={<InfoIcon sx={{ fontSize: '14px !important' }} />}
-                                                onClick={() => {
-                                                    setSelectedTrialId(trial.trial_id);
-                                                    setIsModalOpen(true);
-                                                }}
-                                                sx={{
-                                                    bgcolor: '#E67E22',
-                                                    fontSize: '0.7rem',
-                                                    py: 0.5,
-                                                    px: 1.5,
-                                                    '&:hover': { bgcolor: '#D35400' },
-                                                    whiteSpace: 'nowrap'
-                                                }}
-                                            >
-                                                View Details
-                                            </Button>
+                                            {departmentId === 8 ? (
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        onClick={() => navigate(`/visual-inspection?trial_id=${trial.trial_id}`)}
+                                                        sx={{
+                                                            bgcolor: '#E67E22',
+                                                            fontSize: '0.7rem',
+                                                            py: 0.5,
+                                                            px: 1.5,
+                                                            '&:hover': { bgcolor: '#D35400' },
+                                                            whiteSpace: 'nowrap',
+                                                            width: '100%',
+                                                            textTransform: 'none'
+                                                        }}
+                                                    >
+                                                        View Visual Data
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        onClick={() => navigate(`/metallurgical-inspection?trial_id=${trial.trial_id}`)}
+                                                        sx={{
+                                                            bgcolor: '#E67E22',
+                                                            fontSize: '0.7rem',
+                                                            py: 0.5,
+                                                            px: 1.5,
+                                                            '&:hover': { bgcolor: '#D35400' },
+                                                            whiteSpace: 'nowrap',
+                                                            width: '100%',
+                                                            textTransform: 'none'
+                                                        }}
+                                                    >
+                                                        View Metallurgical Data
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        onClick={() => navigate(`/material-correction?trial_id=${trial.trial_id}`)}
+                                                        sx={{
+                                                            bgcolor: '#E67E22',
+                                                            fontSize: '0.7rem',
+                                                            py: 0.5,
+                                                            px: 1.5,
+                                                            '&:hover': { bgcolor: '#D35400' },
+                                                            whiteSpace: 'nowrap',
+                                                            width: '100%',
+                                                            textTransform: 'none'
+                                                        }}
+                                                    >
+                                                        View Material Correction
+                                                    </Button>
+                                                </Box>
+                                            ) : (
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    startIcon={<InfoIcon sx={{ fontSize: '14px !important' }} />}
+                                                    onClick={() => {
+                                                        setSelectedTrialId(trial.trial_id);
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                    sx={{
+                                                        bgcolor: '#E67E22',
+                                                        fontSize: '0.7rem',
+                                                        py: 0.5,
+                                                        px: 1.5,
+                                                        '&:hover': { bgcolor: '#D35400' },
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    View Details
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}

@@ -6,7 +6,10 @@ export const fetchTrialData = async (trial_id, trx) => {
     trial_id = trial_id.replace(/['"]+/g, '');
 
     const [trial_cards] = await trx.query(
-        `SELECT * FROM trial_cards WHERE trial_id = @trial_id`, { trial_id }
+        `SELECT tc.*, mc.chemical_composition AS spec_chem, mc.micro_structure AS spec_micro 
+         FROM trial_cards tc 
+         LEFT JOIN master_card mc ON tc.pattern_code = mc.pattern_code 
+         WHERE tc.trial_id = @trial_id`, { trial_id }
     );
     const [pouring_details] = await trx.query(
         `SELECT * FROM pouring_details WHERE trial_id = @trial_id`, { trial_id }
@@ -29,6 +32,9 @@ export const fetchTrialData = async (trial_id, trx) => {
     const [machine_shop] = await trx.query(
         `SELECT * FROM machine_shop WHERE trial_id = @trial_id`, { trial_id }
     );
+    const [material_correction] = await trx.query(
+        `SELECT * FROM material_correction WHERE trial_id = @trial_id`, { trial_id }
+    );
 
     return {
         trial_cards,
@@ -38,7 +44,8 @@ export const fetchTrialData = async (trial_id, trx) => {
         metallurgical_inspection,
         visual_inspection,
         dimensional_inspection,
-        machine_shop
+        machine_shop,
+        material_correction
     };
 };
 
@@ -204,6 +211,7 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
         const visual = data.visual_inspection?.[0] || {};
         const dimensional = data.dimensional_inspection?.[0] || {};
         const mcShop = data.machine_shop?.[0] || {};
+        const matCorr = data.material_correction?.[0] || {};
 
         if (i > 0) {
             doc.addPage();
@@ -237,14 +245,63 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
             ], col1X, y1, colWidth) + 10;
         }
 
+        // 1.1 Metallurgical Specification (from FoundrySampleCard/Master)
+        let y1_1 = drawSectionTitle(doc, "1.1 METALLURGICAL SPECIFICATION", col1X, y1);
+        const specChem = safeParse(trialCard.spec_chem);
+        const specMicro = safeParse(trialCard.spec_micro);
+
+        if (Object.keys(specChem).length > 0 || Object.keys(specMicro).length > 0) {
+            const chemRows = [
+                ["C", specChem.c], ["Si", specChem.si], ["Mn", specChem.mn], ["P", specChem.p],
+                ["S", specChem.s], ["Mg", specChem.mg], ["Cr", specChem.cr], ["Cu", specChem.cu]
+            ];
+            doc.font('Helvetica-Bold').fontSize(8).text("Chemical Elements (%)", col1X, y1_1);
+            y1_1 += 12;
+            y1_1 = drawTable(doc, { headers: ["Ele", "Spec"], rows: chemRows }, col1X, y1_1, [125, 125]) + 10;
+
+            doc.font('Helvetica-Bold').fontSize(8).text("Microstructure", col1X, y1_1);
+            y1_1 += 12;
+            y1_1 = drawVerticalTable(doc, [
+                { label: "Nodularity", value: specMicro.nodularity },
+                { label: "Pearlite", value: specMicro.pearlite },
+                { label: "Carbide", value: specMicro.carbide }
+            ], col1X, y1_1, colWidth) + 10;
+            y1 = y1_1;
+        }
+
+        // 1.2 Material Correction Details
+        let y2 = yRow1Start;
+        let y1_2 = drawSectionTitle(doc, "1.2 MATERIAL CORRECTION DETAILS", col2X, yRow1Start);
+        if (Object.keys(matCorr).length > 0) {
+            const corrChem = safeParse(matCorr.chemical_composition);
+            const corrProc = safeParse(matCorr.process_parameters);
+
+            const chemRow = [
+                corrChem.c, corrChem.si, corrChem.mn, corrChem.p, corrChem.s, corrChem.mg, corrChem.cu, corrChem.cr
+            ];
+            doc.font('Helvetica-Bold').fontSize(8).text("Chemical Composition", col2X, y1_2);
+            y1_2 += 12;
+            y1_2 = drawTable(doc, { headers: ["C%", "Si%", "Mn%", "P%", "S%", "Mg%", "Cu%", "Cr%"], rows: [chemRow] }, col2X, y1_2, [31, 31, 31, 31, 31, 31, 31, 33]) + 10;
+
+            doc.font('Helvetica-Bold').fontSize(8).text("Process Parameters", col2X, y1_2);
+            y1_2 += 12;
+            y1_2 = drawVerticalTable(doc, [
+                { label: "Pouring Temp °C", value: corrProc.pouringTemp },
+                { label: "Inoculant per Sec", value: corrProc.inoculantPerSec },
+                { label: "Inoculant type", value: corrProc.inoculantType },
+                { label: "Remarks", value: matCorr.remarks }
+            ], col2X, y1_2, colWidth) + 10;
+            y2 = y1_2;
+        }
+
         // 2. Pouring Details
-        let y2 = drawSectionTitle(doc, "2. POURING DETAILS", col2X, yRow1Start);
+        y1_2 = drawSectionTitle(doc, "2. POURING DETAILS", col1X, Math.max(y1, y2));
         if (Object.keys(pouring).length > 0) {
             const pInoc = safeParse(pouring.inoculation);
             const pRem = safeParse(pouring.other_remarks);
             const pComp = safeParse(pouring.composition);
 
-            y2 = drawVerticalTable(doc, [
+            y1_2 = drawVerticalTable(doc, [
                 { label: "Pour Date", value: pouring.pour_date ? new Date(pouring.pour_date).toISOString().slice(0, 10) : '-' },
                 { label: "Heat Code", value: pouring.heat_code },
                 { label: "Pouring Temp (°C)", value: pouring.pouring_temp_c },
@@ -254,16 +311,18 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
                 { label: "Inoculation Type", value: pInoc.Text },
                 { label: "Stream Inoc.", value: pInoc.Stream },
                 { label: "Inmould Inoc.", value: pInoc.Inmould }
-            ], col2X, y2, colWidth) + 5;
+            ], col1X, y1_2, colWidth) + 5;
 
             // Chemical Comp
-            doc.font('Helvetica-Bold').fontSize(8).text("Chemical Composition", col2X, y2);
-            y2 += 12;
+            doc.font('Helvetica-Bold').fontSize(8).text("Chemical Composition", col1X, y1_2);
+            y1_2 += 12;
             const compKeys = Object.keys(pComp);
             if (compKeys.length > 0) {
-                y2 = drawTable(doc, { headers: compKeys, rows: [Object.values(pComp)] }, col2X, y2, compKeys.map(() => colWidth / compKeys.length)) + 10;
+                y1_2 = drawTable(doc, { headers: compKeys, rows: [Object.values(pComp)] }, col1X, y1_2, compKeys.map(() => colWidth / compKeys.length)) + 10;
             }
+            y1 = y1_2;
         }
+        y2 = y1;
 
         let nextY = Math.max(y1, y2) + 10;
 
@@ -309,10 +368,9 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
             const mechRows = safeParse(meta.mech_properties, []);
             const impactRows = safeParse(meta.impact_strength, []);
             const hardRows = safeParse(meta.hardness, []);
-            const ndtRows = safeParse(meta.ndt_inspection, []);
             const microRows = safeParse(meta.micro_structure, []);
 
-            const hasMetaData = mechRows.length > 0 || impactRows.length > 0 || hardRows.length > 0 || ndtRows.length > 0 || microRows.length > 0;
+            const hasMetaData = mechRows.length > 0 || impactRows.length > 0 || hardRows.length > 0 || microRows.length > 0;
 
             if (hasMetaData) {
                 // Check space
@@ -337,7 +395,6 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
                     metaY2 = drawTable(doc, { headers: ["Parameter", "Value", "Status", "Remarks"], rows: hardRows.map(r => [r.label, r.value, r.ok ? "OK" : "NOK", r.remarks]) }, col2X, metaY2, [80, 50, 40, 80]) + 10;
                 }
 
-                // Next sub-row
                 let nextSubY = Math.max(metaY1, metaY2);
                 metaY1 = nextSubY;
                 metaY2 = nextSubY;
@@ -347,13 +404,6 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
                     doc.font('Helvetica-Bold').fontSize(8).text("Impact Strength", col1X, metaY1);
                     metaY1 += 12;
                     metaY1 = drawTable(doc, { headers: ["Parameter", "Value", "Status", "Remarks"], rows: impactRows.map(r => [r.label, r.value, r.ok ? "OK" : "NOK", r.remarks]) }, col1X, metaY1, [80, 50, 40, 80]) + 10;
-                }
-
-                // NDT
-                if (ndtRows.length > 0) {
-                    doc.font('Helvetica-Bold').fontSize(8).text("NDT Inspection", col2X, metaY2);
-                    metaY2 += 12;
-                    metaY2 = drawTable(doc, { headers: ["Parameter", "Value", "Status", "Remarks"], rows: ndtRows.map(r => [r.label, r.value, r.ok ? "OK" : "NOK", r.remarks]) }, col2X, metaY2, [80, 50, 40, 80]) + 10;
                 }
 
                 nextY = Math.max(metaY1, metaY2);
@@ -385,6 +435,14 @@ export const generateAndStoreConsolidatedReport = async (trial_id, trx) => {
             if (Array.isArray(visInspections) && visInspections.length > 0) {
                 const rows = visInspections.map(r => [r['Cavity Number'], r['Inspected Quantity'], r['Rejected Quantity'], r['Reason for rejection']]);
                 y1 = drawTable(doc, { headers: ['Cav No', 'Insp Qty', 'Rej Qty', 'Reason'], rows }, col1X, y1, [50, 50, 50, 100]) + 10;
+            }
+
+            const ndtRows = safeParse(visual.ndt_inspection, []);
+            if (ndtRows.length > 0) {
+                y1 += 10;
+                doc.font('Helvetica-Bold').fontSize(8).text("NDT Inspection", col1X, y1);
+                y1 += 12;
+                y1 = drawTable(doc, { headers: ["Parameter", "Value", "Status", "Remarks"], rows: ndtRows.map(r => [r.label, r.value, r.ok ? "OK" : "NOK", r.remarks]) }, col1X, y1, [80, 50, 40, 100]) + 10;
             }
         }
 

@@ -144,8 +144,8 @@ const Dashboard: React.FC = () => {
                 <StatsGrid stats={stats} />
               )}
 
-              {/* Progressing Trials Grid for Moulding, PCQC, Sand Plant */}
-              {(user?.department_id === 4 || user?.department_id === 6 || user?.department_id === 7) && (
+              {/* Progressing Trials Grid for Moulding, PCQC, Sand Plant, Machine Shop */}
+              {(user?.department_id === 4 || user?.department_id === 6 || user?.department_id === 7 || user?.department_id === 8) && (
                 <ProgressingTrialsGrid departmentId={user?.department_id || 0} />
               )}
 
