@@ -1275,7 +1275,7 @@ function FoundrySampleCard() {
                       <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
                         Tooling Files
                       </Typography>
-                      {((user?.role !== 'HOD' && user?.role !== 'Admin') || isEditing) && (
+                      {((user?.role !== 'HOD' && user?.role !== 'Admin')) && (
                         <FileUploadSection
                           files={toolingFiles}
                           onFilesChange={handleToolingFilesChange}

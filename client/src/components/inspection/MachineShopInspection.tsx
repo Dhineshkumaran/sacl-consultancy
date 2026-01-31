@@ -607,52 +607,56 @@ export default function McShopInspection({
                                     />
 
                                     <Box display="flex" alignItems="center" gap={1} mt="auto">
-                                      <input
-                                        accept="image/*,application/pdf"
-                                        id="mcshop-attach-file"
-                                        style={{ display: "none" }}
-                                        type="file"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0] ?? null;
-                                          if (file) {
-                                            const validation = validateFileSizes([file]);
-                                            if (!validation.isValid) {
-                                              validation.errors.forEach((error: string) => showAlert('error', error));
-                                              e.target.value = '';
-                                              return;
-                                            }
-                                          }
-                                          setGroupMeta((g) => ({ ...g, attachment: file }));
-                                        }}
-                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                      />
-                                      <label htmlFor="mcshop-attach-file">
-                                        <Button
-                                          size="small"
-                                          variant="outlined"
-                                          component="span"
-                                          startIcon={<UploadFileIcon />}
-                                          sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
-                                          disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                        >
-                                          Attach
-                                        </Button>
-                                      </label>
+                                      {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
+                                        <>
+                                          <input
+                                            accept="image/*,application/pdf"
+                                            id="mcshop-attach-file"
+                                            style={{ display: "none" }}
+                                            type="file"
+                                            onChange={(e) => {
+                                              const file = e.target.files?.[0] ?? null;
+                                              if (file) {
+                                                const validation = validateFileSizes([file]);
+                                                if (!validation.isValid) {
+                                                  validation.errors.forEach((error: string) => showAlert('error', error));
+                                                  e.target.value = '';
+                                                  return;
+                                                }
+                                              }
+                                              setGroupMeta((g) => ({ ...g, attachment: file }));
+                                            }}
+                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                          />
+                                          <label htmlFor="mcshop-attach-file">
+                                            <Button
+                                              size="small"
+                                              variant="outlined"
+                                              component="span"
+                                              startIcon={<UploadFileIcon />}
+                                              sx={{ borderColor: COLORS.border, color: COLORS.textSecondary }}
+                                              disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                            >
+                                              Attach
+                                            </Button>
+                                          </label>
 
-                                      {groupMeta.attachment ? (
-                                        <Chip
-                                          icon={<InsertDriveFileIcon />}
-                                          label={groupMeta.attachment.name}
-                                          onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
-                                          size="small"
-                                          variant="outlined"
-                                          sx={{ maxWidth: 140 }}
-                                          disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                        />
-                                      ) : (
-                                        <Typography variant="caption" color="text.secondary">
-                                          No file attached
-                                        </Typography>
+                                          {groupMeta.attachment ? (
+                                            <Chip
+                                              icon={<InsertDriveFileIcon />}
+                                              label={groupMeta.attachment.name}
+                                              onDelete={() => setGroupMeta((g) => ({ ...g, attachment: null }))}
+                                              size="small"
+                                              variant="outlined"
+                                              sx={{ maxWidth: 140 }}
+                                              disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
+                                            />
+                                          ) : (
+                                            <Typography variant="caption" color="text.secondary">
+                                              No file attached
+                                            </Typography>
+                                          )}
+                                        </>
                                       )}
                                     </Box>
                                   </Box>
@@ -676,7 +680,7 @@ export default function McShopInspection({
                   </Button>
 
                   <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                    {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                    {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
                       <>
                         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
                           Attach PDF / Image Files

@@ -427,7 +427,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                     </Box>
 
                     <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                      {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                      {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
                         <>
                           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
                             Attach PDF / Image Files

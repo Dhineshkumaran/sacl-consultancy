@@ -671,7 +671,7 @@ function PouringDetailsTable() {
 
                                     <Grid size={{ xs: 12 }}>
                                         <Paper sx={{ p: 3, mb: 3 }}>
-                                            {(user?.role !== 'HOD' && user?.role !== 'Admin' || isEditing) && (
+                                            {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
                                                 <>
                                                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase" }}>
                                                         Attach PDF / Image Files

@@ -389,7 +389,7 @@ export default function MaterialCorrection() {
 
                                     <Grid size={{ xs: 12 }}>
                                         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3 }}>
-                                            {((user?.role !== 'HOD' && user?.role !== 'Admin' && user?.department_id !== 8) || isEditing) && (
+                                            {((user?.role !== 'HOD' && user?.role !== 'Admin' && user?.department_id !== 8)) && (
                                                 <>
                                                     <SectionHeader
                                                         icon={<UploadFileIcon />}
