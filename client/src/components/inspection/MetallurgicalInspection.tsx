@@ -928,6 +928,7 @@ export default function MetallurgicalInspection() {
     }));
 
     return {
+      trial_id: trialId,
       inspection_date: date || null,
       microRows: microRowsPayload,
       mechRows: mapRows(mechRows),
