@@ -934,7 +934,7 @@ export default function MetallurgicalInspection() {
       mechRows: mapRows(mechRows),
       impactRows: mapRows(impactRows),
       hardRows: mapRows(hardRows),
-      status: "draft",
+      is_edit: isEditing
     };
   };
 

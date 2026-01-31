@@ -312,7 +312,8 @@ function PouringDetailsTable() {
             pouring_time_sec: pouringTime,
             inoculation: { Text: inoculationText, Stream: inoculationStream, Inmould: inoculationInmould },
             other_remarks: { "F/C & Heat No.": ficHeatNo, "PP Code": ppCode, "Followed by": followedBy, "Username": userName },
-            remarks: remarksText
+            remarks: remarksText,
+            is_edit: isEditing
         };
 
         const result = pouringDetailsSchema.safeParse(validationPayload);

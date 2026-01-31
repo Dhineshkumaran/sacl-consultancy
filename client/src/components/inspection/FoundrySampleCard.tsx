@@ -513,7 +513,7 @@ function FoundrySampleCard() {
       tensile: tensileState,
       micro_structure: microState,
       hardness: hardnessState,
-      is_edit: false
+      is_edit: isEditing
     };
 
     const result = trialCardSchema.safeParse(payload);
@@ -551,13 +551,6 @@ function FoundrySampleCard() {
             tooling_modification: toolingModification,
             remarks: remarks,
             is_edit: isEditing
-          }
-
-          const result = trialCardSchema.partial().safeParse(payload);
-          if (!result.success) {
-            setErrors(result.error.flatten().fieldErrors);
-            showAlert("error", "Validation failed. Please check the form for errors.");
-            return;
           }
 
           await trialService.updateTrial(payload);
