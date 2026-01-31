@@ -553,7 +553,7 @@ function FoundrySampleCard() {
             is_edit: isEditing
           }
 
-          const result = trialCardSchema.safeParse(payload);
+          const result = trialCardSchema.partial().safeParse(payload);
           if (!result.success) {
             setErrors(result.error.flatten().fieldErrors);
             showAlert("error", "Validation failed. Please check the form for errors.");
