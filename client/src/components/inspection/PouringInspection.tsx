@@ -396,7 +396,7 @@ function PouringDetailsTable() {
                 try {
                     const uploadResults = await uploadFiles(
                         attachedFiles,
-                        trialId || "trial_id",
+                        trialId,
                         "POURING_DETAILS",
                         user?.username || "system",
                         "POURING_DETAILS"

@@ -200,7 +200,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
     setLoading(true);
     try {
-      const trialId = new URLSearchParams(window.location.search).get('trial_id') || "trial_id";
+      const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
       if ((user?.role === 'HOD' || user?.role === 'Admin') && trialId) {
         const payload = {

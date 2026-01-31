@@ -330,7 +330,7 @@ export default function DimensionalInspection({
         }
 
         try {
-            const trialId = new URLSearchParams(window.location.search).get('trial_id') || 'trial_id';
+            const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
 
             const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
             const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));

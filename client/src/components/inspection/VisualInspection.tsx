@@ -860,7 +860,7 @@ export default function VisualInspection({
                 try {
                     const uploadResults = await uploadFiles(
                         allFiles,
-                        trialId || "trial_id",
+                        trialId,
                         "VISUAL_INSPECTION",
                         user?.username || "system",
                         "VISUAL_INSPECTION"
