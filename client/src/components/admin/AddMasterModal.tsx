@@ -729,8 +729,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                                                             value={formData[row.fieldLeft] || ""}
                                                             onChange={(e) => handleInputChange(row.fieldLeft, e.target.value)}
                                                             size="small"
-                                                            error={!!errors[row.fieldLeft]}
-                                                            helperText={errors[row.fieldLeft]?.[0]}
                                                         />
                                                     </TableCell>
                                                     <TableCell colSpan={3}></TableCell>
@@ -744,8 +742,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                                                             value={formData[row.fieldLeft] || ""}
                                                             onChange={(e) => handleInputChange(row.fieldLeft, e.target.value)}
                                                             size="small"
-                                                            error={!!errors[row.fieldLeft]}
-                                                            helperText={errors[row.fieldLeft]?.[0]}
                                                         />
                                                     </TableCell>
                                                     <TableCell>{row.right}</TableCell>
@@ -765,8 +761,6 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                                                                     fullWidth
                                                                     value={formData.yield_label ? `${formData.yield_label}%` : ""}
                                                                     size="small"
-                                                                    error={!!errors[row.pp]}
-                                                                    helperText={errors[row.pp]?.[0]}
                                                                     InputProps={{
                                                                         readOnly: true,
                                                                         sx: { bgcolor: 'action.hover' }
