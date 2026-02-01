@@ -102,7 +102,7 @@ export default function DimensionalInspection({
     useEffect(() => {
         const checkAssignment = async () => {
             if (user && trialId) {
-                if (user.role === 'Admin') {
+                if (user.role === 'Admin' || user.department_id === 8) {
                     setIsAssigned(true);
                     return;
                 }
@@ -435,15 +435,15 @@ export default function DimensionalInspection({
 
             if (attachedFiles.length > 0) {
                 try {
-                await uploadFiles(
-                    attachedFiles,
-                    trialId,
-                    "DIMENSIONAL_INSPECTION",
-                    user?.username || "system",
-                    "DIMENSIONAL_INSPECTION"
-                );
+                    await uploadFiles(
+                        attachedFiles,
+                        trialId,
+                        "DIMENSIONAL_INSPECTION",
+                        user?.username || "system",
+                        "DIMENSIONAL_INSPECTION"
+                    );
                 } catch (uploadError) {
-                console.error("Draft file upload error", uploadError);
+                    console.error("Draft file upload error", uploadError);
                 }
             }
 

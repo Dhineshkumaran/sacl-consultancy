@@ -5,8 +5,13 @@ import logger from '../config/logger.js';
 
 export const createCorrection = async (req, res, next) => {
     const { trial_id, mould_thickness, compressability, squeeze_pressure, mould_hardness, remarks, date, is_draft } = req.body || {};
-    if (!trial_id || !mould_thickness || !compressability || !squeeze_pressure || !mould_hardness || !remarks || !date) {
-        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'Trial ID is required' });
+    }
+
+    const existingInspection = await Client.query('SELECT * FROM mould_correction WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length > 0) {
+        return res.status(400).json({ success: false, message: 'Mould correction already exists for this trial ID' });
     }
 
     await Client.transaction(async (trx) => {
@@ -40,6 +45,11 @@ export const updateCorrection = async (req, res, next) => {
 
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'trial_id is required' });
+    }
+
+    const existingInspection = await Client.query('SELECT * FROM mould_correction WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length === 0) {
+        return res.status(400).json({ success: false, message: 'Mould correction does not exist for this trial ID' });
     }
 
     await Client.transaction(async (trx) => {

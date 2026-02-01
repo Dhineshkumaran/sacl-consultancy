@@ -136,6 +136,40 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                                                     <Button
                                                         size="small"
                                                         variant="contained"
+                                                        onClick={() => navigate(`/foundry-sample-card?trial_id=${trial.trial_id}`)}
+                                                        sx={{
+                                                            bgcolor: '#E67E22',
+                                                            fontSize: '0.7rem',
+                                                            py: 0.5,
+                                                            px: 1.5,
+                                                            '&:hover': { bgcolor: '#D35400' },
+                                                            whiteSpace: 'nowrap',
+                                                            width: '100%',
+                                                            textTransform: 'none'
+                                                        }}
+                                                    >
+                                                        View Foundry Sample Card
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
+                                                        onClick={() => navigate(`/material-correction?trial_id=${trial.trial_id}`)}
+                                                        sx={{
+                                                            bgcolor: '#E67E22',
+                                                            fontSize: '0.7rem',
+                                                            py: 0.5,
+                                                            px: 1.5,
+                                                            '&:hover': { bgcolor: '#D35400' },
+                                                            whiteSpace: 'nowrap',
+                                                            width: '100%',
+                                                            textTransform: 'none'
+                                                        }}
+                                                    >
+                                                        View Material Correction
+                                                    </Button>
+                                                    <Button
+                                                        size="small"
+                                                        variant="contained"
                                                         onClick={() => navigate(`/visual-inspection?trial_id=${trial.trial_id}`)}
                                                         sx={{
                                                             bgcolor: '#E67E22',
@@ -170,7 +204,7 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                                                     <Button
                                                         size="small"
                                                         variant="contained"
-                                                        onClick={() => navigate(`/material-correction?trial_id=${trial.trial_id}`)}
+                                                        onClick={() => navigate(`/dimensional-inspection?trial_id=${trial.trial_id}`)}
                                                         sx={{
                                                             bgcolor: '#E67E22',
                                                             fontSize: '0.7rem',
@@ -182,7 +216,7 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                                                             textTransform: 'none'
                                                         }}
                                                     >
-                                                        View Material Correction
+                                                        View Dimensional Inspection
                                                     </Button>
                                                 </Box>
                                             ) : (

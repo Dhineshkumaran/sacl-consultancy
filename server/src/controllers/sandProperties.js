@@ -6,8 +6,13 @@ import logger from '../config/logger.js';
 export const createSandProperties = async (req, res, next) => {
     const { trial_id, date, t_clay, a_clay, vcm, loi, afs, gcs, moi, compactability, permeability, remarks, is_draft } = req.body || {};
 
-    if (!trial_id || !date || !t_clay || !a_clay || !vcm || !loi || !afs || !gcs || !moi || !compactability || !permeability || !remarks) {
-        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'Trial ID is required' });
+    }
+
+    const existingInspection = await Client.query('SELECT * FROM sand_properties WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length > 0) {
+        return res.status(400).json({ success: false, message: 'Sand properties already exists for this trial ID' });
     }
 
     await Client.transaction(async (trx) => {
@@ -41,6 +46,11 @@ export const updateSandProperties = async (req, res, next) => {
 
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'Trial ID is required' });
+    }
+
+    const existingInspection = await Client.query('SELECT * FROM sand_properties WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length === 0) {
+        return res.status(400).json({ success: false, message: 'Sand properties does not exist for this trial ID' });
     }
 
     await Client.transaction(async (trx) => {

@@ -5,9 +5,15 @@ import logger from '../config/logger.js';
 
 export const createInspection = async (req, res, next) => {
     const { trial_id, inspections, visual_ok, remarks, ndt_inspection, ndt_inspection_ok, ndt_inspection_remarks, is_draft } = req.body || {};
-    if (!trial_id || !inspections || !remarks) {
-        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'Trial ID is required' });
     }
+
+    const existingInspection = await Client.query('SELECT * FROM visual_inspection WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length > 0) {
+        return res.status(400).json({ success: false, message: 'Visual inspection already exists for this trial ID' });
+    }
+
     const inspectionsJson = JSON.stringify(inspections);
     const ndtInspectionJson = JSON.stringify(ndt_inspection || []);
 
@@ -49,6 +55,11 @@ export const updateInspection = async (req, res, next) => {
 
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'Trial ID is required' });
+    }
+
+    const existingInspection = await Client.query('SELECT * FROM visual_inspection WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length === 0) {
+        return res.status(400).json({ success: false, message: 'Visual inspection does not exist for this trial ID' });
     }
 
     const inspectionsJson = inspections ? JSON.stringify(inspections) : null;

@@ -315,7 +315,7 @@ function FoundrySampleCard() {
     const checkAssignment = async () => {
       if (!user) return;
 
-      if (user.role === 'Admin' || user.role === 'User') {
+      if (user.role === 'Admin' || user.role === 'User' || user.department_id === 8) {
         setIsAssigned(true);
         return;
       }
@@ -342,7 +342,7 @@ function FoundrySampleCard() {
 
   useEffect(() => {
     const fetchTrialDataForHOD = async () => {
-      if ((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) {
+      if ((user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && trialIdFromUrl) {
         try {
           const response = await trialService.getTrialById(trialIdFromUrl);
           if (response && response.data) {

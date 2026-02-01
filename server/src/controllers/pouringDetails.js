@@ -5,9 +5,15 @@ import logger from '../config/logger.js';
 
 export const createPouringDetails = async (req, res, next) => {
     const { trial_id, pour_date, heat_code, composition, pouring_temp_c, pouring_time_sec, inoculation, other_remarks, remarks, no_of_mould_poured, is_draft } = req.body || {};
-    if (!trial_id || !pour_date || !heat_code || !composition || !pouring_temp_c || !pouring_time_sec || !inoculation || !other_remarks || !remarks) {
-        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'Trial ID is required' });
     }
+
+    const existingInspection = await Client.query('SELECT * FROM pouring_details WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length > 0) {
+        return res.status(400).json({ success: false, message: 'Pouring details already exists for this trial ID' });
+    }
+
     const compositionJson = JSON.stringify(composition);
     const otherRemarksJson = JSON.stringify(other_remarks);
     const inoculationJson = JSON.stringify(inoculation);
@@ -60,6 +66,11 @@ export const updatePouringDetails = async (req, res, next) => {
 
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'Trial ID is required' });
+    }
+
+    const existingInspection = await Client.query('SELECT * FROM pouring_details WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length === 0) {
+        return res.status(400).json({ success: false, message: 'Pouring details does not exist for this trial ID' });
     }
 
     const compositionJson = composition ? JSON.stringify(composition) : null;

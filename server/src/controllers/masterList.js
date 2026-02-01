@@ -134,6 +134,11 @@ export const createMasterList = async (req, res, next) => {
         pattern_plate_weight_pp, crush_pin_height_pp, yield_label, remarks
     } = req.body || {};
 
+    const existingMaster = await Client.query('SELECT * FROM master_card WHERE pattern_code = @pattern_code', { pattern_code });
+    if (existingMaster.length > 0) {
+        return res.status(400).json({ success: false, message: 'Master list already exists for this pattern code' });
+    }
+
     const chemicalCompositionStr = typeof chemical_composition === 'object'
         ? JSON.stringify(chemical_composition)
         : chemical_composition;

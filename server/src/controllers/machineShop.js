@@ -5,9 +5,15 @@ import logger from '../config/logger.js';
 
 export const createMachineShop = async (req, res, next) => {
     const { trial_id, inspection_date, inspections, remarks, is_draft } = req.body || {};
-    if (!trial_id || !inspection_date || !inspections) {
-        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    if (!trial_id) {
+        return res.status(400).json({ success: false, message: 'Trial ID is required' });
     }
+
+    const existingInspection = await Client.query('SELECT * FROM machine_shop WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length > 0) {
+        return res.status(400).json({ success: false, message: 'Machine shop already exists for this trial ID' });
+    }
+
     const inspectionsJson = JSON.stringify(inspections);
 
     await Client.transaction(async (trx) => {
@@ -44,6 +50,12 @@ export const updateMachineShop = async (req, res, next) => {
     if (!trial_id) {
         return res.status(400).json({ success: false, message: 'Trial ID is required' });
     }
+
+    const existingInspection = await Client.query('SELECT * FROM machine_shop WHERE trial_id = @trial_id', { trial_id });
+    if (existingInspection.length === 0) {
+        return res.status(400).json({ success: false, message: 'Machine shop does not exist for this trial ID' });
+    }
+
     const inspectionsJson = inspections ? JSON.stringify(inspections) : null;
 
     await Client.transaction(async (trx) => {
