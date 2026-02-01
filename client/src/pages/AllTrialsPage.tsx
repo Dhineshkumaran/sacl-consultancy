@@ -33,6 +33,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import DescriptionIcon from '@mui/icons-material/Description';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import Swal from 'sweetalert2';
 import { appTheme, COLORS } from '../theme/appTheme';
 import { trialService } from '../services/trialService';
@@ -556,6 +557,43 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                                                                             variant="outlined"
                                                                                                             sx={{ textTransform: 'capitalize' }}
                                                                                                         />
+                                                                                                        {user?.role === 'Admin' && (
+                                                                                                            <Tooltip title="Toggle Status">
+                                                                                                                <IconButton
+                                                                                                                    size="small"
+                                                                                                                    onClick={async () => {
+                                                                                                                        try {
+                                                                                                                            const result = await Swal.fire({
+                                                                                                                                title: 'Toggle Status?',
+                                                                                                                                text: `Change status from ${progress.approval_status}?`,
+                                                                                                                                icon: 'question',
+                                                                                                                                showCancelButton: true,
+                                                                                                                                confirmButtonText: 'Yes, change it'
+                                                                                                                            });
+
+                                                                                                                            if (result.isConfirmed) {
+                                                                                                                                setLoadingProgress(prev => ({ ...prev, [trial.trial_id]: true }));
+                                                                                                                                const response = await departmentProgressService.toggleApprovalStatus(trial.trial_id, progress.department_id);
+                                                                                                                                if (response.success) {
+                                                                                                                                    const data = await departmentProgressService.getProgressByTrialId(trial.trial_id);
+                                                                                                                                    setTrialProgressData(prev => ({ ...prev, [trial.trial_id]: data }));
+                                                                                                                                    Swal.fire('Updated!', 'Status has been updated.', 'success');
+                                                                                                                                } else {
+                                                                                                                                    Swal.fire('Error!', response.message || 'Failed to update.', 'error');
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        } catch (error) {
+                                                                                                                            console.error("Toggle error:", error);
+                                                                                                                            Swal.fire('Error!', 'Failed to toggle status.', 'error');
+                                                                                                                        } finally {
+                                                                                                                            setLoadingProgress(prev => ({ ...prev, [trial.trial_id]: false }));
+                                                                                                                        }
+                                                                                                                    }}
+                                                                                                                >
+                                                                                                                    <PublishedWithChangesIcon fontSize="small" color="primary" />
+                                                                                                                </IconButton>
+                                                                                                            </Tooltip>
+                                                                                                        )}
                                                                                                     </Grid>
                                                                                                     <Grid size={{ xs: 12, sm: 3 }}>
                                                                                                         <Typography variant="subtitle2" color="textSecondary">Completed At</Typography>

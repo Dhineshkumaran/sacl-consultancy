@@ -54,3 +54,35 @@ export const getProgressByTrialId = async (req, res, next) => {
         data: result
     });
 };
+export const toggleApprovalStatus = async (req, res, next) => {
+    const { trial_id, department_id } = req.body;
+    
+    const [current] = await Client.query(
+        `SELECT approval_status FROM department_progress WHERE trial_id = @trial_id AND department_id = @department_id`,
+        { trial_id, department_id }
+    );
+
+    if (!current || current.length === 0) {
+        return res.status(404).json({ success: false, message: 'Progress record not found' });
+    }
+
+    const newStatus = current[0].approval_status === 'pending' ? 'approved' : 'pending';
+    
+    await Client.query(
+        `UPDATE department_progress SET approval_status = @newStatus WHERE trial_id = @trial_id AND department_id = @department_id`,
+        { newStatus, trial_id, department_id }
+    );
+
+    await Client.query(
+        `INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)`,
+        { 
+            user_id: req.user.user_id, 
+            department_id: req.user.department_id, 
+            trial_id, 
+            action: 'Approval Status Toggled', 
+            remarks: `Status changed to ${newStatus} by Admin`
+        }
+    );
+
+    res.status(200).json({ success: true, message: `Status updated to ${newStatus}` });
+};

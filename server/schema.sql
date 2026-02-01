@@ -214,6 +214,7 @@ CREATE TABLE department_progress (
     approval_status VARCHAR(20) NOT NULL DEFAULT 'pending',
     remarks NVARCHAR(MAX),
     CONSTRAINT chk_approval_status CHECK (approval_status IN ('pending', 'approved')),
+    CONSTRAINT uq_trial_department UNIQUE (trial_id, department_id),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE,
     FOREIGN KEY (department_id) REFERENCES departments(department_id),
     FOREIGN KEY (username) REFERENCES users(username)

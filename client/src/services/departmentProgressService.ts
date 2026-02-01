@@ -36,4 +36,14 @@ export async function getProgressByTrialId(trial_id: string): Promise<ProgressIt
   return Array.isArray(data.data) ? data.data as ProgressItem[] : [];
 }
 
-export default { getProgress, getCompletedTrials, getProgressByTrialId };
+export async function toggleApprovalStatus(trial_id: string, department_id: number): Promise<any> {
+  return await apiService.request('/department-progress/toggle-approval-status', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ trial_id, department_id })
+  });
+}
+
+export default { getProgress, getCompletedTrials, getProgressByTrialId, toggleApprovalStatus };
