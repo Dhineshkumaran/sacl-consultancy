@@ -40,6 +40,7 @@ import { formatDate } from "../../utils";
 import Header from "../dashboard/Header";
 import ProfileModal from "../dashboard/ProfileModal";
 import { getDepartmentInfo } from "../../utils/dashboardUtils";
+import { safeParse } from "../../utils/jsonUtils";
 
 
 const COLORS = {
@@ -245,7 +246,7 @@ function PouringDetailsTable() {
                         setPouringDate(data.pour_date ? new Date(data.pour_date).toISOString().slice(0, 10) : "");
                         setHeatCode(data.heat_code || "");
 
-                        const comp = typeof data.composition === 'string' ? JSON.parse(data.composition) : data.composition || {};
+                        const comp = safeParse<any>(data.composition, {});
                         setChemState({
                             c: comp.C || "",
                             si: comp.Si || "",
@@ -260,12 +261,12 @@ function PouringDetailsTable() {
                         setPouringTemp(String(data.pouring_temp_c || ""));
                         setPouringTime(String(data.pouring_time_sec || ""));
 
-                        const inoc = typeof data.inoculation === 'string' ? JSON.parse(data.inoculation) : data.inoculation || {};
+                        const inoc = safeParse<any>(data.inoculation, {});
                         setInoculationText(inoc.Text || "");
                         setInoculationStream(inoc.Stream || "");
                         setInoculationInmould(inoc.Inmould || "");
 
-                        const rem = typeof data.other_remarks === 'string' ? JSON.parse(data.other_remarks) : data.other_remarks || {};
+                        const rem = safeParse<any>(data.other_remarks, {});
                         setFicHeatNo(rem["F/C & Heat No."] || "");
                         setPpCode(rem["PP Code"] || "");
                         setFollowedBy(rem["Followed by"] || "");

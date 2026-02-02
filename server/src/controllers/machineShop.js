@@ -81,6 +81,8 @@ export const updateMachineShop = async (req, res, next) => {
             } else {
                 await updateDepartment(trial_id, req.user, trx);
             }
+        } else {
+            await approveProgress(trial_id, req.user, trx);
         }
     });
 

@@ -14,9 +14,11 @@ export const createInspection = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'Dimensional inspection already exists for this trial ID' });
     }
 
+    const inspectionsJson = JSON.stringify(inspections || []);
+
     await Client.transaction(async (trx) => {
         const sql = 'INSERT INTO dimensional_inspection (trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks) VALUES (@trial_id, @inspection_date, @casting_weight, @bunch_weight, @no_of_cavities, @yields, @inspections, @remarks)';
-        await trx.query(sql, { trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections, remarks });
+        await trx.query(sql, { trial_id, inspection_date, casting_weight, bunch_weight, no_of_cavities, yields, inspections: inspectionsJson, remarks });
 
         const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
         await trx.query(audit_sql, {
@@ -93,7 +95,7 @@ export const updateInspection = async (req, res, next) => {
         if (req.user.role !== 'Admin') {
             if (req.body.is_draft) {
                 await triggerNextDepartment(trial_id, req.user, trx);
-            } else if(req.user.role === 'User'){
+            } else if (req.user.role === 'User') {
                 await updateRole(trial_id, req.user, trx);
             } else {
                 await updateDepartment(trial_id, req.user, trx);

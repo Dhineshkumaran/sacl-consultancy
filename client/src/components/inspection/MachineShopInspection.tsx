@@ -43,6 +43,7 @@ import ProfileModal from "../dashboard/ProfileModal";
 import { getDepartmentInfo } from "../../utils/dashboardUtils";
 import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
+import { safeParse } from "../../utils/jsonUtils";
 
 
 type Row = InspectionRow;
@@ -135,54 +136,58 @@ export default function McShopInspection({
         try {
           const response = await inspectionService.getMachineShopInspection(trialId);
           if (response.success && response.data && response.data.length > 0) {
-
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
-            if (data.inspections) {
-              let inspections: any[] = [];
-              try {
-                inspections = typeof data.inspections === 'string' ? JSON.parse(data.inspections) : data.inspections;
-              } catch (e) {
-                console.warn("Failed to parse inspections JSON", e);
-                inspections = [];
-              }
-              if (!Array.isArray(inspections)) inspections = [];
+            const parsedInspections = safeParse<any[]>(data.inspections, []);
 
-              if (inspections.length > 0) {
-                const newCavities = inspections.map((item: any) => item['Cavity Details'] || "");
-                setCavities(newCavities);
+            if (parsedInspections.length > 0) {
+              const newCavities = parsedInspections.map((item: any) => item['Cavity Details'] || "");
+              setCavities(newCavities);
 
-                const getVals = (key: string) => inspections.map((item: any) => item[key] ?? "");
+              const getVals = (key: string) => parsedInspections.map((item: any) => item[key] ?? "");
 
-                setRows(prevRows => {
-                  const newRows = [...prevRows];
-                  const updateRowVals = (labelSnippet: string, values: any[]) => {
-                    const rIndex = newRows.findIndex(r => r.label.toLowerCase().includes(labelSnippet));
-                    if (rIndex !== -1) {
-                      newRows[rIndex] = {
-                        ...newRows[rIndex],
-                        values: values.map(String),
-                        total: labelSnippet === 'cavity details' ? null : values.reduce((acc, v) => acc + (parseFloat(String(v)) || 0), 0)
-                      };
-                    }
-                  };
+              setRows(prevRows => {
+                const newRows = [...prevRows];
+                const updateRowVals = (labelSnippet: string, values: any[]) => {
+                  const rIndex = newRows.findIndex(r => r.label.toLowerCase().includes(labelSnippet));
+                  if (rIndex !== -1) {
+                    const isPercentage = labelSnippet === 'rejection percentage';
+                    const isCavity = labelSnippet === 'cavity details';
+                    const isReason = labelSnippet.includes('reason');
 
-                  updateRowVals('cavity details', newCavities);
-                  updateRowVals('received', getVals('Received Quantity'));
-                  updateRowVals('inspected', getVals('Inspected Quantity'));
-                  updateRowVals('accepted', getVals('Accepted Quantity'));
-                  updateRowVals('rejected', getVals('Rejected Quantity'));
-                  updateRowVals('rejection percentage', getVals('Rejection Percentage (%)'));
-                  updateRowVals('reason', getVals('Reason for rejection'));
+                    newRows[rIndex] = {
+                      ...newRows[rIndex],
+                      values: values.map(String),
+                      total: (isCavity || isReason || isPercentage) ? null : values.reduce((acc, v) => acc + (parseFloat(String(v)) || 0), 0)
+                    };
+                  }
+                };
 
-                  return newRows;
-                });
-              }
+                updateRowVals('cavity details', newCavities);
+                updateRowVals('received', getVals('Received Quantity'));
+                updateRowVals('inspected', getVals('Inspected Quantity'));
+                updateRowVals('accepted', getVals('Accepted Quantity'));
+                updateRowVals('rejected', getVals('Rejected Quantity'));
+                updateRowVals('rejection percentage', getVals('Rejection Percentage (%)'));
+                updateRowVals('reason', getVals('Reason for rejection'));
+
+                const inspRow = newRows.find(r => r.label === "Inspected Quantity");
+                const rejRow = newRows.find(r => r.label === "Rejected Quantity");
+                const percRow = newRows.find(r => r.label === "Rejection Percentage (%)");
+
+                if (inspRow && rejRow && percRow) {
+                  const totalInsp = inspRow.total || 0;
+                  const totalRej = rejRow.total || 0;
+                  if (totalInsp > 0) {
+                    percRow.total = parseFloat(((totalRej / totalInsp) * 100).toFixed(2));
+                  }
+                }
+
+                return newRows;
+              });
             }
-
             setGroupMeta(prev => ({ ...prev, remarks: data.remarks || "" }));
             setDataExists(true);
-
           }
         } catch (error) {
           console.error("Failed to fetch machine shop data:", error);
@@ -327,18 +332,36 @@ export default function McShopInspection({
     };
   };
 
+  const buildServerPayload = (isDraft: boolean = false) => {
+    const receivedRow = rows.find(r => r.label === "Received Quantity");
+    const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
+    const acceptedRow = rows.find(r => r.label === "Accepted Quantity");
+    const rejectedRow = rows.find(r => r.label === "Rejected Quantity");
+    const percentageRow = rows.find(r => r.label === "Rejection Percentage (%)");
+    const reasonRow = rows.find(r => r.label === "Reason for rejection:");
+
+    const inspections: any[] = cavities.map((cav, idx) => ({
+      'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
+      'Received Quantity': receivedRow?.values?.[idx] ?? null,
+      'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
+      'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
+      'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
+      'Rejection Percentage (%)': percentageRow?.values?.[idx] ?? null,
+      'Reason for rejection': reasonRow?.values?.[idx] ?? null,
+    }));
+
+    return {
+      trial_id: trialId,
+      inspection_date: date || null,
+      inspections: inspections,
+      remarks: groupMeta.remarks || null,
+      is_edit: isEditing || dataExists,
+      is_draft: isDraft
+    };
+  };
+
   const handleSaveAndContinue = async () => {
     const payload = buildPayload();
-
-    const validationPayload = {
-      trial_id: trialId,
-      inspection_date: payload.inspection_date,
-      inspections: payload.rows.map((row, idx) => ({ ...row, values: row.values })),
-      remarks: payload.right_remarks,
-      is_edit: isEditing
-    };
-
-
 
     setPreviewPayload(payload);
     setPreviewMode(true);
@@ -350,120 +373,23 @@ export default function McShopInspection({
     if (!previewPayload) return;
     setSaving(true);
 
-    setSaving(true);
-    setSaving(true);
-
-    if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-      try {
-        const payload = buildPayload();
-        const receivedRow = rows[1];
-        const inspectedRow = rows[2];
-        const acceptedRow = rows[3];
-        const rejectedRow = rows[4];
-        const percentageRow = rows[5];
-        const reasonRow = rows[6];
-
-        const inspections: any[] = cavities.map((cav, idx) => {
-          return {
-            'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
-            'Received Quantity': receivedRow?.values?.[idx] ?? null,
-            'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
-            'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
-            'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
-            'Rejection Percentage (%)': percentageRow?.values?.[idx] ?? null,
-            'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-          };
-        });
-
-        const serverPayload = {
-          trial_id: trialId,
-          inspection_date: payload.inspection_date,
-          inspections: inspections,
-          remarks: groupMeta.remarks || null,
-          is_edit: isEditing || dataExists
-        };
-
-        await inspectionService.updateMachineShopInspection(serverPayload);
-
-        setPreviewSubmitted(true);
-        setPreviewMode(false);
-        await Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Machine Shop Inspection updated successfully.'
-        });
-        navigate('/dashboard');
-      } catch (err: any) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: err.message || 'Failed to update Machine Shop Inspection. Please try again.'
-        });
-        console.error(err);
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-
     try {
-      const trialIdParam = trialId;
+      const serverPayload = buildServerPayload(false);
 
-      const payload = buildPayload();
-      const receivedRow = rows[1];
-      const inspectedRow = rows[2];
-      const acceptedRow = rows[3];
-      const rejectedRow = rows[4];
-      const percentageRow = rows[5];
-      const reasonRow = rows[6];
-
-      const inspections: any[] = cavities.map((cav, idx) => {
-        return {
-          'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
-          'Received Quantity': receivedRow?.values?.[idx] ?? null,
-          'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
-          'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
-          'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
-          'Rejection Percentage (%)': percentageRow?.values?.[idx] ?? null,
-          'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-        };
-      });
-
-      const serverPayload = {
-        trial_id: trialIdParam,
-        inspection_date: payload.inspection_date,
-        inspections: inspections,
-        remarks: groupMeta.remarks || null,
-      };
-
-      await inspectionService.submitMachineShopInspection(serverPayload);
+      if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
+        await inspectionService.updateMachineShopInspection(serverPayload);
+      } else {
+        await inspectionService.submitMachineShopInspection(serverPayload);
+      }
 
       if (attachedFiles.length > 0) {
-        try {
-          const uploadResults = await uploadFiles(
-            attachedFiles,
-            trialIdParam,
-            "MC_SHOP_INSPECTION",
-            user?.username || "system",
-            "MC_SHOP_INSPECTION"
-          );
-
-          const failures = uploadResults.filter(r => !r.success);
-          if (failures.length > 0) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Some files failed to upload. Please try again.'
-            });
-          }
-        } catch (uploadError) {
-          console.error("File upload error:", uploadError);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'File upload error. Please try again.'
-          });
-        }
+        await uploadFiles(
+          attachedFiles,
+          trialId,
+          "MC_SHOP_INSPECTION",
+          user?.username || "system",
+          "MC_SHOP_INSPECTION"
+        );
       }
 
       setPreviewSubmitted(true);
@@ -471,7 +397,7 @@ export default function McShopInspection({
       await Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: 'Machine shop inspection created successfully.'
+        text: `Machine Shop Inspection ${dataExists ? 'updated' : 'created'} successfully.`
       });
       navigate('/dashboard');
     } catch (err: any) {
@@ -489,34 +415,7 @@ export default function McShopInspection({
   const handleSaveDraft = async () => {
     setSaving(true);
     try {
-      const payload = buildPayload();
-      const receivedRow = rows[1];
-      const inspectedRow = rows[2];
-      const acceptedRow = rows[3];
-      const rejectedRow = rows[4];
-      const percentageRow = rows[5];
-      const reasonRow = rows[6];
-
-      const inspections: any[] = cavities.map((cav, idx) => {
-        return {
-          'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
-          'Received Quantity': receivedRow?.values?.[idx] ?? null,
-          'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
-          'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
-          'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
-          'Rejection Percentage (%)': percentageRow?.values?.[idx] ?? null,
-          'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-        };
-      });
-
-      const serverPayload = {
-        trial_id: trialId,
-        inspection_date: payload.inspection_date,
-        inspections: inspections,
-        remarks: groupMeta.remarks || null,
-        is_edit: isEditing || dataExists,
-        is_draft: true
-      };
+      const serverPayload = buildServerPayload(true);
 
       if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
         await inspectionService.updateMachineShopInspection(serverPayload);

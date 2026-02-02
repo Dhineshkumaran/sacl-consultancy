@@ -47,6 +47,7 @@ import { fileToMeta, generateUid, validateFileSizes, formatDate } from '../../ut
 import type { InspectionRow, GroupMetadata } from '../../types/inspection';
 import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
+import { safeParse } from '../../utils/jsonUtils';
 
 
 type CavRow = InspectionRow;
@@ -135,17 +136,9 @@ export default function DimensionalInspection({
                         setGroupMeta({ remarks: data.remarks || "", attachment: null });
                         setRemarks(data.remarks || "");
 
-                        let inspections = data.inspections;
-                        if (typeof inspections === 'string') {
-                            try {
-                                inspections = JSON.parse(inspections);
-                            } catch (parseError) {
-                                console.error("Failed to parse inspections JSON:", parseError);
-                                inspections = [];
-                            }
-                        }
+                        const inspections = safeParse<any[]>(data.inspections, []);
 
-                        if (inspections && Array.isArray(inspections)) {
+                        if (inspections.length > 0) {
                             setCavities(inspections.map((_: any, i: number) => `Cavity ${i + 1}`));
                             setCavRows(prev => prev.map(row => {
                                 if (row.label === "Cavity Number") {
@@ -304,7 +297,7 @@ export default function DimensionalInspection({
                     bunch_weight: parseFloat(previewPayload.bunch_weight || "0") || 0,
                     no_of_cavities: parseInt(previewPayload.number_of_cavity || "0") || (previewPayload.cavities ? previewPayload.cavities.length : 0),
                     yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
-                    inspections: JSON.stringify(inspections),
+                    inspections: inspections,
                     remarks: previewPayload.remarks || "",
                     is_edit: isEditing || dataExists
                 };
@@ -349,7 +342,7 @@ export default function DimensionalInspection({
                 bunch_weight: parseFloat(previewPayload.bunch_weight || "0") || 0,
                 no_of_cavities: parseInt(previewPayload.number_of_cavity || "0") || (previewPayload.cavities ? previewPayload.cavities.length : 0),
                 yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
-                inspections: JSON.stringify(inspections),
+                inspections: inspections,
                 remarks: previewPayload.remarks || ""
             };
 
@@ -421,7 +414,7 @@ export default function DimensionalInspection({
                 bunch_weight: parseFloat(payload.bunch_weight || "0") || 0,
                 no_of_cavities: parseInt(payload.number_of_cavity || "0") || (payload.cavities ? payload.cavities.length : 0),
                 yields: payload.yield ? parseFloat(payload.yield) : null,
-                inspections: JSON.stringify(inspections),
+                inspections: inspections,
                 remarks: payload.remarks || "",
                 is_edit: isEditing,
                 is_draft: true

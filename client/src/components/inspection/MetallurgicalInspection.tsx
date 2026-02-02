@@ -53,6 +53,7 @@ import { AlertMessage } from '../common/AlertMessage';
 import { fileToMeta, generateUid, validateFileSizes, formatDate } from '../../utils';
 import { LoadingState, EmptyState, ActionButtons, PreviewModal, FileUploadSection, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
+import { safeParse } from "../../utils/jsonUtils";
 import { apiService } from "../../services/commonService";
 import Header from "../dashboard/Header";
 import ProfileModal from "../dashboard/ProfileModal";
@@ -844,14 +845,8 @@ export default function MetallurgicalInspection() {
             const data = response.data[0];
             setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
 
-            const parseRows = (jsonStr: string | object) => {
-              if (!jsonStr) return [];
-              const arr = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
-              return Array.isArray(arr) ? arr : [];
-            };
-
             if (data.micro_structure) {
-              const microData = parseRows(data.micro_structure);
+              const microData = safeParse<any[]>(data.micro_structure, []);
               if (microData.length > 0) {
                 const colsCount = Math.max(...microData.map((m: any) => m.values ? m.values.length : 0), 1);
                 setMicroCols(Array.from({ length: colsCount }, (_, i) => ({ id: `c${i + 1}`, label: '' })));
@@ -862,7 +857,6 @@ export default function MetallurgicalInspection() {
                 });
                 setMicroValues(prev => ({ ...prev, ...newValues }));
 
-                const groupAttachName = data.micro_structure_attachment_name;
                 setMicroMeta(prev => ({
                   ...prev,
                   'group': {
@@ -875,7 +869,7 @@ export default function MetallurgicalInspection() {
             }
 
             const restoreSection = (source: any) => {
-              const arr = parseRows(source);
+              const arr = safeParse<any[]>(source, []);
               return arr.map((r: any) => ({
                 id: r.label + "-" + generateUid(),
                 label: r.label,
@@ -887,8 +881,8 @@ export default function MetallurgicalInspection() {
               }));
             }
 
-            if (data.mech_properties) setMechRows(restoreSection(data.mech_properties));
-            if (data.impact_strength) setImpactRows(restoreSection(data.impact_strength));
+            setMechRows(restoreSection(data.mech_properties));
+            setImpactRows(restoreSection(data.impact_strength));
 
             setLoadKey(prev => prev + 1);
             setDataExists(true);

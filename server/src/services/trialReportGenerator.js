@@ -392,11 +392,24 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
             const fileName = `Trial_Report_${trial_id}.pdf`;
 
             try {
-                await trx.query(
-                    `INSERT INTO trial_reports (trial_id, document_type, file_name, file_base64) 
-                     VALUES (@trial_id, 'FULL_REPORT', @file_name, @file_base64)`,
-                    { trial_id, file_name: fileName, file_base64: base64PDF }
+                const existingReport = await trx.query(
+                    `SELECT document_id FROM trial_reports WHERE trial_id = @trial_id`,
+                    { trial_id }
                 );
+
+                if (existingReport.length > 0) {
+                    await trx.query(
+                        `UPDATE trial_reports SET document_type = 'FULL_REPORT', file_name = @file_name, file_base64 = @file_base64 
+                         WHERE trial_id = @trial_id`,
+                        { trial_id, file_name: fileName, file_base64: base64PDF }
+                    );
+                } else {
+                    await trx.query(
+                        `INSERT INTO trial_reports (trial_id, document_type, file_name, file_base64) 
+                         VALUES (@trial_id, 'FULL_REPORT', @file_name, @file_base64)`,
+                        { trial_id, file_name: fileName, file_base64: base64PDF }
+                    );
+                }
                 resolve(true);
             } catch (err) {
                 reject(err);

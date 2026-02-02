@@ -366,6 +366,7 @@ CREATE TABLE trial_reports (
     deleted_at DATETIME2,
     deleted_by VARCHAR(50),
     remarks NVARCHAR(MAX),
+    CONSTRAINT uq_trial_reports_trial UNIQUE (trial_id),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );
 GO
@@ -381,7 +382,8 @@ CREATE TABLE consolidated_reports (
     file_name VARCHAR(255) NOT NULL,
     file_base64 NVARCHAR(MAX),
     uploaded_at DATETIME2 DEFAULT GETDATE(),
-    remarks NVARCHAR(MAX)
+    remarks NVARCHAR(MAX),
+    CONSTRAINT uq_consolidated_reports_pattern UNIQUE (pattern_code),
 );
 GO
 

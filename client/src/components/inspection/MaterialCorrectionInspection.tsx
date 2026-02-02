@@ -48,6 +48,7 @@ import { ActionButtons, EmptyState } from "../common";
 import departmentProgressService from "../../services/departmentProgressService";
 import { useAlert } from "../../hooks/useAlert";
 import { apiService } from "../../services/commonService";
+import { safeParse } from "../../utils/jsonUtils";
 
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: string, color: string }) => (
@@ -124,9 +125,7 @@ export default function MaterialCorrection() {
                     if (response.success && response.data && response.data.length > 0) {
                         const data = response.data[0];
 
-                        const comp = typeof data.chemical_composition === 'string'
-                            ? JSON.parse(data.chemical_composition)
-                            : data.chemical_composition || {};
+                        const comp = safeParse<any>(data.chemical_composition, {});
 
                         setChemState({
                             c: comp.c || "",
@@ -139,9 +138,7 @@ export default function MaterialCorrection() {
                             cu: comp.cu || ""
                         });
 
-                        const proc = typeof data.process_parameters === 'string'
-                            ? JSON.parse(data.process_parameters)
-                            : data.process_parameters || {};
+                        const proc = safeParse<any>(data.process_parameters, {});
 
                         setProcessState({
                             pouringTemp: proc.pouringTemp || "",

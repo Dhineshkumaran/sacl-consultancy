@@ -48,6 +48,7 @@ import { AlertMessage } from '../common/AlertMessage';
 import { fileToMeta, generateUid, validateFileSizes, formatDateTime } from '../../utils';
 import type { InspectionRow, GroupMetadata } from '../../types/inspection';
 import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
+import { safeParse } from '../../utils/jsonUtils';
 import BasicInfo from "../dashboard/BasicInfo";
 
 type Row = InspectionRow;
@@ -472,17 +473,8 @@ export default function VisualInspection({
                         const data = response.data[0];
                         if (data.inspection_date) setDate(new Date(data.inspection_date).toISOString().slice(0, 10));
 
-                        let inspections = data.inspections;
-                        if (typeof inspections === 'string') {
-                            try {
-                                inspections = JSON.parse(inspections);
-                            } catch (parseError) {
-                                console.error("Failed to parse inspections JSON:", parseError);
-                                inspections = [];
-                            }
-                        }
-
-                        if (inspections && Array.isArray(inspections)) {
+                        const inspections = safeParse<any[]>(data.inspections, []);
+                        if (inspections.length > 0) {
                             const loadedCols = inspections.map((item: any) => item['Cavity Number'] || '');
 
                             setCols(loadedCols);
@@ -503,22 +495,11 @@ export default function VisualInspection({
                             attachment: linkedAttachment || null
                         });
 
-                        if (data.ndt_inspection) {
-                            try {
-                                const parsed = typeof data.ndt_inspection === 'string' ? JSON.parse(data.ndt_inspection) : data.ndt_inspection;
-                                if (Array.isArray(parsed)) {
-                                    setNdtRows(parsed);
-                                }
-                            } catch (e) { console.error(e); }
-                        }
-                        if (data.hardness) {
-                            try {
-                                const parsed = typeof data.hardness === 'string' ? JSON.parse(data.hardness) : data.hardness;
-                                if (Array.isArray(parsed)) {
-                                    setHardRows(parsed);
-                                }
-                            } catch (e) { console.error(e); }
-                        }
+                        const ndt_inspection = safeParse<NdtRow[]>(data.ndt_inspection, []);
+                        setNdtRows(ndt_inspection);
+
+                        const hardness = safeParse<NdtRow[]>(data.hardness, []);
+                        setHardRows(hardness);
                         setDataExists(true);
                     }
                 } catch (error) {
