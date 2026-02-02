@@ -1,4 +1,4 @@
-import Client from "../config/db.js";
+import Client from "../config/connection.js";
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 import CustomError from '../utils/customError.js';
 
