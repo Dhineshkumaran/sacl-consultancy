@@ -63,11 +63,12 @@ export const getAllData = async (req, res, next) => {
     }
 };
 
-const safeParse = (data, fallback = {}) => {
+const safeParse = (data, fallback = []) => {
     if (!data) return fallback;
-    if (typeof data === 'object') return data;
     try {
-        return JSON.parse(data);
+        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+        if (Array.isArray(fallback) && !Array.isArray(parsed)) return fallback;
+        return parsed || fallback;
     } catch (e) {
         return fallback;
     }
@@ -303,19 +304,27 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     const impactRows = safeParse(meta.impact_strength, []);
     const microRows = safeParse(meta.micro_structure, []);
 
+    let metLeftY = p2y;
+
+    if (mechRows.length > 0) {
+        doc.font('Helvetica-Bold').fontSize(7).text("Mechanical Properties", col1X, metLeftY);
+        metLeftY += 10;
+        metLeftY = drawTable(doc, { headers: ["Param", "Value", "Res", "Rem"], rows: Array.isArray(mechRows) ? mechRows.map(r => [r.label, r.value, r.ok ? "OK" : "NOK", r.remarks]) : [] }, col1X, metLeftY, [80, 50, 30, 90]) + 10;
+    }
+
     p2y = metLeftY;
 
     if (impactRows.length > 0) {
         doc.font('Helvetica-Bold').fontSize(7).text("Impact Strength", col1X, p2y);
         p2y += 10;
-        p2y = drawTable(doc, { headers: ["Param", "Value", "Res", "Rem"], rows: impactRows.map(r => [r.label, r.value, r.ok ? "OK" : "NOK", r.remarks]) }, col1X, p2y, [80, 50, 30, 90]) + 10;
+        p2y = drawTable(doc, { headers: ["Param", "Value", "Res", "Rem"], rows: Array.isArray(impactRows) ? impactRows.map(r => [r.label, r.value, r.ok ? "OK" : "NOK", r.remarks]) : [] }, col1X, p2y, [80, 50, 30, 90]) + 10;
     }
 
     if (microRows.length > 0) {
         doc.font('Helvetica-Bold').fontSize(7).text("Microstructure", col1X, p2y);
         p2y += 10;
         // Full width table
-        p2y = drawTable(doc, { headers: ["Parameter", "Values", "Result", "Remarks"], rows: microRows.map(r => [r.label, r.values?.join(", "), r.ok ? "OK" : "NOK", r.remarks]) }, col1X, p2y, [140, 180, 40, 175]) + 10;
+        p2y = drawTable(doc, { headers: ["Parameter", "Values", "Result", "Remarks"], rows: Array.isArray(microRows) ? microRows.map(r => [r.label, r.values?.join(", "), r.ok ? "OK" : "NOK", r.remarks]) : [] }, col1X, p2y, [140, 180, 40, 175]) + 10;
     }
 
     p2y += 5;
@@ -352,7 +361,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
 
     const dimInspections = safeParse(dimensional.inspections, []);
     if (dimInspections.length > 0) {
-        dimY = drawTable(doc, { headers: ['Cavity', 'Weight (kg)'], rows: dimInspections.map(r => [r['Cavity Number'], r['Casting Weight']]) }, col2X, dimY, [130, 130]) + 8;
+        dimY = drawTable(doc, { headers: ['Cavity', 'Weight (kg)'], rows: Array.isArray(dimInspections) ? dimInspections.map(r => [r['Cavity Number'], r['Casting Weight']]) : [] }, col2X, dimY, [130, 130]) + 8;
     }
 
     p2NextY = Math.max(visitY, dimY) + 10;

@@ -1,8 +1,13 @@
 import sql from 'mssql';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import CustomError from '../utils/customError.js';
 import logger from './logger.js';
-dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const config = {
   user: process.env.DB_USER,

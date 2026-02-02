@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Nginx config
+nginx/conf.d/default.conf
+
+# OS files
+.DS_Store
+Thumbs.db
