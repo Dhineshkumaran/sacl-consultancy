@@ -645,32 +645,32 @@ export default function VisualInspection({
     };
 
     const buildPayload = () => {
+        const processedRows = rows.map(r => {
+            const totalVal = r.label.toLowerCase().includes("cavity") ? null : r.values.reduce((acc, v) => {
+                const n = parseFloat(String(v).trim());
+                return acc + (isNaN(n) ? 0 : n);
+            }, 0);
+            return { ...r, total: totalVal };
+        });
+
+        const inspRow = processedRows.find(r => r.label === "Inspected Quantity");
+        const rejRow = processedRows.find(r => r.label === "Rejected Quantity");
+        const percRow = processedRows.find(r => r.label === "Rejection Percentage (%)");
+
+        if (inspRow && rejRow && percRow) {
+            const totalInsp = inspRow.total || 0;
+            const totalRej = rejRow.total || 0;
+            if (totalInsp > 0) {
+                percRow.total = parseFloat(((totalRej / totalInsp) * 100).toFixed(2));
+            } else {
+                percRow.total = 0;
+            }
+        }
+
         return {
             created_at: formatDateTime(new Date().toISOString()),
             cols: cols.slice(),
-            rows: rows.map(r => {
-                if (r.label === "Rejection Percentage (%)") {
-                    const inspectedRow = rows.find(row => row.label === "Inspected Quantity");
-                    const rejectedRow = rows.find(row => row.label === "Rejected Quantity");
-                    const calculatedValues = r.values.map((_, i) => {
-                        const ins = parseFloat(inspectedRow?.values[i] || "0");
-                        const rej = parseFloat(rejectedRow?.values[i] || "0");
-                        if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
-                        return ((rej / ins) * 100).toFixed(2);
-                    });
-                    return { ...r, values: calculatedValues, total: null };
-                }
-                return {
-                    label: r.label,
-                    values: r.values,
-
-                    total: r.label === "Cavity Number" ? null : r.values.reduce((acc, v) => {
-                        const n = parseFloat(String(v).trim());
-                        return acc + (isNaN(n) ? 0 : n);
-                    }, 0)
-                };
-            }),
-
+            rows: processedRows,
             group: {
                 ok: groupMeta.ok,
                 remarks: groupMeta.remarks || null,
@@ -687,54 +687,58 @@ export default function VisualInspection({
         };
     };
 
+    const buildServerPayload = (isDraft: boolean = false) => {
+        const source = previewPayload || buildPayload();
+
+        const findRow = (labelPart: string) => source.rows.find((r: any) => r.label.toLowerCase().includes(labelPart));
+        const cavityRow = findRow('cavity number');
+        const inspectedRow = findRow('inspected quantity');
+        const acceptedRow = findRow('accepted quantity');
+        const rejectedRow = findRow('rejected quantity');
+        const reasonRow = findRow('reason for rejection');
+
+        const inspections = cols.map((col, idx) => {
+            const inspected = inspectedRow?.values?.[idx] ?? null;
+            const accepted = acceptedRow?.values?.[idx] ?? null;
+            const rejected = rejectedRow?.values?.[idx] ?? null;
+            const rejectionPercentage = (() => {
+                const ins = parseFloat(String(inspected ?? '0'));
+                const rej = parseFloat(String(rejected ?? '0'));
+                if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
+                return ((rej / ins) * 100).toFixed(2);
+            })();
+
+            return {
+                'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
+                'Inspected Quantity': inspected ?? null,
+                'Accepted Quantity': accepted ?? null,
+                'Rejected Quantity': rejected ?? null,
+                'Rejection Percentage': rejectionPercentage ?? null,
+                'Reason for rejection': reasonRow?.values?.[idx] ?? null,
+            };
+        });
+
+        return {
+            trial_id: trialId,
+            inspections,
+            visual_ok: groupMeta.ok,
+            remarks: groupMeta.remarks || null,
+            ndt_inspection: ndtRows.length > 0 ? ndtRows : null,
+            ndt_inspection_ok: ndtRows[0]?.ok,
+            ndt_inspection_remarks: ndtRows[0]?.remarks,
+            hardness: hardRows.length > 0 ? hardRows : null,
+            hardness_ok: hardRows[0]?.ok,
+            hardness_remarks: hardRows[0]?.remarks,
+            is_edit: isEditing || dataExists,
+            is_draft: isDraft
+        };
+    };
+
     const handleSaveAndContinue = () => {
         setSaving(true);
         setMessage(null);
         try {
             const payload = buildPayload();
-
-            const inspections = cols.map((col, idx) => {
-                const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
-                const cavityRow = findRow('cavity number');
-                const inspectedRow = findRow('inspected quantity');
-                const acceptedRow = findRow('accepted quantity');
-                const rejectedRow = findRow('rejected quantity');
-                const reasonRow = findRow('reason for rejection');
-
-                const inspected = inspectedRow?.values?.[idx] ?? null;
-                const accepted = acceptedRow?.values?.[idx] ?? null;
-                const rejected = rejectedRow?.values?.[idx] ?? null;
-                const rejectionPercentage = (() => {
-                    const ins = parseFloat(String(inspected ?? '0'));
-                    const rej = parseFloat(String(rejected ?? '0'));
-                    if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
-                    return ((rej / ins) * 100).toFixed(2);
-                })();
-
-                return {
-                    'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
-                    'Inspected Quantity': inspected ?? null,
-                    'Accepted Quantity': accepted ?? null,
-                    'Rejected Quantity': rejected ?? null,
-                    'Rejection Percentage': rejectionPercentage ?? null,
-                    'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-                };
-            });
-
-            const validationPayload = {
-                trial_id: trialId,
-                inspections,
-                visual_ok: groupMeta.ok,
-                remarks: groupMeta.remarks || null,
-                ndt_inspection: ndtRows.length > 0 ? ndtRows : null,
-                ndt_inspection_ok: ndtRows[0]?.ok,
-                ndt_inspection_remarks: ndtRows[0]?.remarks,
-                hardness: hardRows,
-                hardness_ok: hardRows[0]?.ok,
-                hardness_remarks: hardRows[0]?.remarks,
-                is_edit: isEditing
-            };
-
             setPreviewPayload(payload);
             setPreviewMode(true);
             setSubmitted(false);
@@ -750,132 +754,26 @@ export default function VisualInspection({
         setSaving(true);
         setMessage(null);
 
-        if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-            try {
-                const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
-                const cavityRow = findRow('cavity number');
-                const inspectedRow = findRow('inspected quantity');
-                const acceptedRow = findRow('accepted quantity');
-                const rejectedRow = findRow('rejected quantity');
-                const reasonRow = findRow('reason for rejection');
-
-                const inspections = cols.map((col, idx) => {
-                    const inspected = inspectedRow?.values?.[idx] ?? null;
-                    const accepted = acceptedRow?.values?.[idx] ?? null;
-                    const rejected = rejectedRow?.values?.[idx] ?? null;
-                    const rejectionPercentage = (() => {
-                        const ins = parseFloat(String(inspected ?? '0'));
-                        const rej = parseFloat(String(rejected ?? '0'));
-                        if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
-                        return ((rej / ins) * 100).toFixed(2);
-                    })();
-
-                    return {
-                        'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
-                        'Inspected Quantity': inspected ?? null,
-                        'Accepted Quantity': accepted ?? null,
-                        'Rejected Quantity': rejected ?? null,
-                        'Rejection Percentage': rejectionPercentage ?? null,
-                        'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-                    };
-                });
-
-                const updatePayload = {
-                    trial_id: trialId,
-                    inspections,
-                    visual_ok: groupMeta.ok,
-                    remarks: groupMeta.remarks || null,
-                    ndt_inspection: ndtRows,
-                    ndt_inspection_ok: ndtRows[0]?.ok,
-                    ndt_inspection_remarks: ndtRows[0]?.remarks,
-                    hardness: hardRows,
-                    hardness_ok: hardRows[0]?.ok,
-                    hardness_remarks: hardRows[0]?.remarks,
-                    is_edit: isEditing || dataExists
-                };
-                await inspectionService.updateVisualInspection(updatePayload);
-
-                setSubmitted(true);
-                setPreviewMode(false);
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Visual Inspection updated successfully.'
-                });
-                navigate('/dashboard');
-            } catch (err: any) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Failed to update Visual Inspection. Please try again.'
-                });
-            } finally {
-                setSaving(false);
-            }
-            return;
-        }
-
         try {
-            const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
-            const cavityRow = findRow('cavity number');
-            const inspectedRow = findRow('inspected quantity');
-            const acceptedRow = findRow('accepted quantity');
-            const rejectedRow = findRow('rejected quantity');
-            const reasonRow = findRow('reason for rejection');
+            const apiPayload = buildServerPayload(false);
 
-            const inspections = cols.map((col, idx) => {
-                const inspected = inspectedRow?.values?.[idx] ?? null;
-                const accepted = acceptedRow?.values?.[idx] ?? null;
-                const rejected = rejectedRow?.values?.[idx] ?? null;
-                const rejectionPercentage = (() => {
-                    const ins = parseFloat(String(inspected ?? '0'));
-                    const rej = parseFloat(String(rejected ?? '0'));
-                    if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
-                    return ((rej / ins) * 100).toFixed(2);
-                })();
-
-                return {
-                    'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
-                    'Inspected Quantity': inspected ?? null,
-                    'Accepted Quantity': accepted ?? null,
-                    'Rejected Quantity': rejected ?? null,
-                    'Rejection Percentage': rejectionPercentage ?? null,
-                    'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-                };
-            });
-
-            const serverPayload = {
-                trial_id: trialId,
-                inspections,
-                visual_ok: previewPayload.group?.ok ?? null,
-                remarks: previewPayload.group?.remarks || null,
-                ndt_inspection: ndtRows,
-                ndt_inspection_ok: ndtRows[0]?.ok,
-                ndt_inspection_remarks: ndtRows[0]?.remarks
-            };
-
-            await inspectionService.submitVisualInspection(serverPayload);
+            if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
+                await inspectionService.updateVisualInspection(apiPayload);
+            } else {
+                await inspectionService.submitVisualInspection(apiPayload);
+            }
 
             const allFiles = [...attachedFiles];
             if (groupMeta.attachment instanceof File) allFiles.push(groupMeta.attachment);
 
             if (allFiles.length > 0) {
-                try {
-                    const uploadResults = await uploadFiles(
-                        allFiles,
-                        trialId,
-                        "VISUAL_INSPECTION",
-                        user?.username || "system",
-                        "VISUAL_INSPECTION"
-                    );
-
-                    const failures = uploadResults.filter(r => !r.success);
-                    if (failures.length > 0) {
-                        console.error("Some files failed to upload:", failures);
-                    }
-                } catch (uploadError) {
-                    console.error("File upload error:", uploadError);
-                }
+                await uploadFiles(
+                    allFiles,
+                    trialId,
+                    "VISUAL_INSPECTION",
+                    user?.username || "system",
+                    "VISUAL_INSPECTION"
+                ).catch(err => console.error("File upload error:", err));
             }
 
             setSubmitted(true);
@@ -883,14 +781,14 @@ export default function VisualInspection({
             await Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Visual inspection created successfully.'
+                text: `Visual Inspection ${dataExists ? 'updated' : 'created'} successfully.`
             });
             navigate('/dashboard');
         } catch (err: any) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err?.message || 'Failed to save visual inspection. Please try again.'
+                text: err?.message || 'Failed to save Visual Inspection. Please try again.'
             });
         } finally {
             setSaving(false);
@@ -901,52 +799,12 @@ export default function VisualInspection({
         setSaving(true);
         setMessage(null);
         try {
-            const payload = buildPayload();
-
-            const findRow = (labelPart: string) => rows.find(r => r.label.toLowerCase().includes(labelPart));
-            const cavityRow = findRow('cavity number');
-            const inspectedRow = findRow('inspected quantity');
-            const acceptedRow = findRow('accepted quantity');
-            const rejectedRow = findRow('rejected quantity');
-            const reasonRow = findRow('reason for rejection');
-
-            const inspections = cols.map((col, idx) => {
-                const inspected = inspectedRow?.values?.[idx] ?? null;
-                const accepted = acceptedRow?.values?.[idx] ?? null;
-                const rejected = rejectedRow?.values?.[idx] ?? null;
-                const rejectionPercentage = (() => {
-                    const ins = parseFloat(String(inspected ?? '0'));
-                    const rej = parseFloat(String(rejected ?? '0'));
-                    if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
-                    return ((rej / ins) * 100).toFixed(2);
-                })();
-
-                return {
-                    'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
-                    'Inspected Quantity': inspected ?? null,
-                    'Accepted Quantity': accepted ?? null,
-                    'Rejected Quantity': rejected ?? null,
-                    'Rejection Percentage': rejectionPercentage ?? null,
-                    'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-                };
-            });
-
-            const serverPayload = {
-                trial_id: trialId,
-                inspections,
-                visual_ok: groupMeta.ok,
-                remarks: groupMeta.remarks || null,
-                ndt_inspection: ndtRows.length > 0 ? ndtRows : null,
-                ndt_inspection_ok: ndtRows[0]?.ok,
-                ndt_inspection_remarks: ndtRows[0]?.remarks,
-                is_edit: isEditing || dataExists,
-                is_draft: true
-            };
+            const apiPayload = buildServerPayload(true);
 
             if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-                await inspectionService.updateVisualInspection(serverPayload);
+                await inspectionService.updateVisualInspection(apiPayload);
             } else {
-                await inspectionService.submitVisualInspection(serverPayload);
+                await inspectionService.submitVisualInspection(apiPayload);
             }
 
             const allFiles = [...attachedFiles];
@@ -954,7 +812,7 @@ export default function VisualInspection({
 
             if (allFiles.length > 0) {
                 await uploadFiles(allFiles, trialId, "VISUAL_INSPECTION", user?.username || "system", "VISUAL_INSPECTION")
-                    .catch(console.error);
+                    .catch(err => console.error("Draft file upload error", err));
             }
 
             setSubmitted(true);
@@ -1289,21 +1147,17 @@ export default function VisualInspection({
                                     </Button>
 
                                     <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                                        {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                                            <>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                                                    Attach PDF / Image Files
-                                                </Typography>
-                                                <FileUploadSection
-                                                    files={attachedFiles}
-                                                    onFilesChange={handleAttachFiles}
-                                                    onFileRemove={removeAttachedFile}
-                                                    showAlert={showAlert}
-                                                    label="Attach PDF"
-                                                    disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
-                                                />
-                                            </>
-                                        )}
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                                            Attach PDF / Image Files
+                                        </Typography>
+                                        <FileUploadSection
+                                            files={attachedFiles}
+                                            onFilesChange={handleAttachFiles}
+                                            onFileRemove={removeAttachedFile}
+                                            showAlert={showAlert}
+                                            label="Attach PDF"
+                                            disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                                        />
                                         <DocumentViewer trialId={trialId} category="VISUAL_INSPECTION" />
                                     </Box>
 

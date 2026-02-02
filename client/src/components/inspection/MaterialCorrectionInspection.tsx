@@ -168,6 +168,24 @@ export default function MaterialCorrection() {
     };
 
 
+    const buildServerPayload = (isDraft: boolean = false) => {
+        const source = previewPayload || {
+            trial_id: trialId,
+            chemical_composition: chemState,
+            process_parameters: processState,
+            remarks,
+            is_edit: isEditing
+        };
+
+        return {
+            ...source,
+            user_name: user?.username || 'Unknown',
+            user_ip: userIP,
+            is_draft: isDraft,
+            is_edit: isEditing
+        };
+    };
+
     const handleSaveAndContinue = () => {
         const payload = {
             trial_id: trialId,
@@ -177,101 +195,84 @@ export default function MaterialCorrection() {
             is_edit: isEditing
         };
 
-
-
         setPreviewPayload(payload);
         setPreviewOpen(true);
         setSubmitted(false);
     };
 
     const handleFinalSave = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
+            const apiPayload = buildServerPayload(false);
 
-            if ((user?.role === 'HOD' || user?.role === 'Admin') && trialId) {
-                try {
-                    const updatePayload = {
-                        trial_id: trialId,
-                        chemical_composition: previewPayload.chemical_composition,
-                        process_parameters: previewPayload.process_parameters,
-                        remarks: previewPayload.remarks,
-                        user_name: user?.username || 'Unknown',
-                        user_ip: userIP,
-                        is_edit: isEditing
-                    };
-
-                    await inspectionService.updateMaterialCorrection(updatePayload);
-                    setSubmitted(true);
-                    setPreviewOpen(false);
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Material correction updated successfully.'
-                    });
-                    navigate('/dashboard');
-                } catch (err: any) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: err.message || 'Failed to update material correction. Please try again.'
-                    });
-                    console.error(err);
-                }
-                return;
+            if (((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
+                await inspectionService.updateMaterialCorrection(apiPayload);
+            } else {
+                await inspectionService.submitMaterialCorrection(apiPayload);
             }
 
-            if (!previewPayload) return;
+            if (attachedFiles.length > 0) {
+                await uploadFiles(
+                    attachedFiles,
+                    trialId,
+                    "MATERIAL_CORRECTION",
+                    user?.username || "system",
+                    "MATERIAL_CORRECTION"
+                ).catch(err => console.error("File upload error:", err));
+            }
 
-            const response = await inspectionService.submitMaterialCorrection({
-                ...previewPayload,
-                user_name: user?.username || 'Unknown',
-                user_ip: userIP
+            setSubmitted(true);
+            setPreviewOpen(false);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: `Material Correction created successfully.`
             });
-
-            if (response.success) {
-                if (attachedFiles.length > 0) {
-                    try {
-                        const uploadResults = await uploadFiles(
-                            attachedFiles,
-                            trialId,
-                            "MATERIAL_CORRECTION",
-                            user?.username || "system",
-                            "MATERIAL_CORRECTION"
-                        );
-
-                        const failures = uploadResults.filter(r => !r.success);
-                        if (failures.length > 0) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Some files failed to upload. Please try again.'
-                            });
-                        }
-                    } catch (uploadError) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'File upload error. Please try again.'
-                        });
-                    }
-                }
-
-                setSubmitted(true);
-                setPreviewOpen(false);
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Material correction created successfully.'
-                });
-            }
-
             navigate('/dashboard');
         } catch (error: any) {
-            console.error(error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.message || "An error occurred during submission. Please try again."
+                text: error.message || "Failed to save Material Correction. Please try again."
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveDraft = async () => {
+        setLoading(true);
+        try {
+            const apiPayload = buildServerPayload(true);
+
+            if ((user?.role === 'HOD' || user?.role === 'Admin') && trialId) {
+                await inspectionService.updateMaterialCorrection(apiPayload);
+            } else {
+                await inspectionService.submitMaterialCorrection(apiPayload);
+            }
+
+            if (attachedFiles.length > 0) {
+                await uploadFiles(
+                    attachedFiles,
+                    trialId,
+                    "MATERIAL_CORRECTION",
+                    user?.username || "system",
+                    "MATERIAL_CORRECTION"
+                ).catch(err => console.error("Draft file upload error:", err));
+            }
+
+            setSubmitted(true);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Saved as Draft',
+                text: 'Progress saved and moved to next department.'
+            });
+            navigate('/dashboard');
+        } catch (error: any) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || "Failed to save draft."
             });
         } finally {
             setLoading(false);
@@ -386,23 +387,20 @@ export default function MaterialCorrection() {
 
                                     <Grid size={{ xs: 12 }}>
                                         <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3 }}>
-                                            {((user?.role !== 'HOD' && user?.role !== 'Admin' && user?.department_id !== 8)) && (
-                                                <>
-                                                    <SectionHeader
-                                                        icon={<UploadFileIcon />}
-                                                        title="Attach PDF / Image Files"
-                                                        color={COLORS.accentBlue}
-                                                    />
+                                            <SectionHeader
+                                                icon={<UploadFileIcon />}
+                                                title="Attach PDF / Image Files"
+                                                color={COLORS.accentBlue}
+                                            />
 
-                                                    <FileUploadSection
-                                                        files={attachedFiles}
-                                                        onFilesChange={handleFileChange}
-                                                        onFileRemove={removeAttachedFile}
-                                                        label="Upload Files"
-                                                        showAlert={showAlert}
-                                                    />
-                                                </>
-                                            )}
+                                            <FileUploadSection
+                                                files={attachedFiles}
+                                                onFilesChange={handleFileChange}
+                                                onFileRemove={removeAttachedFile}
+                                                label="Upload Files"
+                                                showAlert={showAlert}
+                                                disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                                            />
                                             <DocumentViewer trialId={trialId || ""} category="MATERIAL_CORRECTION" />
                                         </Paper>
                                     </Grid>
@@ -440,6 +438,17 @@ export default function MaterialCorrection() {
                                                         saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
                                                         saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
                                                     >
+                                                        {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
+                                                            <Button
+                                                                variant="outlined"
+                                                                startIcon={<SaveIcon />}
+                                                                onClick={handleSaveDraft}
+                                                                disabled={loading}
+                                                                sx={{ mr: 2 }}
+                                                            >
+                                                                Save as Draft
+                                                            </Button>
+                                                        )}
                                                         {(user?.role === 'HOD' || user?.role === 'Admin') && (
                                                             <Button
                                                                 variant="outlined"

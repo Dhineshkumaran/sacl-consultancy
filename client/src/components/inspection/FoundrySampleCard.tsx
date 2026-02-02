@@ -1275,15 +1275,14 @@ function FoundrySampleCard() {
                       <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary, display: 'block', mb: 1 }}>
                         Tooling Files
                       </Typography>
-                      {((user?.role !== 'HOD' && user?.role !== 'Admin')) && (
-                        <FileUploadSection
-                          files={toolingFiles}
-                          onFilesChange={handleToolingFilesChange}
-                          onFileRemove={removeToolingFile}
-                          showAlert={showAlert}
-                          label="Attach Tooling PDF"
-                        />
-                      )}
+                      <FileUploadSection
+                        files={toolingFiles}
+                        onFilesChange={handleToolingFilesChange}
+                        onFileRemove={removeToolingFile}
+                        showAlert={showAlert}
+                        label="Attach Tooling PDF"
+                        disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                      />
                       <DocumentViewer trialId={trialId || ""} category="TOOLING_MODIFICATION" label="Attached Tooling Files" refreshTrigger={docsRefreshTrigger} />
                     </Grid>
                   </Grid>

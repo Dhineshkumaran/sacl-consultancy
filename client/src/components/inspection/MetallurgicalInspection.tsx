@@ -928,9 +928,48 @@ export default function MetallurgicalInspection() {
     };
   };
 
+  const buildServerPayload = (isDraft: boolean = false) => {
+    const source = previewPayload || buildPayload();
+
+    const microOk = microMeta['group']?.ok ?? null;
+    const microRemarks = microMeta['group']?.remarks ?? '';
+
+    const getMechOk = () => {
+      const hasNotOk = source.mechRows?.some((r: any) => r.ok === false);
+      if (hasNotOk) return false;
+      const hasOk = source.mechRows?.some((r: any) => r.ok === true);
+      return hasOk ? true : null;
+    };
+
+    const getImpactOk = () => {
+      const hasNotOk = source.impactRows?.some((r: any) => r.ok === false);
+      if (hasNotOk) return false;
+      const hasOk = source.impactRows?.some((r: any) => r.ok === true);
+      return hasOk ? true : null;
+    };
+
+    const getMechRemarks = () => source.mechRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
+    const getImpactRemarks = () => source.impactRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
+
+    return {
+      trial_id: trialId,
+      inspection_date: source.inspection_date,
+      micro_structure: source.microRows || [],
+      micro_structure_ok: microOk,
+      micro_structure_remarks: microRemarks,
+      mech_properties: source.mechRows || [],
+      mech_properties_ok: getMechOk(),
+      mech_properties_remarks: getMechRemarks(),
+      impact_strength: source.impactRows || [],
+      impact_strength_ok: getImpactOk(),
+      impact_strength_remarks: getImpactRemarks(),
+      is_edit: isEditing || dataExists,
+      is_draft: isDraft
+    };
+  };
+
   const handleSaveAndContinue = async () => {
     const payload = buildPayload();
-
     setPreviewPayload(payload);
     setPreviewMode(true);
     setPreviewSubmitted(false);
@@ -939,203 +978,15 @@ export default function MetallurgicalInspection() {
 
   const handleFinalSave = async () => {
     if (!previewPayload) return;
-
-    const transformToServerPayload = (payload: any) => {
-      const microOk = microMeta['group']?.ok ?? null;
-      const microRemarks = microMeta['group']?.remarks ?? '';
-
-      const getMechOk = () => {
-        const hasNotOk = payload.mechRows?.some((r: any) => r.ok === false);
-        if (hasNotOk) return false;
-        const hasOk = payload.mechRows?.some((r: any) => r.ok === true);
-        return hasOk ? true : null;
-      };
-
-      const getImpactOk = () => {
-        const hasNotOk = payload.impactRows?.some((r: any) => r.ok === false);
-        if (hasNotOk) return false;
-        const hasOk = payload.impactRows?.some((r: any) => r.ok === true);
-        return hasOk ? true : null;
-      };
-
-      const getHardnessOk = () => {
-        const hasNotOk = payload.hardRows?.some((r: any) => r.ok === false);
-        if (hasNotOk) return false;
-        const hasOk = payload.hardRows?.some((r: any) => r.ok === true);
-        return hasOk ? true : null;
-      };
-
-      const getMechRemarks = () => payload.mechRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
-      const getImpactRemarks = () => payload.impactRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
-      const getHardnessRemarks = () => payload.hardRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
-
-      return {
-        trial_id: trialId,
-        inspection_date: payload.inspection_date,
-        micro_structure: payload.microRows || [],
-        micro_structure_ok: microOk,
-        micro_structure_remarks: microRemarks,
-        mech_properties: payload.mechRows || [],
-        mech_properties_ok: getMechOk(),
-        mech_properties_remarks: getMechRemarks(),
-        impact_strength: payload.impactRows || [],
-        impact_strength_ok: getImpactOk(),
-        impact_strength_remarks: getImpactRemarks(),
-        hardness: payload.hardRows || [],
-        hardness_ok: getHardnessOk(),
-        hardness_remarks: getHardnessRemarks(),
-        is_edit: isEditing || dataExists
-      };
-    };
-
-    if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-      setSending(true);
-      try {
-        const serverPayload = transformToServerPayload(previewPayload);
-        await inspectionService.updateMetallurgicalInspection(serverPayload);
-        setPreviewSubmitted(true);
-        setPreviewMode(false);
-        await Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Metallurgical Inspection updated successfully.'
-        });
-        navigate('/dashboard');
-      } catch (err) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to update Metallurgical Inspection. Please try again.'
-        });
-        console.error(err);
-      } finally {
-        setSending(false);
-      }
-      return;
-    }
-
-    try {
-      setSending(true);
-
-      const serverPayload = transformToServerPayload(previewPayload);
-      await inspectionService.submitMetallurgicalInspection(serverPayload);
-
-      const allFiles = [...attachedFiles];
-      if (microMeta['group']?.attachment instanceof File) allFiles.push(microMeta['group'].attachment);
-      const collectRowFiles = (rows: Row[]) => rows.forEach(r => { if (r.attachment instanceof File) allFiles.push(r.attachment); });
-      collectRowFiles(mechRows);
-      collectRowFiles(impactRows);
-
-      if (allFiles.length > 0) {
-        try {
-          const uploadResults = await uploadFiles(
-            allFiles,
-            trialId,
-            "METALLURGICAL_INSPECTION",
-            user?.username || "system",
-            "METALLURGICAL_INSPECTION"
-          );
-
-          const failures = uploadResults.filter(r => !r.success);
-          if (failures.length > 0) {
-            console.error("Some files failed to upload:", failures);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Some files failed to upload. Please try again.'
-            });
-          }
-        } catch (uploadError) {
-          console.error("File upload error:", uploadError);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'File upload error. Please try again.'
-          });
-        }
-      }
-
-      setPreviewSubmitted(true);
-      setPreviewMode(false);
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Metallurgical inspection created successfully.'
-      });
-
-      navigate('/dashboard');
-    } catch (err: any) {
-      setMessage('Failed to submit inspection data');
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Failed to submit inspection data. Please try again.'
-      });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const handleSaveDraft = async () => {
     setSending(true);
+
     try {
-      const payload = buildPayload();
-
-      const transformToServerPayload = (payload: any) => {
-        const microOk = microMeta['group']?.ok ?? null;
-        const microRemarks = microMeta['group']?.remarks ?? '';
-
-        const getMechOk = () => {
-          const hasNotOk = payload.mechRows?.some((r: any) => r.ok === false);
-          if (hasNotOk) return false;
-          const hasOk = payload.mechRows?.some((r: any) => r.ok === true);
-          return hasOk ? true : null;
-        };
-
-        const getImpactOk = () => {
-          const hasNotOk = payload.impactRows?.some((r: any) => r.ok === false);
-          if (hasNotOk) return false;
-          const hasOk = payload.impactRows?.some((r: any) => r.ok === true);
-          return hasOk ? true : null;
-        };
-
-        const getHardnessOk = () => {
-          const hasNotOk = payload.hardRows?.some((r: any) => r.ok === false);
-          if (hasNotOk) return false;
-          const hasOk = payload.hardRows?.some((r: any) => r.ok === true);
-          return hasOk ? true : null;
-        };
-
-        const getMechRemarks = () => payload.mechRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
-        const getImpactRemarks = () => payload.impactRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
-        const getHardnessRemarks = () => payload.hardRows?.map((r: any) => r.remarks).filter(Boolean).join('; ') || '';
-
-        return {
-          trial_id: trialId,
-          inspection_date: payload.inspection_date,
-          micro_structure: payload.microRows || [],
-          micro_structure_ok: microOk,
-          micro_structure_remarks: microRemarks,
-          mech_properties: payload.mechRows || [],
-          mech_properties_ok: getMechOk(),
-          mech_properties_remarks: getMechRemarks(),
-          impact_strength: payload.impactRows || [],
-          impact_strength_ok: getImpactOk(),
-          impact_strength_remarks: getImpactRemarks(),
-          hardness: payload.hardRows || [],
-          hardness_ok: getHardnessOk(),
-          hardness_remarks: getHardnessRemarks(),
-          is_edit: isEditing || dataExists,
-          is_draft: true
-        };
-      };
-
-      const serverPayload = transformToServerPayload(payload);
+      const apiPayload = buildServerPayload(false);
 
       if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-        await inspectionService.updateMetallurgicalInspection(serverPayload);
+        await inspectionService.updateMetallurgicalInspection(apiPayload);
       } else {
-        await inspectionService.submitMetallurgicalInspection(serverPayload);
+        await inspectionService.submitMetallurgicalInspection(apiPayload);
       }
 
       const allFiles = [...attachedFiles];
@@ -1151,9 +1002,56 @@ export default function MetallurgicalInspection() {
           "METALLURGICAL_INSPECTION",
           user?.username || "system",
           "METALLURGICAL_INSPECTION"
-        ).catch(console.error);
+        ).catch(err => console.error("File upload error:", err));
       }
 
+      setPreviewSubmitted(true);
+      setPreviewMode(false);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Metallurgical Inspection ${dataExists ? 'updated' : 'created'} successfully.`
+      });
+      navigate('/dashboard');
+    } catch (err: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Failed to save Metallurgical Inspection. Please try again.'
+      });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    setSending(true);
+    try {
+      const apiPayload = buildServerPayload(true);
+
+      if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
+        await inspectionService.updateMetallurgicalInspection(apiPayload);
+      } else {
+        await inspectionService.submitMetallurgicalInspection(apiPayload);
+      }
+
+      const allFiles = [...attachedFiles];
+      if (microMeta['group']?.attachment instanceof File) allFiles.push(microMeta['group'].attachment);
+      const collectRowFiles = (rows: Row[]) => rows.forEach(r => { if (r.attachment instanceof File) allFiles.push(r.attachment); });
+      collectRowFiles(mechRows);
+      collectRowFiles(impactRows);
+
+      if (allFiles.length > 0) {
+        await uploadFiles(
+          allFiles,
+          trialId,
+          "METALLURGICAL_INSPECTION",
+          user?.username || "system",
+          "METALLURGICAL_INSPECTION"
+        ).catch(err => console.error("Draft file upload error", err));
+      }
+
+      setPreviewSubmitted(true);
       await Swal.fire({
         icon: 'success',
         title: 'Saved as Draft',
@@ -1426,21 +1324,17 @@ export default function MetallurgicalInspection() {
                   </Grid>
 
                   <Box sx={{ mt: 3, p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                    {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                      <>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                          Attach PDF / Image Files
-                        </Typography>
-                        <FileUploadSection
-                          files={attachedFiles}
-                          onFilesChange={handleAttachFiles}
-                          onFileRemove={removeAttachedFile}
-                          showAlert={showAlert}
-                          label="Attach PDF"
-                          disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
-                        />
-                      </>
-                    )}
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                      Attach PDF / Image Files
+                    </Typography>
+                    <FileUploadSection
+                      files={attachedFiles}
+                      onFilesChange={handleAttachFiles}
+                      onFileRemove={removeAttachedFile}
+                      showAlert={showAlert}
+                      label="Attach PDF"
+                      disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                    />
                     <DocumentViewer trialId={trialId || ""} category="METALLURGICAL_INSPECTION" />
                   </Box>
 

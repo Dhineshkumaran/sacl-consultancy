@@ -157,6 +157,20 @@ function MouldingTable() {
   };
 
 
+  const buildServerPayload = (isDraft: boolean = false) => {
+    return {
+      mould_thickness: mouldState.thickness,
+      compressability: mouldState.compressability,
+      squeeze_pressure: mouldState.pressure,
+      mould_hardness: mouldState.hardness,
+      remarks: mouldState.remarks,
+      trial_id: trialId,
+      date: mouldDate,
+      is_edit: isEditing || dataExists,
+      is_draft: isDraft
+    };
+  };
+
   const handleSaveAndContinue = () => {
     const payload = {
       trial_id: trialId,
@@ -168,8 +182,6 @@ function MouldingTable() {
       is_edit: isEditing,
       date: mouldDate
     };
-
-
 
     setPreviewMode(true);
   };
@@ -192,82 +204,37 @@ function MouldingTable() {
   const handleFinalSave = async () => {
     setLoading(true);
     try {
+      const apiPayload = buildServerPayload(false);
+
       if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-
-        const payload = {
-          mould_thickness: mouldState.thickness,
-          compressability: mouldState.compressability,
-          squeeze_pressure: mouldState.pressure,
-          mould_hardness: mouldState.hardness,
-          remarks: mouldState.remarks,
-          trial_id: trialId,
-          is_edit: isEditing || dataExists
-        };
-        await inspectionService.updateMouldingCorrection(payload);
-
-        setSubmitted(true);
-        setPreviewMode(false);
-        await Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Moulding correction updated successfully.'
-        });
-        navigate('/dashboard');
+        await inspectionService.updateMouldingCorrection(apiPayload);
       } else {
-
-        const payload = {
-          mould_thickness: mouldState.thickness,
-          compressability: mouldState.compressability,
-          squeeze_pressure: mouldState.pressure,
-          mould_hardness: mouldState.hardness,
-          remarks: mouldState.remarks,
-          trial_id: trialId,
-          date: mouldDate
-        };
-
-        await inspectionService.submitMouldingCorrection(payload);
-
-        if (attachedFiles.length > 0) {
-          try {
-            const uploadResults = await uploadFiles(
-              attachedFiles,
-              trialId || "",
-              "MOULDING",
-              user?.username || "system",
-              "MOULDING"
-            );
-
-            const failures = uploadResults.filter(r => !r.success);
-            if (failures.length > 0) {
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Some files failed to upload. Please try again.'
-              });
-            }
-          } catch (uploadError) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'File upload error. Please try again.'
-            });
-          }
-        }
-
-        setSubmitted(true);
-        setPreviewMode(false);
-        await Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Moulding details created successfully.'
-        });
-        navigate('/dashboard');
+        await inspectionService.submitMouldingCorrection(apiPayload);
       }
+
+      if (attachedFiles.length > 0) {
+        await uploadFiles(
+          attachedFiles,
+          trialId || "",
+          "MOULDING",
+          user?.username || "system",
+          "MOULDING"
+        ).catch(err => console.error("File upload error:", err));
+      }
+
+      setSubmitted(true);
+      setPreviewMode(false);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Moulding Correction ${dataExists ? 'updated' : 'created'} successfully.`
+      });
+      navigate('/dashboard');
     } catch (error: any) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: error.message || (user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to update moulding correction. Please try again.' : 'Failed to save moulding details. Please try again.')
+        text: error.message || 'Failed to save Moulding Correction. Please try again.'
       });
     } finally {
       setLoading(false);
@@ -277,36 +244,22 @@ function MouldingTable() {
   const handleSaveDraft = async () => {
     setLoading(true);
     try {
-      const payload = {
-        mould_thickness: mouldState.thickness,
-        compressability: mouldState.compressability,
-        squeeze_pressure: mouldState.pressure,
-        mould_hardness: mouldState.hardness,
-        remarks: mouldState.remarks,
-        trial_id: trialId,
-        date: mouldDate,
-        is_edit: isEditing || dataExists,
-        is_draft: true
-      };
+      const apiPayload = buildServerPayload(true);
 
       if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-        await inspectionService.updateMouldingCorrection(payload);
+        await inspectionService.updateMouldingCorrection(apiPayload);
       } else {
-        await inspectionService.submitMouldingCorrection(payload);
+        await inspectionService.submitMouldingCorrection(apiPayload);
       }
 
       if (attachedFiles.length > 0) {
-        try {
-          await uploadFiles(
-            attachedFiles,
-            trialId || "",
-            "MOULDING",
-            user?.username || "system",
-            "MOULDING"
-          );
-        } catch (uploadError) {
-          console.error("Draft file upload error", uploadError);
-        }
+        await uploadFiles(
+          attachedFiles,
+          trialId || "",
+          "MOULDING",
+          user?.username || "system",
+          "MOULDING"
+        ).catch(err => console.error("Draft file upload error", err));
       }
 
       setSubmitted(true);
@@ -316,7 +269,6 @@ function MouldingTable() {
         text: 'Progress saved and moved to next department.'
       });
       navigate('/dashboard');
-
     } catch (error: any) {
       Swal.fire({
         icon: 'error',
@@ -450,25 +402,21 @@ function MouldingTable() {
                     </Table>
                   </Box>
                   <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                    {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                      <>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase", color: COLORS.primary }}
-                        >
-                          Attach PDF / Image Files
-                        </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase", color: COLORS.primary }}
+                    >
+                      Attach PDF / Image Files
+                    </Typography>
 
-                        <FileUploadSection
-                          files={attachedFiles}
-                          onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
-                          onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
-                          showAlert={showAlert}
-                          label="Attach PDF"
-                          disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                        />
-                      </>
-                    )}
+                    <FileUploadSection
+                      files={attachedFiles}
+                      onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
+                      onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                      showAlert={showAlert}
+                      label="Attach PDF"
+                      disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                    />
                     <DocumentViewer trialId={trialId || ""} category="MOULDING" />
                   </Box>
 

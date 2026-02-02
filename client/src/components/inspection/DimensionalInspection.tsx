@@ -268,6 +268,31 @@ export default function DimensionalInspection({
         };
     };
 
+    const buildServerPayload = (isDraft: boolean = false) => {
+        const source = previewPayload || buildPayload();
+
+        const cavityRow = source.cavity_rows?.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
+        const castingRow = source.cavity_rows?.find((r: any) => String(r.label).toLowerCase().includes('casting'));
+
+        const inspections = (source.cavities || []).map((_: any, i: number) => ({
+            "Cavity Number": (cavityRow?.values?.[i] ?? source.cavities[i] ?? null),
+            "Casting Weight": (castingRow?.values?.[i] ?? null)
+        }));
+
+        return {
+            trial_id: trialId,
+            inspection_date: source.inspection_date || source.created_at || null,
+            casting_weight: parseFloat(source.weight_target || "0") || 0,
+            bunch_weight: parseFloat(source.bunch_weight || "0") || 0,
+            no_of_cavities: parseInt(source.number_of_cavity || "0") || (source.cavities ? source.cavities.length : 0),
+            yields: source.yield ? parseFloat(source.yield) : null,
+            inspections: inspections,
+            remarks: source.remarks || "",
+            is_edit: isEditing || dataExists,
+            is_draft: isDraft
+        };
+    };
+
     const handleSaveAndContinue = async () => {
         const payload = buildPayload();
         setPreviewPayload(payload);
@@ -280,100 +305,23 @@ export default function DimensionalInspection({
         if (!previewPayload) return;
         setSaving(true);
 
-        if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-            try {
-                const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
-                const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
-
-                const inspections = (previewPayload.cavities || []).map((_: any, i: number) => ({
-                    "Cavity Number": (cavityRow?.values?.[i] ?? previewPayload.cavities[i] ?? null),
-                    "Casting Weight": (castingRow?.values?.[i] ?? null)
-                }));
-
-                const updatePayload = {
-                    trial_id: trialId,
-                    inspection_date: previewPayload.inspection_date || previewPayload.created_at || null,
-                    casting_weight: parseFloat(previewPayload.weight_target || "0") || 0,
-                    bunch_weight: parseFloat(previewPayload.bunch_weight || "0") || 0,
-                    no_of_cavities: parseInt(previewPayload.number_of_cavity || "0") || (previewPayload.cavities ? previewPayload.cavities.length : 0),
-                    yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
-                    inspections: inspections,
-                    remarks: previewPayload.remarks || "",
-                    is_edit: isEditing || dataExists
-                };
-
-                await inspectionService.updateDimensionalInspection(updatePayload);
-
-                setPreviewSubmitted(true);
-                setPreviewMode(false);
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Dimensional Inspection updated successfully.'
-                });
-                navigate('/dashboard');
-            } catch (err: any) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Failed to update Dimensional Inspection. Please try again.'
-                });
-            } finally {
-                setSaving(false);
-            }
-            return;
-        }
-
         try {
-            const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+            const apiPayload = buildServerPayload(false);
 
-            const cavityRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
-            const castingRow = previewPayload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
-
-            const inspections = (previewPayload.cavities || []).map((_: any, i: number) => ({
-                "Cavity Number": (cavityRow?.values?.[i] ?? previewPayload.cavities[i] ?? null),
-                "Casting Weight": (castingRow?.values?.[i] ?? null)
-            }));
-
-            const apiPayload = {
-                trial_id: trialId,
-                inspection_date: previewPayload.inspection_date || previewPayload.created_at || null,
-                casting_weight: parseFloat(previewPayload.weight_target || "0") || 0,
-                bunch_weight: parseFloat(previewPayload.bunch_weight || "0") || 0,
-                no_of_cavities: parseInt(previewPayload.number_of_cavity || "0") || (previewPayload.cavities ? previewPayload.cavities.length : 0),
-                yields: previewPayload.yield ? parseFloat(previewPayload.yield) : null,
-                inspections: inspections,
-                remarks: previewPayload.remarks || ""
-            };
-
-            await inspectionService.submitDimensionalInspection(apiPayload);
+            if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
+                await inspectionService.updateDimensionalInspection(apiPayload);
+            } else {
+                await inspectionService.submitDimensionalInspection(apiPayload);
+            }
 
             if (attachedFiles.length > 0) {
-                try {
-                    const uploadResults = await uploadFiles(
-                        attachedFiles,
-                        trialId,
-                        "DIMENSIONAL_INSPECTION",
-                        user?.username || "system",
-                        "DIMENSIONAL_INSPECTION"
-                    );
-
-                    const failures = uploadResults.filter(r => !r.success);
-                    if (failures.length > 0) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Some files failed to upload. Please try again.'
-                        });
-                    }
-                } catch (uploadError) {
-                    console.error("File upload error:", uploadError);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'File upload error. Please try again.'
-                    });
-                }
+                await uploadFiles(
+                    attachedFiles,
+                    trialId,
+                    "DIMENSIONAL_INSPECTION",
+                    user?.username || "system",
+                    "DIMENSIONAL_INSPECTION"
+                ).catch(err => console.error("File upload error:", err));
             }
 
             setPreviewSubmitted(true);
@@ -381,14 +329,14 @@ export default function DimensionalInspection({
             await Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Dimensional inspection created successfully.'
+                text: `Dimensional Inspection ${dataExists ? 'updated' : 'created'} successfully.`
             });
             navigate('/dashboard');
         } catch (err: any) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err.message || 'Failed to save dimensional inspection. Please try again.'
+                text: err.message || 'Failed to save Dimensional Inspection. Please try again.'
             });
         } finally {
             setSaving(false);
@@ -398,27 +346,7 @@ export default function DimensionalInspection({
     const handleSaveDraft = async () => {
         setSaving(true);
         try {
-            const payload = buildPayload();
-            const cavityRow = payload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
-            const castingRow = payload.cavity_rows.find((r: any) => String(r.label).toLowerCase().includes('casting'));
-
-            const inspections = (payload.cavities || []).map((_: any, i: number) => ({
-                "Cavity Number": (cavityRow?.values?.[i] ?? payload.cavities[i] ?? null),
-                "Casting Weight": (castingRow?.values?.[i] ?? null)
-            }));
-
-            const apiPayload = {
-                trial_id: trialId,
-                inspection_date: payload.inspection_date || payload.created_at || null,
-                casting_weight: parseFloat(payload.weight_target || "0") || 0,
-                bunch_weight: parseFloat(payload.bunch_weight || "0") || 0,
-                no_of_cavities: parseInt(payload.number_of_cavity || "0") || (payload.cavities ? payload.cavities.length : 0),
-                yields: payload.yield ? parseFloat(payload.yield) : null,
-                inspections: inspections,
-                remarks: payload.remarks || "",
-                is_edit: isEditing,
-                is_draft: true
-            };
+            const apiPayload = buildServerPayload(true);
 
             if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
                 await inspectionService.updateDimensionalInspection(apiPayload);
@@ -427,17 +355,13 @@ export default function DimensionalInspection({
             }
 
             if (attachedFiles.length > 0) {
-                try {
-                    await uploadFiles(
-                        attachedFiles,
-                        trialId,
-                        "DIMENSIONAL_INSPECTION",
-                        user?.username || "system",
-                        "DIMENSIONAL_INSPECTION"
-                    );
-                } catch (uploadError) {
-                    console.error("Draft file upload error", uploadError);
-                }
+                await uploadFiles(
+                    attachedFiles,
+                    trialId,
+                    "DIMENSIONAL_INSPECTION",
+                    user?.username || "system",
+                    "DIMENSIONAL_INSPECTION"
+                ).catch(err => console.error("Draft file upload error", err));
             }
 
             setPreviewSubmitted(true);
@@ -638,20 +562,17 @@ export default function DimensionalInspection({
                                     </Button>
 
                                     <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}`, mt: 3 }}>
-                                        {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                                            <>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                                                    Attach PDF / Image Files
-                                                </Typography>
-                                                <FileUploadSection
-                                                    files={attachedFiles}
-                                                    onFilesChange={handleAttachFiles}
-                                                    onFileRemove={removeAttachedFile}
-                                                    showAlert={showAlert}
-                                                    label="Attach PDF"
-                                                />
-                                            </>
-                                        )}
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                                            Attach PDF / Image Files
+                                        </Typography>
+                                        <FileUploadSection
+                                            files={attachedFiles}
+                                            onFilesChange={handleAttachFiles}
+                                            onFileRemove={removeAttachedFile}
+                                            showAlert={showAlert}
+                                            label="Attach PDF"
+                                            disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                                        />
                                         <DocumentViewer trialId={trialId || ""} category="DIMENSIONAL_INSPECTION" />
                                     </Box>
                                 </Paper>

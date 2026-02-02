@@ -285,156 +285,89 @@ function PouringDetailsTable() {
 
 
 
+    const buildServerPayload = (isDraft: boolean = false) => {
+        const source = previewPayload || {
+            pouringDate,
+            heatCode,
+            pouringTemp,
+            pouringTime,
+            remarksText
+        };
+
+        return {
+            trial_id: trialId,
+            pour_date: source.pouringDate || source.pour_date || null,
+            heat_code: source.heatCode || source.heat_code || null,
+            composition: {
+                C: chemState.c, Si: chemState.si, Mn: chemState.mn, P: chemState.p,
+                S: chemState.s, Mg: chemState.mg, Cu: chemState.cu, Cr: chemState.cr
+            },
+            no_of_mould_poured: parseInt(String(noOfMouldPoured)) || 0,
+            pouring_temp_c: parseFloat(String(source.pouringTemp ?? source.pouring_temp_c)) || 0,
+            pouring_time_sec: parseInt(String(source.pouringTime ?? source.pouring_time_sec)) || 0,
+            inoculation: {
+                Text: inoculationText,
+                Stream: inoculationStream,
+                Inmould: inoculationInmould
+            },
+            other_remarks: {
+                "F/C & Heat No.": ficHeatNo,
+                "PP Code": ppCode,
+                "Followed by": followedBy,
+                "Username": userName
+            },
+            remarks: source.remarksText || source.remarks || remarksText,
+            is_draft: isDraft,
+            is_edit: isEditing || dataExists
+        };
+    };
+
     const handleSaveAndContinue = () => {
         const payload = {
             pouringDate,
             heatCode,
-            chemical_composition: chemState,
-            noOfMouldPoured,
             pouringTemp,
             pouringTime,
-            inoculation: { text: inoculationText, stream: inoculationStream, inmould: inoculationInmould },
-            remarks: { ficHeatNo, ppCode, followedBy, userName },
-            remarksText,
-            attachedFiles
+            remarksText
         };
-
         setPreviewPayload(payload);
         setPreviewMode(true);
     };
 
     const handleFinalSave = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
+            const apiPayload = buildServerPayload(false);
 
             if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-                try {
-                    const updatePayload = {
-                        trial_id: trialId,
-                        pour_date: previewPayload.pouringDate,
-                        heat_code: previewPayload.heatCode,
-                        composition: {
-                            C: chemState.c,
-                            Si: chemState.si,
-                            Mn: chemState.mn,
-                            P: chemState.p,
-                            S: chemState.s,
-                            Mg: chemState.mg,
-                            Cu: chemState.cu,
-                            Cr: chemState.cr
-                        },
-                        no_of_mould_poured: parseInt(noOfMouldPoured) || 0,
-                        pouring_temp_c: parseFloat(previewPayload.pouringTemp) || 0,
-                        pouring_time_sec: parseInt(previewPayload.pouringTime) || 0,
-                        inoculation: {
-                            Text: inoculationText,
-                            Stream: inoculationStream,
-                            Inmould: inoculationInmould
-                        },
-                        other_remarks: {
-                            "F/C & Heat No.": ficHeatNo,
-                            "PP Code": ppCode,
-                            "Followed by": followedBy,
-                            "Username": userName
-                        },
-                        remarks: previewPayload.remarksText,
-                        is_edit: isEditing || dataExists
-                    };
-
-                    await inspectionService.updatePouringDetails(updatePayload);
-
-                    setSubmitted(true);
-                    setPreviewMode(false);
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Pouring details updated successfully.'
-                    });
-                    navigate('/dashboard');
-                } catch (err: any) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: err.message || 'Failed to update pouring details. Please try again.'
-                    });
-                    console.error(err);
-                }
-                return;
+                await inspectionService.updatePouringDetails(apiPayload);
+            } else {
+                await inspectionService.submitPouringDetails(apiPayload);
             }
-
-            const apiPayload = {
-                trial_id: trialId,
-                pour_date: pouringDate,
-                heat_code: heatCode,
-                composition: {
-                    C: chemState.c,
-                    Si: chemState.si,
-                    Mn: chemState.mn,
-                    P: chemState.p,
-                    S: chemState.s,
-                    Mg: chemState.mg,
-                    Cu: chemState.cu,
-                    Cr: chemState.cr
-                },
-                no_of_mould_poured: parseInt(noOfMouldPoured) || 0,
-                pouring_temp_c: parseFloat(pouringTemp) || 0,
-                pouring_time_sec: parseInt(pouringTime) || 0,
-                inoculation: {
-                    Text: inoculationText,
-                    Stream: inoculationStream,
-                    Inmould: inoculationInmould
-                },
-                other_remarks: {
-                    "F/C & Heat No.": ficHeatNo,
-                    "PP Code": ppCode,
-                    "Followed by": followedBy,
-                    "Username": userName
-                },
-                remarks: remarksText
-            };
-
-            await inspectionService.submitPouringDetails(apiPayload);
 
             if (attachedFiles.length > 0) {
-                try {
-                    const uploadResults = await uploadFiles(
-                        attachedFiles,
-                        trialId,
-                        "POURING_DETAILS",
-                        user?.username || "system",
-                        "POURING_DETAILS"
-                    );
-
-                    const failures = uploadResults.filter(r => !r.success);
-                    if (failures.length > 0) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Some files failed to upload. Please try again.'
-                        });
-                    }
-                } catch (uploadError) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'File upload error. Please try again.'
-                    });
-                }
+                await uploadFiles(
+                    attachedFiles,
+                    trialId,
+                    "POURING_DETAILS",
+                    user?.username || "system",
+                    "POURING_DETAILS"
+                ).catch(err => console.error("File upload error:", err));
             }
+
             setSubmitted(true);
             setPreviewMode(false);
             await Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Pouring details created successfully.'
+                text: `Pouring Details ${dataExists ? 'updated' : 'created'} successfully.`
             });
             navigate('/dashboard');
         } catch (error: any) {
-            console.error("Error saving pouring details:", error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.message || 'Failed to create pouring details. Please try again.'
+                text: error.message || 'Failed to save Pouring Details. Please try again.'
             });
         } finally {
             setLoading(false);
@@ -444,32 +377,7 @@ function PouringDetailsTable() {
     const handleSaveDraft = async () => {
         setLoading(true);
         try {
-            const apiPayload = {
-                trial_id: trialId,
-                pour_date: pouringDate,
-                heat_code: heatCode,
-                composition: {
-                    C: chemState.c, Si: chemState.si, Mn: chemState.mn, P: chemState.p,
-                    S: chemState.s, Mg: chemState.mg, Cu: chemState.cu, Cr: chemState.cr
-                },
-                no_of_mould_poured: parseInt(noOfMouldPoured) || 0,
-                pouring_temp_c: parseFloat(pouringTemp) || 0,
-                pouring_time_sec: parseInt(pouringTime) || 0,
-                inoculation: {
-                    Text: inoculationText,
-                    Stream: inoculationStream,
-                    Inmould: inoculationInmould
-                },
-                other_remarks: {
-                    "F/C & Heat No.": ficHeatNo,
-                    "PP Code": ppCode,
-                    "Followed by": followedBy,
-                    "Username": userName
-                },
-                remarks: remarksText,
-                is_draft: true,
-                is_edit: isEditing || dataExists
-            };
+            const apiPayload = buildServerPayload(true);
 
             if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
                 await inspectionService.updatePouringDetails(apiPayload);
@@ -478,9 +386,13 @@ function PouringDetailsTable() {
             }
 
             if (attachedFiles.length > 0) {
-                try {
-                    await uploadFiles(attachedFiles, trialId, "POURING_DETAILS", user?.username || "system", "POURING_DETAILS");
-                } catch (e) { console.error(e); }
+                await uploadFiles(
+                    attachedFiles,
+                    trialId,
+                    "POURING_DETAILS",
+                    user?.username || "system",
+                    "POURING_DETAILS"
+                ).catch(err => console.error("Draft file upload error:", err));
             }
 
             setSubmitted(true);
@@ -734,21 +646,17 @@ function PouringDetailsTable() {
 
                                     <Grid size={{ xs: 12 }}>
                                         <Paper sx={{ p: 3, mb: 3 }}>
-                                            {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                                                <>
-                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase" }}>
-                                                        Attach PDF / Image Files
-                                                    </Typography>
-                                                    <FileUploadSection
-                                                        files={attachedFiles}
-                                                        onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
-                                                        onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
-                                                        showAlert={showAlert}
-                                                        label="Upload Files"
-                                                        disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
-                                                    />
-                                                </>
-                                            )}
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase" }}>
+                                                Attach PDF / Image Files
+                                            </Typography>
+                                            <FileUploadSection
+                                                files={attachedFiles}
+                                                onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
+                                                onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                                                showAlert={showAlert}
+                                                label="Upload Files"
+                                                disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                                            />
                                             <DocumentViewer trialId={trialId || ""} category="POURING_DETAILS" />
                                         </Paper>
                                     </Grid>

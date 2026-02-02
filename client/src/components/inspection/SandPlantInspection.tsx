@@ -178,6 +178,25 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const buildServerPayload = (isDraft: boolean = false) => {
+    return {
+      trial_id: trialId,
+      date: sandDate,
+      t_clay: Number((sandProps as any).tClay) || 0,
+      a_clay: Number((sandProps as any).aClay) || 0,
+      vcm: Number((sandProps as any).vcm) || 0,
+      loi: Number((sandProps as any).loi) || 0,
+      afs: Number((sandProps as any).afs) || 0,
+      gcs: Number((sandProps as any).gcs) || 0,
+      moi: Number((sandProps as any).moi) || 0,
+      compactability: Number((sandProps as any).compactability) || 0,
+      permeability: Number((sandProps as any).perm) || 0,
+      remarks: (sandProps as any).remarks || "",
+      is_edit: isEditing || dataExists,
+      is_draft: isDraft
+    };
+  };
+
   const handleSaveAndContinue = () => {
     const payload = {
       trial_id: trialId,
@@ -199,97 +218,39 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
   };
 
   const handleFinalSave = async () => {
-
     setLoading(true);
     try {
-      const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
+      const apiPayload = buildServerPayload(false);
 
       if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-        const payload = {
-          trial_id: trialId,
-          date: sandDate,
-          t_clay: Number((sandProps as any).tClay) || 0,
-          a_clay: Number((sandProps as any).aClay) || 0,
-          vcm: Number((sandProps as any).vcm) || 0,
-          loi: Number((sandProps as any).loi) || 0,
-          afs: Number((sandProps as any).afs) || 0,
-          gcs: Number((sandProps as any).gcs) || 0,
-          moi: Number((sandProps as any).moi) || 0,
-          compactability: Number((sandProps as any).compactability) || 0,
-          permeability: Number((sandProps as any).perm) || 0,
-          remarks: (sandProps as any).remarks || "",
-          is_edit: isEditing || dataExists
-        };
-
-        await inspectionService.updateSandProperties(payload);
-
-        setSubmitted(true);
-        setPreviewMode(false);
-        await Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Sand properties updated successfully.'
-        });
-        navigate('/dashboard');
+        await inspectionService.updateSandProperties(apiPayload);
       } else {
-        const payload = {
-          trial_id: trialId,
-          date: sandDate,
-          t_clay: Number((sandProps as any).tClay) || 0,
-          a_clay: Number((sandProps as any).aClay) || 0,
-          vcm: Number((sandProps as any).vcm) || 0,
-          loi: Number((sandProps as any).loi) || 0,
-          afs: Number((sandProps as any).afs) || 0,
-          gcs: Number((sandProps as any).gcs) || 0,
-          moi: Number((sandProps as any).moi) || 0,
-          compactability: Number((sandProps as any).compactability) || 0,
-          permeability: Number((sandProps as any).perm) || 0,
-          remarks: (sandProps as any).remarks || ""
-        };
-
-        await inspectionService.submitSandProperties(payload);
-
-        if (attachedFiles.length > 0) {
-          try {
-            const uploadResults = await uploadFiles(
-              attachedFiles,
-              trialId,
-              "SAND_PROPERTIES",
-              user?.username || "system",
-              "SAND_PROPERTIES"
-            );
-
-            const failures = uploadResults.filter(r => !r.success);
-            if (failures.length > 0) {
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Some files failed to upload. Please try again.'
-              });
-            }
-          } catch (uploadError) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'File upload error. Please try again.'
-            });
-          }
-        }
-
-        setSubmitted(true);
-        setPreviewMode(false);
-        await Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Sand properties created successfully.'
-        });
-        navigate('/dashboard');
+        await inspectionService.submitSandProperties(apiPayload);
       }
+
+      if (attachedFiles.length > 0) {
+        await uploadFiles(
+          attachedFiles,
+          trialId,
+          "SAND_PROPERTIES",
+          user?.username || "system",
+          "SAND_PROPERTIES"
+        ).catch(err => console.error("File upload error:", err));
+      }
+
+      setSubmitted(true);
+      setPreviewMode(false);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Sand Properties ${dataExists ? 'updated' : 'created'} successfully.`
+      });
+      navigate('/dashboard');
     } catch (err: any) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: err.message || (user?.role === 'HOD' || user?.role === 'Admin' ? 'Failed to approve sand properties. Please try again.' : 'Failed to save sand properties. Please try again.')
+        text: err.message || 'Failed to save Sand Properties. Please try again.'
       });
     } finally {
       setLoading(false);
@@ -299,41 +260,22 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
   const handleSaveDraft = async () => {
     setLoading(true);
     try {
-      const payload = {
-        trial_id: trialId,
-        date: sandDate,
-        t_clay: Number((sandProps as any).tClay) || 0,
-        a_clay: Number((sandProps as any).aClay) || 0,
-        vcm: Number((sandProps as any).vcm) || 0,
-        loi: Number((sandProps as any).loi) || 0,
-        afs: Number((sandProps as any).afs) || 0,
-        gcs: Number((sandProps as any).gcs) || 0,
-        moi: Number((sandProps as any).moi) || 0,
-        compactability: Number((sandProps as any).compactability) || 0,
-        permeability: Number((sandProps as any).perm) || 0,
-        remarks: (sandProps as any).remarks || "",
-        is_edit: isEditing || dataExists,
-        is_draft: true
-      };
+      const apiPayload = buildServerPayload(true);
 
       if (dataExists || ((user?.role === 'HOD' || user?.role === 'Admin') && trialId)) {
-        await inspectionService.updateSandProperties(payload);
+        await inspectionService.updateSandProperties(apiPayload);
       } else {
-        await inspectionService.submitSandProperties(payload);
+        await inspectionService.submitSandProperties(apiPayload);
       }
 
       if (attachedFiles.length > 0) {
-        try {
-          await uploadFiles(
-            attachedFiles,
-            trialId,
-            "SAND_PROPERTIES",
-            user?.username || "system",
-            "SAND_PROPERTIES"
-          );
-        } catch (uploadError) {
-          console.error("Draft file upload error", uploadError);
-        }
+        await uploadFiles(
+          attachedFiles,
+          trialId,
+          "SAND_PROPERTIES",
+          user?.username || "system",
+          "SAND_PROPERTIES"
+        ).catch(err => console.error("Draft file upload error", err));
       }
 
       setSubmitted(true);
@@ -343,7 +285,6 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         text: 'Progress saved and moved to next department.'
       });
       navigate('/dashboard');
-
     } catch (error: any) {
       Swal.fire({
         icon: 'error',
@@ -488,20 +429,17 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                     </Box>
 
                     <Box sx={{ p: 3, mt: 4, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
-                      {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                        <>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
-                            Attach PDF / Image Files
-                          </Typography>
-                          <FileUploadSection
-                            files={attachedFiles}
-                            onFilesChange={handleAttachFiles}
-                            onFileRemove={removeAttachedFile}
-                            showAlert={showAlert}
-                            label="Attach PDF"
-                          />
-                        </>
-                      )}
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
+                        Attach PDF / Image Files
+                      </Typography>
+                      <FileUploadSection
+                        files={attachedFiles}
+                        onFilesChange={handleAttachFiles}
+                        onFileRemove={removeAttachedFile}
+                        showAlert={showAlert}
+                        label="Attach PDF"
+                        disabled={user?.role === 'HOD' || user?.role === 'Admin'}
+                      />
                       <DocumentViewer trialId={trialId || ""} category="SAND_PROPERTIES" />
                     </Box>
 
