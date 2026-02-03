@@ -9,8 +9,8 @@ import { machineShopSchema, updateMachineShopSchema } from '../schemas/index.js'
 
 const router = express.Router();
 
-router.post('/', verifyToken, validateTrial, authorizeDepartments(1, 8), validate(machineShopSchema), asyncErrorHandler(machineShopController.createMachineShop));
-router.put('/', verifyToken, validateTrial, authorizeDepartments(1, 8), validate(updateMachineShopSchema), asyncErrorHandler(machineShopController.updateMachineShop));
+router.post('/', verifyToken, validateTrial, authorizeDepartments(1, 8, 9), validate(machineShopSchema), asyncErrorHandler(machineShopController.createMachineShop));
+router.put('/', verifyToken, validateTrial, authorizeDepartments(1, 8, 9), validate(updateMachineShopSchema), asyncErrorHandler(machineShopController.updateMachineShop));
 router.get('/', verifyToken, asyncErrorHandler(machineShopController.getMachineShops));
 router.get('/trial_id', verifyToken, asyncErrorHandler(machineShopController.getMachineShopByTrialId));
 
