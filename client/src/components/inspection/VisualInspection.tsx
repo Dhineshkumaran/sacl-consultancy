@@ -479,7 +479,10 @@ export default function VisualInspection({
 
                             setCols(loadedCols);
                             setRows(prevRows => prevRows.map(row => {
-                                const fieldName = "Reason for rejection";
+                                let fieldName = row.label;
+                                if (fieldName.includes('Rejection Percentage')) fieldName = 'Rejection Percentage';
+                                if (fieldName.endsWith(':')) fieldName = fieldName.slice(0, -1);
+
                                 return {
                                     ...row,
                                     values: inspections.map((item: any) => String(item[fieldName] || ''))
@@ -1251,21 +1254,27 @@ export default function VisualInspection({
                                                             <TableHead>
                                                                 <TableRow sx={{ bgcolor: '#f8fafc' }}>
                                                                     <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Values</TableCell>
+                                                                    {previewPayload.cols.map((col: string, i: number) => (
+                                                                        <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{col}</TableCell>
+                                                                    ))}
                                                                     <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
                                                                 </TableRow>
                                                             </TableHead>
                                                             <TableBody>
                                                                 {previewPayload.ndt.rows?.map((r: any, idx: number) => (
                                                                     <TableRow key={idx}>
-                                                                        <TableCell sx={{ fontSize: '0.75rem' }}>{r.label}</TableCell>
-                                                                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{r.value}</TableCell>
-                                                                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{r.total ?? "-"}</TableCell>
+                                                                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r.label}</TableCell>
+                                                                        {(r.value || "").split('|').map((v: string, j: number) => (
+                                                                            <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.75rem', fontFamily: 'Roboto Mono' }}>
+                                                                                {v.trim() || "-"}
+                                                                            </TableCell>
+                                                                        ))}
+                                                                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700 }}>{r.total ?? "-"}</TableCell>
                                                                     </TableRow>
                                                                 ))}
                                                                 <TableRow>
                                                                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
-                                                                    <TableCell colSpan={2} sx={{ textAlign: 'center' }}>
+                                                                    <TableCell colSpan={previewPayload.cols.length + 1} sx={{ textAlign: 'center' }}>
                                                                         {previewPayload.ndt.ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
                                                                     </TableCell>
                                                                 </TableRow>
@@ -1284,26 +1293,32 @@ export default function VisualInspection({
                                                             <TableHead>
                                                                 <TableRow sx={{ bgcolor: '#f8fafc' }}>
                                                                     <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Value</TableCell>
+                                                                    {previewPayload.cols.map((col: string, i: number) => (
+                                                                        <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{col}</TableCell>
+                                                                    ))}
                                                                 </TableRow>
                                                             </TableHead>
                                                             <TableBody>
                                                                 {previewPayload.hardness.map((r: any, idx: number) => (
                                                                     <TableRow key={idx}>
-                                                                        <TableCell sx={{ fontSize: '0.75rem' }}>{r.label}</TableCell>
-                                                                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{r.value || "-"}</TableCell>
+                                                                        <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r.label}</TableCell>
+                                                                        {(r.value || "").split('|').map((v: string, j: number) => (
+                                                                            <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.75rem', fontFamily: 'Roboto Mono' }}>
+                                                                                {v.trim() || "-"}
+                                                                            </TableCell>
+                                                                        ))}
                                                                     </TableRow>
                                                                 ))}
                                                                 <TableRow>
                                                                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
-                                                                    <TableCell sx={{ textAlign: 'center' }}>
+                                                                    <TableCell colSpan={previewPayload.cols.length} sx={{ textAlign: 'center' }}>
                                                                         {previewPayload.hardness_ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
                                                                     </TableCell>
                                                                 </TableRow>
                                                                 {previewPayload.hardness_remarks && (
                                                                     <TableRow>
                                                                         <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Remarks</TableCell>
-                                                                        <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload.hardness_remarks}</TableCell>
+                                                                        <TableCell colSpan={previewPayload.cols.length} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload.hardness_remarks}</TableCell>
                                                                     </TableRow>
                                                                 )}
                                                             </TableBody>
