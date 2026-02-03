@@ -56,11 +56,9 @@ export default function McShopInspection({
 
     return { ok: true };
   },
-  onValidationError,
 }: {
   initialCavities?: string[];
   onSave?: (payload: any) => Promise<any> | any;
-  onValidationError?: (message: string) => void;
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -258,11 +256,7 @@ export default function McShopInspection({
 
         if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
           if (acceptedNum > inspectedNum) {
-            if (onValidationError) {
-              onValidationError(`Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
-            } else {
-              showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
-            }
+            showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
             const newRejectedValues = [...rejectedRow.values];
             newRejectedValues[colIndex] = "Invalid";
             updated = updated.map(r => r.id === rejectedRow.id ? { ...r, values: newRejectedValues } : r);
