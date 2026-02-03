@@ -9,7 +9,7 @@ export const createMachineShop = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'Trial ID is required' });
     }
 
-    const existingInspection = await Client.query('SELECT * FROM machine_shop WHERE trial_id = @trial_id', { trial_id });
+    const [existingInspection] = await Client.query('SELECT * FROM machine_shop WHERE trial_id = @trial_id', { trial_id });
     if (existingInspection.length > 0) {
         return res.status(400).json({ success: false, message: 'Machine shop already exists for this trial ID' });
     }
@@ -51,7 +51,7 @@ export const updateMachineShop = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'Trial ID is required' });
     }
 
-    const existingInspection = await Client.query('SELECT * FROM machine_shop WHERE trial_id = @trial_id', { trial_id });
+    const [existingInspection] = await Client.query('SELECT * FROM machine_shop WHERE trial_id = @trial_id', { trial_id });
     if (existingInspection.length === 0) {
         return res.status(400).json({ success: false, message: 'Machine shop does not exist for this trial ID' });
     }
