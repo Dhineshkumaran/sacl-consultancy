@@ -1169,12 +1169,12 @@ export default function VisualInspection({
                                                 <Typography variant="body2" color="textSecondary">Created: {previewPayload?.created_at}</Typography>
                                             </Box>
                                             <Divider sx={{ mb: 3 }} />
-
-                                            <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
-                                                <Table size="small">
-                                                    <TableHead>
-                                                        <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                                            <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
+                                            {previewPayload?.cols && (
+                                                <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
+                                                    <Table size="small">
+                                                        <TableHead>
+                                                            <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                                                                <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
                                                             {previewPayload?.cols?.map((c: string, i: number) => (<TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
                                                             ))}
                                                         </TableRow>
@@ -1199,6 +1199,7 @@ export default function VisualInspection({
                                                     </TableBody>
                                                 </Table>
                                             </Box>
+                                            )}
 
                                             {/* NDT Preview in Modal */}
                                             {previewPayload?.ndt && (
@@ -1335,15 +1336,17 @@ export default function VisualInspection({
                         )}
                     </Container>
                 </Box>
-            </Box>
+            </Box >
 
             {/* Profile Modal */}
-            {showProfile && (
-                <ProfileModal
-                    onClose={() => setShowProfile(false)}
-                    onPhotoUpdate={() => setHeaderRefreshKey(prev => prev + 1)}
-                />
-            )}
-        </ThemeProvider>
+            {
+                showProfile && (
+                    <ProfileModal
+                        onClose={() => setShowProfile(false)}
+                        onPhotoUpdate={() => setHeaderRefreshKey(prev => prev + 1)}
+                    />
+                )
+            }
+        </ThemeProvider >
     );
 }
