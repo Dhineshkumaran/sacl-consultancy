@@ -161,20 +161,28 @@ export const updateDepartment = async (trial_id, user, trx) => {
         remarks: `Department progress for trial ${trial_id} approved by ${user.username} at ${user.department_name} department`
     });
 
-    const [rows] = await trx.query(
-        `SELECT df2.department_id AS next_department_id
-            FROM department_flow df1
-            JOIN department_flow df2
-            ON df2.sequence_no = df1.sequence_no + 1
-            WHERE df1.department_id = @currentDepartmentId`,
-        { currentDepartmentId: current_department_id }
-    );
+    let current_sequence_no = 1;
+    let next_department_id = null;
 
-    if (!rows || rows.length === 0) {
-        await approveProgress(trial_id, user, trx);
-        return;
+    while (current_sequence_no <= 10) {
+        const [next_rows] = await trx.query(
+            `SELECT df.department_id 
+             FROM department_flow df 
+             WHERE df.sequence_no = @sequence_no 
+             AND NOT EXISTS(SELECT 1 FROM department_progress WHERE department_id = df.department_id AND trial_id = @trial_id)`,
+            { sequence_no: current_sequence_no, trial_id }
+        );
+
+        if (next_rows && next_rows.length > 0) {
+            next_department_id = next_rows[0].department_id;
+            break;
+        }
+        current_sequence_no++;
     }
-    const next_department_id = rows[0].next_department_id;
+
+    if (!next_department_id) {
+        return await approveProgress(trial_id, user, trx);
+    }
 
     return await assignToNextDepartmentUser(current_department_id, trial_id, trial_type, next_department_id, user, trx);
 };
@@ -262,20 +270,28 @@ export const updateRole = async (trial_id, user, trx) => {
         await sendMail(mailOptions);
         return "Department progress updated successfully";
     } else {
-        const [rows] = await trx.query(
-            `SELECT df2.department_id AS next_department_id
-                FROM department_flow df1
-                JOIN department_flow df2
-                ON df2.sequence_no = df1.sequence_no + 1
-                WHERE df1.department_id = @currentDepartmentId`,
-            { currentDepartmentId: current_department_id }
-        );
+        let current_sequence_no = 1;
+        let next_department_id = null;
 
-        if (!rows || rows.length === 0) {
-            await approveProgress(trial_id, user, trx);
-            return;
+        while (current_sequence_no <= 10) {
+            const [next_rows] = await trx.query(
+                `SELECT df.department_id 
+                 FROM department_flow df 
+                 WHERE df.sequence_no = @sequence_no 
+                 AND NOT EXISTS(SELECT 1 FROM department_progress WHERE department_id = df.department_id AND trial_id = @trial_id)`,
+                { sequence_no: current_sequence_no, trial_id }
+            );
+
+            if (next_rows && next_rows.length > 0) {
+                next_department_id = next_rows[0].department_id;
+                break;
+            }
+            current_sequence_no++;
         }
-        const next_department_id = rows[0].next_department_id;
+
+        if (!next_department_id) {
+            return await approveProgress(trial_id, user, trx);
+        }
 
         return await assignToNextDepartmentUser(current_department_id, trial_id, trial_type, next_department_id, user, trx);
     }

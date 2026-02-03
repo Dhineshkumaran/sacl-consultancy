@@ -1245,6 +1245,12 @@ export default function VisualInspection({
                                                                 ))}
                                                             </TableRow>
                                                         ))}
+                                                        <TableRow>
+                                                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
+                                                            <TableCell colSpan={previewPayload.cols.length + 1} sx={{ textAlign: 'center' }}>
+                                                                {previewPayload.group.ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
+                                                            </TableCell>
+                                                        </TableRow>
                                                     </TableBody>
                                                 </Table>
                                             </Box>
@@ -1338,23 +1344,9 @@ export default function VisualInspection({
                                             )}
 
                                             <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                                <Typography variant="subtitle2" mb={1} color="textSecondary">FINAL STATUS & REMARKS</Typography>
+                                                <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHMENTS</Typography>
                                                 <Grid container spacing={2}>
-                                                    <Grid size={{ xs: 12, sm: 4 }}>
-                                                        <Box display="flex" alignItems="center" gap={1}>
-                                                            <Typography variant="body2">Status:</Typography>
-                                                            {previewPayload?.group.ok === true ?
-                                                                <Chip label="OK" color="success" size="small" /> :
-                                                                previewPayload?.group.ok === false ?
-                                                                    <Chip label="NOT OK" color="error" size="small" /> :
-                                                                    <Chip label="-" size="small" />
-                                                            }
-                                                        </Box>
-                                                    </Grid>
                                                     <Grid size={{ xs: 12, sm: 8 }}>
-                                                        <Typography variant="body2">
-                                                            <strong>Remarks:</strong> {previewPayload?.group.remarks || "No remarks"}
-                                                        </Typography>
                                                         {previewPayload?.group.attachment && (
                                                             <Typography variant="caption" display="block" mt={0.5} color="primary">
                                                                 Attachment: {previewPayload.group.attachment.name}
