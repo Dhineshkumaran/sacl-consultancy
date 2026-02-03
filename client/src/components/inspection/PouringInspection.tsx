@@ -262,9 +262,9 @@ function PouringDetailsTable() {
                         setPouringTime(String(data.pouring_time_sec || ""));
 
                         const inoc = safeParse<any>(data.inoculation, {});
-                        setInoculationText(inoc.Text || "");
-                        setInoculationStream(inoc.Stream || "");
-                        setInoculationInmould(inoc.Inmould || "");
+                        setInoculationText(inoc.text || "");
+                        setInoculationStream(inoc.stream || "");
+                        setInoculationInmould(inoc.inmould || "");
 
                         const rem = safeParse<any>(data.other_remarks, {});
                         setFicHeatNo(rem["F/C & Heat No."] || "");
@@ -306,9 +306,9 @@ function PouringDetailsTable() {
             pouring_temp_c: parseFloat(String(source.pouringTemp ?? source.pouring_temp_c)) || 0,
             pouring_time_sec: parseInt(String(source.pouringTime ?? source.pouring_time_sec)) || 0,
             inoculation: {
-                Text: inoculationText,
-                Stream: inoculationStream,
-                Inmould: inoculationInmould
+                text: inoculationText,
+                stream: inoculationStream,
+                inmould: inoculationInmould
             },
             other_remarks: {
                 "F/C & Heat No.": ficHeatNo,

@@ -272,11 +272,7 @@ function FoundrySampleCard() {
   const handleToolingFilesChange = (newFiles: File[]) => {
     setToolingFiles(prev => [...prev, ...newFiles]);
   };
-  const [patternDataSheetFiles, setPatternDataSheetFiles] = useState<File[]>([]);
-  const handlePatternDataSheetFilesChange = (newFiles: File[]) => {
-    setPatternDataSheetFiles(prev => [...prev, ...newFiles]);
-  };
-  const removePatternDataSheetFile = (index: number) => setPatternDataSheetFiles(prev => prev.filter((_, i) => i !== index));
+
   const removeToolingFile = (index: number) => setToolingFiles(prev => prev.filter((_, i) => i !== index));
 
   const [remarks, setRemarks] = useState("");
@@ -529,15 +525,6 @@ function FoundrySampleCard() {
             "TOOLING_MODIFICATION",
             user?.username || "Unknown",
             "Tooling Modification files"
-          );
-        }
-        if (patternDataSheetFiles.length > 0) {
-          await uploadFiles(
-            patternDataSheetFiles,
-            trialId || trialIdFromUrl,
-            "PATTERN_DATA_SHEET",
-            user?.username || "Unknown",
-            "Pattern Data Sheet files"
           );
         }
         setDocsRefreshTrigger(prev => prev + 1);
