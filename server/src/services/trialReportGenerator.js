@@ -223,6 +223,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     yLeft = yMetSpec;
 
     // 3. Pouring Details (Right, Below Mat Corr)
+    let yRight = y;
     yRight = drawSectionTitle(doc, "2. POURING DETAILS", col2X, yRight);
     const pInoc = safeParse(pouring.inoculation, {});
     const pRem = safeParse(pouring.other_remarks, {});
