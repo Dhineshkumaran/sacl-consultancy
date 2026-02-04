@@ -54,13 +54,13 @@ export const createInspection = async (req, res, next) => {
             trial_id,
             inspection_date,
             micro_structure: JSON.stringify(micro_structure || []),
-            micro_structure_ok,
+            micro_structure_ok: micro_structure_ok ?? null,
             micro_structure_remarks: micro_structure_remarks || null,
             mech_properties: JSON.stringify(mech_properties || []),
-            mech_properties_ok,
+            mech_properties_ok: mech_properties_ok ?? null,
             mech_properties_remarks: mech_properties_remarks || null,
             impact_strength: JSON.stringify(impact_strength || []),
-            impact_strength_ok,
+            impact_strength_ok: impact_strength_ok ?? null,
             impact_strength_remarks: impact_strength_remarks || null
         });
 
@@ -128,13 +128,13 @@ export const updateInspection = async (req, res, next) => {
             await trx.query(sql, {
                 inspection_date: inspection_date || null,
                 micro_structure: microStructureJson,
-                micro_structure_ok: micro_structure_ok || null,
+                micro_structure_ok: micro_structure_ok ?? null,
                 micro_structure_remarks: micro_structure_remarks || null,
                 mech_properties: mechPropertiesJson,
-                mech_properties_ok: mech_properties_ok || null,
+                mech_properties_ok: mech_properties_ok ?? null,
                 mech_properties_remarks: mech_properties_remarks || null,
                 impact_strength: impactStrengthJson,
-                impact_strength_ok: impact_strength_ok || null,
+                impact_strength_ok: impact_strength_ok ?? null,
                 impact_strength_remarks: impact_strength_remarks || null,
                 trial_id
             });
