@@ -389,11 +389,6 @@ export const triggerNextDepartment = async (trial_id, user, trx) => {
         { next_department_id, next_department_username, trial_id }
     );
 
-    await trx.query(
-        `UPDATE trial_cards SET current_department_id = @next_department_id, status = 'IN_PROGRESS' WHERE trial_id = @trial_id`,
-        { next_department_id, trial_id }
-    );
-
     const audit_sql_assignment = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     await trx.query(audit_sql_assignment, {
         user_id: user.user_id,
