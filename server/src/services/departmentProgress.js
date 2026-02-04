@@ -48,11 +48,27 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
     });
 
     const [pending] = await trx.query(
-        `SELECT COUNT(*) as count FROM department_progress WHERE trial_id = @trial_id AND approval_status = 'pending'`,
+        `SELECT df.department_id
+  FROM department_flow df
+  JOIN department_progress dp
+    ON dp.department_id = df.department_id
+  WHERE dp.trial_id = @trial_id
+    AND dp.approval_status = 'pending'
+  ORDER BY df.sequence_no
+  LIMIT 1`,
         { trial_id }
     );
 
-    if (pending[0].count > 0) {
+    if (pending && pending.length > 0) {
+        await trx.query(
+  `
+  UPDATE trial_cards
+  SET current_department_id = @next_department_id,
+      status = 'IN_PROGRESS'
+  WHERE trial_id = @trial_id
+  `,
+  { pending[0].department_id, trial_id }
+);
         return;
     }
 
