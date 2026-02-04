@@ -18,13 +18,13 @@ export const createInspection = async (req, res, next) => {
         await trx.query(sql, {
             trial_id,
             inspections: inspectionsJson,
-            visual_ok,
+            visual_ok: visual_ok ?? null,
             remarks,
             ndt_inspection: ndtInspectionJson,
-            ndt_inspection_ok: ndt_inspection_ok || null,
+            ndt_inspection_ok: ndt_inspection_ok ?? null,
             ndt_inspection_remarks: ndt_inspection_remarks || null,
             hardness: hardnessJson,
-            hardness_ok: hardness_ok || null,
+            hardness_ok: hardness_ok ?? null,
             hardness_remarks: hardness_remarks || null
         });
 
@@ -76,13 +76,13 @@ export const updateInspection = async (req, res, next) => {
 
             await trx.query(sql, {
                 inspections: inspectionsJson,
-                visual_ok: visual_ok || null,
+                visual_ok: visual_ok ?? null,
                 remarks: remarks || null,
                 ndt_inspection: ndtInspectionJson,
-                ndt_inspection_ok: ndt_inspection_ok || null,
+                ndt_inspection_ok: ndt_inspection_ok ?? null,
                 ndt_inspection_remarks: ndt_inspection_remarks || null,
                 hardness: hardnessJson,
-                hardness_ok: hardness_ok || null,
+                hardness_ok: hardness_ok ?? null,
                 hardness_remarks: hardness_remarks || null,
                 trial_id
             });

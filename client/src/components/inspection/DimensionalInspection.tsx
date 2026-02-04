@@ -16,16 +16,13 @@ import {
     Button,
     Alert,
     ThemeProvider,
-    createTheme,
     Container,
     Grid,
     Chip,
-    Divider,
-    GlobalStyles
+    Divider
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from '@mui/icons-material/Edit';
@@ -43,20 +40,18 @@ import { AlertMessage } from '../common/AlertMessage';
 import Header from "../dashboard/Header";
 import ProfileModal from "../dashboard/ProfileModal";
 import { getDepartmentInfo } from "../../utils/dashboardUtils";
-import { fileToMeta, generateUid, validateFileSizes, formatDate } from '../../utils';
-import type { InspectionRow, GroupMetadata } from '../../types/inspection';
-import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
+import { fileToMeta, generateUid, formatDate } from '../../utils';
+import type { InspectionRow } from '../../types/inspection';
+import { EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
 import { safeParse } from '../../utils/jsonUtils';
 
 
 type CavRow = InspectionRow;
-type GroupMeta = GroupMetadata;
 
 export default function DimensionalInspection({
     initialCavities = [""],
     onSave = async (payload: any) => {
-
         return { ok: true };
     },
 }: {
@@ -71,14 +66,14 @@ export default function DimensionalInspection({
     const [cavities, setCavities] = useState<string[]>([...initialCavities]);
     const [cavRows, setCavRows] = useState<CavRow[]>(() => {
         const makeCavRows = (cavLabels: string[]) => [
-            { id: `cavity-${generateUid()}`, label: "Cavity Number", values: cavLabels.map(() => "") } as CavRow,
-            { id: `avg-${generateUid()}`, label: "Casting Weight", values: cavLabels.map(() => "") } as CavRow,
+            { id: `cavity-${generateUid()}`, label: "Cavity Number", values: cavLabels?.map(() => "") } as CavRow,
+            { id: `avg-${generateUid()}`, label: "Casting Weight", values: cavLabels?.map(() => "") } as CavRow,
         ];
         return makeCavRows(initialCavities);
     });
     const [bunchWeight, setBunchWeight] = useState<string>("");
     const [numberOfCavity, setNumberOfCavity] = useState<string>("");
-    const [groupMeta, setGroupMeta] = useState<GroupMeta>({ remarks: "", attachment: null });
+
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const { alert, showAlert } = useAlert();
@@ -109,7 +104,7 @@ export default function DimensionalInspection({
                 }
                 try {
                     const pending = await departmentProgressService.getProgress(user.username, user.department_id);
-                    const found = pending.find(p => p.trial_id === trialId);
+                    const found = pending?.find(p => p?.trial_id === trialId);
                     setIsAssigned(!!found);
                 } catch (error) {
                     console.error("Failed to check assignment:", error);
@@ -129,23 +124,23 @@ export default function DimensionalInspection({
                     const response = await inspectionService.getDimensionalInspection(trialId);
                     if (response.success && response.data && response.data.length > 0) {
                         const data = response.data[0];
-                        setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
-                        setWeightTarget(String(data.casting_weight || ""));
-                        setBunchWeight(String(data.bunch_weight || ""));
-                        setNumberOfCavity(String(data.no_of_cavities || ""));
-                        setGroupMeta({ remarks: data.remarks || "", attachment: null });
-                        setRemarks(data.remarks || "");
+                        setDate(data?.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
+                        setWeightTarget(String(data?.casting_weight || ""));
+                        setBunchWeight(String(data?.bunch_weight || ""));
+                        setNumberOfCavity(String(data?.no_of_cavities || ""));
+                        setRemarks(data?.remarks || "");
 
-                        const inspections = safeParse<any[]>(data.inspections, []);
 
-                        if (inspections.length > 0) {
-                            setCavities(inspections.map((_: any, i: number) => `Cavity ${i + 1}`));
-                            setCavRows(prev => prev.map(row => {
-                                if (row.label === "Cavity Number") {
-                                    return { ...row, values: inspections.map((p: any) => String(p["Cavity Number"] || "")) };
+                        const inspections = safeParse<any[]>(data?.inspections, []);
+
+                        if (inspections && inspections?.length > 0) {
+                            setCavities(inspections?.map((_: any, i: number) => `Cavity ${i + 1}`));
+                            setCavRows(prev => prev?.map(row => {
+                                if (row?.label === "Cavity Number") {
+                                    return { ...row, values: inspections?.map((p: any) => String(p?.["Cavity Number"] || "")) };
                                 }
-                                if (row.label === "Casting Weight") {
-                                    return { ...row, values: inspections.map((p: any) => String(p["Casting Weight"] || "")) };
+                                if (row?.label === "Casting Weight") {
+                                    return { ...row, values: inspections?.map((p: any) => String(p?.["Casting Weight"] || "")) };
                                 }
                                 return row;
                             }));
@@ -191,8 +186,8 @@ export default function DimensionalInspection({
 
 
     const makeCavRows = (cavLabels: string[]) => [
-        { id: `cavity-${generateUid()}`, label: "Cavity Number", values: cavLabels.map(() => "") } as CavRow,
-        { id: `avg-${generateUid()}`, label: "Casting Weight", values: cavLabels.map(() => "") } as CavRow,
+        { id: `cavity-${generateUid()}`, label: "Cavity Number", values: cavLabels?.map(() => "") } as CavRow,
+        { id: `avg-${generateUid()}`, label: "Casting Weight", values: cavLabels?.map(() => "") } as CavRow,
     ];
 
     const calculateYield = () => {
@@ -211,8 +206,8 @@ export default function DimensionalInspection({
 
     const addCavity = () => {
         const next = "";
-        setCavities((c) => [...c, next]);
-        setCavRows((rows) => rows.map((r) => ({ ...r, values: [...r.values, ""] })));
+        setCavities((c) => [...(c || []), next]);
+        setCavRows((rows) => rows?.map((r) => ({ ...r, values: [...(r?.values || []), ""] })));
     };
 
     const handleAttachFiles = (newFiles: File[]) => {
@@ -224,9 +219,9 @@ export default function DimensionalInspection({
     };
 
     const removeCavity = (index: number) => {
-        if (cavities.length <= 1) return;
-        setCavities((c) => c.filter((_: string, i: number) => i !== index));
-        setCavRows((rows) => rows.map((r) => ({ ...r, values: r.values.filter((_: string, i: number) => i !== index) })));
+        if ((cavities?.length || 0) <= 1) return;
+        setCavities((c) => c?.filter((_: string, i: number) => i !== index));
+        setCavRows((rows) => rows?.map((r) => ({ ...r, values: r?.values?.filter((_: string, i: number) => i !== index) })));
     };
 
     const updateCavityLabel = (index: number, label: string) => {
@@ -234,7 +229,7 @@ export default function DimensionalInspection({
     };
 
     const updateCavCell = (rowId: string, colIndex: number, value: string) => {
-        setCavRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, values: r.values.map((v, i) => (i === colIndex ? value : v)) } : r)));
+        setCavRows((prev) => prev?.map((r) => (r.id === rowId ? { ...r, values: r?.values?.map((v, i) => (i === colIndex ? value : v)) } : r)));
     };
 
     const resetAll = () => {
@@ -244,7 +239,6 @@ export default function DimensionalInspection({
         setCavRows(makeCavRows(initialCavities));
         setBunchWeight("");
         setNumberOfCavity("");
-        setGroupMeta({ remarks: "", attachment: null });
         setAttachedFiles([]);
         setRemarks("");
         setMessage(null);
@@ -255,15 +249,13 @@ export default function DimensionalInspection({
         return {
             inspection_date: date || null,
             weight_target: weightTarget || null,
-            cavities: cavities.slice(),
-            cavity_rows: cavRows.map((r) => ({ label: r.label, values: r.values.map((v) => (v === "" ? null : v)) })),
+            cavities: cavities?.slice(),
+            cavity_rows: cavRows?.map((r) => ({ label: r?.label, values: r?.values?.map((v) => (v === "" ? null : v)) })),
             bunch_weight: bunchWeight || null,
             number_of_cavity: numberOfCavity || null,
             yield: calculateYield() || null,
-            dimensional_remarks: groupMeta.remarks || null,
-            attachment: fileToMeta(groupMeta.attachment),
-            attachedFiles: attachedFiles.map(f => f.name),
             remarks: remarks,
+            attachedFiles: attachedFiles?.map(f => f?.name),
             created_at: new Date().toISOString(),
         };
     };
@@ -271,12 +263,13 @@ export default function DimensionalInspection({
     const buildServerPayload = (isDraft: boolean = false) => {
         const source = previewPayload || buildPayload();
 
-        const cavityRow = source.cavity_rows?.find((r: any) => String(r.label).toLowerCase().includes('cavity'));
-        const castingRow = source.cavity_rows?.find((r: any) => String(r.label).toLowerCase().includes('casting'));
+        const cavityRow = source?.cavity_rows?.find((r: any) => String(r?.label)?.toLowerCase()?.includes('cavity'));
+        const castingRow = source?.cavity_rows?.find((r: any) => String(r?.label)?.toLowerCase()?.includes('casting'));
 
-        const inspections = (source.cavities || []).map((_: any, i: number) => ({
-            "Cavity Number": (cavityRow?.values?.[i] ?? source.cavities[i] ?? null),
-            "Casting Weight": (castingRow?.values?.[i] ?? null)
+
+        const inspections = (source?.cavities || [])?.map((_: any, i: number) => ({
+            "Cavity Number": String(cavityRow?.values?.[i] ?? source?.cavities?.[i] ?? ""),
+            "Casting Weight": String(castingRow?.values?.[i] ?? "")
         }));
 
         return {
@@ -505,7 +498,7 @@ export default function DimensionalInspection({
                                             <TableHead>
                                                 <TableRow sx={{ bgcolor: COLORS.blueHeaderBg }}>
                                                     <TableCell sx={{ minWidth: 200, color: COLORS.blueHeaderText }}>Parameter</TableCell>
-                                                    {cavities.map((c, ci) => (
+                                                    {cavities?.map((c, ci) => (
                                                         <TableCell key={ci} sx={{ minWidth: 140 }}>
                                                             <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
                                                                 <TextField
@@ -527,18 +520,18 @@ export default function DimensionalInspection({
                                             </TableHead>
 
                                             <TableBody>
-                                                {cavRows.map((r, ri) => (
-                                                    <TableRow key={r.id}>
+                                                {cavRows?.map((r, ri) => (
+                                                    <TableRow key={r?.id}>
                                                         <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
-                                                            {r.label}
+                                                            {r?.label}
                                                         </TableCell>
-                                                        {r.values.map((val, ci) => (
+                                                        {r?.values?.map((val, ci) => (
                                                             <TableCell key={ci}>
                                                                 <TextField
                                                                     size="small"
                                                                     fullWidth
                                                                     value={val}
-                                                                    onChange={(e) => updateCavCell(r.id, ci, e.target.value)}
+                                                                    onChange={(e) => updateCavCell(r?.id, ci, e.target.value)}
                                                                     variant="outlined"
                                                                     sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
                                                                     disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
@@ -650,13 +643,21 @@ export default function DimensionalInspection({
                                     <Divider sx={{ mb: 3 }} />
 
                                     <Grid container spacing={2} sx={{ mb: 3 }}>
-                                        <Grid size={{ xs: 12, md: 6 }}>
-                                            <Typography variant="caption" color="textSecondary">TARGET WEIGHT</Typography>
+                                        <Grid size={{ xs: 6, md: 3 }}>
+                                            <Typography variant="caption" color="textSecondary">CASTING WEIGHT</Typography>
                                             <Typography variant="body1" fontWeight="bold">{previewPayload?.weight_target || "-"} Kg</Typography>
                                         </Grid>
-                                        <Grid size={{ xs: 12, md: 6 }}>
+                                        <Grid size={{ xs: 6, md: 3 }}>
                                             <Typography variant="caption" color="textSecondary">BUNCH WEIGHT</Typography>
                                             <Typography variant="body1" fontWeight="bold">{previewPayload?.bunch_weight || "-"} Kg</Typography>
+                                        </Grid>
+                                        <Grid size={{ xs: 6, md: 3 }}>
+                                            <Typography variant="caption" color="textSecondary">NO. OF CAVITY</Typography>
+                                            <Typography variant="body1" fontWeight="bold">{previewPayload?.number_of_cavity || "-"}</Typography>
+                                        </Grid>
+                                        <Grid size={{ xs: 6, md: 3 }}>
+                                            <Typography variant="caption" color="textSecondary">YIELD</Typography>
+                                            <Typography variant="body1" fontWeight="bold">{previewPayload?.yield || "-"} %</Typography>
                                         </Grid>
                                     </Grid>
 
@@ -665,16 +666,16 @@ export default function DimensionalInspection({
                                             <TableHead>
                                                 <TableRow sx={{ bgcolor: '#f8fafc' }}>
                                                     <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                                                    {previewPayload?.cavities.map((c: string, i: number) => (
+                                                    {previewPayload?.cavities?.map((c: string, i: number) => (
                                                         <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
                                                     ))}
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {previewPayload?.cavity_rows.map((r: any, idx: number) => (
+                                                {previewPayload?.cavity_rows?.map((r: any, idx: number) => (
                                                     <TableRow key={idx}>
-                                                        <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
-                                                        {r.values.map((v: any, j: number) => (
+                                                        <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r?.label}</TableCell>
+                                                        {r?.values?.map((v: any, j: number) => (
                                                             <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
                                                                 {v === null ? "-" : String(v)}
                                                             </TableCell>
@@ -685,19 +686,11 @@ export default function DimensionalInspection({
                                         </Table>
                                     </Box>
 
-                                    <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                        {previewPayload?.attachment && (
-                                            <Typography variant="caption" display="block" mt={1} color="primary">
-                                                Attachment: {previewPayload.attachment.name}
-                                            </Typography>
-                                        )}
-                                    </Box>
-
                                     {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
                                         <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
                                             <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
+                                                {previewPayload?.attachedFiles?.map((fileName: string, idx: number) => (
                                                     <Chip
                                                         key={idx}
                                                         icon={<InsertDriveFileIcon />}

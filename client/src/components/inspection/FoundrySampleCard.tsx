@@ -32,8 +32,7 @@ import {
   DialogActions,
   RadioGroup,
   FormControlLabel,
-  Radio,
-  CircularProgress
+  Radio
 } from "@mui/material";
 import Swal from 'sweetalert2';
 import Autocomplete from "@mui/material/Autocomplete";
@@ -428,10 +427,10 @@ function FoundrySampleCard() {
   useEffect(() => {
     if (selectedPart) {
       setSelectedPattern(selectedPart);
-      setChemState(parseChemicalComposition(selectedPart.chemical_composition));
-      setTensileState(parseTensileData(selectedPart.tensile));
-      setMicroState(parseMicrostructureData(selectedPart.micro_structure));
-      setHardnessState(parseHardnessData(selectedPart.hardness));
+      setChemState(parseChemicalComposition(selectedPart?.chemical_composition));
+      setTensileState(parseTensileData(selectedPart?.tensile));
+      setMicroState(parseMicrostructureData(selectedPart?.micro_structure));
+      setHardnessState(parseHardnessData(selectedPart?.hardness));
     } else { setSelectedPattern(null); }
   }, [selectedPart]);
 
@@ -804,7 +803,7 @@ function FoundrySampleCard() {
                   {["C", "Si", "Mn", "P", "S", "Mg", "Cr", "Cu"].map(k => (
                     <Box key={k} sx={{ textAlign: "center", p: 1, bgcolor: "white", borderRadius: 1, border: `1px solid ${COLORS.border}` }}>
                       <Typography variant="caption" color="text.secondary">{k}</Typography>
-                      <Typography variant="body2" fontWeight="bold">{previewPayload?.chemical_composition[k.toLowerCase()] || "-"}</Typography>
+                      <Typography variant="body2" fontWeight="bold">{previewPayload?.chemical_composition?.[k.toLowerCase()] || "-"}</Typography>
                     </Box>
                   ))}
                 </Box>
@@ -813,15 +812,15 @@ function FoundrySampleCard() {
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mb: 3 }}>
                   <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: 1, border: `1px solid ${COLORS.border}` }}>
                     <Typography variant="caption" color="text.secondary">Nodularity</Typography>
-                    <Typography variant="body2" fontWeight="bold">{previewPayload?.micro_structure.nodularity || "-"}</Typography>
+                    <Typography variant="body2" fontWeight="bold">{previewPayload?.micro_structure?.nodularity || "-"}</Typography>
                   </Box>
                   <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: 1, border: `1px solid ${COLORS.border}` }}>
                     <Typography variant="caption" color="text.secondary">Pearlite</Typography>
-                    <Typography variant="body2" fontWeight="bold">{previewPayload?.micro_structure.pearlite || "-"}</Typography>
+                    <Typography variant="body2" fontWeight="bold">{previewPayload?.micro_structure?.pearlite || "-"}</Typography>
                   </Box>
                   <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: 1, border: `1px solid ${COLORS.border}` }}>
                     <Typography variant="caption" color="text.secondary">Carbide</Typography>
-                    <Typography variant="body2" fontWeight="bold">{previewPayload?.micro_structure.carbide || "-"}</Typography>
+                    <Typography variant="body2" fontWeight="bold">{previewPayload?.micro_structure?.carbide || "-"}</Typography>
                   </Box>
                 </Box>
 
@@ -830,28 +829,28 @@ function FoundrySampleCard() {
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 6, sm: 4 }}>
                       <Typography variant="caption" color="text.secondary">Tensile</Typography>
-                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile.tensileStrength || "-"}</Typography>
+                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile?.tensileStrength || "-"}</Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 4 }}>
                       <Typography variant="caption" color="text.secondary">Yield</Typography>
-                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile.yieldStrength || "-"}</Typography>
+                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile?.yieldStrength || "-"}</Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 4 }}>
                       <Typography variant="caption" color="text.secondary">Elongation</Typography>
-                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile.elongation || "-"}</Typography>
+                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile?.elongation || "-"}</Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 4 }}>
                       <Typography variant="caption" color="text.secondary">Impact (Cold)</Typography>
-                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile.impactCold || "-"}</Typography>
+                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile?.impactCold || "-"}</Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 4 }}>
                       <Typography variant="caption" color="text.secondary">Impact (Room)</Typography>
-                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile.impactRoom || "-"}</Typography>
+                      <Typography variant="body2" fontWeight="bold">{previewPayload?.tensile?.impactRoom || "-"}</Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 4 }}>
                       <Typography variant="caption" color="text.secondary">Hardness (Surf/Core)</Typography>
                       <Typography variant="body2" fontWeight="bold">
-                        {previewPayload?.hardness.surface || "-"} / {previewPayload?.hardness.core || "-"}
+                        {previewPayload?.hardness?.surface || "-"} / {previewPayload?.hardness?.core || "-"}
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 6, sm: 4 }}>
@@ -1301,12 +1300,12 @@ function FoundrySampleCard() {
                       </TableHead>
                       <TableBody>
                         {[
-                          { l: "Number of cavity in pattern", v: (selectedPattern as any).number_of_cavity },
-                          { l: "Cavity identification number", v: (selectedPattern as any).cavity_identification },
-                          { l: "Pattern material", v: (selectedPattern as any).pattern_material },
-                          { l: "Core weight in kgs", v: (selectedPattern as any).core_weight },
-                          { l: "Core mask thickness in mm", v: (selectedPattern as any).core_mask_thickness },
-                          { l: "Estimated casting weight", v: (selectedPattern as any).estimated_casting_weight },
+                          { l: "Number of cavity in pattern", v: (selectedPattern as any)?.number_of_cavity },
+                          { l: "Cavity identification number", v: (selectedPattern as any)?.cavity_identification },
+                          { l: "Pattern material", v: (selectedPattern as any)?.pattern_material },
+                          { l: "Core weight in kgs", v: (selectedPattern as any)?.core_weight },
+                          { l: "Core mask thickness in mm", v: (selectedPattern as any)?.core_mask_thickness },
+                          { l: "Estimated casting weight", v: (selectedPattern as any)?.estimated_casting_weight },
                         ].map((r, i) => (
                           <TableRow key={i}>
                             <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>{r.l}</TableCell>
@@ -1331,10 +1330,10 @@ function FoundrySampleCard() {
                       </TableHead>
                       <TableBody>
                         {[
-                          { l: "Pattern plate thickness in mm", sp: (selectedPattern as any).pattern_plate_thickness_sp, pp: (selectedPattern as any).pattern_plate_thickness_pp },
-                          { l: "Pattern plate weight in kgs", sp: (selectedPattern as any).pattern_plate_weight_sp, pp: (selectedPattern as any).pattern_plate_weight_pp },
-                          { l: "Crush pin height in mm", sp: (selectedPattern as any).crush_pin_height_sp, pp: (selectedPattern as any).crush_pin_height_pp },
-                          { l: "Core mask weight in kgs", sp: (selectedPattern as any).core_mask_weight_sp, pp: (selectedPattern as any).core_mask_weight_pp },
+                          { l: "Pattern plate thickness in mm", sp: (selectedPattern as any)?.pattern_plate_thickness_sp, pp: (selectedPattern as any)?.pattern_plate_thickness_pp },
+                          { l: "Pattern plate weight in kgs", sp: (selectedPattern as any)?.pattern_plate_weight_sp, pp: (selectedPattern as any)?.pattern_plate_weight_pp },
+                          { l: "Crush pin height in mm", sp: (selectedPattern as any)?.crush_pin_height_sp, pp: (selectedPattern as any)?.crush_pin_height_pp },
+                          { l: "Core mask weight in kgs", sp: (selectedPattern as any)?.core_mask_weight_sp, pp: (selectedPattern as any)?.core_mask_weight_pp },
                         ].map((r, i) => (
                           <TableRow key={i}>
                             <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>{r.l}</TableCell>
@@ -1346,9 +1345,9 @@ function FoundrySampleCard() {
                           <TableCell sx={{ fontSize: '13px', color: COLORS.textSecondary }}>Estimated Bunch weight</TableCell>
                           <TableCell colSpan={2} sx={{ fontSize: '13px', fontWeight: 500 }}>
                             <Box display="flex" alignItems="center" gap={3}>
-                              <span>{(selectedPattern as any).estimated_bunch_weight || "-"}</span>
-                              {(selectedPattern as any).yield_label && (
-                                <span style={{ fontWeight: 'bold' }}>Yield: {(selectedPattern as any).yield_label}</span>
+                              <span>{(selectedPattern as any)?.estimated_bunch_weight || "-"}</span>
+                              {(selectedPattern as any)?.yield_label && (
+                                <span style={{ fontWeight: 'bold' }}>Yield: {(selectedPattern as any)?.yield_label}</span>
                               )}
                             </Box>
                           </TableCell>
@@ -1362,7 +1361,7 @@ function FoundrySampleCard() {
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold">Remarks:</Typography>
                   <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb', minHeight: '60px' }}>
-                    <Typography variant="body2">{(selectedPattern as any).remarks || "-"}</Typography>
+                    <Typography variant="body2">{(selectedPattern as any)?.remarks || "-"}</Typography>
                   </Paper>
                 </Grid>
               </Grid>

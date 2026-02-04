@@ -13,11 +13,8 @@ import {
     Chip,
     ThemeProvider,
     Button,
-    IconButton,
     Grid,
     Container,
-    Alert,
-    GlobalStyles,
     useMediaQuery
 } from "@mui/material";
 import Swal from 'sweetalert2';
@@ -95,8 +92,8 @@ export default function MaterialCorrection() {
                     return;
                 }
                 try {
-                    const pending = await departmentProgressService.getProgress(user.username, user.department_id);
-                    const found = pending.find(p => p.trial_id === trialId);
+                    const pending = await departmentProgressService.getProgress(user?.username || "", user?.department_id || 0);
+                    const found = pending?.find(p => p?.trial_id === trialId);
                     setIsAssigned(!!found);
                 } catch (error) {
                     console.error("Failed to check assignment:", error);
@@ -122,31 +119,31 @@ export default function MaterialCorrection() {
             if ((user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && trialId) {
                 try {
                     const response = await inspectionService.getMaterialCorrection(trialId);
-                    if (response.success && response.data && response.data.length > 0) {
-                        const data = response.data[0];
+                    if (response?.success && response?.data && response?.data?.length > 0) {
+                        const data = response?.data?.[0];
 
-                        const comp = safeParse<any>(data.chemical_composition, {});
+                        const comp = safeParse<any>(data?.chemical_composition, {});
 
                         setChemState({
-                            c: comp.c || "",
-                            si: comp.si || "",
-                            mn: comp.mn || "",
-                            p: comp.p || "",
-                            s: comp.s || "",
-                            mg: comp.mg || "",
-                            cr: comp.cr || "",
-                            cu: comp.cu || ""
+                            c: comp?.c || "",
+                            si: comp?.si || "",
+                            mn: comp?.mn || "",
+                            p: comp?.p || "",
+                            s: comp?.s || "",
+                            mg: comp?.mg || "",
+                            cr: comp?.cr || "",
+                            cu: comp?.cu || ""
                         });
 
-                        const proc = safeParse<any>(data.process_parameters, {});
+                        const proc = safeParse<any>(data?.process_parameters, {});
 
                         setProcessState({
-                            pouringTemp: proc.pouringTemp || "",
-                            inoculantPerSec: proc.inoculantPerSec || "",
-                            inoculantType: proc.inoculantType || ""
+                            pouringTemp: proc?.pouringTemp || "",
+                            inoculantPerSec: proc?.inoculantPerSec || "",
+                            inoculantType: proc?.inoculantType || ""
                         });
 
-                        setRemarks(data.remarks || "");
+                        setRemarks(data?.remarks || "");
                     }
                 } catch (error) {
                     console.error("Failed to fetch material correction data:", error);
@@ -159,7 +156,7 @@ export default function MaterialCorrection() {
 
     const { showAlert, alert } = useAlert();
 
-    const handleFileChange = (newFiles: File[]) => {
+    const handleAttachFiles = (newFiles: File[]) => {
         setAttachedFiles(prev => [...prev, ...newFiles]);
     };
 
@@ -181,7 +178,8 @@ export default function MaterialCorrection() {
             ...source,
             user_name: user?.username || 'Unknown',
             user_ip: userIP,
-            is_edit: isEditing
+            is_edit: isEditing,
+            attachedFiles: attachedFiles?.map(f => f?.name)
         };
     };
 
@@ -210,7 +208,7 @@ export default function MaterialCorrection() {
                 await inspectionService.submitMaterialCorrection(apiPayload);
             }
 
-            if (attachedFiles.length > 0) {
+            if (attachedFiles?.length > 0) {
                 await uploadFiles(
                     attachedFiles,
                     trialId,
@@ -232,7 +230,7 @@ export default function MaterialCorrection() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.message || "Failed to save Material Correction. Please try again."
+                text: error?.message || "Failed to save Material Correction. Please try again."
             });
         } finally {
             setLoading(false);
@@ -273,7 +271,6 @@ export default function MaterialCorrection() {
                                         <Paper sx={{ p: { xs: 2, md: 3 } }}>
                                             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                                                 <SectionHeader icon={<ScienceIcon />} title="Material correction details" color={COLORS.accentBlue} />
-                                                {!isMobile && <Chip label="Input Required" size="small" variant="outlined" sx={{ opacity: 0.7 }} />}
                                             </Box>
 
                                             <Box sx={{ overflowX: "auto", width: "100%", pb: 1 }}>
@@ -341,7 +338,7 @@ export default function MaterialCorrection() {
                                                     </TableBody>
                                                 </Table>
                                             </Box>
-                                            {isMobile && <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}>â† Swipe to view more â†’</Typography>}
+                                            {isMobile && <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}> Swipe to view more </Typography>}
                                         </Paper>
                                     </Grid>
 
@@ -355,7 +352,7 @@ export default function MaterialCorrection() {
 
                                             <FileUploadSection
                                                 files={attachedFiles}
-                                                onFilesChange={handleFileChange}
+                                                onFilesChange={handleAttachFiles}
                                                 onFileRemove={removeAttachedFile}
                                                 label="Upload Files"
                                                 showAlert={showAlert}
@@ -438,19 +435,19 @@ export default function MaterialCorrection() {
                                             <Box sx={{ mb: 3, p: 2, bgcolor: "white", border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
                                                 <Typography variant="caption" color="text.secondary" display="block" mb={1}>PROCESS PARAMETERS</Typography>
                                                 <Grid container spacing={2}>
-                                                    <Grid size={{ xs: 4 }}><Typography variant="body2">Temp <b>{previewPayload.process_parameters.pouringTemp || "-"}°C</b></Typography></Grid>
-                                                    <Grid size={{ xs: 4 }}><Typography variant="body2">Inoc/Sec <b>{previewPayload.process_parameters.inoculantPerSec || "-"}</b></Typography></Grid>
-                                                    <Grid size={{ xs: 4 }}><Typography variant="body2">Type <b>{previewPayload.process_parameters.inoculantType || "-"}</b></Typography></Grid>
+                                                    <Grid size={{ xs: 4 }}><Typography variant="body2">Temp <b>{previewPayload?.process_parameters?.pouringTemp || "-"}°C</b></Typography></Grid>
+                                                    <Grid size={{ xs: 4 }}><Typography variant="body2">Inoc/Sec <b>{previewPayload?.process_parameters?.inoculantPerSec || "-"}</b></Typography></Grid>
+                                                    <Grid size={{ xs: 4 }}><Typography variant="body2">Type <b>{previewPayload?.process_parameters?.inoculantType || "-"}</b></Typography></Grid>
                                                 </Grid>
                                             </Box>
 
-                                            {attachedFiles.length > 0 && (
+                                            {attachedFiles?.length > 0 && (
                                                 <Box sx={{ mt: 3, p: 2, bgcolor: "white", borderRadius: 1, border: `1px solid ${COLORS.border}` }}>
                                                     <Typography variant="caption" color="text.secondary" display="block" mb={1}>
                                                         ATTACHED FILES
                                                     </Typography>
-                                                    {attachedFiles.map((file, i) => (
-                                                        <Typography key={i} variant="body2">• {file.name}</Typography>
+                                                    {attachedFiles?.map((file, i) => (
+                                                        <Typography key={i} variant="body2">• {file?.name}</Typography>
                                                     ))}
                                                 </Box>
                                             )}

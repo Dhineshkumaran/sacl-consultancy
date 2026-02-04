@@ -12,16 +12,10 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Chip,
   ThemeProvider,
-  createTheme,
   Button,
-  Grid,
   Container,
-  IconButton,
-  useMediaQuery,
-  GlobalStyles,
-  Divider
+  useMediaQuery
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
@@ -35,32 +29,14 @@ import { uploadFiles } from '../../services/fileUploadHelper';
 import { COLORS, appTheme } from '../../theme/appTheme';
 import { useAlert } from '../../hooks/useAlert';
 import { AlertMessage } from '../common/AlertMessage';
-import { fileToMeta, validateFileSizes, formatDate } from '../../utils';
 import departmentProgressService from "../../services/departmentProgressService";
-import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, DocumentViewer } from '../common';
+import { SpecInput, FileUploadSection, EmptyState, ActionButtons, FormSection, PreviewModal, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
 import Header from "../dashboard/Header";
 import ProfileModal from "../dashboard/ProfileModal";
 import { getDepartmentInfo } from "../../utils/dashboardUtils";
 
-
-interface SandTableProps {
-  submittedData?: {
-    selectedPart?: any;
-    selectedPattern?: any;
-    machine?: string;
-    reason?: string;
-    trialNo?: string;
-    samplingDate?: string;
-    mouldCount?: string;
-    sampleTraceability?: string;
-  };
-  onSave?: (data: any) => void;
-  onComplete?: () => void;
-  fromPendingCards?: boolean;
-}
-
-function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: SandTableProps = {}) {
+function SandTable() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(appTheme.breakpoints.down('sm'));
@@ -96,13 +72,13 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
   useEffect(() => {
     const checkAssignment = async () => {
       if (user && trialId) {
-        if (user.role === 'Admin') {
+        if (user?.role === 'Admin') {
           setIsAssigned(true);
           return;
         }
         try {
-          const pending = await departmentProgressService.getProgress(user.username, user.department_id);
-          const found = pending.find(p => p.trial_id === trialId);
+          const pending = await departmentProgressService.getProgress(user?.username || "", user?.department_id || 0);
+          const found = pending?.find(p => p?.trial_id === trialId);
           setIsAssigned(!!found);
         } catch (error) {
           console.error("Failed to check assignment:", error);
@@ -121,20 +97,20 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
       if (urlTrialId) {
         try {
           const response = await inspectionService.getSandProperties(urlTrialId);
-          if (response.success && response.data && response.data.length > 0) {
-            const data = response.data[0];
-            setSandDate(data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+          if (response?.success && response?.data && response?.data?.length > 0) {
+            const data = response?.data?.[0];
+            setSandDate(data?.date ? new Date(data?.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
             setSandProps({
-              tClay: String(data.t_clay || ""),
-              aClay: String(data.a_clay || ""),
-              vcm: String(data.vcm || ""),
-              loi: String(data.loi || ""),
-              afs: String(data.afs || ""),
-              gcs: String(data.gcs || ""),
-              moi: String(data.moi || ""),
-              compactability: String(data.compactability || ""),
-              perm: String(data.permeability || ""),
-              remarks: data.remarks || ""
+              tClay: String(data?.t_clay || ""),
+              aClay: String(data?.a_clay || ""),
+              vcm: String(data?.vcm || ""),
+              loi: String(data?.loi || ""),
+              afs: String(data?.afs || ""),
+              gcs: String(data?.gcs || ""),
+              moi: String(data?.moi || ""),
+              compactability: String(data?.compactability || ""),
+              perm: String(data?.permeability || ""),
+              remarks: data?.remarks || ""
             });
             setDataExists(true);
           }
@@ -168,12 +144,11 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
 
     setSubmitted(false);
   };
-  // Handle file uploads
+
   const handleAttachFiles = (newFiles: File[]) => {
     setAttachedFiles(prev => [...prev, ...newFiles]);
   };
 
-  // Remove a selected file
   const removeAttachedFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
@@ -182,18 +157,19 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
     return {
       trial_id: trialId,
       date: sandDate,
-      t_clay: Number((sandProps as any).tClay) || 0,
-      a_clay: Number((sandProps as any).aClay) || 0,
-      vcm: Number((sandProps as any).vcm) || 0,
-      loi: Number((sandProps as any).loi) || 0,
-      afs: Number((sandProps as any).afs) || 0,
-      gcs: Number((sandProps as any).gcs) || 0,
-      moi: Number((sandProps as any).moi) || 0,
-      compactability: Number((sandProps as any).compactability) || 0,
-      permeability: Number((sandProps as any).perm) || 0,
-      remarks: (sandProps as any).remarks || "",
+      t_clay: Number((sandProps as any)?.tClay) || 0,
+      a_clay: Number((sandProps as any)?.aClay) || 0,
+      vcm: Number((sandProps as any)?.vcm) || 0,
+      loi: Number((sandProps as any)?.loi) || 0,
+      afs: Number((sandProps as any)?.afs) || 0,
+      gcs: Number((sandProps as any)?.gcs) || 0,
+      moi: Number((sandProps as any)?.moi) || 0,
+      compactability: Number((sandProps as any)?.compactability) || 0,
+      permeability: Number((sandProps as any)?.perm) || 0,
+      remarks: (sandProps as any)?.remarks || "",
       is_edit: isEditing || dataExists,
-      is_draft: isDraft
+      is_draft: isDraft,
+      attachedFiles: attachedFiles?.map(f => f?.name)
     };
   };
 
@@ -228,7 +204,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         await inspectionService.submitSandProperties(apiPayload);
       }
 
-      if (attachedFiles.length > 0) {
+      if (attachedFiles?.length > 0) {
         await uploadFiles(
           attachedFiles,
           trialId,
@@ -268,7 +244,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
         await inspectionService.submitSandProperties(apiPayload);
       }
 
-      if (attachedFiles.length > 0) {
+      if (attachedFiles?.length > 0) {
         await uploadFiles(
           attachedFiles,
           trialId,
@@ -289,7 +265,7 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: error.message || 'Failed to save draft.'
+        text: error?.message || 'Failed to save draft.'
       });
     } finally {
       setLoading(false);
@@ -402,9 +378,9 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                             {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((key) => (
                               <TableCell key={key} sx={{ p: 2, verticalAlign: 'middle' }}>
                                 <SpecInput
-                                  value={(sandProps as any)[key]}
+                                  value={(sandProps as any)?.[key]}
                                   onChange={(e: any) => {
-                                    handleChange(key, e.target.value);
+                                    handleChange(key, e?.target?.value);
                                   }}
                                   disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                 />
@@ -417,8 +393,8 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                                 fullWidth
                                 variant="outlined"
                                 placeholder="Enter remarks..."
-                                value={sandProps.remarks}
-                                onChange={(e) => handleChange("remarks", e.target.value)}
+                                value={sandProps?.remarks}
+                                onChange={(e) => handleChange("remarks", e?.target?.value)}
                                 disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                 sx={{ bgcolor: '#fff' }}
                               />
@@ -547,24 +523,24 @@ function SandTable({ submittedData, onSave, onComplete, fromPendingCards }: Sand
                     <tr style={{ textAlign: 'center' }}>
                       {["tClay", "aClay", "vcm", "loi", "afs", "gcs", "moi", "compactability", "perm"].map((k) => (
                         <td key={k} style={{ border: '1px solid black', padding: '12px' }}>
-                          {(sandProps as any)[k] || "-"}
+                          {(sandProps as any)?.[k] || "-"}
                         </td>
                       ))}
                       <td style={{ border: '1px solid black', padding: '12px', textAlign: 'left' }}>
-                        {sandProps.remarks || "-"}
+                        {sandProps?.remarks || "-"}
                       </td>
                     </tr>
                   </tbody>
                 </table>
                 {/* Attached Files in Preview */}
-                {attachedFiles.length > 0 && (
+                {attachedFiles?.length > 0 && (
                   <Box sx={{ mt: 3, p: 2, border: "1px solid #ccc", borderRadius: 1, bgcolor: "white" }}>
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
                       ATTACHED FILES
                     </Typography>
 
-                    {attachedFiles.map((file, i) => (
-                      <Typography key={i} variant="body2">• {file.name}</Typography>
+                    {attachedFiles?.map((file, i) => (
+                      <Typography key={i} variant="body2">• {file?.name}</Typography>
                     ))}
                   </Box>
                 )}

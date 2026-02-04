@@ -32,14 +32,6 @@ export interface FileMetadata {
 }
 
 /**
- * Group metadata including remarks and attachments
- */
-export interface GroupMetadata {
-    remarks: string;
-    attachment: File | null;
-}
-
-/**
  * Common inspection form state
  */
 export interface InspectionFormState {

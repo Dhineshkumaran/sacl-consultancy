@@ -23,7 +23,6 @@ import {
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from '@mui/icons-material/Save';
@@ -35,19 +34,18 @@ import { uploadFiles } from '../../services/fileUploadHelper';
 import { COLORS, appTheme } from '../../theme/appTheme';
 import { useAlert } from '../../hooks/useAlert';
 import { AlertMessage } from '../common/AlertMessage';
-import { fileToMeta, generateUid, validateFileSizes, formatDate } from '../../utils';
-import type { InspectionRow, GroupMetadata } from '../../types/inspection';
+import { fileToMeta, generateUid, formatDate } from '../../utils';
+import type { InspectionRow } from '../../types/inspection';
 import departmentProgressService from "../../services/departmentProgressService";
 import Header from "../dashboard/Header";
 import ProfileModal from "../dashboard/ProfileModal";
 import { getDepartmentInfo } from "../../utils/dashboardUtils";
-import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
+import { EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
 import { safeParse } from "../../utils/jsonUtils";
 
 
 type Row = InspectionRow;
-type GroupMeta = GroupMetadata;
 
 
 export default function McShopInspection({
@@ -76,17 +74,18 @@ export default function McShopInspection({
 
 
   const makeInitialRows = (cavLabels: string[]): Row[] => [
-    { id: `cavity-${generateUid()}`, label: "Cavity details", values: cavLabels.map(() => "") },
-    { id: `received-${generateUid()}`, label: "Received Quantity", values: cavLabels.map(() => ""), total: null },
-    { id: `insp-${generateUid()}`, label: "Inspected Quantity", values: cavLabels.map(() => ""), total: null },
-    { id: `accp-${generateUid()}`, label: "Accepted Quantity", values: cavLabels.map(() => ""), total: null },
-    { id: `rej-${generateUid()}`, label: "Rejected Quantity", values: cavLabels.map(() => ""), total: null },
-    { id: `rej-perc-${generateUid()}`, label: "Rejection Percentage (%)", values: cavLabels.map(() => ""), total: null },
-    { id: `reason-${generateUid()}`, label: "Reason for rejection:", values: cavLabels.map(() => "") },
+    { id: `cavity-${generateUid()}`, label: "Cavity Number", values: cavLabels?.map(() => "") },
+    { id: `received-${generateUid()}`, label: "Received Quantity", values: cavLabels?.map(() => ""), total: null },
+    { id: `insp-${generateUid()}`, label: "Inspected Quantity", values: cavLabels?.map(() => ""), total: null },
+    { id: `accp-${generateUid()}`, label: "Accepted Quantity", values: cavLabels?.map(() => ""), total: null },
+    { id: `rej-${generateUid()}`, label: "Rejected Quantity", values: cavLabels?.map(() => ""), total: null },
+    { id: `rej-perc-${generateUid()}`, label: "Rejection Percentage", values: cavLabels?.map(() => ""), total: null },
+    { id: `reason-${generateUid()}`, label: "Reason for rejection", values: cavLabels?.map(() => "") },
   ];
 
   const [rows, setRows] = useState<Row[]>(() => makeInitialRows(initialCavities));
-  const [groupMeta, setGroupMeta] = useState<GroupMeta>({ remarks: "", attachment: null });
+  const [remarks, setRemarks] = useState<string>("");
+
   const [dimensionalRemarks, setDimensionalRemarks] = useState<string>("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [additionalRemarks, setAdditionalRemarks] = useState<string>("");
@@ -109,7 +108,7 @@ export default function McShopInspection({
         }
         try {
           const pending = await departmentProgressService.getProgress(user.username, user.department_id);
-          const found = pending.find(p => p.trial_id === trialId);
+          const found = pending?.find(p => p?.trial_id === trialId);
           setIsAssigned(!!found);
         } catch (error) {
           console.error("Failed to check assignment:", error);
@@ -135,49 +134,47 @@ export default function McShopInspection({
       if (trialId) {
         try {
           const response = await inspectionService.getMachineShopInspection(trialId);
-          if (response.success && response.data && response.data.length > 0) {
+          if (response?.success && response?.data && response?.data?.length > 0) {
             const data = response.data[0];
-            setDate(data.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
-            const parsedInspections = safeParse<any[]>(data.inspections, []);
+            setDate(data?.inspection_date ? new Date(data.inspection_date).toISOString().slice(0, 10) : "");
+            const parsedInspections = safeParse<any[]>(data?.inspections, []);
 
-            if (parsedInspections.length > 0) {
-              const newCavities = parsedInspections.map((item: any) => item['Cavity Details'] || "");
+            if (parsedInspections && parsedInspections?.length > 0) {
+              const newCavities = parsedInspections?.map((item: any) => item?.['Cavity Number'] || "");
               setCavities(newCavities);
 
-              const getVals = (key: string) => parsedInspections.map((item: any) => item[key] ?? "");
+              const getVals = (key: string) => parsedInspections?.map((item: any) => item?.[key] ?? "");
 
               setRows(prevRows => {
-                const newRows = [...prevRows];
-                const updateRowVals = (labelSnippet: string, values: any[]) => {
-                  const rIndex = newRows.findIndex(r => r.label.toLowerCase().includes(labelSnippet));
-                  if (rIndex !== -1) {
-                    const isPercentage = labelSnippet === 'rejection percentage';
-                    const isCavity = labelSnippet === 'cavity details';
-                    const isReason = labelSnippet.includes('reason');
+                const newRows = [...(prevRows || [])];
+                const findRowByLabel = (labelPart: string) => newRows?.find(r => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
 
-                    newRows[rIndex] = {
-                      ...newRows[rIndex],
-                      values: values.map(String),
-                      total: (isCavity || isReason || isPercentage) ? null : values.reduce((acc, v) => acc + (parseFloat(String(v)) || 0), 0)
-                    };
+                const updateRowVals = (labelSnippet: string, key: string) => {
+                  const targetRow = findRowByLabel(labelSnippet);
+                  if (targetRow) {
+                    const values = getVals(key);
+                    const isMetadata = labelSnippet?.includes('cavity') || labelSnippet?.includes('reason') || labelSnippet?.includes('rejection percentage');
+
+                    targetRow.values = values?.map(String);
+                    targetRow.total = isMetadata ? null : values?.reduce((acc: number, v: any) => acc + (parseFloat(String(v)) || 0), 0);
                   }
                 };
 
-                updateRowVals('cavity details', newCavities);
-                updateRowVals('received', getVals('Received Quantity'));
-                updateRowVals('inspected', getVals('Inspected Quantity'));
-                updateRowVals('accepted', getVals('Accepted Quantity'));
-                updateRowVals('rejected', getVals('Rejected Quantity'));
-                updateRowVals('rejection percentage', getVals('Rejection Percentage (%)'));
-                updateRowVals('reason', getVals('Reason for rejection'));
+                updateRowVals('cavity number', 'Cavity Number');
+                updateRowVals('received quantity', 'Received Quantity');
+                updateRowVals('inspected quantity', 'Inspected Quantity');
+                updateRowVals('accepted quantity', 'Accepted Quantity');
+                updateRowVals('rejected quantity', 'Rejected Quantity');
+                updateRowVals('rejection percentage', 'Rejection Percentage');
+                updateRowVals('reason for rejection', 'Reason for rejection');
 
-                const inspRow = newRows.find(r => r.label === "Inspected Quantity");
-                const rejRow = newRows.find(r => r.label === "Rejected Quantity");
-                const percRow = newRows.find(r => r.label === "Rejection Percentage (%)");
+                const inspRow = newRows?.find(r => r?.label === "Inspected Quantity");
+                const rejRow = newRows?.find(r => r?.label === "Rejected Quantity");
+                const percRow = newRows?.find(r => r?.label === "Rejection Percentage");
 
                 if (inspRow && rejRow && percRow) {
-                  const totalInsp = inspRow.total || 0;
-                  const totalRej = rejRow.total || 0;
+                  const totalInsp = (inspRow.total as number) || 0;
+                  const totalRej = (rejRow.total as number) || 0;
                   if (totalInsp > 0) {
                     percRow.total = parseFloat(((totalRej / totalInsp) * 100).toFixed(2));
                   }
@@ -186,7 +183,8 @@ export default function McShopInspection({
                 return newRows;
               });
             }
-            setGroupMeta(prev => ({ ...prev, remarks: data.remarks || "" }));
+
+            setRemarks(data?.remarks || "");
             setDataExists(true);
           }
         } catch (error) {
@@ -200,8 +198,8 @@ export default function McShopInspection({
 
 
   const addColumn = () => {
-    setCavities((c) => [...c, ""]);
-    setRows((r) => r.map((row) => ({ ...row, values: [...row.values, ""] })));
+    setCavities((c) => [...(c || []), ""]);
+    setRows((r) => r?.map((row) => ({ ...row, values: [...(row?.values || []), ""] })));
   };
 
   const handleAttachFiles = (newFiles: File[]) => {
@@ -213,9 +211,9 @@ export default function McShopInspection({
   };
 
   const removeColumn = (index: number) => {
-    if (cavities.length <= 1) return;
-    setCavities((c) => c.filter((_, i) => i !== index));
-    setRows((r) => r.map((row) => ({ ...row, values: row.values.filter((_, i) => i !== index) })));
+    if ((cavities?.length || 0) <= 1) return;
+    setCavities((c) => c?.filter((_, i) => i !== index));
+    setRows((r) => r?.map((row) => ({ ...row, values: row?.values?.filter((_, i) => i !== index) })));
   };
 
   const updateCavityLabel = (index: number, label: string) => {
@@ -224,19 +222,19 @@ export default function McShopInspection({
 
   const updateCell = (rowId: string, colIndex: number, value: string) => {
     setRows((prev) => {
-      const updatedRows = [...prev];
-      const rIndex = updatedRows.findIndex(r => r.id === rowId);
+      const updatedRows = [...(prev || [])];
+      const rIndex = updatedRows?.findIndex(r => r?.id === rowId);
       if (rIndex === -1) return prev;
 
-      const newValues = updatedRows[rIndex].values.map((v, i) => (i === colIndex ? value : v));
-      const isCavityOrReason = updatedRows[rIndex].label.toLowerCase().includes("cavity details") || updatedRows[rIndex].label.toLowerCase().includes("reason");
+      const newValues = updatedRows[rIndex]?.values?.map((v, i) => (i === colIndex ? value : v));
+      const isCavityOrReason = updatedRows[rIndex]?.label?.toLowerCase()?.includes("cavity details") || updatedRows[rIndex]?.label?.toLowerCase()?.includes("reason");
 
       if (isCavityOrReason) {
         updatedRows[rIndex] = { ...updatedRows[rIndex], values: newValues };
         return updatedRows;
       }
 
-      const total = newValues.reduce((sum, val) => {
+      const total = newValues?.reduce((sum, val) => {
         const n = parseFloat(String(val).trim());
         return sum + (isNaN(n) ? 0 : n);
       }, 0);
@@ -245,36 +243,37 @@ export default function McShopInspection({
 
       // Auto-calculation logic
       let updated = [...updatedRows];
-      const inspectedRow = updated.find(r => r.label === "Inspected Quantity");
-      const acceptedRow = updated.find(r => r.label === "Accepted Quantity");
-      const rejectedRow = updated.find(r => r.label === "Rejected Quantity");
-      const percentageRow = updated.find(r => r.label === "Rejection Percentage (%)");
+      const findInUpdated = (labelPart: string) => updated?.find(r => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
+      const inspectedRow = findInUpdated("inspected quantity");
+      const acceptedRow = findInUpdated("accepted quantity");
+      const rejectedRow = findInUpdated("rejected quantity");
+      const percentageRow = findInUpdated("rejection percentage");
 
       if (inspectedRow && acceptedRow && rejectedRow) {
-        const inspectedNum = parseFloat(String(inspectedRow.values[colIndex] || '').trim());
-        const acceptedNum = parseFloat(String(acceptedRow.values[colIndex] || '').trim());
+        const inspectedNum = parseFloat(String(inspectedRow?.values?.[colIndex] || '').trim());
+        const acceptedNum = parseFloat(String(acceptedRow?.values?.[colIndex] || '').trim());
 
         if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
           if (acceptedNum > inspectedNum) {
             showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
-            const newRejectedValues = [...rejectedRow.values];
+            const newRejectedValues = [...(rejectedRow?.values || [])];
             newRejectedValues[colIndex] = "Invalid";
-            updated = updated.map(r => r.id === rejectedRow.id ? { ...r, values: newRejectedValues } : r);
+            updated = updated?.map(r => r.id === rejectedRow.id ? { ...r, values: newRejectedValues } : r);
           } else {
             const calculatedRejected = inspectedNum - acceptedNum;
-            const newRejectedValues = [...rejectedRow.values];
+            const newRejectedValues = [...(rejectedRow?.values || [])];
             newRejectedValues[colIndex] = calculatedRejected >= 0 ? calculatedRejected.toString() : '';
-            updated = updated.map(r => r.id === rejectedRow.id ? { ...r, values: newRejectedValues, total: newRejectedValues.reduce((s, v) => s + (parseFloat(v) || 0), 0) } : r);
+            updated = updated?.map(r => r.id === rejectedRow.id ? { ...r, values: newRejectedValues, total: newRejectedValues?.reduce((s, v) => s + (parseFloat(v) || 0), 0) } : r);
           }
         }
       }
 
-      const updatedRejectedRow = updated.find(r => r.label === "Rejected Quantity");
+      const updatedRejectedRow = findInUpdated("rejected quantity");
 
       if (inspectedRow && updatedRejectedRow && percentageRow) {
-        const inspectedNum = parseFloat(String(inspectedRow.values[colIndex] || '').trim());
-        const rejectedNum = parseFloat(String(updatedRejectedRow.values[colIndex] || '').trim());
-        const newPercentageValues = [...percentageRow.values];
+        const inspectedNum = parseFloat(String(inspectedRow?.values?.[colIndex] || '').trim());
+        const rejectedNum = parseFloat(String(updatedRejectedRow?.values?.[colIndex] || '').trim());
+        const newPercentageValues = [...(percentageRow?.values || [])];
 
         if (!isNaN(inspectedNum) && inspectedNum > 0 && !isNaN(rejectedNum)) {
           const percentage = (rejectedNum / inspectedNum) * 100;
@@ -283,15 +282,15 @@ export default function McShopInspection({
           newPercentageValues[colIndex] = '';
         }
 
-        const totalInspected = inspectedRow.values.reduce((acc, val) => acc + (parseFloat(String(val)) || 0), 0);
-        const totalRejected = updated.find(r => r.label === "Rejected Quantity")?.values.reduce((acc, val) => acc + (parseFloat(String(val)) || 0), 0) || 0;
+        const totalInspected = inspectedRow?.values?.reduce((acc, val) => acc + (parseFloat(String(val)) || 0), 0);
+        const totalRejected = updated?.find(r => r?.label?.toLowerCase()?.includes("rejected quantity"))?.values?.reduce((acc, val) => acc + (parseFloat(String(val)) || 0), 0) || 0;
 
         let totalPercentage = null;
         if (totalInspected > 0) {
           totalPercentage = (totalRejected / totalInspected) * 100;
         }
 
-        updated = updated.map(r => r.id === percentageRow.id ? { ...r, values: newPercentageValues, total: totalPercentage !== null ? parseFloat(totalPercentage.toFixed(2)) : null } : r);
+        updated = updated?.map(r => r.id === percentageRow.id ? { ...r, values: newPercentageValues, total: totalPercentage !== null ? parseFloat(totalPercentage.toFixed(2)) : null } : r);
       }
 
       return updated;
@@ -302,7 +301,7 @@ export default function McShopInspection({
     setDate(new Date().toISOString().slice(0, 10));
     setCavities([...initialCavities]);
     setRows(makeInitialRows(initialCavities));
-    setGroupMeta({ remarks: "", attachment: null });
+    setRemarks("");
     setDimensionalRemarks("");
     setAttachedFiles([]);
     setAdditionalRemarks("");
@@ -316,45 +315,58 @@ export default function McShopInspection({
       inspection_date: date || null,
       user_name: user?.username || null,
       user_ip: userIP || null,
-      cavities: cavities.slice(),
-      rows: rows.map((r) => ({
-        label: r.label,
-        values: r.values.map((v) => (v === "" ? null : v)),
-        freeText: r.freeText || null,
-        total: r.total ?? null,
+      cavities: cavities?.slice(),
+      rows: rows?.map((r) => ({
+        label: r?.label,
+        values: r?.values?.map((v) => (v === "" ? null : v)),
+        freeText: r?.freeText || null,
+        total: r?.total ?? null,
       })),
-      right_remarks: groupMeta.remarks || null,
-      right_attachment: fileToMeta(groupMeta.attachment),
+      remarks: remarks || null,
       dimensional_report_remarks: dimensionalRemarks || null,
-      attachedFiles: attachedFiles.map(f => f.name),
+      attachedFiles: attachedFiles?.map(f => f?.name),
       additionalRemarks: additionalRemarks,
       created_at: new Date().toISOString(),
     };
   };
 
   const buildServerPayload = (isDraft: boolean = false) => {
-    const receivedRow = rows.find(r => r.label === "Received Quantity");
-    const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
-    const acceptedRow = rows.find(r => r.label === "Accepted Quantity");
-    const rejectedRow = rows.find(r => r.label === "Rejected Quantity");
-    const percentageRow = rows.find(r => r.label === "Rejection Percentage (%)");
-    const reasonRow = rows.find(r => r.label === "Reason for rejection:");
+    const findRowByLabel = (labelPart: string) => rows?.find(r => r?.label?.toLowerCase()?.includes(labelPart.toLowerCase()));
 
-    const inspections: any[] = cavities.map((cav, idx) => ({
-      'Cavity Details': cav || (rows[0]?.values?.[idx] ?? ''),
-      'Received Quantity': receivedRow?.values?.[idx] ?? null,
-      'Inspected Quantity': inspectedRow?.values?.[idx] ?? null,
-      'Accepted Quantity': acceptedRow?.values?.[idx] ?? null,
-      'Rejected Quantity': rejectedRow?.values?.[idx] ?? null,
-      'Rejection Percentage (%)': percentageRow?.values?.[idx] ?? null,
-      'Reason for rejection': reasonRow?.values?.[idx] ?? null,
-    }));
+    const inspectedRow = findRowByLabel("inspected quantity");
+    const receivedRow = findRowByLabel("received quantity");
+    const acceptedRow = findRowByLabel("accepted quantity");
+    const rejectedRow = findRowByLabel("rejected quantity");
+    const percentageRow = findRowByLabel("rejection percentage");
+    const reasonRow = findRowByLabel("reason for rejection");
+
+
+    const inspections: any[] = cavities?.map((cav, idx) => {
+      const inspected = inspectedRow?.values?.[idx] ?? null;
+      const rejected = rejectedRow?.values?.[idx] ?? null;
+      const rejectionPercentage = (() => {
+        const ins = parseFloat(String(inspected ?? '0'));
+        const rej = parseFloat(String(rejected ?? '0'));
+        if (isNaN(ins) || isNaN(rej) || ins === 0) return "0.00";
+        return ((rej / ins) * 100).toFixed(2);
+      })();
+
+      return {
+        'Cavity Number': String(cav || (rows?.[0]?.values?.[idx] ?? '')),
+        'Received Quantity': String(receivedRow?.values?.[idx] ?? ""),
+        'Inspected Quantity': String(inspected ?? ""),
+        'Accepted Quantity': String(acceptedRow?.values?.[idx] ?? ""),
+        'Rejected Quantity': String(rejected ?? ""),
+        'Rejection Percentage': String(rejectionPercentage),
+        'Reason for rejection': String(reasonRow?.values?.[idx] ?? ""),
+      };
+    }) || [];
 
     return {
       trial_id: trialId,
       inspection_date: date || null,
       inspections: inspections,
-      remarks: groupMeta.remarks || null,
+      remarks: remarks || null,
       is_edit: isEditing || dataExists,
       is_draft: isDraft
     };
@@ -512,7 +524,7 @@ export default function McShopInspection({
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>Parameter</TableCell>
-                          {cavities.map((cav, i) => (
+                          {cavities?.map((cav, i) => (
                             <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.8rem', textAlign: 'center', color: COLORS.blueHeaderText, backgroundColor: COLORS.blueHeaderBg }}>
                               <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
                                 <TextField
@@ -536,31 +548,31 @@ export default function McShopInspection({
                       </TableHead>
 
                       <TableBody>
-                        {rows.map((r, ri) => {
-                          const isReasonRow = r.label.toLowerCase().includes("reason");
+                        {rows?.map((r, ri) => {
+                          const isReasonRow = r?.label?.toLowerCase()?.includes("reason");
                           return (
-                            <TableRow key={r.id}>
-                              <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r.label}</TableCell>
+                            <TableRow key={r?.id}>
+                              <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>{r?.label}</TableCell>
 
-                              {r.values.map((val, ci) => (
+                              {r?.values?.map((val, ci) => (
                                 <TableCell key={ci}>
                                   <TextField
                                     size="small"
                                     fullWidth
                                     value={val ?? ""}
-                                    onChange={(e) => updateCell(r.id, ci, e.target.value)}
+                                    onChange={(e) => updateCell(r?.id, ci, e.target.value)}
                                     variant="outlined"
                                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: 'white' } }}
-                                    disabled={((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) || r.label.toLowerCase().includes("rejected quantity") || r.label.toLowerCase().includes("rejection percentage")}
+                                    disabled={((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) || r?.label?.toLowerCase()?.includes("rejected quantity") || r?.label?.toLowerCase()?.includes("rejection percentage")}
                                   />
                                 </TableCell>
                               ))}
                               <TableCell sx={{ textAlign: 'center', fontWeight: 700, bgcolor: '#f1f5f9' }}>
-                                {r.label.toLowerCase().includes("cavity details") || r.label.toLowerCase().includes("reason") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
+                                {r?.label?.toLowerCase()?.includes("cavity details") || r?.label?.toLowerCase()?.includes("reason") ? "-" : (r?.total !== null && r?.total !== undefined ? r.total : "-")}
                               </TableCell>
 
                               {ri === 0 && (
-                                <TableCell rowSpan={rows.length} sx={{ verticalAlign: "top", bgcolor: '#fff7ed', padding: 2, minWidth: 240 }}>
+                                <TableCell rowSpan={rows?.length || 1} sx={{ verticalAlign: "top", bgcolor: '#fff7ed', padding: 2, minWidth: 240 }}>
                                   <Box display="flex" flexDirection="column" height="100%" gap={2}>
                                     <TextField
                                       size="small"
@@ -568,8 +580,10 @@ export default function McShopInspection({
                                       multiline
                                       rows={8}
                                       placeholder="General remarks..."
-                                      value={groupMeta.remarks}
-                                      onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
+                                      value={remarks || ""}
+                                      onChange={(e) => setRemarks(e.target.value)}
+
+
                                       variant="outlined"
                                       sx={{ bgcolor: 'white' }}
                                       disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
@@ -669,29 +683,29 @@ export default function McShopInspection({
                       <TableHead>
                         <TableRow sx={{ bgcolor: '#f8fafc' }}>
                           <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                          {previewPayload?.cavities.map((c: string, i: number) => (
+                          {previewPayload?.cavities?.map((c: string, i: number) => (
                             <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
                           ))}
                           <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {previewPayload?.rows.map((r: any, idx: number) => (
+                        {previewPayload?.rows?.map((r: any, idx: number) => (
                           <TableRow key={idx}>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
-                            {r.freeText !== undefined && r.freeText !== null ? (
-                              <TableCell colSpan={previewPayload.cavities.length + 1} sx={{ textAlign: 'left', fontSize: '0.8rem', fontStyle: 'italic' }}>
-                                {r.freeText}
+                            <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r?.label}</TableCell>
+                            {r?.freeText !== undefined && r?.freeText !== null ? (
+                              <TableCell colSpan={(previewPayload?.cavities?.length || 0) + 1} sx={{ textAlign: 'left', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                                {r?.freeText}
                               </TableCell>
                             ) : (
                               <>
-                                {r.values.map((v: any, j: number) => (
+                                {r?.values?.map((v: any, j: number) => (
                                   <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
                                     {v === null ? "-" : String(v)}
                                   </TableCell>
                                 ))}
                                 <TableCell sx={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 700 }}>
-                                  {r.label.toLowerCase().includes("cavity details") ? "-" : (r.total !== null && r.total !== undefined ? r.total : "-")}
+                                  {r?.label?.toLowerCase()?.includes("cavity details") ? "-" : (r?.total !== null && r?.total !== undefined ? r.total : "-")}
                                 </TableCell>
                               </>
                             )}
@@ -701,11 +715,18 @@ export default function McShopInspection({
                     </Table>
                   </Box>
 
+                  {previewPayload?.remarks && (
+                    <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
+                      <Typography variant="subtitle2" mb={1} color="textSecondary">REMARKS</Typography>
+                      <Typography variant="body2">{previewPayload.remarks}</Typography>
+                    </Box>
+                  )}
+
                   {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
                     <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
                       <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
+                        {previewPayload?.attachedFiles?.map((fileName: string, idx: number) => (
                           <Chip
                             key={idx}
                             icon={<InsertDriveFileIcon />}

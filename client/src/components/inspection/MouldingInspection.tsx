@@ -12,7 +12,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Chip,
   ThemeProvider,
   Button,
   Grid,
@@ -32,9 +31,8 @@ import { uploadFiles } from '../../services/fileUploadHelper';
 import { COLORS, appTheme } from '../../theme/appTheme';
 import { useAlert } from '../../hooks/useAlert';
 import { AlertMessage } from '../common/AlertMessage';
-import { fileToMeta, validateFileSizes, formatDate } from '../../utils';
-import type { InspectionRow, GroupMetadata } from '../../types/inspection';
-import { SpecInput, FileUploadSection, LoadingState, EmptyState, ActionButtons, FormSection, PreviewModal, DocumentViewer } from '../common';
+import { fileToMeta, formatDate } from '../../utils';
+import { SpecInput, FileUploadSection, EmptyState, ActionButtons, FormSection, PreviewModal, DocumentViewer } from '../common';
 import BasicInfo from "../dashboard/BasicInfo";
 import departmentProgressService from "../../services/departmentProgressService";
 import Header from "../dashboard/Header";
@@ -56,8 +54,6 @@ function MouldingTable() {
 
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
-  const [mouldCorrectionLoading, setMouldCorrectionLoading] = useState(false);
-  const [mouldCorrectionSubmitted, setMouldCorrectionSubmitted] = useState(false);
   const [mouldDate, setMouldDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const [previewMode, setPreviewMode] = useState(false);
@@ -99,14 +95,14 @@ function MouldingTable() {
       if (trialId) {
         try {
           const response = await inspectionService.getMouldingCorrection(trialId);
-          if (response.success && response.data && response.data.length > 0) {
-            const data = response.data[0];
+          if (response?.success && response?.data && response?.data?.length > 0) {
+            const data = response?.data?.[0];
             setMouldState({
-              thickness: String(data.mould_thickness || ""),
-              compressability: String(data.compressability || ""),
-              pressure: String(data.squeeze_pressure || ""),
-              hardness: String(data.mould_hardness || ""),
-              remarks: data.remarks || ""
+              thickness: String(data?.mould_thickness || ""),
+              compressability: String(data?.compressability || ""),
+              pressure: String(data?.squeeze_pressure || ""),
+              hardness: String(data?.mould_hardness || ""),
+              remarks: data?.remarks || ""
             });
             setDataExists(true);
           }
@@ -139,17 +135,9 @@ function MouldingTable() {
     });
     setSubmitted(false);
   };
-  const handleAttachFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []) as File[];
 
-    const validation = validateFileSizes(files);
-    if (!validation.isValid) {
-      validation.errors.forEach((error: string) => showAlert('error', error));
-      e.target.value = '';
-      return;
-    }
-
-    setAttachedFiles(prev => [...prev, ...files]);
+  const handleAttachFiles = (newFiles: File[]) => {
+    setAttachedFiles(prev => [...prev, ...newFiles]);
   };
 
   const removeAttachedFile = (index: number) => {
@@ -159,30 +147,20 @@ function MouldingTable() {
 
   const buildServerPayload = (isDraft: boolean = false) => {
     return {
-      mould_thickness: mouldState.thickness,
-      compressability: mouldState.compressability,
-      squeeze_pressure: mouldState.pressure,
-      mould_hardness: mouldState.hardness,
-      remarks: mouldState.remarks,
+      mould_thickness: mouldState?.thickness ?? "",
+      compressability: mouldState?.compressability ?? "",
+      squeeze_pressure: mouldState?.pressure ?? "",
+      mould_hardness: mouldState?.hardness ?? "",
+      remarks: mouldState?.remarks ?? "",
       trial_id: trialId,
       date: mouldDate,
       is_edit: isEditing || dataExists,
-      is_draft: isDraft
+      is_draft: isDraft,
+      attachedFiles: attachedFiles?.map(f => f?.name)
     };
   };
 
   const handleSaveAndContinue = () => {
-    const payload = {
-      trial_id: trialId,
-      mould_thickness: mouldState.thickness,
-      compressability: mouldState.compressability,
-      squeeze_pressure: mouldState.pressure,
-      mould_hardness: mouldState.hardness,
-      remarks: mouldState.remarks,
-      is_edit: isEditing,
-      date: mouldDate
-    };
-
     setPreviewMode(true);
   };
 
@@ -212,7 +190,7 @@ function MouldingTable() {
         await inspectionService.submitMouldingCorrection(apiPayload);
       }
 
-      if (attachedFiles.length > 0) {
+      if (attachedFiles?.length > 0) {
         await uploadFiles(
           attachedFiles,
           trialId || "",
@@ -234,7 +212,7 @@ function MouldingTable() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: error.message || 'Failed to save Moulding Correction. Please try again.'
+        text: error?.message || 'Failed to save Moulding Correction. Please try again.'
       });
     } finally {
       setLoading(false);
@@ -252,7 +230,7 @@ function MouldingTable() {
         await inspectionService.submitMouldingCorrection(apiPayload);
       }
 
-      if (attachedFiles.length > 0) {
+      if (attachedFiles?.length > 0) {
         await uploadFiles(
           attachedFiles,
           trialId || "",
@@ -273,7 +251,7 @@ function MouldingTable() {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: error.message || 'Failed to save draft.'
+        text: error?.message || 'Failed to save draft.'
       });
     } finally {
       setLoading(false);
@@ -354,7 +332,7 @@ function MouldingTable() {
                         <TableRow>
                           <TableCell>
                             <SpecInput
-                              value={mouldState.thickness}
+                              value={mouldState?.thickness ?? ""}
                               onChange={(e: any) => {
                                 handleChange('thickness', e.target.value);
                               }}
@@ -363,7 +341,7 @@ function MouldingTable() {
                           </TableCell>
                           <TableCell>
                             <SpecInput
-                              value={mouldState.compressability}
+                              value={mouldState?.compressability ?? ""}
                               onChange={(e: any) => {
                                 handleChange('compressability', e.target.value);
                               }}
@@ -372,7 +350,7 @@ function MouldingTable() {
                           </TableCell>
                           <TableCell>
                             <SpecInput
-                              value={mouldState.pressure}
+                              value={mouldState?.pressure ?? ""}
                               onChange={(e: any) => {
                                 handleChange('pressure', e.target.value);
                               }}
@@ -381,7 +359,7 @@ function MouldingTable() {
                           </TableCell>
                           <TableCell sx={{ borderRight: `2px solid ${COLORS.border}` }}>
                             <SpecInput
-                              value={mouldState.hardness}
+                              value={mouldState?.hardness ?? ""}
                               onChange={(e: any) => {
                                 handleChange('hardness', e.target.value);
                               }}
@@ -391,7 +369,7 @@ function MouldingTable() {
 
                           <TableCell>
                             <SpecInput
-                              value={mouldState.remarks}
+                              value={mouldState?.remarks ?? ""}
                               onChange={(e: any) => handleChange('remarks', e.target.value)}
                               placeholder="--"
                               disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
@@ -411,8 +389,8 @@ function MouldingTable() {
 
                     <FileUploadSection
                       files={attachedFiles}
-                      onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
-                      onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                      onFilesChange={handleAttachFiles}
+                      onFileRemove={removeAttachedFile}
                       showAlert={showAlert}
                       label="Attach PDF"
                       disabled={user?.role === 'HOD' || user?.role === 'Admin'}
@@ -470,10 +448,10 @@ function MouldingTable() {
 
                 <Typography variant="caption" sx={{ color: COLORS.blueHeaderText, mb: 2, display: 'block' }}>MOULDING PARAMETERS</Typography>
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Thickness" value={mouldState.thickness} /></Grid>
-                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Compressability" value={mouldState.compressability} /></Grid>
-                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Pressure" value={mouldState.pressure} /></Grid>
-                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Hardness" value={mouldState.hardness} /></Grid>
+                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Thickness" value={mouldState?.thickness ?? ""} /></Grid>
+                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Compressability" value={mouldState?.compressability ?? ""} /></Grid>
+                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Pressure" value={mouldState?.pressure ?? ""} /></Grid>
+                  <Grid size={{ xs: 6, sm: 3 }}><GridValueBox label="Hardness" value={mouldState?.hardness ?? ""} /></Grid>
                 </Grid>
 
                 <Typography variant="caption" sx={{ color: COLORS.textSecondary, mb: 2, display: 'block' }}>REMARKS & LOG</Typography>
@@ -489,10 +467,10 @@ function MouldingTable() {
                 }}>
                   <Box flex={2}>
                     <Typography variant="caption" color="textSecondary" display="block">REMARKS</Typography>
-                    <Typography variant="body2">{mouldState.remarks || "No remarks entered."}</Typography>
+                    <Typography variant="body2">{mouldState?.remarks || "No remarks entered."}</Typography>
                   </Box>
                 </Box>
-                {attachedFiles.length > 0 && (
+                {attachedFiles?.length > 0 && (
                   <Box
                     sx={{
                       mt: 3,
@@ -506,8 +484,8 @@ function MouldingTable() {
                       ATTACHED FILES
                     </Typography>
 
-                    {attachedFiles.map((file, i) => (
-                      <Typography key={i} variant="body2">• {file.name}</Typography>
+                    {attachedFiles?.map((file, i) => (
+                      <Typography key={i} variant="body2">• {file?.name}</Typography>
                     ))}
                   </Box>
                 )}

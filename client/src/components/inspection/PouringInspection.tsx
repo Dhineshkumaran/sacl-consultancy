@@ -13,7 +13,6 @@ import {
     TableRow,
     TableCell,
     TableBody,
-    Chip,
     ThemeProvider,
     createTheme,
     Button,
@@ -163,8 +162,8 @@ function PouringDetailsTable() {
                     return;
                 }
                 try {
-                    const pending = await departmentProgressService.getProgress(user.username, user.department_id);
-                    const found = pending.find(p => p.trial_id === trialId);
+                    const pending = await departmentProgressService.getProgress(user?.username || "", user?.department_id || 0);
+                    const found = pending?.find(p => p?.trial_id === trialId);
                     setIsAssigned(!!found);
                 } catch (error) {
                     console.error("Failed to check assignment:", error);
@@ -235,43 +234,50 @@ function PouringDetailsTable() {
     const [submitted, setSubmitted] = useState(false);
     const { alert, showAlert } = useAlert();
 
+    const handleAttachFiles = (newFiles: File[]) => {
+        setAttachedFiles(prev => [...prev, ...newFiles]);
+    };
+
+    const removeAttachedFile = (index: number) => {
+        setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    };
 
     useEffect(() => {
         const fetchData = async () => {
             if (trialId) {
                 try {
                     const response = await inspectionService.getPouringDetails(trialId);
-                    if (response.success && response.data && response.data.length > 0) {
-                        const data = response.data[0];
-                        setPouringDate(data.pour_date ? new Date(data.pour_date).toISOString().slice(0, 10) : "");
-                        setHeatCode(data.heat_code || "");
+                    if (response?.success && response?.data && response?.data?.length > 0) {
+                        const data = response?.data?.[0];
+                        setPouringDate(data?.pour_date ? new Date(data?.pour_date).toISOString().slice(0, 10) : "");
+                        setHeatCode(data?.heat_code || "");
 
-                        const comp = safeParse<any>(data.composition, {});
+                        const comp = safeParse<any>(data?.composition, {});
                         setChemState({
-                            c: comp.C || "",
-                            si: comp.Si || "",
-                            mn: comp.Mn || "",
-                            p: comp.P || "",
-                            s: comp.S || "",
-                            mg: comp.Mg || "",
-                            cr: comp.Cr || "",
-                            cu: comp.Cu || ""
+                            c: comp?.C || "",
+                            si: comp?.Si || "",
+                            mn: comp?.Mn || "",
+                            p: comp?.P || "",
+                            s: comp?.S || "",
+                            mg: comp?.Mg || "",
+                            cr: comp?.Cr || "",
+                            cu: comp?.Cu || ""
                         });
 
-                        setPouringTemp(String(data.pouring_temp_c || ""));
-                        setPouringTime(String(data.pouring_time_sec || ""));
+                        setPouringTemp(String(data?.pouring_temp_c || ""));
+                        setPouringTime(String(data?.pouring_time_sec || ""));
 
-                        const inoc = safeParse<any>(data.inoculation, {});
-                        setInoculationText(inoc.text || "");
-                        setInoculationStream(inoc.stream || "");
-                        setInoculationInmould(inoc.inmould || "");
+                        const inoc = safeParse<any>(data?.inoculation, {});
+                        setInoculationText(inoc?.text || "");
+                        setInoculationStream(inoc?.stream || "");
+                        setInoculationInmould(inoc?.inmould || "");
 
-                        const rem = safeParse<any>(data.other_remarks, {});
-                        setFicHeatNo(rem["F/C & Heat No."] || "");
-                        setPpCode(rem["PP Code"] || "");
-                        setFollowedBy(rem["Followed by"] || "");
-                        setRemarksText(data.remarks || "");
-                        setNoOfMouldPoured(String(data.no_of_mould_poured || ""));
+                        const rem = safeParse<any>(data?.other_remarks, {});
+                        setFicHeatNo(rem?.["F/C & Heat No."] || "");
+                        setPpCode(rem?.["PP Code"] || "");
+                        setFollowedBy(rem?.["Followed by"] || "");
+                        setRemarksText(data?.remarks || "");
+                        setNoOfMouldPoured(String(data?.no_of_mould_poured || ""));
                         setDataExists(true);
                     }
                 } catch (error) {
@@ -290,8 +296,8 @@ function PouringDetailsTable() {
             pouringDate,
             heatCode,
             chemical_composition: {
-                c: chemState.c, si: chemState.si, mn: chemState.mn, p: chemState.p,
-                s: chemState.s, mg: chemState.mg, cu: chemState.cu, cr: chemState.cr
+                c: chemState?.c, si: chemState?.si, mn: chemState?.mn, p: chemState?.p,
+                s: chemState?.s, mg: chemState?.mg, cu: chemState?.cu, cr: chemState?.cr
             },
             noOfMouldPoured,
             pouringTemp,
@@ -308,7 +314,7 @@ function PouringDetailsTable() {
                 userName
             },
             remarksText,
-            attachedFiles: attachedFiles
+            attachedFiles: attachedFiles?.map(f => f?.name)
         };
     };
 
@@ -317,31 +323,32 @@ function PouringDetailsTable() {
 
         return {
             trial_id: trialId,
-            pour_date: source.pouringDate || null,
-            heat_code: source.heatCode || null,
+            pour_date: source?.pouringDate || null,
+            heat_code: source?.heatCode || null,
             composition: {
-                C: source.chemical_composition.c, Si: source.chemical_composition.si,
-                Mn: source.chemical_composition.mn, P: source.chemical_composition.p,
-                S: source.chemical_composition.s, Mg: source.chemical_composition.mg,
-                Cu: source.chemical_composition.cu, Cr: source.chemical_composition.cr
+                C: source?.chemical_composition?.c, Si: source?.chemical_composition?.si,
+                Mn: source?.chemical_composition?.mn, P: source?.chemical_composition?.p,
+                S: source?.chemical_composition?.s, Mg: source?.chemical_composition?.mg,
+                Cu: source?.chemical_composition?.cu, Cr: source?.chemical_composition?.cr
             },
-            no_of_mould_poured: parseInt(String(source.noOfMouldPoured)) || 0,
-            pouring_temp_c: parseFloat(String(source.pouringTemp)) || 0,
-            pouring_time_sec: parseInt(String(source.pouringTime)) || 0,
+            no_of_mould_poured: parseInt(String(source?.noOfMouldPoured)) || 0,
+            pouring_temp_c: parseFloat(String(source?.pouringTemp)) || 0,
+            pouring_time_sec: parseInt(String(source?.pouringTime)) || 0,
             inoculation: {
-                text: source.inoculation.text,
-                stream: source.inoculation.stream,
-                inmould: source.inoculation.inmould
+                text: source?.inoculation?.text,
+                stream: source?.inoculation?.stream,
+                inmould: source?.inoculation?.inmould
             },
             other_remarks: {
-                "F/C & Heat No.": source.remarks.ficHeatNo,
-                "PP Code": source.remarks.ppCode,
-                "Followed by": source.remarks.followedBy,
-                "Username": source.remarks.userName
+                "F/C & Heat No.": source?.remarks?.ficHeatNo,
+                "PP Code": source?.remarks?.ppCode,
+                "Followed by": source?.remarks?.followedBy,
+                "Username": source?.remarks?.userName
             },
-            remarks: source.remarksText || remarksText,
+            remarks: source?.remarksText || remarksText,
             is_draft: isDraft,
-            is_edit: isEditing || dataExists
+            is_edit: isEditing || dataExists,
+            attachedFiles: attachedFiles?.map(f => f?.name)
         };
     };
 
@@ -362,7 +369,7 @@ function PouringDetailsTable() {
                 await inspectionService.submitPouringDetails(apiPayload);
             }
 
-            if (attachedFiles.length > 0) {
+            if (attachedFiles?.length > 0) {
                 await uploadFiles(
                     attachedFiles,
                     trialId,
@@ -387,7 +394,7 @@ function PouringDetailsTable() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.message || `Failed to ${isDraft ? 'save draft' : 'save Pouring Details'}. Please try again.`
+                text: error?.message || `Failed to ${isDraft ? 'save draft' : 'save Pouring Details'}. Please try again.`
             });
         } finally {
             setLoading(false);
@@ -453,7 +460,7 @@ function PouringDetailsTable() {
                                                                         <SpecInput
                                                                             type="date"
                                                                             value={pouringDate}
-                                                                            onChange={(e: any) => setPouringDate(e.target.value)}
+                                                                            onChange={(e: any) => setPouringDate(e?.target?.value)}
                                                                             inputStyle={{ textAlign: 'left' }}
                                                                             disabled={user?.role === 'HOD' || user?.role === 'Admin'}
                                                                         />
@@ -464,7 +471,7 @@ function PouringDetailsTable() {
                                                                             placeholder="Code"
                                                                             value={heatCode}
                                                                             onChange={(e: any) => {
-                                                                                setHeatCode(e.target.value);
+                                                                                setHeatCode(e?.target?.value);
                                                                             }}
                                                                             disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                         />
@@ -480,8 +487,8 @@ function PouringDetailsTable() {
                                                                             <Box display="flex" alignItems="center" gap={1}>
                                                                                 <Typography variant="body2" fontWeight="bold">{el}-</Typography>
                                                                                 <SpecInput
-                                                                                    value={(chemState as any)[el.toLowerCase()]}
-                                                                                    onChange={(e: any) => setChemState({ ...chemState, [el.toLowerCase()]: e.target.value })}
+                                                                                    value={(chemState as any)?.[el.toLowerCase()]}
+                                                                                    onChange={(e: any) => setChemState({ ...chemState, [el.toLowerCase()]: e?.target?.value })}
                                                                                     disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                                 />
                                                                             </Box>
@@ -494,8 +501,8 @@ function PouringDetailsTable() {
                                                                             <Box display="flex" alignItems="center" gap={1}>
                                                                                 <Typography variant="body2" fontWeight="bold">{el}-</Typography>
                                                                                 <SpecInput
-                                                                                    value={(chemState as any)[el.toLowerCase()]}
-                                                                                    onChange={(e: any) => setChemState({ ...chemState, [el.toLowerCase()]: e.target.value })}
+                                                                                    value={(chemState as any)?.[el.toLowerCase()]}
+                                                                                    onChange={(e: any) => setChemState({ ...chemState, [el.toLowerCase()]: e?.target?.value })}
                                                                                     disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                                 />
                                                                             </Box>
@@ -509,7 +516,7 @@ function PouringDetailsTable() {
                                                                                 placeholder="Actual"
                                                                                 value={noOfMouldPoured}
                                                                                 onChange={(e: any) => {
-                                                                                    setNoOfMouldPoured(e.target.value);
+                                                                                    setNoOfMouldPoured(e?.target?.value);
                                                                                 }}
                                                                                 disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                                 sx={{ width: '100px' }}
@@ -527,7 +534,7 @@ function PouringDetailsTable() {
                                                                             placeholder="Deg C"
                                                                             value={pouringTemp}
                                                                             onChange={(e: any) => {
-                                                                                setPouringTemp(e.target.value);
+                                                                                setPouringTemp(e?.target?.value);
                                                                             }}
                                                                             InputProps={{
                                                                                 endAdornment: <InputAdornment position="end">°C</InputAdornment>,
@@ -542,7 +549,7 @@ function PouringDetailsTable() {
                                                                             <SpecInput
                                                                                 placeholder="Type"
                                                                                 value={inoculationText}
-                                                                                onChange={(e: any) => setInoculationText(e.target.value)}
+                                                                                onChange={(e: any) => setInoculationText(e?.target?.value)}
                                                                                 sx={{ width: 80 }}
                                                                                 disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                             />
@@ -555,7 +562,7 @@ function PouringDetailsTable() {
                                                                                         sx={{ width: 60 }}
                                                                                         placeholder="gms"
                                                                                         value={inoculationStream}
-                                                                                        onChange={(e: any) => setInoculationStream(e.target.value)}
+                                                                                        onChange={(e: any) => setInoculationStream(e?.target?.value)}
                                                                                         disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                                     />
                                                                                 </Box>
@@ -567,7 +574,7 @@ function PouringDetailsTable() {
                                                                                         sx={{ width: 60 }}
                                                                                         placeholder="gms"
                                                                                         value={inoculationInmould}
-                                                                                        onChange={(e: any) => setInoculationInmould(e.target.value)}
+                                                                                        onChange={(e: any) => setInoculationInmould(e?.target?.value)}
                                                                                         disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                                     />
                                                                                 </Box>
@@ -583,7 +590,7 @@ function PouringDetailsTable() {
                                                                     placeholder="Sec"
                                                                     value={pouringTime}
                                                                     onChange={(e: any) => {
-                                                                        setPouringTime(e.target.value);
+                                                                        setPouringTime(e?.target?.value);
                                                                     }}
                                                                     disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                                                 />
@@ -594,19 +601,19 @@ function PouringDetailsTable() {
                                                                     <Grid size={{ xs: 12 }}>
                                                                         <Box display="flex" alignItems="center" gap={1}>
                                                                             <Typography variant="caption" noWrap minWidth={90}>F/C & Heat No:</Typography>
-                                                                            <SpecInput value={ficHeatNo} onChange={(e: any) => setFicHeatNo(e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                                                                            <SpecInput value={ficHeatNo} onChange={(e: any) => setFicHeatNo(e?.target?.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
                                                                         </Box>
                                                                     </Grid>
                                                                     <Grid size={{ xs: 12 }}>
                                                                         <Box display="flex" alignItems="center" gap={1}>
                                                                             <Typography variant="caption" noWrap minWidth={90}>PP Code :</Typography>
-                                                                            <SpecInput value={ppCode} onChange={(e: any) => setPpCode(e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                                                                            <SpecInput value={ppCode} onChange={(e: any) => setPpCode(e?.target?.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
                                                                         </Box>
                                                                     </Grid>
                                                                     <Grid size={{ xs: 12 }}>
                                                                         <Box display="flex" alignItems="center" gap={1}>
                                                                             <Typography variant="caption" noWrap minWidth={90}>Followed by :</Typography>
-                                                                            <SpecInput value={followedBy} onChange={(e: any) => setFollowedBy(e.target.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                                                                            <SpecInput value={followedBy} onChange={(e: any) => setFollowedBy(e?.target?.value)} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
                                                                         </Box>
                                                                     </Grid>
                                                                     <Grid size={{ xs: 12 }}>
@@ -632,8 +639,8 @@ function PouringDetailsTable() {
                                             </Typography>
                                             <FileUploadSection
                                                 files={attachedFiles}
-                                                onFilesChange={(newFiles) => setAttachedFiles(prev => [...prev, ...newFiles])}
-                                                onFileRemove={(index) => setAttachedFiles(prev => prev.filter((_, i) => i !== index))}
+                                                onFilesChange={handleAttachFiles}
+                                                onFileRemove={removeAttachedFile}
                                                 showAlert={showAlert}
                                                 label="Upload Files"
                                                 disabled={user?.role === 'HOD' || user?.role === 'Admin'}
@@ -650,7 +657,7 @@ function PouringDetailsTable() {
                                             rows={3}
                                             placeholder="Enter additional remarks..."
                                             value={remarksText}
-                                            onChange={(e) => setRemarksText(e.target.value)}
+                                            onChange={(e) => setRemarksText(e?.target?.value)}
                                             sx={{ bgcolor: "white" }}
                                             disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing}
                                         />
@@ -757,8 +764,8 @@ function PouringDetailsTable() {
                                 {previewPayload?.attachedFiles?.length > 0 && (
                                     <Box sx={{ mt: 3, p: 2, border: "1px solid #ccc", borderRadius: 1, bgcolor: "white" }}>
                                         <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>ATTACHED FILES:</Typography>
-                                        {previewPayload.attachedFiles.map((file: File, i: number) => (
-                                            <Typography key={i} variant="body2">• {file.name}</Typography>
+                                        {previewPayload?.attachedFiles?.map((fileName: string, i: number) => (
+                                            <Typography key={i} variant="body2">• {fileName}</Typography>
                                         ))}
                                     </Box>
                                 )}
@@ -767,7 +774,7 @@ function PouringDetailsTable() {
                                     <Box sx={{ mt: 3, p: 2, border: "1px solid #ccc", borderRadius: 1, bgcolor: "white" }}>
                                         <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>REMARKS:</Typography>
                                         <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-                                            {previewPayload.remarksText}
+                                            {previewPayload?.remarksText}
                                         </Typography>
                                     </Box>
                                 )}

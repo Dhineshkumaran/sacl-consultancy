@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -24,7 +24,6 @@ import {
 } from "@mui/material";
 import Swal from 'sweetalert2';
 
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from '@mui/icons-material/Save';
@@ -33,10 +32,8 @@ import ScienceIcon from '@mui/icons-material/Science';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { apiService } from '../../services/commonService';
 import { inspectionService } from '../../services/inspectionService';
-import { documentService } from '../../services/documentService';
 import { uploadFiles } from '../../services/fileUploadHelper';
 import departmentProgressService from "../../services/departmentProgressService";
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import Header from "../dashboard/Header";
 import ProfileModal from "../dashboard/ProfileModal";
 import { getDepartmentInfo } from "../../utils/dashboardUtils";
@@ -45,14 +42,13 @@ import { COLORS, appTheme } from '../../theme/appTheme';
 import { useAlert } from '../../hooks/useAlert';
 import { AlertMessage } from '../common/AlertMessage';
 
-import { fileToMeta, generateUid, validateFileSizes, formatDateTime } from '../../utils';
-import type { InspectionRow, GroupMetadata } from '../../types/inspection';
-import { LoadingState, EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
+import { fileToMeta, generateUid, formatDateTime } from '../../utils';
+import type { InspectionRow } from '../../types/inspection';
+import { EmptyState, ActionButtons, FileUploadSection, PreviewModal, DocumentViewer } from '../common';
 import { safeParse } from '../../utils/jsonUtils';
 import BasicInfo from "../dashboard/BasicInfo";
 
 type Row = InspectionRow;
-type GroupMeta = { ok: boolean | null; remarks: string; attachment: File | null };
 
 const buildRows = (labels: string[], initialCols: string[]): Row[] =>
     labels.map((lab, i) => ({
@@ -64,7 +60,6 @@ const buildRows = (labels: string[], initialCols: string[]): Row[] =>
 interface NdtRow {
     id: string;
     label: string;
-    attachment: File | null;
     ok: boolean | null;
     remarks: string;
     value?: string;
@@ -80,7 +75,6 @@ const initialNdtRows = (labels: string[]): NdtRow[] =>
     labels.map((label, i) => ({
         id: `${label}-${i}`,
         label,
-        attachment: null,
         ok: null,
         remarks: "",
         total: null,
@@ -91,51 +85,52 @@ function SectionTable({
     rows,
     onChange,
     showTotal = false,
-    onValidationError,
     showAlert,
     user,
     isEditing,
+    onSectionChange,
 }: {
     title: string;
     rows: NdtRow[];
     onChange: (id: string, patch: Partial<NdtRow>) => void;
     showTotal?: boolean;
-    onValidationError?: (message: string) => void;
     showAlert?: (severity: 'success' | 'error', message: string) => void;
     user: any;
     isEditing: boolean;
+    onSectionChange?: (patch: Partial<NdtRow>) => void;
 }) {
     const [cols, setCols] = useState<MicroCol[]>(() => {
-        const maxLen = Math.max(...rows.map(r => (r.value ? r.value.split('|').length : 1)), 1);
+        const maxLen = Math.max(...(rows?.map(r => (r?.value ? r.value.split('|').length : 1)) || []), 1);
         return Array.from({ length: maxLen }, (_, i) => ({ id: `c${i + 1}`, label: '' }));
     });
 
     const [values, setValues] = useState<Record<string, string[]>>(() => {
         const init: Record<string, string[]> = {};
-        rows.forEach((r) => {
-            init[r.id] = r.value ? r.value.split('|').map(s => s.trim()) : Array(cols.length).fill('');
+        rows?.forEach((r) => {
+            init[r.id] = r?.value ? r.value.split('|').map(s => s.trim()) : Array(cols?.length || 0).fill('');
         });
         return init;
     });
 
-    const [groupMeta, setGroupMeta] = useState<{ attachment: File | null; ok: boolean | null; remarks: string }>(() => ({ attachment: null, ok: null, remarks: '' }));
+    const [okStatus, setOkStatus] = useState<boolean | null>(null);
+    const [remarks, setRemarks] = useState<string>("");
 
     useEffect(() => {
-        if (rows.length > 0) {
-            const firstWithStatus = rows.find(r => r.ok !== null && r.ok !== undefined);
-            if (firstWithStatus) {
-                setGroupMeta(prev => ({
-                    ...prev,
-                    ok: firstWithStatus.ok,
-                    remarks: firstWithStatus.remarks || prev.remarks || ""
-                }));
+        if (rows && rows.length > 0) {
+            const firstRowStatus = rows.find(r => r.ok === true || r.ok === false);
+            const firstRowRemarks = rows.find(r => r.remarks && r.remarks.length > 0);
+            if (firstRowStatus) {
+                setOkStatus(firstRowStatus.ok);
+            }
+            if (firstRowRemarks) {
+                setRemarks(firstRowRemarks.remarks);
             }
         }
     }, [rows]);
 
     useEffect(() => {
-        const maxLen = Math.max(...rows.map(r => (r.value ? r.value.split('|').length : 1)), 1);
-        if (maxLen > cols.length) {
+        const maxLen = Math.max(...(rows?.map(r => (r?.value ? r.value.split('|').length : 1)) || []), 1);
+        if (maxLen > (cols?.length || 0)) {
             setCols(Array.from({ length: maxLen }, (_, i) => ({ id: `c${i + 1}`, label: '' })));
         }
     }, [rows]);
@@ -143,13 +138,13 @@ function SectionTable({
     useEffect(() => {
         setValues((prev) => {
             const copy: Record<string, string[]> = {};
-            rows.forEach((r) => {
-                const rowVals = r.value ? r.value.split('|').map(s => s.trim()) : [];
-                copy[r.id] = (rowVals.length > 0) ? rowVals : (prev[r.id] ?? Array(cols.length).fill(''));
+            rows?.forEach((r) => {
+                const rowVals = r?.value ? r.value.split('|').map(s => s.trim()) : [];
+                copy[r.id] = (rowVals.length > 0) ? rowVals : (prev[r.id] ?? Array(cols?.length || 0).fill(''));
 
-                if (copy[r.id].length < cols.length) {
-                    copy[r.id] = [...copy[r.id], ...Array(cols.length - copy[r.id].length).fill('')];
-                } else if (copy[r.id].length > cols.length && cols.length > 0) {
+                if (copy[r.id].length < (cols?.length || 0)) {
+                    copy[r.id] = [...copy[r.id], ...Array((cols?.length || 0) - copy[r.id].length).fill('')];
+                } else if (copy[r.id].length > (cols?.length || 0) && (cols?.length || 0) > 0) {
                     copy[r.id] = copy[r.id].slice(0, cols.length);
                 }
             });
@@ -167,11 +162,11 @@ function SectionTable({
     };
 
     const removeColumn = (index: number) => {
-        setCols((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+        setCols((prev) => ((prev?.length || 0) <= 1 ? prev : prev.filter((_, i) => i !== index)));
         setValues((prev) => {
             const copy: Record<string, string[]> = {};
-            Object.keys(prev).forEach((k) => {
-                const arr = [...prev[k]];
+            Object.keys(prev || {}).forEach((k) => {
+                const arr = [...(prev[k] || [])];
                 if (arr.length > index) arr.splice(index, 1);
                 copy[k] = arr;
             });
@@ -185,9 +180,9 @@ function SectionTable({
             let copy = { ...prev, [rowId]: arr };
 
             if (title === "NDT INSPECTION ANALYSIS") {
-                const inspectedRow = rows.find(r => r.label.toLowerCase().includes('inspected'));
-                const acceptedRow = rows.find(r => r.label.toLowerCase().includes('accepted'));
-                const rejectedRow = rows.find(r => r.label.toLowerCase().includes('rejected'));
+                const inspectedRow = rows?.find(r => r?.label?.toLowerCase()?.includes('inspected'));
+                const acceptedRow = rows?.find(r => r?.label?.toLowerCase()?.includes('accepted'));
+                const rejectedRow = rows?.find(r => r?.label?.toLowerCase()?.includes('rejected'));
 
                 if (inspectedRow && acceptedRow && rejectedRow) {
                     const inspectedValues = copy[inspectedRow.id] || [];
@@ -200,8 +195,8 @@ function SectionTable({
                     if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
                         if (acceptedNum > inspectedNum) {
                             rejectedValues[colIndex] = 'Invalid';
-                            if (onValidationError) {
-                                onValidationError(`Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
+                            if (showAlert) {
+                                showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
                             }
                         } else {
                             const calculatedRejected = inspectedNum - acceptedNum;
@@ -209,14 +204,14 @@ function SectionTable({
                         }
                         copy = { ...copy, [rejectedRow.id]: rejectedValues };
 
-                        const rejectedCombined = rejectedValues.map(v => v || "").join(' | ');
+                        const rejectedCombined = rejectedValues?.map(v => v || "").join(' | ');
                         onChange(rejectedRow.id, { value: rejectedCombined });
                     }
                 }
             }
 
-            const combined = arr.map(v => v || "").join(' | ');
-            const total = arr.reduce((acc, s) => {
+            const combined = arr?.map(v => v || "").join(' | ');
+            const total = arr?.reduce((acc, s) => {
                 const n = parseFloat(String(s).trim());
                 return acc + (isNaN(n) ? 0 : n);
             }, 0);
@@ -225,15 +220,21 @@ function SectionTable({
         });
     };
 
-    const updateGroupMeta = (patch: Partial<{ attachment: File | null; ok: boolean | null; remarks: string }>) => {
-        setGroupMeta((prev) => ({ ...prev, ...patch }));
-        rows.forEach(r => {
-            onChange(r.id, { ...patch });
-        });
+    const updateSectionMeta = (patch: Partial<{ ok: boolean | null; remarks: string }>) => {
+        if (patch.ok !== undefined) setOkStatus(patch.ok);
+        if (patch.remarks !== undefined) setRemarks(patch.remarks);
+
+        if (onSectionChange) {
+            onSectionChange(patch);
+        } else {
+            rows.forEach(r => {
+                onChange(r.id, patch);
+            });
+        }
     };
 
     const cavityRow = rows.find(r => r.label === "Cavity Number");
-    const dataRows = rows.filter(r => r.label !== "Cavity Number" && !r.label.toLowerCase().includes('rejection percentage'));
+    const dataRows = rows.filter(r => r && r.label && r.label !== "Cavity Number" && !r.label.toLowerCase().includes('rejection percentage'));
 
     return (
         <Box mb={4}>
@@ -291,20 +292,20 @@ function SectionTable({
                                 </TableCell>
                             ))}
                             {showTotal && <TableCell sx={{ bgcolor: '#f8fafc' }} />}
-                            <TableCell rowSpan={rows.length + 1} sx={{ bgcolor: COLORS.successBg, verticalAlign: "middle", textAlign: 'center', width: 140, borderBottom: 'none' }}>
-                                <RadioGroup row sx={{ justifyContent: 'center' }} value={groupMeta.ok === null ? "" : String(groupMeta.ok)} onChange={(e) => updateGroupMeta({ ok: e.target.value === "true" })}>
+                            <TableCell rowSpan={rows?.length + 1} sx={{ bgcolor: COLORS.successBg, verticalAlign: "middle", textAlign: 'center', width: 140, borderBottom: 'none' }}>
+                                <RadioGroup row sx={{ justifyContent: 'center' }} value={okStatus === null ? "" : String(okStatus)} onChange={(e) => updateSectionMeta({ ok: e.target.value === "true" })}>
                                     <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing} />
                                     <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing} />
                                 </RadioGroup>
                             </TableCell>
-                            <TableCell rowSpan={rows.length + 1} sx={{ bgcolor: '#fff7ed', verticalAlign: "top", borderBottom: 'none' }}>
+                            <TableCell rowSpan={rows?.length + 1} sx={{ bgcolor: '#fff7ed', verticalAlign: "top", borderBottom: 'none' }}>
                                 <TextField
                                     size="small"
                                     fullWidth
                                     multiline
                                     rows={3}
-                                    value={groupMeta.remarks}
-                                    onChange={(e) => updateGroupMeta({ remarks: e.target.value })}
+                                    value={remarks || ""}
+                                    onChange={(e) => updateSectionMeta({ remarks: e.target.value })}
                                     placeholder="Enter remarks..."
                                     variant="outlined"
                                     sx={{ bgcolor: 'white' }}
@@ -350,35 +351,8 @@ function SectionTable({
     );
 }
 
-const viewAttachment = (file: any) => {
-    if (!file) return;
-    if (file instanceof File) {
-        const url = URL.createObjectURL(file);
-        window.open(url, '_blank');
-    } else if (file.file_base64) {
-        try {
-            const byteCharacters = atob(file.file_base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const ext = (file.name || file.file_name || "").split('.').pop()?.toLowerCase();
-            let mime = 'application/pdf';
-            if (['jpg', 'jpeg', 'png'].includes(ext)) mime = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-
-            const blob = new Blob([byteArray], { type: mime });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        } catch (e) {
-            console.error("Error viewing file", e);
-            alert("Could not view file.");
-        }
-    }
-};
-
 export default function VisualInspection({
-    initialRows = ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage (%)", "Reason for rejection:"],
+    initialRows = ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"],
     initialCols = [""],
     onSave = async (payload: any) => {
         return new Promise(resolve => setTimeout(() => resolve({ ok: true }), 1000));
@@ -392,11 +366,8 @@ export default function VisualInspection({
     const navigate = useNavigate();
     const [cols, setCols] = useState<string[]>([...initialCols]);
     const [rows, setRows] = useState<Row[]>(() => buildRows(initialRows, initialCols));
-    const [groupMeta, setGroupMeta] = useState<GroupMeta>({
-        ok: null,
-        remarks: "",
-        attachment: null,
-    });
+    const [visualOk, setVisualOk] = useState<boolean | null>(null);
+    const [remarks, setRemarks] = useState<string>("");
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const { alert, showAlert } = useAlert();
@@ -411,11 +382,8 @@ export default function VisualInspection({
     const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
     const departmentInfo = getDepartmentInfo(user);
     const [dataExists, setDataExists] = useState(false);
-    const [ndtRows, setNdtRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Inspected Qty", "Accepted Qty", "Rejected Qty", "Reason for Rejection"]));
+    const [ndtRows, setNdtRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Reason for rejection"]));
     const [hardRows, setHardRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Surface", "Core"]));
-    const [ndtValidationError, setNdtValidationError] = useState<string | null>(null);
-
-
 
     const handleNdtChange = (id: string, patch: Partial<NdtRow>) => {
         setNdtRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
@@ -425,6 +393,13 @@ export default function VisualInspection({
         setHardRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
     };
 
+    const handleNdtSectionChange = (patch: Partial<NdtRow>) => {
+        setNdtRows(prev => prev.map(r => ({ ...r, ...patch })));
+    };
+
+    const handleHardnessSectionChange = (patch: Partial<NdtRow>) => {
+        setHardRows(prev => prev.map(r => ({ ...r, ...patch })));
+    };
 
     const trialId = new URLSearchParams(window.location.search).get('trial_id') || "";
     const [isAssigned, setIsAssigned] = useState<boolean | null>(null);
@@ -459,54 +434,60 @@ export default function VisualInspection({
                 try {
                     const response = await inspectionService.getVisualInspection(trialId);
 
-                    const docsMap: Record<string, any> = {};
-                    try {
-                        const docRes = await documentService.getDocument(trialId);
-                        if (docRes && docRes.success && Array.isArray(docRes.data)) {
-                            docRes.data.forEach((d: any) => {
-                                if (d.document_type === 'VISUAL_INSPECTION') docsMap[d.file_name] = d;
-                            });
-                        }
-                    } catch (e) { console.error(e); }
-
                     if (response.success && response.data && response.data.length > 0) {
                         const data = response.data[0];
                         if (data.inspection_date) setDate(new Date(data.inspection_date).toISOString().slice(0, 10));
 
                         const inspections = safeParse<any[]>(data.inspections, []);
-                        if (inspections.length > 0) {
-                            const loadedCols = inspections.map((item: any) => item['Cavity Number'] || '');
+                        if (inspections && inspections.length > 0) {
+                            const loadedCols = inspections?.map((item: any) => item?.['Cavity Number'] || '');
 
                             setCols(loadedCols);
-                            setRows(prevRows => prevRows.map(row => {
-                                let fieldName = row.label;
-                                if (fieldName.includes('Rejection Percentage')) fieldName = 'Rejection Percentage';
-                                if (fieldName.endsWith(':')) fieldName = fieldName.slice(0, -1);
-
+                            setRows(prevRows => prevRows?.map(row => {
+                                let fieldName = row?.label;
                                 return {
                                     ...row,
-                                    values: inspections.map((item: any) => String(item[fieldName] || ''))
+                                    values: inspections?.map((item: any) => String(item?.[fieldName] || ''))
                                 };
                             }));
                         }
 
-                        const linkedAttachment = data.attachment_name ? docsMap[data.attachment_name] : null;
+                        setVisualOk(data?.visual_ok === null || data?.visual_ok === undefined ? null : (data.visual_ok === true || data.visual_ok === 1 || String(data.visual_ok) === "1" || String(data.visual_ok) === "true"));
+                        setRemarks(data?.remarks || "");
 
-                        setGroupMeta({
-                            ok: data.visual_ok === null || data.visual_ok === undefined ? null : (data.visual_ok === true || data.visual_ok === 1 || String(data.visual_ok) === "1" || String(data.visual_ok) === "true"),
-                            remarks: data.remarks || "",
-                            attachment: linkedAttachment || null
-                        });
+                        const restoreSection = (source: any, labelKeys: string[], sectionOk: any = null, sectionRemarks: string = "") => {
+                            const arr = safeParse<any[]>(source, []);
+                            const okVal = sectionOk === null || sectionOk === undefined ? null : (sectionOk === true || sectionOk === 1 || String(sectionOk) === "1" || String(sectionOk) === "true");
 
-                        const ndt_inspection = safeParse<NdtRow[]>(data.ndt_inspection, []);
-                        if (ndt_inspection && ndt_inspection.length > 0) {
-                            setNdtRows(ndt_inspection);
-                        }
+                            if (arr?.length > 0 && typeof arr?.[0] === 'object' && !Array.isArray(arr?.[0])) {
+                                return labelKeys?.map((label, i) => {
+                                    const values = arr?.map(obj => String(obj?.[label] || ""));
+                                    return {
+                                        id: `${label}-${i}-${generateUid()}`,
+                                        label: label,
+                                        value: values?.join(' | '),
+                                        ok: okVal,
+                                        remarks: sectionRemarks || "",
+                                        total: label?.toLowerCase()?.includes('quantity') || label?.toLowerCase()?.includes('strength') ? values?.reduce((acc, v) => acc + (parseFloat(v) || 0), 0) : null,
+                                    };
+                                });
+                            }
+                            return arr?.map((r: any, i: number) => ({
+                                id: (r?.label || "Param") + "-" + i + "-" + generateUid(),
+                                label: r?.label || "Param",
+                                value: Array.isArray(r?.values) ? r.values.join(' | ') : (r?.value || ""),
+                                ok: r?.ok === null || r?.ok === undefined ? okVal : (r.ok === true || String(r.ok) === "1" || String(r.ok) === "true"),
+                                remarks: r?.remarks || sectionRemarks || "",
+                                total: r?.total || null,
+                            }));
+                        };
 
-                        const hardness = safeParse<NdtRow[]>(data.hardness, []);
-                        if (hardness && hardness.length > 0) {
-                            setHardRows(hardness);
-                        }
+                        const ndtRowsData = restoreSection(data?.ndt_inspection, ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Reason for rejection"], data?.ndt_inspection_ok, data?.ndt_inspection_remarks);
+                        if (ndtRowsData?.length > 0) setNdtRows(ndtRowsData as NdtRow[]);
+
+                        const hardRowsData = restoreSection(data?.hardness, ["Cavity Number", "Surface", "Core"], data?.hardness_ok, data?.hardness_remarks);
+                        if (hardRowsData?.length > 0) setHardRows(hardRowsData as NdtRow[]);
+
                         setDataExists(true);
                     }
                 } catch (error) {
@@ -520,13 +501,14 @@ export default function VisualInspection({
 
 
     const calculateRejectionPercentage = (colIndex: number): string => {
-        const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
-        const rejectedRow = rows.find(r => r.label === "Rejected Quantity");
+        const findRow = (labelPart: string) => rows?.find(r => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
+        const inspectedRow = findRow("inspected quantity");
+        const rejectedRow = findRow("rejected quantity");
 
         if (!inspectedRow || !rejectedRow) return "";
 
-        const inspected = parseFloat(inspectedRow.values[colIndex] || "0");
-        const rejected = parseFloat(rejectedRow.values[colIndex] || "0");
+        const inspected = parseFloat(inspectedRow?.values?.[colIndex] || "0");
+        const rejected = parseFloat(rejectedRow?.values?.[colIndex] || "0");
 
         if (isNaN(inspected) || isNaN(rejected) || inspected === 0) {
             return "";
@@ -546,11 +528,11 @@ export default function VisualInspection({
     }, []);
 
     const addColumn = () => {
-        setCols((c) => [...c, ""]);
+        setCols((c) => [...(c || []), ""]);
         setRows((r) =>
-            r.map((row) => ({
+            r?.map((row) => ({
                 ...row,
-                values: [...row.values, ""],
+                values: [...(row?.values || []), ""],
             }))
         );
     };
@@ -564,35 +546,36 @@ export default function VisualInspection({
     };
 
     const removeColumn = (index: number) => {
-        if (cols.length <= 1) return;
-        setCols((c) => c.filter((_, i) => i !== index));
+        if ((cols?.length || 0) <= 1) return;
+        setCols((c) => c?.filter((_, i) => i !== index));
         setRows((r) =>
-            r.map((row) => ({
+            r?.map((row) => ({
                 ...row,
-                values: row.values.filter((_, i) => i !== index),
+                values: row?.values?.filter((_, i) => i !== index),
             }))
         );
     };
 
     const updateCell = (rowId: string, colIndex: number, value: string) => {
         setRows(prev => {
-            let updated = prev.map(r => {
+            let updated = prev?.map(r => {
                 if (r.id !== rowId) return r;
-                const newValues = r.values.map((v, i) => (i === colIndex ? value : v));
+                const newValues = r?.values?.map((v, i) => (i === colIndex ? value : v));
                 return { ...r, values: newValues };
             });
 
-            const inspectedRow = updated.find(r => r.label === "Inspected Quantity");
-            const acceptedRow = updated.find(r => r.label === "Accepted Quantity");
-            const rejectedRow = updated.find(r => r.label === "Rejected Quantity");
-            const percentageRow = updated.find(r => r.label === "Rejection Percentage (%)");
+            const findInUpdated = (labelPart: string) => updated?.find(r => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
+            const inspectedRow = findInUpdated("inspected quantity");
+            const acceptedRow = findInUpdated("accepted quantity");
+            const rejectedRow = findInUpdated("rejected quantity");
+            const percentageRow = findInUpdated("rejection percentage");
 
             if (inspectedRow && acceptedRow && rejectedRow) {
-                const inspectedNum = parseFloat(String(inspectedRow.values[colIndex] || '').trim());
-                const acceptedNum = parseFloat(String(acceptedRow.values[colIndex] || '').trim());
+                const inspectedNum = parseFloat(String(inspectedRow?.values?.[colIndex] || '').trim());
+                const acceptedNum = parseFloat(String(acceptedRow?.values?.[colIndex] || '').trim());
 
                 if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
-                    const newRejectedValues = [...rejectedRow.values];
+                    const newRejectedValues = [...(rejectedRow?.values || [])];
                     if (acceptedNum > inspectedNum) {
                         newRejectedValues[colIndex] = 'Invalid';
                         showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
@@ -600,14 +583,14 @@ export default function VisualInspection({
                         const calculatedRejected = inspectedNum - acceptedNum;
                         newRejectedValues[colIndex] = calculatedRejected >= 0 ? calculatedRejected.toString() : '';
                     }
-                    updated = updated.map(r => r.id === rejectedRow.id ? { ...r, values: newRejectedValues } : r);
+                    updated = updated?.map(r => r.id === rejectedRow.id ? { ...r, values: newRejectedValues } : r);
                 }
             }
 
             if (inspectedRow && rejectedRow && percentageRow) {
-                const newPercentageValues = [...percentageRow.values];
-                const inspectedNum = parseFloat(String(inspectedRow.values[colIndex] || '').trim());
-                const rejectedNum = parseFloat(String(rejectedRow.values[colIndex] || '').trim());
+                const newPercentageValues = [...(percentageRow?.values || [])];
+                const inspectedNum = parseFloat(String(inspectedRow?.values?.[colIndex] || '').trim());
+                const rejectedNum = parseFloat(String(rejectedRow?.values?.[colIndex] || '').trim());
 
                 if (!isNaN(inspectedNum) && inspectedNum > 0 && !isNaN(rejectedNum)) {
                     if (rejectedNum > inspectedNum) {
@@ -619,12 +602,12 @@ export default function VisualInspection({
                 } else {
                     newPercentageValues[colIndex] = '';
                 }
-                updated = updated.map(r => r.id === percentageRow.id ? { ...r, values: newPercentageValues } : r);
+                updated = updated?.map(r => r.id === percentageRow.id ? { ...r, values: newPercentageValues } : r);
             }
 
-            return updated.map(r => {
-                if (r.label === "Cavity Number") return r;
-                const total = r.values.reduce((sum, val) => {
+            return updated?.map(r => {
+                if (r?.label === "Cavity Number") return r;
+                const total = r?.values?.reduce((sum, val) => {
                     const n = parseFloat(String(val).trim());
                     return sum + (isNaN(n) ? 0 : n);
                 }, 0);
@@ -641,7 +624,8 @@ export default function VisualInspection({
     const reset = () => {
         setCols([...initialCols]);
         setRows(buildRows(initialRows, initialCols));
-        setGroupMeta({ ok: null, remarks: "", attachment: null });
+        setVisualOk(null);
+        setRemarks("");
         setAttachedFiles([]);
         setAdditionalRemarks("");
         setMessage(null);
@@ -652,21 +636,21 @@ export default function VisualInspection({
     };
 
     const buildPayload = () => {
-        const processedRows = rows.map(r => {
-            const totalVal = r.label.toLowerCase().includes("cavity") ? null : r.values.reduce((acc, v) => {
+        const processedRows = rows?.map(r => {
+            const totalVal = r?.label?.toLowerCase()?.includes("cavity") ? null : r?.values?.reduce((acc, v) => {
                 const n = parseFloat(String(v).trim());
                 return acc + (isNaN(n) ? 0 : n);
             }, 0);
             return { ...r, total: totalVal };
         });
 
-        const inspRow = processedRows.find(r => r.label === "Inspected Quantity");
-        const rejRow = processedRows.find(r => r.label === "Rejected Quantity");
-        const percRow = processedRows.find(r => r.label === "Rejection Percentage (%)");
+        const inspRow = processedRows?.find(r => r?.label === "Inspected Quantity");
+        const rejRow = processedRows?.find(r => r?.label === "Rejected Quantity");
+        const percRow = processedRows?.find(r => r?.label === "Rejection Percentage");
 
         if (inspRow && rejRow && percRow) {
-            const totalInsp = inspRow.total || 0;
-            const totalRej = rejRow.total || 0;
+            const totalInsp = inspRow?.total || 0;
+            const totalRej = rejRow?.total || 0;
             if (totalInsp > 0) {
                 percRow.total = parseFloat(((totalRej / totalInsp) * 100).toFixed(2));
             } else {
@@ -674,39 +658,41 @@ export default function VisualInspection({
             }
         }
 
+        const getOkStatus = (rows: any[]) => {
+            const hasNotOk = rows?.some(r => r?.ok === false || String(r?.ok) === "false" || String(r?.ok) === "0");
+            if (hasNotOk) return false;
+            const hasOk = rows?.some(r => r?.ok === true || String(r?.ok) === "true" || String(r?.ok) === "1");
+            return hasOk ? true : null;
+        };
+
         return {
             created_at: formatDateTime(new Date().toISOString()),
-            cols: cols.slice(),
+            cols: cols?.slice(),
             rows: processedRows,
-            group: {
-                ok: groupMeta.ok,
-                remarks: groupMeta.remarks || null,
-                attachment: fileToMeta(groupMeta.attachment),
-            },
-            attachedFiles: attachedFiles.map(f => f.name),
+            visual_ok: visualOk,
+            remarks: remarks || null,
+            attachedFiles: attachedFiles?.map(f => f?.name),
             additionalRemarks: additionalRemarks,
-            ndt: {
-                rows: ndtRows,
-                ok: ndtRows[0]?.ok,
-                remarks: ndtRows[0]?.remarks
-            },
-            hardness: hardRows.map(r => ({ label: r.label, value: r.value, total: r.total })),
-            hardness_ok: hardRows[0]?.ok,
-            hardness_remarks: hardRows[0]?.remarks
+            ndt_rows: ndtRows?.map(r => ({ ...r })),
+            ndt_ok: getOkStatus(ndtRows || []),
+            ndt_remarks: ndtRows?.find(r => r?.remarks)?.remarks || "",
+            hard_rows: hardRows?.map(r => ({ ...r })),
+            hard_ok: getOkStatus(hardRows || []),
+            hard_remarks: hardRows?.find(r => r?.remarks)?.remarks || ""
         };
     };
 
     const buildServerPayload = (isDraft: boolean = false) => {
         const source = previewPayload || buildPayload();
 
-        const findRow = (labelPart: string) => source.rows.find((r: any) => r.label.toLowerCase().includes(labelPart));
+        const findRow = (labelPart: string) => (source?.rows || []).find((r: any) => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
         const cavityRow = findRow('cavity number');
         const inspectedRow = findRow('inspected quantity');
         const acceptedRow = findRow('accepted quantity');
         const rejectedRow = findRow('rejected quantity');
         const reasonRow = findRow('reason for rejection');
 
-        const inspections = cols.map((col, idx) => {
+        const inspections = source?.cols?.map((col: any, idx: number) => {
             const inspected = inspectedRow?.values?.[idx] ?? null;
             const accepted = acceptedRow?.values?.[idx] ?? null;
             const rejected = rejectedRow?.values?.[idx] ?? null;
@@ -718,29 +704,72 @@ export default function VisualInspection({
             })();
 
             return {
-                'Cavity Number': cavityRow?.values?.[idx] ?? col ?? null,
-                'Inspected Quantity': inspected ?? null,
-                'Accepted Quantity': accepted ?? null,
-                'Rejected Quantity': rejected ?? null,
-                'Rejection Percentage': rejectionPercentage ?? null,
-                'Reason for rejection': reasonRow?.values?.[idx] ?? null,
+                'Cavity Number': String(cavityRow?.values?.[idx] ?? col ?? ""),
+                'Inspected Quantity': String(inspected ?? ""),
+                'Accepted Quantity': String(accepted ?? ""),
+                'Rejected Quantity': String(rejected ?? ""),
+                'Rejection Percentage': String(rejectionPercentage),
+                'Reason for rejection': String(reasonRow?.values?.[idx] ?? ""),
+            };
+        }) || [];
+
+        const getNdtRow = (labelPart: string) => (source?.ndt_rows || []).find((r: any) => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
+        const ndtCavityRow = getNdtRow('cavity number');
+        const ndtInspectedRow = getNdtRow('inspected quantity');
+        const ndtAcceptedRow = getNdtRow('accepted quantity');
+        const ndtRejectedRow = getNdtRow('rejected quantity');
+        const ndtReasonRow = getNdtRow('reason for rejection');
+
+        const ndtMaxCols = Math.max(...(source?.ndt_rows || [])?.map((r: any) => r?.value ? r.value.split('|').length : 0), 0);
+        const ndt_inspection = Array.from({ length: ndtMaxCols }).map((_, idx) => {
+            const inspected = ndtInspectedRow?.value?.split('|')[idx]?.trim() || "";
+            const accepted = ndtAcceptedRow?.value?.split('|')[idx]?.trim() || "";
+            const rejected = ndtRejectedRow?.value?.split('|')[idx]?.trim() || "";
+            const rejectionPercentage = (() => {
+                const ins = parseFloat(String(inspected || '0'));
+                const rej = parseFloat(String(rejected || '0'));
+                if (isNaN(ins) || ins === 0) return "0.00";
+                return ((rej / ins) * 100).toFixed(2);
+            })();
+
+            return {
+                'Cavity Number': String(ndtCavityRow?.value?.split('|')[idx]?.trim() || ""),
+                'Inspected Quantity': String(inspected),
+                'Accepted Quantity': String(accepted),
+                'Rejected Quantity': String(rejected),
+                'Rejection Percentage': String(rejectionPercentage),
+                'Reason for rejection': String(ndtReasonRow?.value?.split('|')[idx]?.trim() || ""),
             };
         });
+
+        const getHardRow = (labelPart: string) => (source?.hard_rows || []).find((r: any) => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
+        const hardCavityRow = getHardRow('cavity number');
+        const surfaceRow = getHardRow('surface');
+        const coreRow = getHardRow('core');
+
+        const hardMaxCols = Math.max(...(source?.hard_rows || [])?.map((r: any) => r?.value ? r.value.split('|').length : 0), 0);
+        const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => ({
+            'Cavity Number': String(hardCavityRow?.value?.split('|')[idx]?.trim() || ""),
+            'Surface': String(surfaceRow?.value?.split('|')[idx]?.trim() || ""),
+            'Core': String(coreRow?.value?.split('|')[idx]?.trim() || ""),
+        }));
 
         return {
             trial_id: trialId,
             inspections,
-            visual_ok: groupMeta.ok,
-            remarks: groupMeta.remarks || null,
-            ndt_inspection: ndtRows.length > 0 ? ndtRows : null,
-            ndt_inspection_ok: ndtRows[0]?.ok,
-            ndt_inspection_remarks: ndtRows[0]?.remarks,
-            hardness: hardRows.length > 0 ? hardRows : null,
-            hardness_ok: hardRows[0]?.ok,
-            hardness_remarks: hardRows[0]?.remarks,
+            visual_ok: source.visual_ok === null ? null : Boolean(source.visual_ok),
+            remarks: source.remarks || null,
+            ndt_inspection_ok: source.ndt_ok === null ? null : Boolean(source.ndt_ok),
+            ndt_inspection_remarks: source.ndt_remarks || "",
+            ndt_inspection,
+            hardness_ok: source.hard_ok === null ? null : Boolean(source.hard_ok),
+            hardness_remarks: source.hard_remarks || "",
+            hardness,
             is_edit: isEditing || dataExists,
-            is_draft: isDraft
+            is_draft: isDraft,
+            inspection_date: date
         };
+
     };
 
     const handleSaveAndContinue = () => {
@@ -772,12 +801,10 @@ export default function VisualInspection({
                 await inspectionService.submitVisualInspection(apiPayload);
             }
 
-            const allFiles = [...attachedFiles];
-            if (groupMeta.attachment instanceof File) allFiles.push(groupMeta.attachment);
 
-            if (allFiles.length > 0) {
+            if (attachedFiles.length > 0) {
                 await uploadFiles(
-                    allFiles,
+                    attachedFiles,
                     trialId,
                     "VISUAL_INSPECTION",
                     user?.username || "system",
@@ -816,11 +843,8 @@ export default function VisualInspection({
                 await inspectionService.submitVisualInspection(apiPayload);
             }
 
-            const allFiles = [...attachedFiles];
-            if (groupMeta.attachment instanceof File) allFiles.push(groupMeta.attachment);
-
-            if (allFiles.length > 0) {
-                await uploadFiles(allFiles, trialId, "VISUAL_INSPECTION", user?.username || "system", "VISUAL_INSPECTION")
+            if (attachedFiles.length > 0) {
+                await uploadFiles(attachedFiles, trialId, "VISUAL_INSPECTION", user?.username || "system", "VISUAL_INSPECTION")
                     .catch(err => console.error("Draft file upload error", err));
             }
 
@@ -877,12 +901,12 @@ export default function VisualInspection({
                                         rows={ndtRows}
                                         onChange={handleNdtChange}
                                         showTotal={true}
-                                        onValidationError={setNdtValidationError}
                                         showAlert={showAlert}
                                         user={user}
                                         isEditing={isEditing}
+                                        onSectionChange={handleNdtSectionChange}
                                     />
-                                    {ndtValidationError && <Alert severity="error" sx={{ mt: 1 }}>{ndtValidationError}</Alert>}
+
                                 </Paper>
 
                                 <Paper sx={{ p: { xs: 2, md: 4 }, mb: 4, overflow: 'hidden' }}>
@@ -893,6 +917,7 @@ export default function VisualInspection({
                                         showAlert={showAlert}
                                         user={user}
                                         isEditing={isEditing}
+                                        onSectionChange={handleHardnessSectionChange}
                                     />
                                 </Paper>
 
@@ -913,7 +938,7 @@ export default function VisualInspection({
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell sx={{ minWidth: 200 }}>Parameter</TableCell>
-                                                    {cols.map((col, ci) => (
+                                                    {cols?.map((col, ci) => (
                                                         <TableCell key={ci} sx={{ minWidth: 140 }}>
                                                             <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
                                                                 <TextField
@@ -947,146 +972,141 @@ export default function VisualInspection({
                                             </TableHead>
 
                                             <TableBody>
-                                                {rows.map((r, ri) => (
-                                                    <TableRow key={r.id}>
-                                                        <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
-                                                            {r.label}
-                                                        </TableCell>
+                                                {rows.map((r, ri) => {
+                                                    const labelLower = r.label?.toLowerCase() || "";
+                                                    const isRejectionPercentage = labelLower.includes("rejection percentage");
+                                                    const isRejectedQty = labelLower.includes("rejected quantity");
+                                                    const isAcceptedQty = labelLower.includes("accepted quantity");
+                                                    const findRowMain = (p: string) => rows.find(row => row.label?.toLowerCase().includes(p.toLowerCase()));
+                                                    const inspectedRow = findRowMain("inspected quantity");
 
-                                                        {cols.map((_, ci) => {
-                                                            const inspectedRow = rows.find(r => r.label === "Inspected Quantity");
-                                                            const isRejectionPercentage = r.label === "Rejection Percentage (%)";
-                                                            const isRejectedQty = r.label === "Rejected Quantity";
-                                                            const isAcceptedQty = r.label === "Accepted Quantity";
+                                                    return (
+                                                        <TableRow key={r.id}>
+                                                            <TableCell sx={{ fontWeight: 600, color: COLORS.textSecondary, bgcolor: '#f8fafc' }}>
+                                                                {r.label}
+                                                            </TableCell>
 
-                                                            const inspectedValue = inspectedRow ? (inspectedRow.values[ci] ?? "") : "";
-                                                            const inspectedNum = parseFloat(String(inspectedValue).trim());
-                                                            const acceptedNum = isAcceptedQty ? parseFloat(String(r.values[ci] ?? '').trim()) : NaN;
-                                                            const isInvalid = !isNaN(inspectedNum) && !isNaN(acceptedNum) && acceptedNum > inspectedNum;
-                                                            const rejectedValue = isRejectedQty ? (r.values[ci] ?? "") : "";
-                                                            const isRejectedInvalid = rejectedValue === 'Invalid';
+                                                            {cols?.map((_, ci) => {
+                                                                const inspectedValue = inspectedRow ? (inspectedRow?.values?.[ci] ?? "") : "";
+                                                                const inspectedNum = parseFloat(String(inspectedValue).trim());
+                                                                const acceptedNum = isAcceptedQty ? parseFloat(String(r?.values?.[ci] ?? '').trim()) : NaN;
+                                                                const isInvalid = !isNaN(inspectedNum) && !isNaN(acceptedNum) && acceptedNum > inspectedNum;
+                                                                const rejectedValue = isRejectedQty ? (r?.values?.[ci] ?? "") : "";
+                                                                const isRejectedInvalid = rejectedValue === 'Invalid';
 
-                                                            const displayValue = isRejectionPercentage ? calculateRejectionPercentage(ci) : (r.values[ci] ?? "");
-                                                            const isFieldDisabled = ((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) ||
-                                                                (isAcceptedQty && !inspectedValue) ||
-                                                                isRejectedQty ||
-                                                                isRejectionPercentage;
+                                                                const displayValue = isRejectionPercentage ? calculateRejectionPercentage(ci) : (r?.values?.[ci] ?? "");
+                                                                const isFieldDisabled = ((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) ||
+                                                                    (isAcceptedQty && !inspectedValue) ||
+                                                                    isRejectedQty ||
+                                                                    isRejectionPercentage;
 
-                                                            return (
-                                                                <TableCell key={ci}>
-                                                                    <TextField
-                                                                        size="small"
-                                                                        fullWidth
-                                                                        value={displayValue}
-                                                                        onChange={(e) => updateCell(r.id, ci, e.target.value)}
-                                                                        variant="outlined"
-                                                                        InputProps={{
-                                                                            readOnly: isFieldDisabled,
-                                                                        }}
-                                                                        sx={{
-                                                                            "& .MuiInputBase-input": {
-                                                                                textAlign: 'center',
-                                                                                fontFamily: 'Roboto Mono',
-                                                                                fontSize: '0.85rem',
-                                                                                bgcolor: isRejectionPercentage ? '#fffbeb' :
-                                                                                    isRejectedQty ? '#f3f4f6' :
-                                                                                        (isInvalid || isRejectedInvalid) ? '#fee2e2' :
-                                                                                            'transparent',
-                                                                                fontWeight: isRejectionPercentage ? 700 : 400,
-                                                                            },
-                                                                            "& .MuiInputBase-root": {
-                                                                                bgcolor: isRejectionPercentage ? '#fffbeb' :
-                                                                                    isRejectedQty ? '#f3f4f6' :
-                                                                                        'white'
-                                                                            }
-                                                                        }}
-                                                                        error={isInvalid || isRejectedInvalid}
-                                                                    />
-                                                                </TableCell>
-                                                            );
-                                                        })}
-                                                        <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>
-                                                            {(() => {
-                                                                if (r.label === "Cavity Number") return "-";
-
-                                                                if (r.label === "Rejection Percentage (%)") {
-                                                                    const inspectedRow = rows.find(row => row.label === "Inspected Quantity");
-                                                                    const rejectedRow = rows.find(row => row.label === "Rejected Quantity");
-
-                                                                    if (!inspectedRow || !rejectedRow) return "-";
-
-                                                                    const totalInspected = inspectedRow.values.reduce((acc, v) => {
-                                                                        const n = parseFloat(String(v).trim());
-                                                                        return acc + (isNaN(n) ? 0 : n);
-                                                                    }, 0);
-
-                                                                    const totalRejected = rejectedRow.values.reduce((acc, v) => {
-                                                                        const n = parseFloat(String(v).trim());
-                                                                        return acc + (isNaN(n) ? 0 : n);
-                                                                    }, 0);
-
-                                                                    if (totalInspected > 0 && !isNaN(totalRejected)) {
-                                                                        const percent = (totalRejected / totalInspected) * 100;
-                                                                        return `${percent.toFixed(2)}%`;
-                                                                    }
-                                                                    return "-";
-                                                                }
-
-                                                                const sum = r.values.reduce((acc, v) => {
-                                                                    const n = parseFloat(String(v).trim());
-                                                                    return acc + (isNaN(n) ? 0 : n);
-                                                                }, 0);
-                                                                return sum || "-";
-                                                            })()}
-                                                        </TableCell>
-
-
-                                                        {ri === 0 ? (
-                                                            <>
-                                                                <TableCell
-                                                                    rowSpan={rows.length}
-                                                                    sx={{
-                                                                        bgcolor: COLORS.successBg,
-                                                                        verticalAlign: "middle",
-                                                                        textAlign: 'center'
-                                                                    }}
-                                                                >
-                                                                    <RadioGroup
-                                                                        row
-                                                                        sx={{ justifyContent: 'center' }}
-                                                                        value={groupMeta.ok === null ? "" : String(groupMeta.ok)}
-                                                                        onChange={(e) => setGroupMeta((g) => ({ ...g, ok: e.target.value === "true" }))}
-                                                                    >
-                                                                        <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
-                                                                        <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
-                                                                    </RadioGroup>
-                                                                </TableCell>
-
-                                                                <TableCell
-                                                                    rowSpan={rows.length}
-                                                                    colSpan={2}
-                                                                    sx={{ bgcolor: '#fff7ed', verticalAlign: "top" }}
-                                                                >
-                                                                    <Box display="flex" flexDirection="column" height="100%" gap={1}>
+                                                                return (
+                                                                    <TableCell key={ci}>
                                                                         <TextField
                                                                             size="small"
                                                                             fullWidth
-                                                                            multiline
-                                                                            rows={5}
-                                                                            placeholder="Remarks (optional)"
-                                                                            value={groupMeta.remarks}
-                                                                            onChange={(e) => setGroupMeta((g) => ({ ...g, remarks: e.target.value }))}
+                                                                            value={displayValue}
+                                                                            onChange={(e) => updateCell(r.id, ci, e.target.value)}
                                                                             variant="outlined"
-                                                                            sx={{ bgcolor: 'white' }}
-                                                                            disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
+                                                                            InputProps={{
+                                                                                readOnly: isFieldDisabled,
+                                                                            }}
+                                                                            sx={{
+                                                                                "& .MuiInputBase-input": {
+                                                                                    textAlign: 'center',
+                                                                                    fontFamily: 'Roboto Mono',
+                                                                                    fontSize: '0.85rem',
+                                                                                    bgcolor: isRejectionPercentage ? '#fffbeb' :
+                                                                                        isRejectedQty ? '#f3f4f6' :
+                                                                                            (isInvalid || isRejectedInvalid) ? '#fee2e2' :
+                                                                                                'transparent',
+                                                                                    fontWeight: isRejectionPercentage ? 700 : 400,
+                                                                                },
+                                                                                "& .MuiInputBase-root": {
+                                                                                    bgcolor: isRejectionPercentage ? '#fffbeb' :
+                                                                                        isRejectedQty ? '#f3f4f6' :
+                                                                                            'white'
+                                                                                }
+                                                                            }}
+                                                                            error={isInvalid || isRejectedInvalid}
                                                                         />
+                                                                    </TableCell>
+                                                                );
+                                                            })}
+                                                            <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>
+                                                                {(() => {
+                                                                    if (labelLower?.includes("cavity")) return "-";
+                                                                    if (labelLower?.includes("reason")) return "-";
 
-                                                                    </Box>
-                                                                </TableCell>
-                                                            </>
-                                                        ) : null}
-                                                    </TableRow>
-                                                ))}
+                                                                    if (isRejectionPercentage) {
+                                                                        const rejectedRow = findRowMain("rejected quantity");
+                                                                        if (!inspectedRow || !rejectedRow) return "-";
+
+                                                                        const totalInspected = inspectedRow?.values?.reduce((acc: number, v: any) => acc + (parseFloat(String(v).trim()) || 0), 0);
+                                                                        const totalRejected = rejectedRow?.values?.reduce((acc: number, v: any) => acc + (parseFloat(String(v).trim()) || 0), 0);
+
+                                                                        if (totalInspected > 0) {
+                                                                            return `${((totalRejected / totalInspected) * 100).toFixed(2)}%`;
+                                                                        }
+                                                                        return "0.00%";
+                                                                    }
+
+                                                                    const sum = r?.values?.reduce((acc: number, v: any) => acc + (parseFloat(String(v).trim()) || 0), 0);
+                                                                    return sum;
+                                                                })()}
+                                                            </TableCell>
+
+
+                                                            {ri === 0 ? (
+                                                                <>
+                                                                    <TableCell
+                                                                        rowSpan={rows.length}
+                                                                        sx={{
+                                                                            bgcolor: COLORS.successBg,
+                                                                            verticalAlign: "middle",
+                                                                            textAlign: 'center'
+                                                                        }}
+                                                                    >
+                                                                        <RadioGroup
+                                                                            row
+                                                                            sx={{ justifyContent: 'center' }}
+                                                                            value={visualOk === null ? "" : String(visualOk)}
+
+                                                                            onChange={(e) => setVisualOk(e.target.value === "true")}
+
+                                                                        >
+
+                                                                            <FormControlLabel value="true" control={<Radio size="small" color="success" />} label={<Typography variant="caption">OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                                                                            <FormControlLabel value="false" control={<Radio size="small" color="error" />} label={<Typography variant="caption">NOT OK</Typography>} disabled={(user?.role === 'HOD' || user?.role === 'Admin') && !isEditing} />
+                                                                        </RadioGroup>
+                                                                    </TableCell>
+
+                                                                    <TableCell
+                                                                        rowSpan={rows.length}
+                                                                        colSpan={2}
+                                                                        sx={{ bgcolor: '#fff7ed', verticalAlign: "top" }}
+                                                                    >
+                                                                        <Box display="flex" flexDirection="column" height="100%" gap={1}>
+                                                                            <TextField
+                                                                                size="small"
+                                                                                fullWidth
+                                                                                multiline
+                                                                                rows={5}
+                                                                                placeholder="Remarks (optional)"
+                                                                                value={remarks}
+                                                                                onChange={(e) => setRemarks(e.target.value)}
+                                                                                variant="outlined"
+                                                                                sx={{ bgcolor: 'white' }}
+                                                                                disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
+                                                                            />
+
+                                                                        </Box>
+                                                                    </TableCell>
+                                                                </>
+                                                            ) : null}
+                                                        </TableRow>
+                                                    );
+                                                })}
                                             </TableBody>
                                         </Table>
                                     </Box>
@@ -1175,34 +1195,34 @@ export default function VisualInspection({
                                                         <TableHead>
                                                             <TableRow sx={{ bgcolor: '#f8fafc' }}>
                                                                 <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                                                            {previewPayload?.cols?.map((c: string, i: number) => (<TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
-                                                            ))}
-                                                        </TableRow>
-                                                    </TableHead>
-                                                    <TableBody>
-                                                        {previewPayload?.rows?.map((r: any, idx: number) => (
-                                                            <TableRow key={idx}>
-                                                                <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
-                                                                {r.values?.map((v: any, j: number) => (
-                                                                    <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
-                                                                        {v === null ? "-" : String(v)}
-                                                                    </TableCell>
+                                                                {previewPayload?.cols?.map((c: string, i: number) => (<TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c}</TableCell>
                                                                 ))}
                                                             </TableRow>
-                                                        ))}
-                                                        <TableRow>
-                                                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
-                                                            <TableCell colSpan={(previewPayload?.cols?.length || 0) + 1} sx={{ textAlign: 'center' }}>
-                                                                {previewPayload?.group?.ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    </TableBody>
-                                                </Table>
-                                            </Box>
+                                                        </TableHead>
+                                                        <TableBody>
+                                                            {previewPayload?.rows?.map((r: any, idx: number) => (
+                                                                <TableRow key={idx}>
+                                                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{r.label}</TableCell>
+                                                                    {r.values?.map((v: any, j: number) => (
+                                                                        <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>
+                                                                            {v === null ? "-" : String(v)}
+                                                                        </TableCell>
+                                                                    ))}
+                                                                </TableRow>
+                                                            ))}
+                                                            <TableRow>
+                                                                <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
+                                                                <TableCell colSpan={(previewPayload?.cols?.length || 0) + 1} sx={{ textAlign: 'center' }}>
+                                                                    {previewPayload?.visual_ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        </TableBody>
+                                                    </Table>
+                                                </Box>
                                             )}
 
                                             {/* NDT Preview in Modal */}
-                                            {previewPayload?.ndt && (
+                                            {previewPayload?.ndt_rows && previewPayload.ndt_rows.length > 0 && (
                                                 <Box mt={3}>
                                                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>NDT INSPECTION ANALYSIS</Typography>
                                                     <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
@@ -1217,25 +1237,31 @@ export default function VisualInspection({
                                                                 </TableRow>
                                                             </TableHead>
                                                             <TableBody>
-                                                                {previewPayload.ndt.rows?.map((r: any, idx: number) => {
-                                                                    const vals = (r.value || "").split('|');
+                                                                {previewPayload?.ndt_rows?.map((r: any, idx: number) => {
+                                                                    const vals = (r?.value || "")?.split('|');
                                                                     return (
                                                                         <TableRow key={idx}>
-                                                                            <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r.label}</TableCell>
+                                                                            <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r?.label}</TableCell>
                                                                             {previewPayload?.cols?.map((_: any, j: number) => (
                                                                                 <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.75rem', fontFamily: 'Roboto Mono' }}>
-                                                                                    {vals[j]?.trim() || "-"}
+                                                                                    {vals?.[j]?.trim() || "-"}
                                                                                 </TableCell>
                                                                             ))}
-                                                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700 }}>{r.total ?? "-"}</TableCell>
+                                                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700 }}>{r?.total ?? "-"}</TableCell>
                                                                         </TableRow>
                                                                     );
                                                                 })}
                                                                 <TableRow>
                                                                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
-                                                                    <TableCell colSpan={(previewPayload?.cols?.length || 0) + 1} sx={{ textAlign: 'center' }}>                                                                        {previewPayload.ndt.ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
+                                                                    <TableCell colSpan={(previewPayload?.cols?.length || 0) + 1} sx={{ textAlign: 'center' }}>                                                                        {previewPayload?.ndt_ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
                                                                     </TableCell>
                                                                 </TableRow>
+                                                                {previewPayload?.ndt_remarks && (
+                                                                    <TableRow>
+                                                                        <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Remarks</TableCell>
+                                                                        <TableCell colSpan={(previewPayload?.cols?.length || 0) + 1} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload?.ndt_remarks}</TableCell>
+                                                                    </TableRow>
+                                                                )}
                                                             </TableBody>
                                                         </Table>
                                                     </Box>
@@ -1243,7 +1269,7 @@ export default function VisualInspection({
                                             )}
 
                                             {/* Hardness Preview in Modal */}
-                                            {previewPayload?.hardness && previewPayload.hardness.length > 0 && (
+                                            {previewPayload?.hard_rows && previewPayload.hard_rows.length > 0 && (
                                                 <Box mt={3}>
                                                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>HARDNESS</Typography>
                                                     <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
@@ -1257,14 +1283,14 @@ export default function VisualInspection({
                                                                 </TableRow>
                                                             </TableHead>
                                                             <TableBody>
-                                                                {previewPayload.hardness.map((r: any, idx: number) => {
-                                                                    const vals = (r.value || "").split('|');
+                                                                {previewPayload?.hard_rows?.map((r: any, idx: number) => {
+                                                                    const vals = (r?.value || "")?.split('|');
                                                                     return (
                                                                         <TableRow key={idx}>
-                                                                            <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r.label}</TableCell>
+                                                                            <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r?.label}</TableCell>
                                                                             {previewPayload?.cols?.map((_: any, j: number) => (
                                                                                 <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.75rem', fontFamily: 'Roboto Mono' }}>
-                                                                                    {vals[j]?.trim() || "-"}
+                                                                                    {vals?.[j]?.trim() || "-"}
                                                                                 </TableCell>
                                                                             ))}
                                                                         </TableRow>
@@ -1272,13 +1298,13 @@ export default function VisualInspection({
                                                                 })}
                                                                 <TableRow>
                                                                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
-                                                                    <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center' }}>                                                                        {previewPayload.hardness_ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
+                                                                    <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center' }}>                                                                        {previewPayload?.hard_ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
                                                                     </TableCell>
                                                                 </TableRow>
-                                                                {previewPayload.hardness_remarks && (
+                                                                {previewPayload?.hard_remarks && (
                                                                     <TableRow>
                                                                         <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Remarks</TableCell>
-                                                                        <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload.hardness_remarks}</TableCell>                                                                    </TableRow>
+                                                                        <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload?.hard_remarks}</TableCell>                                                                    </TableRow>
                                                                 )}
                                                             </TableBody>
                                                         </Table>
@@ -1286,25 +1312,12 @@ export default function VisualInspection({
                                                 </Box>
                                             )}
 
-                                            <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
-                                                <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHMENTS</Typography>
-                                                <Grid container spacing={2}>
-                                                    <Grid size={{ xs: 12, sm: 8 }}>
-                                                        {previewPayload?.group.attachment && (
-                                                            <Typography variant="caption" display="block" mt={0.5} color="primary">
-                                                                Attachment: {previewPayload.group.attachment.name}
-                                                            </Typography>
-                                                        )}
-                                                    </Grid>
-                                                </Grid>
-                                            </Box>
-
                                             {/* Attached PDF Files Preview */}
                                             {previewPayload?.attachedFiles && previewPayload.attachedFiles.length > 0 && (
                                                 <Box mt={3} p={2} sx={{ bgcolor: '#f8fafc', borderRadius: 2, border: `1px solid ${COLORS.border}` }}>
                                                     <Typography variant="subtitle2" mb={1} color="textSecondary">ATTACHED FILES</Typography>
                                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                                        {previewPayload.attachedFiles.map((fileName: string, idx: number) => (
+                                                        {previewPayload?.attachedFiles?.map((fileName: string, idx: number) => (
                                                             <Chip
                                                                 key={idx}
                                                                 icon={<InsertDriveFileIcon />}
