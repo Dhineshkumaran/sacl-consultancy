@@ -187,11 +187,11 @@ export const updateDepartment = async (trial_id, user, trx) => {
         { trial_id }
     );
 
-    const next_department_id = rows?.[0]?.department_id ?? null;
-
-    if (!next_department_id) {
+    if (!rows || rows.length === 0) {
         return await approveProgress(trial_id, user, trx);
     }
+
+    const next_department_id = rows[0].department_id;
 
     return await assignToNextDepartmentUser(current_department_id, trial_id, trial_type, next_department_id, user, trx);
 };
@@ -288,11 +288,11 @@ export const updateRole = async (trial_id, user, trx) => {
             { trial_id }
         );
 
-    const next_department_id = rows?.[0]?.department_id ?? null;
-
-        if (!next_department_id) {
+        if (!rows || rows.length === 0) {
             return await approveProgress(trial_id, user, trx);
         }
+
+        const next_department_id = rows[0].department_id;
 
         return await assignToNextDepartmentUser(current_department_id, trial_id, trial_type, next_department_id, user, trx);
     }
