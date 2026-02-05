@@ -275,9 +275,9 @@ export default function DimensionalInspection({
         return {
             trial_id: trialId,
             inspection_date: source.inspection_date || source.created_at || null,
-            casting_weight: parseFloat(source.weight_target || "0") || 0,
-            bunch_weight: parseFloat(source.bunch_weight || "0") || 0,
-            no_of_cavities: parseInt(source.number_of_cavity || "0") || (source.cavities ? source.cavities.length : 0),
+            casting_weight: source.weight_target ? parseFloat(source.weight_target) : null,
+            bunch_weight: source.bunch_weight ? parseFloat(source.bunch_weight) : null,
+            no_of_cavities: parseInt(source.number_of_cavity) || (source.cavities ? source.cavities.length : null),
             yields: source.yield ? parseFloat(source.yield) : null,
             inspections: inspections,
             remarks: source.remarks || "",

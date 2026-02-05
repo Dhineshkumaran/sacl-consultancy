@@ -157,15 +157,15 @@ function SandTable() {
     return {
       trial_id: trialId,
       date: sandDate,
-      t_clay: Number((sandProps as any)?.tClay) || 0,
-      a_clay: Number((sandProps as any)?.aClay) || 0,
-      vcm: Number((sandProps as any)?.vcm) || 0,
-      loi: Number((sandProps as any)?.loi) || 0,
-      afs: Number((sandProps as any)?.afs) || 0,
-      gcs: Number((sandProps as any)?.gcs) || 0,
-      moi: Number((sandProps as any)?.moi) || 0,
-      compactability: Number((sandProps as any)?.compactability) || 0,
-      permeability: Number((sandProps as any)?.perm) || 0,
+      t_clay: Number((sandProps as any)?.tClay) || null,
+      a_clay: Number((sandProps as any)?.aClay) || null,
+      vcm: Number((sandProps as any)?.vcm) || null,
+      loi: Number((sandProps as any)?.loi) || null,
+      afs: Number((sandProps as any)?.afs) || null,
+      gcs: Number((sandProps as any)?.gcs) || null,
+      moi: Number((sandProps as any)?.moi) || null,
+      compactability: Number((sandProps as any)?.compactability) || null,
+      permeability: Number((sandProps as any)?.perm) || null,
       remarks: (sandProps as any)?.remarks || "",
       is_edit: isEditing || dataExists,
       is_draft: isDraft,
@@ -174,22 +174,6 @@ function SandTable() {
   };
 
   const handleSaveAndContinue = () => {
-    const payload = {
-      trial_id: trialId,
-      date: sandDate,
-      t_clay: sandProps.tClay,
-      a_clay: sandProps.aClay,
-      vcm: sandProps.vcm,
-      loi: sandProps.loi,
-      afs: sandProps.afs,
-      gcs: sandProps.gcs,
-      moi: sandProps.moi,
-      compactability: sandProps.compactability,
-      permeability: sandProps.perm,
-      remarks: sandProps.remarks,
-      is_edit: isEditing
-    };
-
     setPreviewMode(true);
   };
 

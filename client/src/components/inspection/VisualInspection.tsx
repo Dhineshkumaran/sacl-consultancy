@@ -472,13 +472,25 @@ export default function VisualInspection({
                                     };
                                 });
                             }
-                            return arr?.map((r: any, i: number) => ({
-                                id: (r?.label || "Param") + "-" + i + "-" + generateUid(),
-                                label: r?.label || "Param",
-                                value: Array.isArray(r?.values) ? r.values.join('|') : (r?.value || ""),
-                                ok: r?.ok === null || r?.ok === undefined ? okVal : (r.ok === true || String(r.ok) === "1" || String(r.ok) === "true"),
-                                remarks: r?.remarks || sectionRemarks || "",
-                                total: r?.total || null,
+
+                            if (arr?.length > 0) {
+                                return arr?.map((r: any, i: number) => ({
+                                    id: (r?.label || "Param") + "-" + i + "-" + generateUid(),
+                                    label: r?.label || "Param",
+                                    value: Array.isArray(r?.values) ? r.values.join('|') : (r?.value || ""),
+                                    ok: r?.ok === null || r?.ok === undefined ? okVal : (r.ok === true || String(r.ok) === "1" || String(r.ok) === "true"),
+                                    remarks: r?.remarks || sectionRemarks || "",
+                                    total: r?.total || null,
+                                }));
+                            }
+
+                            return labelKeys.map((label, i) => ({
+                                id: `${label}-${i}-${generateUid()}`,
+                                label: label,
+                                value: "",
+                                ok: okVal,
+                                remarks: sectionRemarks || "",
+                                total: null
                             }));
                         };
 

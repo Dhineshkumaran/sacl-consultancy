@@ -85,7 +85,7 @@ export const metallurgicalInspectionSchema = z.object({
 export const visualInspectionSchema = z.object({
     trial_id: z.string().min(1, "Trial ID is required"),
     inspections: jsonValueSchema.optional().nullable(),
-    visual_ok: z.boolean({ required_error: "Visual Inspection Status is required", invalid_type_error: "Visual Inspection Status must be valid" }),
+    visual_ok: z.boolean().optional().nullable(),
     remarks: z.string().optional().nullable(),
     ndt_inspection: jsonValueSchema.optional().nullable(),
     ndt_inspection_ok: z.boolean().optional().nullable(),

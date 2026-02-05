@@ -331,9 +331,9 @@ function PouringDetailsTable() {
                 S: source?.chemical_composition?.s, Mg: source?.chemical_composition?.mg,
                 Cu: source?.chemical_composition?.cu, Cr: source?.chemical_composition?.cr
             },
-            no_of_mould_poured: parseInt(String(source?.noOfMouldPoured)) || 0,
-            pouring_temp_c: parseFloat(String(source?.pouringTemp)) || 0,
-            pouring_time_sec: parseInt(String(source?.pouringTime)) || 0,
+            no_of_mould_poured: parseInt(String(source?.noOfMouldPoured)) || null,
+            pouring_temp_c: parseFloat(String(source?.pouringTemp)) || null,
+            pouring_time_sec: parseInt(String(source?.pouringTime)) || null,
             inoculation: {
                 text: source?.inoculation?.text,
                 stream: source?.inoculation?.stream,
