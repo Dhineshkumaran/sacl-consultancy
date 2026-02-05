@@ -1252,28 +1252,28 @@ function FoundrySampleCard() {
                   />
                 </Paper>
 
-                <Box sx={{ mt: 2, mb: 4 }}>
-                  <ActionButtons
-                    {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: () => window.location.reload() } : {})}
-                    onSave={handleSaveAndContinue}
-                    showSubmit={false}
-                    saveLabel={((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) ? 'Approve' : 'Save & Continue'}
-                    saveIcon={((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) ? <CheckCircleIcon /> : <SaveIcon />}
-                    loading={isSubmitting}
-                    disabled={user?.department_id === 8}
-                  >
-                    {((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) && (
-                      <Button
-                        variant="outlined"
-                        onClick={() => setIsEditing(!isEditing)}
-                        sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                        disabled={user?.department_id === 8}
-                      >
-                        {isEditing ? "Cancel Edit" : "Edit Details"}
-                      </Button>
-                    )}
-                  </ActionButtons>
-                </Box>
+                {user?.department_id !== 8 && (
+                  <Box sx={{ mt: 2, mb: 4 }}>
+                    <ActionButtons
+                      {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: () => window.location.reload() } : {})}
+                      onSave={handleSaveAndContinue}
+                      showSubmit={false}
+                      saveLabel={((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) ? 'Approve' : 'Save & Continue'}
+                      saveIcon={((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) ? <CheckCircleIcon /> : <SaveIcon />}
+                      loading={isSubmitting}
+                    >
+                      {((user?.role === 'HOD' || user?.role === 'Admin') && trialIdFromUrl) && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => setIsEditing(!isEditing)}
+                          sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                        >
+                          {isEditing ? "Cancel Edit" : "Edit Details"}
+                        </Button>
+                      )}
+                    </ActionButtons>
+                  </Box>
+                )}
 
               </React.Fragment>
             )}

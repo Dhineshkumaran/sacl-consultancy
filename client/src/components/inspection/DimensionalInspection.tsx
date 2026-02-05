@@ -591,40 +591,40 @@ export default function DimensionalInspection({
                                 </Paper>
 
 
-                                <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
-                                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-                                        <ActionButtons
-                                            {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: resetAll } : {})}
-                                            onSave={handleSaveAndContinue}
-                                            showSubmit={false}
-                                            saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
-                                            saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
-                                            disabled={user?.department_id === 8}
-                                        >
-                                            {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
-                                                <Button
-                                                    variant="outlined"
-                                                    startIcon={<SaveIcon />}
-                                                    onClick={handleSaveDraft}
-                                                    disabled={saving || user?.department_id === 8}
-                                                    sx={{ mr: 2 }}
-                                                >
-                                                    Save as Draft
-                                                </Button>
-                                            )}
-                                            {(user?.role === 'HOD' || user?.role === 'Admin') && (
-                                                <Button
-                                                    variant="outlined"
-                                                    onClick={() => setIsEditing(!isEditing)}
-                                                    sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
-                                                    disabled={user?.department_id === 8}
-                                                >
-                                                    {isEditing ? "Cancel Edit" : "Edit Details"}
-                                                </Button>
-                                            )}
-                                        </ActionButtons>
+                                {user?.department_id !== 8 && (
+                                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="flex-end" gap={2} sx={{ mt: 2, mb: 4 }}>
+                                        <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                                            <ActionButtons
+                                                {...(user?.role !== 'HOD' && user?.role !== 'Admin' ? { onReset: resetAll } : {})}
+                                                onSave={handleSaveAndContinue}
+                                                showSubmit={false}
+                                                saveLabel={user?.role === 'HOD' || user?.role === 'Admin' ? 'Approve' : 'Save & Continue'}
+                                                saveIcon={user?.role === 'HOD' || user?.role === 'Admin' ? <CheckCircleIcon /> : <SaveIcon />}
+                                            >
+                                                {(user?.role !== 'HOD' && user?.role !== 'Admin') && (
+                                                    <Button
+                                                        variant="outlined"
+                                                        startIcon={<SaveIcon />}
+                                                        onClick={handleSaveDraft}
+                                                        disabled={saving}
+                                                        sx={{ mr: 2 }}
+                                                    >
+                                                        Save as Draft
+                                                    </Button>
+                                                )}
+                                                {(user?.role === 'HOD' || user?.role === 'Admin') && (
+                                                    <Button
+                                                        variant="outlined"
+                                                        onClick={() => setIsEditing(!isEditing)}
+                                                        sx={{ color: COLORS.secondary, borderColor: COLORS.secondary }}
+                                                    >
+                                                        {isEditing ? "Cancel Edit" : "Edit Details"}
+                                                    </Button>
+                                                )}
+                                            </ActionButtons>
+                                        </Box>
                                     </Box>
-                                </Box>
+                                )}
                             </>
                         )}
 
