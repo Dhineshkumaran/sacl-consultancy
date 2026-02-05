@@ -48,27 +48,18 @@ const assignToNextDepartmentUser = async (current_department_id, trial_id, trial
     });
 
     const [pending] = await trx.query(
-        `SELECT df.department_id
-  FROM department_flow df
-  JOIN department_progress dp
-    ON dp.department_id = df.department_id
-  WHERE dp.trial_id = @trial_id
-    AND dp.approval_status = 'pending'
-  ORDER BY df.sequence_no
-  LIMIT 1`,
+        `SELECT df.department_id FROM department_flow df
+        JOIN department_progress dp ON dp.department_id = df.department_id
+        WHERE dp.trial_id = @trial_id AND dp.approval_status = 'pending'
+        ORDER BY df.sequence_no LIMIT 1`,
         { trial_id }
     );
 
     if (pending && pending.length > 0) {
         await trx.query(
-  `
-  UPDATE trial_cards
-  SET current_department_id = @next_department_id,
-      status = 'IN_PROGRESS'
-  WHERE trial_id = @trial_id
-  `,
-  { pending[0].department_id, trial_id }
-);
+            `UPDATE trial_cards SET current_department_id = @pending_department_id, status = 'IN_PROGRESS' WHERE trial_id = @trial_id`,
+            { pending_department_id: pending[0].department_id, trial_id }
+        );
         return;
     }
 
@@ -281,10 +272,10 @@ export const updateRole = async (trial_id, user, trx) => {
     } else {
         const [rows] = await trx.query(
             `SELECT df.department_id FROM department_flow df WHERE 
-             NOT EXISTS (SELECT 1 FROM department_progress dp 
-             WHERE dp.department_id = df.department_id 
-             AND dp.trial_id = @trial_id)
-         ORDER BY df.sequence_no LIMIT 1`,
+                NOT EXISTS (SELECT 1 FROM department_progress dp 
+                WHERE dp.department_id = df.department_id 
+                AND dp.trial_id = @trial_id)
+            ORDER BY df.sequence_no LIMIT 1`,
             { trial_id }
         );
 

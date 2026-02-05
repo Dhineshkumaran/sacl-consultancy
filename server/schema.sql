@@ -110,7 +110,7 @@ GO
 
 CREATE TABLE pouring_details (
     trial_id NVARCHAR(255) PRIMARY KEY,
-    pour_date DATE NOT NULL,
+    pour_date DATE,
     heat_code NVARCHAR(MAX),
     composition NVARCHAR(MAX),
     no_of_mould_poured INT,
@@ -125,7 +125,7 @@ GO
 
 CREATE TABLE sand_properties (
     trial_id NVARCHAR(255) PRIMARY KEY,
-    date DATE NOT NULL,
+    date DATE,
     t_clay INT CHECK (t_clay >= 0),
     a_clay INT CHECK (a_clay >= 0),
     vcm INT CHECK (vcm >= 0),
@@ -147,14 +147,14 @@ CREATE TABLE mould_correction (
     squeeze_pressure VARCHAR(30),
     mould_hardness VARCHAR(30),
     remarks NVARCHAR(MAX),
-    date DATE NOT NULL,
+    date DATE,
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );
 GO
 
 CREATE TABLE metallurgical_inspection (
     trial_id NVARCHAR(255) PRIMARY KEY,
-    inspection_date DATE NOT NULL,
+    inspection_date DATE,
     micro_structure NVARCHAR(MAX),
     micro_structure_ok BIT,
     micro_structure_remarks NVARCHAR(MAX),
@@ -164,6 +164,9 @@ CREATE TABLE metallurgical_inspection (
     impact_strength NVARCHAR(MAX),
     impact_strength_ok BIT,
     impact_strength_remarks NVARCHAR(MAX),
+    hardness NVARCHAR(MAX),
+    hardness_ok BIT,
+    hardness_remarks NVARCHAR(MAX),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE
 );
 GO
@@ -171,7 +174,7 @@ GO
 CREATE TABLE visual_inspection (
     trial_id NVARCHAR(255) PRIMARY KEY,
     inspections NVARCHAR(MAX),
-    visual_ok BIT NOT NULL,
+    visual_ok BIT,
     remarks NVARCHAR(MAX),
     ndt_inspection NVARCHAR(MAX),
     ndt_inspection_ok BIT,
@@ -185,7 +188,7 @@ GO
 
 CREATE TABLE dimensional_inspection (
     trial_id NVARCHAR(255) PRIMARY KEY,
-    inspection_date DATE NOT NULL,
+    inspection_date DATE,
     casting_weight INT CHECK (casting_weight > 0),
     bunch_weight INT CHECK (bunch_weight > 0),
     no_of_cavities INT CHECK (no_of_cavities > 0),
@@ -198,7 +201,7 @@ GO
 
 CREATE TABLE machine_shop (
     trial_id NVARCHAR(255) PRIMARY KEY,
-    inspection_date DATE NOT NULL,
+    inspection_date DATE,
     inspections NVARCHAR(MAX),
     remarks NVARCHAR(MAX),
     FOREIGN KEY (trial_id) REFERENCES trial_cards(trial_id) ON DELETE CASCADE

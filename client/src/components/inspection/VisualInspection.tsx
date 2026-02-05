@@ -107,7 +107,7 @@ function SectionTable({
     const [values, setValues] = useState<Record<string, string[]>>(() => {
         const init: Record<string, string[]> = {};
         rows?.forEach((r) => {
-            init[r.id] = r?.value ? r.value.split('|').map(s => s.trim()) : Array(cols?.length || 0).fill('');
+            init[r.id] = r?.value ? r.value.split('|') : Array(cols?.length || 0).fill('');
         });
         return init;
     });
@@ -139,7 +139,7 @@ function SectionTable({
         setValues((prev) => {
             const copy: Record<string, string[]> = {};
             rows?.forEach((r) => {
-                const rowVals = r?.value ? r.value.split('|').map(s => s.trim()) : [];
+                const rowVals = r?.value ? r.value.split('|') : [];
                 copy[r.id] = (rowVals.length > 0) ? rowVals : (prev[r.id] ?? Array(cols?.length || 0).fill(''));
 
                 if (copy[r.id].length < (cols?.length || 0)) {
@@ -204,13 +204,13 @@ function SectionTable({
                         }
                         copy = { ...copy, [rejectedRow.id]: rejectedValues };
 
-                        const rejectedCombined = rejectedValues?.map(v => v || "").join(' | ');
+                        const rejectedCombined = rejectedValues?.map(v => v || "").join('|');
                         onChange(rejectedRow.id, { value: rejectedCombined });
                     }
                 }
             }
 
-            const combined = arr?.map(v => v || "").join(' | ');
+            const combined = arr?.map(v => v || "").join('|');
             const total = arr?.reduce((acc, s) => {
                 const n = parseFloat(String(s).trim());
                 return acc + (isNaN(n) ? 0 : n);
@@ -465,7 +465,7 @@ export default function VisualInspection({
                                     return {
                                         id: `${label}-${i}-${generateUid()}`,
                                         label: label,
-                                        value: values?.join(' | '),
+                                        value: values?.join('|'),
                                         ok: okVal,
                                         remarks: sectionRemarks || "",
                                         total: label?.toLowerCase()?.includes('quantity') || label?.toLowerCase()?.includes('strength') ? values?.reduce((acc, v) => acc + (parseFloat(v) || 0), 0) : null,
@@ -475,7 +475,7 @@ export default function VisualInspection({
                             return arr?.map((r: any, i: number) => ({
                                 id: (r?.label || "Param") + "-" + i + "-" + generateUid(),
                                 label: r?.label || "Param",
-                                value: Array.isArray(r?.values) ? r.values.join(' | ') : (r?.value || ""),
+                                value: Array.isArray(r?.values) ? r.values.join('|') : (r?.value || ""),
                                 ok: r?.ok === null || r?.ok === undefined ? okVal : (r.ok === true || String(r.ok) === "1" || String(r.ok) === "true"),
                                 remarks: r?.remarks || sectionRemarks || "",
                                 total: r?.total || null,
@@ -722,9 +722,9 @@ export default function VisualInspection({
 
         const ndtMaxCols = Math.max(...(source?.ndt_rows || [])?.map((r: any) => r?.value ? r.value.split('|').length : 0), 0);
         const ndt_inspection = Array.from({ length: ndtMaxCols }).map((_, idx) => {
-            const inspected = ndtInspectedRow?.value?.split('|')[idx]?.trim() || "";
-            const accepted = ndtAcceptedRow?.value?.split('|')[idx]?.trim() || "";
-            const rejected = ndtRejectedRow?.value?.split('|')[idx]?.trim() || "";
+            const inspected = ndtInspectedRow?.value?.split('|')[idx] || "";
+            const accepted = ndtAcceptedRow?.value?.split('|')[idx] || "";
+            const rejected = ndtRejectedRow?.value?.split('|')[idx] || "";
             const rejectionPercentage = (() => {
                 const ins = parseFloat(String(inspected || '0'));
                 const rej = parseFloat(String(rejected || '0'));
@@ -733,12 +733,12 @@ export default function VisualInspection({
             })();
 
             return {
-                'Cavity Number': String(ndtCavityRow?.value?.split('|')[idx]?.trim() || ""),
+                'Cavity Number': String(ndtCavityRow?.value?.split('|')[idx] || ""),
                 'Inspected Quantity': String(inspected),
                 'Accepted Quantity': String(accepted),
                 'Rejected Quantity': String(rejected),
                 'Rejection Percentage': String(rejectionPercentage),
-                'Reason for rejection': String(ndtReasonRow?.value?.split('|')[idx]?.trim() || ""),
+                'Reason for rejection': String(ndtReasonRow?.value?.split('|')[idx] || ""),
             };
         });
 
@@ -749,9 +749,9 @@ export default function VisualInspection({
 
         const hardMaxCols = Math.max(...(source?.hard_rows || [])?.map((r: any) => r?.value ? r.value.split('|').length : 0), 0);
         const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => ({
-            'Cavity Number': String(hardCavityRow?.value?.split('|')[idx]?.trim() || ""),
-            'Surface': String(surfaceRow?.value?.split('|')[idx]?.trim() || ""),
-            'Core': String(coreRow?.value?.split('|')[idx]?.trim() || ""),
+            'Cavity Number': String(hardCavityRow?.value?.split('|')[idx] || ""),
+            'Surface': String(surfaceRow?.value?.split('|')[idx] || ""),
+            'Core': String(coreRow?.value?.split('|')[idx] || ""),
         }));
 
         return {
@@ -925,7 +925,7 @@ export default function VisualInspection({
 
                                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                                         <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
-                                        <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>INSPECTION DETAILS</Typography>
+                                        <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>VISUAL INSPECTION DETAILS</Typography>
                                     </Box>
                                     <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
 

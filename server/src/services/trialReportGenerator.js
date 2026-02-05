@@ -324,7 +324,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
 
     const visInspections = safeParse(visual?.inspections, []);
     if (visInspections.length > 0) {
-        doc.font('Helvetica-Bold').fontSize(7).text("General Inspection", col1X, visitY);
+        doc.font('Helvetica-Bold').fontSize(7).text("Visual Inspection", col1X, visitY);
         visitY += 10;
         visitY = drawTable(doc, { headers: ['Cav', 'Insp', 'Rej', 'Reason'], rows: visInspections.map(r => [r['Cavity Number'], r['Inspected Quantity'], r['Rejected Quantity'], r['Reason for rejection']]) }, col1X, visitY, [30, 30, 30, 170]) + 8;
     }

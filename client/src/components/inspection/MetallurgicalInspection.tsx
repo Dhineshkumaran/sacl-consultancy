@@ -113,7 +113,7 @@ function SectionTable({
   const [values, setValues] = useState<Record<string, string[]>>(() => {
     const init: Record<string, string[]> = {};
     rows?.forEach((r) => {
-      init[r?.id] = r?.value ? r.value.split('|').map(s => s.trim()) : Array(cols?.length || 0).fill('');
+      init[r?.id] = r?.value ? r.value.split('|') : Array(cols?.length || 0).fill('');
     });
     return init;
   });
@@ -122,7 +122,7 @@ function SectionTable({
   useEffect(() => {
     setValues((prev) => {
       const copy: Record<string, string[]> = {};
-      rows?.forEach((r) => { copy[r?.id] = prev[r?.id] ?? (r?.value ? r.value.split('|').map(s => s.trim()) : Array(cols?.length || 0).fill('')); });
+      rows?.forEach((r) => { copy[r?.id] = prev[r?.id] ?? (r?.value ? r.value.split('|') : Array(cols?.length || 0).fill('')); });
       return copy;
     });
   }, [rows]);
@@ -170,7 +170,7 @@ function SectionTable({
       let copy = { ...prev, [rowId]: arr };
 
 
-      const combined = arr?.map(v => v || "")?.join(' | ');
+      const combined = arr?.map(v => v || "")?.join('|');
       const total = arr?.reduce((acc, s) => {
         const n = parseFloat(String(s).trim());
         return acc + (isNaN(n) ? 0 : n);
@@ -563,9 +563,12 @@ export default function MetallurgicalInspection() {
   const [mechRemarks, setMechRemarks] = useState<string>("");
   const [impactOk, setImpactOk] = useState<boolean | null>(null);
   const [impactRemarks, setImpactRemarks] = useState<string>("");
+  const [hardOk, setHardOk] = useState<boolean | null>(null);
+  const [hardRemarks, setHardRemarks] = useState<string>("");
 
   const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Cavity Number", "Tensile strength", "Yield strength", "Elongation"]));
   const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity Number", "Cold Temp °C", "Room Temp °C"]));
+  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core"]));
 
   const handleAttachFiles = (newFiles: File[]) => {
     setAttachedFiles(prev => [...prev, ...newFiles]);
@@ -644,7 +647,7 @@ export default function MetallurgicalInspection() {
                   return {
                     id: `${label}-${i}`,
                     label: label,
-                    value: values.join(' | '),
+                    value: values.join('|'),
                     ok: okVal,
                     remarks: sectionRemarks || "",
                     total: label.toLowerCase().includes('quantity') || label.toLowerCase().includes('strength') ? values.reduce((acc, v) => acc + (parseFloat(v) || 0), 0) : null,
@@ -654,7 +657,7 @@ export default function MetallurgicalInspection() {
               return arr.map((r: any, i: number) => ({
                 id: (r.label || "Param") + "-" + i,
                 label: r.label || "Param",
-                value: Array.isArray(r.values) ? r.values.join(' | ') : (r.value || ""),
+                value: Array.isArray(r.values) ? r.values.join('|') : (r.value || ""),
                 ok: r.ok === null || r.ok === undefined ? okVal : (r.ok === true || String(r.ok) === "1" || String(r.ok) === "true"),
                 remarks: r.remarks || sectionRemarks || "",
                 total: r.total || null
@@ -669,6 +672,10 @@ export default function MetallurgicalInspection() {
 
             setImpactOk(data.impact_strength_ok === null || data.impact_strength_ok === undefined ? null : (data.impact_strength_ok === true || data.impact_strength_ok === 1 || String(data.impact_strength_ok) === "1" || String(data.impact_strength_ok) === "true"));
             setImpactRemarks(data.impact_strength_remarks || "");
+
+            setHardRows(restoreSection(data.hardness, ["Cavity Number", "Surface", "Core"], null, ""));
+            setHardOk(data.hardness_ok === null || data.hardness_ok === undefined ? null : (data.hardness_ok === true || data.hardness_ok === 1 || String(data.hardness_ok) === "1" || String(data.hardness_ok) === "true"));
+            setHardRemarks(data.hardness_remarks || "");
 
             setLoadKey(prev => prev + 1);
             setDataExists(true);
@@ -711,6 +718,13 @@ export default function MetallurgicalInspection() {
       })),
       impact_ok: impactOk ?? null,
       impact_remarks: impactRemarks ?? "",
+      hardRows: hardRows?.map((r) => ({
+        label: r?.label,
+        value: r?.value ?? null,
+        total: r?.total ?? null,
+      })),
+      hard_ok: hardOk ?? null,
+      hard_remarks: hardRemarks ?? "",
       attachedFiles: attachedFiles?.map(f => f?.name),
       is_edit: isEditing
     };
@@ -743,10 +757,10 @@ export default function MetallurgicalInspection() {
 
     const mechMaxCols = Math.max(...(source?.mechRows || [])?.map((r: any) => (r?.value ? String(r?.value).split('|').length : 0)), 0);
     const mech_properties = Array.from({ length: mechMaxCols }).map((_, idx) => ({
-      'Cavity Number': String(mechCavityRow?.value?.split('|')[idx]?.trim() || ""),
-      'Tensile strength': String(tensileRow?.value?.split('|')[idx]?.trim() || ""),
-      'Yield strength': String(yieldRow?.value?.split('|')[idx]?.trim() || ""),
-      'Elongation': String(elongationRow?.value?.split('|')[idx]?.trim() || ""),
+      'Cavity Number': String(mechCavityRow?.value?.split('|')[idx] || ""),
+      'Tensile strength': String(tensileRow?.value?.split('|')[idx] || ""),
+      'Yield strength': String(yieldRow?.value?.split('|')[idx] || ""),
+      'Elongation': String(elongationRow?.value?.split('|')[idx] || ""),
     }));
 
     const getImpactRow = (labelPart: string) => (source?.impactRows || [])?.find((r: any) => String(r?.label)?.toLowerCase()?.includes(labelPart.toLowerCase()));
@@ -756,9 +770,21 @@ export default function MetallurgicalInspection() {
 
     const impactMaxCols = Math.max(...(source?.impactRows || [])?.map((r: any) => (r?.value ? String(r?.value).split('|').length : 0)), 0);
     const impact_strength = Array.from({ length: impactMaxCols }).map((_, idx) => ({
-      'Cavity Number': String(impactCavityRow?.value?.split('|')[idx]?.trim() || ""),
-      'Cold Temp °C': String(coldTempRow?.value?.split('|')[idx]?.trim() || ""),
-      'Room Temp °C': String(roomTempRow?.value?.split('|')[idx]?.trim() || ""),
+      'Cavity Number': String(impactCavityRow?.value?.split('|')[idx] || ""),
+      'Cold Temp °C': String(coldTempRow?.value?.split('|')[idx] || ""),
+      'Room Temp °C': String(roomTempRow?.value?.split('|')[idx] || ""),
+    }));
+
+    const getHardRow = (labelPart: string) => (source?.hardRows || [])?.find((r: any) => String(r?.label)?.toLowerCase()?.includes(labelPart.toLowerCase()));
+    const hardCavityRow = getHardRow('cavity number');
+    const surfaceRow = getHardRow('surface');
+    const coreRow = getHardRow('core');
+
+    const hardMaxCols = Math.max(...(source?.hardRows || [])?.map((r: any) => (r?.value ? String(r?.value).split('|').length : 0)), 0);
+    const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => ({
+      'Cavity Number': String(hardCavityRow?.value?.split('|')[idx] || ""),
+      'Surface': String(surfaceRow?.value?.split('|')[idx] || ""),
+      'Core': String(coreRow?.value?.split('|')[idx] || ""),
     }));
 
     return {
@@ -773,6 +799,9 @@ export default function MetallurgicalInspection() {
       impact_strength: impact_strength,
       impact_strength_ok: source?.impact_ok,
       impact_strength_remarks: source?.impact_remarks,
+      hardness: hardness,
+      hardness_ok: source?.hard_ok,
+      hardness_remarks: source?.hard_remarks,
       is_edit: isEditing || dataExists,
       is_draft: isDraft
     };
@@ -1091,6 +1120,22 @@ export default function MetallurgicalInspection() {
                         onSectionRemarksChange={setImpactRemarks}
                       />
                     </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <SectionTable
+                        key={`hard-${loadKey}`}
+                        title="HARDNESS"
+                        rows={hardRows}
+                        onChange={updateRow(setHardRows)}
+                        showAlert={showAlert}
+                        user={user}
+                        isEditing={isEditing}
+                        cavityNumbers={microValues["Cavity Number"] || []}
+                        sectionOk={hardOk}
+                        onSectionOkChange={setHardOk}
+                        sectionRemarks={hardRemarks}
+                        onSectionRemarksChange={setHardRemarks}
+                      />
+                    </Grid>
                   </Grid>
 
                   <Box sx={{ mt: 3, p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
@@ -1167,6 +1212,7 @@ export default function MetallurgicalInspection() {
                   <PreviewMicroTable data={previewPayload?.microRows} ok={previewPayload?.micro_ok} remarks={previewPayload?.micro_remarks} />
                   <PreviewSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload?.mechRows} ok={previewPayload?.mech_ok} remarks={previewPayload?.mech_remarks} />
                   <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} ok={previewPayload?.impact_ok} remarks={previewPayload?.impact_remarks} />
+                  <PreviewSectionTable title="HARDNESS RESULTS" rows={previewPayload?.hardRows} ok={previewPayload?.hard_ok} remarks={previewPayload?.hard_remarks} />
 
 
                   <Box sx={{ mt: 3 }}>
