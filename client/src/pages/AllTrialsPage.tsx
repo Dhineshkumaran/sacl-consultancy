@@ -144,7 +144,9 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
         if (result.isConfirmed) {
             try {
                 setLoading(true);
-                const response = await trialService.deleteTrialCard(trialId);
+                const trial = trials.find(t => t.trial_id === trialId);
+                const patternCode = trial?.pattern_code || "";
+                const response = await trialService.deleteTrialCard(trialId, patternCode);
                 if (response.success) {
                     Swal.fire('Deleted!', 'Trial card has been deleted.', 'success');
                     const data = await trialService.getAllTrialReports();
@@ -178,7 +180,9 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
         if (result.isConfirmed) {
             try {
                 setLoading(true);
-                const response = await trialService.bulkDeleteTrialCards(selectedIds);
+                const selectedTrials = trials.filter(t => selectedIds.includes(t.trial_id));
+                const uniquePatternCodes = Array.from(new Set(selectedTrials.map(t => t.pattern_code).filter(pc => !!pc)));
+                const response = await trialService.bulkDeleteTrialCards(selectedIds, uniquePatternCodes);
 
                 if (response.success) {
                     Swal.fire('Deleted!', `${selectedIds.length} trial(s) have been deleted.`, 'success');

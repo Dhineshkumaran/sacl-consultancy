@@ -169,6 +169,52 @@ function SectionTable({
       const arr = prev?.[rowId]?.map((v, i) => (i === colIndex ? val : v)) || [];
       let copy = { ...prev, [rowId]: arr };
 
+      const findRow = (labelPart: string) => rows?.find(r => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
+      const inspectedRow = findRow("inspected quantity");
+      const acceptedRow = findRow("accepted quantity");
+      const rejectedRow = findRow("rejected quantity");
+      const percentageRow = findRow("rejection percentage");
+
+      if (inspectedRow && acceptedRow && rejectedRow) {
+        const inspectedValues = copy[inspectedRow.id] || [];
+        const acceptedValues = copy[acceptedRow.id] || [];
+        const rejectedValues = [...(copy[rejectedRow.id] || [])];
+        const percentageValues = percentageRow ? [...(copy[percentageRow.id] || [])] : [];
+
+        const inspectedNum = parseFloat(String(inspectedValues[colIndex] || '').trim());
+        const acceptedNum = parseFloat(String(acceptedValues[colIndex] || '').trim());
+
+        if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
+          if (acceptedNum > inspectedNum) {
+            rejectedValues[colIndex] = 'Invalid';
+            if (percentageRow) percentageValues[colIndex] = 'Invalid';
+            if (showAlert) {
+              showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
+            }
+          } else {
+            const calculatedRejected = inspectedNum - acceptedNum;
+            rejectedValues[colIndex] = calculatedRejected >= 0 ? calculatedRejected.toString() : '';
+
+            if (percentageRow) {
+              if (inspectedNum > 0) {
+                percentageValues[colIndex] = ((calculatedRejected / inspectedNum) * 100).toFixed(2);
+              } else {
+                percentageValues[colIndex] = '0.00';
+              }
+            }
+          }
+          copy = { ...copy, [rejectedRow.id]: rejectedValues };
+          if (percentageRow) copy = { ...copy, [percentageRow.id]: percentageValues };
+
+          const rejectedCombined = rejectedValues?.map(v => v || "").join('|');
+          onChange(rejectedRow.id, { value: rejectedCombined });
+
+          if (percentageRow) {
+            const percentageCombined = percentageValues?.map(v => v || "").join('|');
+            onChange(percentageRow.id, { value: percentageCombined });
+          }
+        }
+      }
 
       const combined = arr?.map(v => v || "")?.join('|');
       const total = arr?.reduce((acc, s) => {
@@ -302,7 +348,7 @@ function SectionTable({
                               bgcolor: 'inherit'
                             }
                           }}
-                          disabled={isFieldDisabled}
+                          disabled={isFieldDisabled || r.label.toLowerCase().includes('rejected quantity') || r.label.toLowerCase().includes('rejection percentage')}
                           error={false}
                         />
                       </TableCell>
@@ -310,22 +356,6 @@ function SectionTable({
                   })}
 
 
-                  {r?.label?.toLowerCase()?.includes('reason') && (
-                    <TableCell colSpan={(cols?.length || 0) + (showTotal ? 1 : 0)}>
-                      <TextField
-                        size="small"
-                        fullWidth
-                        multiline
-                        rows={2}
-                        value={values?.[r?.id]?.[0] ?? ""}
-                        onChange={(e) => updateCell(r?.id, 0, e.target.value)}
-                        placeholder="Enter reason for rejection..."
-                        variant="outlined"
-                        sx={{ "& .MuiInputBase-input": { fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
-                        disabled={(user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing}
-                      />
-                    </TableCell>
-                  )}
 
                   {showTotal && !r?.label?.toLowerCase()?.includes('reason') && (
                     <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>
@@ -568,7 +598,7 @@ export default function MetallurgicalInspection() {
 
   const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Cavity Number", "Tensile strength", "Yield strength", "Elongation"]));
   const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity Number", "Cold Temp °C", "Room Temp °C"]));
-  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core"]));
+  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"]));
 
   const handleAttachFiles = (newFiles: File[]) => {
     setAttachedFiles(prev => [...prev, ...newFiles]);
@@ -685,7 +715,7 @@ export default function MetallurgicalInspection() {
             setImpactOk(data.impact_strength_ok === null || data.impact_strength_ok === undefined ? null : (data.impact_strength_ok === true || data.impact_strength_ok === 1 || String(data.impact_strength_ok) === "1" || String(data.impact_strength_ok) === "true"));
             setImpactRemarks(data.impact_strength_remarks || "");
 
-            setHardRows(restoreSection(data.hardness, ["Cavity Number", "Surface", "Core"], null, ""));
+            setHardRows(restoreSection(data.hardness, ["Cavity Number", "Surface", "Core", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"], null, ""));
             setHardOk(data.hardness_ok === null || data.hardness_ok === undefined ? null : (data.hardness_ok === true || data.hardness_ok === 1 || String(data.hardness_ok) === "1" || String(data.hardness_ok) === "true"));
             setHardRemarks(data.hardness_remarks || "");
 
@@ -791,13 +821,34 @@ export default function MetallurgicalInspection() {
     const hardCavityRow = getHardRow('cavity number');
     const surfaceRow = getHardRow('surface');
     const coreRow = getHardRow('core');
+    const hardInspectedRow = getHardRow('inspected quantity');
+    const hardAcceptedRow = getHardRow('accepted quantity');
+    const hardRejectedRow = getHardRow('rejected quantity');
+    const hardReasonRow = getHardRow('reason for rejection');
 
     const hardMaxCols = Math.max(...(source?.hardRows || [])?.map((r: any) => (r?.value ? String(r?.value).split('|').length : 0)), 0);
-    const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => ({
-      'Cavity Number': String(hardCavityRow?.value?.split('|')[idx] || ""),
-      'Surface': String(surfaceRow?.value?.split('|')[idx] || ""),
-      'Core': String(coreRow?.value?.split('|')[idx] || ""),
-    }));
+    const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => {
+      const inspected = hardInspectedRow?.value?.split('|')[idx] || "";
+      const accepted = hardAcceptedRow?.value?.split('|')[idx] || "";
+      const rejected = hardRejectedRow?.value?.split('|')[idx] || "";
+      const rejectionPercentage = (() => {
+        const ins = parseFloat(String(inspected || '0'));
+        const rej = parseFloat(String(rejected || '0'));
+        if (isNaN(ins) || ins === 0) return "0.00";
+        return ((rej / ins) * 100).toFixed(2);
+      })();
+
+      return {
+        'Cavity Number': String(hardCavityRow?.value?.split('|')[idx] || ""),
+        'Surface': String(surfaceRow?.value?.split('|')[idx] || ""),
+        'Core': String(coreRow?.value?.split('|')[idx] || ""),
+        'Inspected Quantity': String(inspected),
+        'Accepted Quantity': String(accepted),
+        'Rejected Quantity': String(rejected),
+        'Rejection Percentage': String(rejectionPercentage),
+        'Reason for rejection': String(hardReasonRow?.value?.split('|')[idx] || ""),
+      };
+    });
 
     return {
       trial_id: trialId,
@@ -910,7 +961,7 @@ export default function MetallurgicalInspection() {
   };
 
 
-  const PreviewSectionTable = ({ title, rows, ok, remarks }: { title: string, rows: any[], ok: any, remarks: string }) => {
+  const PreviewSectionTable = ({ title, rows, cols = [], ok, remarks }: { title: string, rows: any[], cols?: any[], ok: any, remarks: string }) => {
     const hasTotal = rows.some(r => typeof r.total === 'number' && !isNaN(r.total));
 
     return (
@@ -922,29 +973,38 @@ export default function MetallurgicalInspection() {
           <TableHead>
             <TableRow sx={{ bgcolor: '#f8fafc' }}>
               <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Value</TableCell>
-              {hasTotal && <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Total</TableCell>}
+              {cols.map((c, i) => (
+                <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{c?.label || `Value ${i + 1}`}</TableCell>
+              ))}
+              {hasTotal && <TableCell key="total" sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>}
               <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', width: 80 }}>OK / NOT OK</TableCell>
               <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Remarks</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows?.map((r, i) => (
-              <TableRow key={i}>
-                <TableCell sx={{ fontSize: '0.8rem' }}>{r?.label}</TableCell>
-                <TableCell sx={{ fontSize: '0.8rem', fontFamily: 'Roboto Mono' }}>{r?.value || '-'}</TableCell>
-                {hasTotal && <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>{(typeof r?.total === 'number') ? r.total : '-'}</TableCell>}
-                {i === 0 && (
-                  <>
-                    <TableCell rowSpan={rows?.length || 1} sx={{ fontSize: '0.8rem', textAlign: 'center', verticalAlign: 'middle' }}>
-                      {ok === true ? <Chip label="OK" color="success" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> :
-                        ok === false ? <Chip label="NOT OK" color="error" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> : '-'}
+            {rows?.map((r, i) => {
+              const vals = (r?.value || "")?.split('|');
+              return (
+                <TableRow key={i}>
+                  <TableCell sx={{ fontSize: '0.8rem', fontWeight: 700 }}>{r?.label}</TableCell>
+                  {cols.map((_, colIdx) => (
+                    <TableCell key={colIdx} sx={{ fontSize: '0.8rem', fontFamily: 'Roboto Mono', textAlign: 'center' }}>
+                      {vals?.[colIdx]?.trim() || '-'}
                     </TableCell>
-                    <TableCell rowSpan={rows?.length || 1} sx={{ fontSize: '0.8rem', color: 'text.secondary', verticalAlign: 'top' }}>{remarks || '-'}</TableCell>
-                  </>
-                )}
-              </TableRow>
-            ))}
+                  ))}
+                  {hasTotal && <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>{(typeof r?.total === 'number') ? r.total : '-'}</TableCell>}
+                  {i === 0 && (
+                    <>
+                      <TableCell rowSpan={rows?.length || 1} sx={{ fontSize: '0.8rem', textAlign: 'center', verticalAlign: 'middle' }}>
+                        {ok === true ? <Chip label="OK" color="success" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> :
+                          ok === false ? <Chip label="NOT OK" color="error" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} /> : '-'}
+                      </TableCell>
+                      <TableCell rowSpan={rows?.length || 1} sx={{ fontSize: '0.8rem', color: 'text.secondary', verticalAlign: 'top' }}>{remarks || '-'}</TableCell>
+                    </>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Box>
@@ -998,7 +1058,7 @@ export default function MetallurgicalInspection() {
   };
 
 
-  const PrintSectionTable = ({ title, rows }: { title: string, rows: any[] }) => {
+  const PrintSectionTable = ({ title, rows, cols = [] }: { title: string, rows: any[], cols?: any[] }) => {
     const hasTotal = rows.some(r => typeof r.total === 'number' && !isNaN(r.total));
     return (
       <div style={{ marginBottom: '20px' }}>
@@ -1007,24 +1067,37 @@ export default function MetallurgicalInspection() {
           <thead>
             <tr style={{ backgroundColor: '#f0f0f0' }}>
               <th style={{ border: '1px solid black', padding: '5px', textAlign: 'left' }}>Parameter</th>
-              <th style={{ border: '1px solid black', padding: '5px', textAlign: 'left' }}>Value</th>
+              {cols.map((c, i) => (
+                <th key={i} style={{ border: '1px solid black', padding: '5px', textAlign: 'center' }}>{c?.label || `Value ${i + 1}`}</th>
+              ))}
               {hasTotal && <th style={{ border: '1px solid black', padding: '5px', textAlign: 'center' }}>Total</th>}
               <th style={{ border: '1px solid black', padding: '5px', textAlign: 'center', width: '80px' }}>OK / NOT OK</th>
               <th style={{ border: '1px solid black', padding: '5px', textAlign: 'left' }}>Remarks</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
-              <tr key={i}>
-                <td style={{ border: '1px solid black', padding: '5px' }}>{r.label}</td>
-                <td style={{ border: '1px solid black', padding: '5px' }}>{r.value || '-'}</td>
-                {hasTotal && <td style={{ border: '1px solid black', padding: '5px', textAlign: 'center' }}>{(typeof r.total === 'number') ? r.total : '-'}</td>}
-                <td style={{ border: '1px solid black', padding: '5px', textAlign: 'center' }}>
-                  {r.ok === true ? 'OK' : r.ok === false ? 'NOT OK' : '-'}
-                </td>
-                <td style={{ border: '1px solid black', padding: '5px' }}>{r.remarks || '-'}</td>
-              </tr>
-            ))}
+            {rows.map((r, i) => {
+              const vals = (r.value || "")?.split('|');
+              return (
+                <tr key={i}>
+                  <td style={{ border: '1px solid black', padding: '5px' }}>{r.label}</td>
+                  {cols.map((_, colIdx) => (
+                    <td key={colIdx} style={{ border: '1px solid black', padding: '5px', textAlign: 'center' }}>
+                      {vals[colIdx]?.trim() || '-'}
+                    </td>
+                  ))}
+                  {hasTotal && <td style={{ border: '1px solid black', padding: '5px', textAlign: 'center' }}>{(typeof r.total === 'number') ? r.total : '-'}</td>}
+                  {i === 0 && (
+                    <>
+                      <td rowSpan={rows.length} style={{ border: '1px solid black', padding: '5px', textAlign: 'center', verticalAlign: 'middle' }}>
+                        {r.ok === true ? 'OK' : r.ok === false ? 'NOT OK' : '-'}
+                      </td>
+                      <td rowSpan={rows.length} style={{ border: '1px solid black', padding: '5px', verticalAlign: 'top' }}>{r.remarks || '-'}</td>
+                    </>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -1100,7 +1173,7 @@ export default function MetallurgicalInspection() {
                   />
 
                   <Grid container spacing={3}>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ xs: 12 }}>
                       <SectionTable
                         key={`mech-${loadKey}`}
                         title="MECHANICAL PROPERTIES"
@@ -1116,7 +1189,7 @@ export default function MetallurgicalInspection() {
                         onSectionRemarksChange={setMechRemarks}
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ xs: 12 }}>
                       <SectionTable
                         key={`impact-${loadKey}`}
                         title="IMPACT STRENGTH"
@@ -1132,10 +1205,10 @@ export default function MetallurgicalInspection() {
                         onSectionRemarksChange={setImpactRemarks}
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ xs: 12 }}>
                       <SectionTable
                         key={`hard-${loadKey}`}
-                        title="HARDNESS"
+                        title="HARDNESS INSPECTION"
                         rows={hardRows}
                         onChange={updateRow(setHardRows)}
                         showAlert={showAlert}
@@ -1222,9 +1295,9 @@ export default function MetallurgicalInspection() {
                   <Divider sx={{ mb: 3 }} />
 
                   <PreviewMicroTable data={previewPayload?.microRows} ok={previewPayload?.micro_ok} remarks={previewPayload?.micro_remarks} />
-                  <PreviewSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload?.mechRows} ok={previewPayload?.mech_ok} remarks={previewPayload?.mech_remarks} />
-                  <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} ok={previewPayload?.impact_ok} remarks={previewPayload?.impact_remarks} />
-                  <PreviewSectionTable title="HARDNESS RESULTS" rows={previewPayload?.hardRows} ok={previewPayload?.hard_ok} remarks={previewPayload?.hard_remarks} />
+                  <PreviewSectionTable title="MECHANICAL PROPERTIES" rows={previewPayload?.mechRows} cols={previewPayload?.microRows?.find((r: any) => r.label === "Cavity Number")?.values?.map(() => ({}))} ok={previewPayload?.mech_ok} remarks={previewPayload?.mech_remarks} />
+                  <PreviewSectionTable title="IMPACT STRENGTH" rows={previewPayload?.impactRows} cols={previewPayload?.microRows?.find((r: any) => r.label === "Cavity Number")?.values?.map(() => ({}))} ok={previewPayload?.impact_ok} remarks={previewPayload?.impact_remarks} />
+                  <PreviewSectionTable title="HARDNESS INSPECTION" rows={previewPayload?.hardRows} cols={previewPayload?.microRows?.find((r: any) => r.label === "Cavity Number")?.values?.map(() => ({}))} ok={previewPayload?.hard_ok} remarks={previewPayload?.hard_remarks} />
 
 
                   <Box sx={{ mt: 3 }}>

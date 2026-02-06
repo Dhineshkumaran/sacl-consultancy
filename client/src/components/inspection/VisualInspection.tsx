@@ -179,15 +179,17 @@ function SectionTable({
             const arr = prev[rowId].map((v, i) => (i === colIndex ? val : v));
             let copy = { ...prev, [rowId]: arr };
 
-            if (title === "NDT INSPECTION ANALYSIS") {
+            if (title === "NDT INSPECTION ANALYSIS" || title === "HARDNESS INSPECTION ANALYSIS") {
                 const inspectedRow = rows?.find(r => r?.label?.toLowerCase()?.includes('inspected'));
                 const acceptedRow = rows?.find(r => r?.label?.toLowerCase()?.includes('accepted'));
                 const rejectedRow = rows?.find(r => r?.label?.toLowerCase()?.includes('rejected'));
+                const percentageRow = rows?.find(r => r?.label?.toLowerCase()?.includes('rejection percentage'));
 
                 if (inspectedRow && acceptedRow && rejectedRow) {
                     const inspectedValues = copy[inspectedRow.id] || [];
                     const acceptedValues = copy[acceptedRow.id] || [];
                     const rejectedValues = [...(copy[rejectedRow.id] || [])];
+                    const percentageValues = percentageRow ? [...(copy[percentageRow.id] || [])] : [];
 
                     const inspectedNum = parseFloat(String(inspectedValues[colIndex] || '').trim());
                     const acceptedNum = parseFloat(String(acceptedValues[colIndex] || '').trim());
@@ -195,17 +197,32 @@ function SectionTable({
                     if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
                         if (acceptedNum > inspectedNum) {
                             rejectedValues[colIndex] = 'Invalid';
+                            if (percentageRow) percentageValues[colIndex] = 'Invalid';
                             if (showAlert) {
                                 showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
                             }
                         } else {
                             const calculatedRejected = inspectedNum - acceptedNum;
                             rejectedValues[colIndex] = calculatedRejected >= 0 ? calculatedRejected.toString() : '';
+
+                            if (percentageRow) {
+                                if (inspectedNum > 0) {
+                                    percentageValues[colIndex] = ((calculatedRejected / inspectedNum) * 100).toFixed(2);
+                                } else {
+                                    percentageValues[colIndex] = '0.00';
+                                }
+                            }
                         }
                         copy = { ...copy, [rejectedRow.id]: rejectedValues };
+                        if (percentageRow) copy = { ...copy, [percentageRow.id]: percentageValues };
 
                         const rejectedCombined = rejectedValues?.map(v => v || "").join('|');
                         onChange(rejectedRow.id, { value: rejectedCombined });
+
+                        if (percentageRow) {
+                            const percentageCombined = percentageValues?.map(v => v || "").join('|');
+                            onChange(percentageRow.id, { value: percentageCombined });
+                        }
                     }
                 }
             }
@@ -335,7 +352,7 @@ function SectionTable({
                                                 onChange={(e) => updateCell(r.id, ci, e.target.value)}
                                                 variant="outlined"
                                                 sx={{ "& .MuiInputBase-input": { textAlign: 'center', fontFamily: 'Roboto Mono', fontSize: '0.85rem' } }}
-                                                disabled={((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) || isRejectedQty}
+                                                disabled={((user?.role === 'HOD' || user?.role === 'Admin') && !isEditing) || isRejectedQty || r.label.toLowerCase().includes('percentage')}
                                             />
                                         </TableCell>
                                     ))}
@@ -382,8 +399,8 @@ export default function VisualInspection({
     const [headerRefreshKey, setHeaderRefreshKey] = useState(0);
     const departmentInfo = getDepartmentInfo(user);
     const [dataExists, setDataExists] = useState(false);
-    const [ndtRows, setNdtRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Reason for rejection"]));
-    const [hardRows, setHardRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Surface", "Core"]));
+    const [ndtRows, setNdtRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"]));
+    const [hardRows, setHardRows] = useState<NdtRow[]>(initialNdtRows(["Cavity Number", "Surface", "Core", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"]));
 
     const handleNdtChange = (id: string, patch: Partial<NdtRow>) => {
         setNdtRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
@@ -494,10 +511,10 @@ export default function VisualInspection({
                             }));
                         };
 
-                        const ndtRowsData = restoreSection(data?.ndt_inspection, ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Reason for rejection"], data?.ndt_inspection_ok, data?.ndt_inspection_remarks);
+                        const ndtRowsData = restoreSection(data?.ndt_inspection, ["Cavity Number", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"], data?.ndt_inspection_ok, data?.ndt_inspection_remarks);
                         if (ndtRowsData?.length > 0) setNdtRows(ndtRowsData as NdtRow[]);
 
-                        const hardRowsData = restoreSection(data?.hardness, ["Cavity Number", "Surface", "Core"], data?.hardness_ok, data?.hardness_remarks);
+                        const hardRowsData = restoreSection(data?.hardness, ["Cavity Number", "Surface", "Core", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"], data?.hardness_ok, data?.hardness_remarks);
                         if (hardRowsData?.length > 0) setHardRows(hardRowsData as NdtRow[]);
 
                         setDataExists(true);
@@ -758,13 +775,34 @@ export default function VisualInspection({
         const hardCavityRow = getHardRow('cavity number');
         const surfaceRow = getHardRow('surface');
         const coreRow = getHardRow('core');
+        const hardInspectedRow = getHardRow('inspected quantity');
+        const hardAcceptedRow = getHardRow('accepted quantity');
+        const hardRejectedRow = getHardRow('rejected quantity');
+        const hardReasonRow = getHardRow('reason for rejection');
 
         const hardMaxCols = Math.max(...(source?.hard_rows || [])?.map((r: any) => r?.value ? r.value.split('|').length : 0), 0);
-        const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => ({
-            'Cavity Number': String(hardCavityRow?.value?.split('|')[idx] || ""),
-            'Surface': String(surfaceRow?.value?.split('|')[idx] || ""),
-            'Core': String(coreRow?.value?.split('|')[idx] || ""),
-        }));
+        const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => {
+            const inspected = hardInspectedRow?.value?.split('|')[idx] || "";
+            const accepted = hardAcceptedRow?.value?.split('|')[idx] || "";
+            const rejected = hardRejectedRow?.value?.split('|')[idx] || "";
+            const rejectionPercentage = (() => {
+                const ins = parseFloat(String(inspected || '0'));
+                const rej = parseFloat(String(rejected || '0'));
+                if (isNaN(ins) || ins === 0) return "0.00";
+                return ((rej / ins) * 100).toFixed(2);
+            })();
+
+            return {
+                'Cavity Number': String(hardCavityRow?.value?.split('|')[idx] || ""),
+                'Surface': String(surfaceRow?.value?.split('|')[idx] || ""),
+                'Core': String(coreRow?.value?.split('|')[idx] || ""),
+                'Inspected Quantity': String(inspected),
+                'Accepted Quantity': String(accepted),
+                'Rejected Quantity': String(rejected),
+                'Rejection Percentage': String(rejectionPercentage),
+                'Reason for rejection': String(hardReasonRow?.value?.split('|')[idx] || ""),
+            };
+        });
 
         return {
             trial_id: trialId,
@@ -923,7 +961,7 @@ export default function VisualInspection({
 
                                 <Paper sx={{ p: { xs: 2, md: 4 }, mb: 4, overflow: 'hidden' }}>
                                     <SectionTable
-                                        title="HARDNESS"
+                                        title="HARDNESS INSPECTION"
                                         rows={hardRows}
                                         onChange={handleHardnessChange}
                                         showAlert={showAlert}
@@ -1236,7 +1274,7 @@ export default function VisualInspection({
                                             {/* NDT Preview in Modal */}
                                             {previewPayload?.ndt_rows && previewPayload.ndt_rows.length > 0 && (
                                                 <Box mt={3}>
-                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>NDT INSPECTION ANALYSIS</Typography>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>NDT INSPECTION ANALYSIS(X-RAY & MPI)</Typography>
                                                     <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
                                                         <Table size="small">
                                                             <TableHead>
@@ -1283,7 +1321,7 @@ export default function VisualInspection({
                                             {/* Hardness Preview in Modal */}
                                             {previewPayload?.hard_rows && previewPayload.hard_rows.length > 0 && (
                                                 <Box mt={3}>
-                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>HARDNESS</Typography>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>HARDNESS INSPECTION</Typography>
                                                     <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
                                                         <Table size="small">
                                                             <TableHead>
@@ -1292,6 +1330,7 @@ export default function VisualInspection({
                                                                     {previewPayload?.cols?.map((col: string, i: number) => (
                                                                         <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{col}</TableCell>
                                                                     ))}
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
                                                                 </TableRow>
                                                             </TableHead>
                                                             <TableBody>
@@ -1305,6 +1344,7 @@ export default function VisualInspection({
                                                                                     {vals?.[j]?.trim() || "-"}
                                                                                 </TableCell>
                                                                             ))}
+                                                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700 }}>{r?.total ?? "-"}</TableCell>
                                                                         </TableRow>
                                                                     );
                                                                 })}

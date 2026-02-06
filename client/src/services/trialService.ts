@@ -258,11 +258,11 @@ export const trialService = {
      * @param trialId - Trial ID to delete
      * @returns Promise resolving to API response
      */
-    async deleteTrialCard(trialId: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    async deleteTrialCard(trialId: string, patternCode: string): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         try {
             return await apiService.request('/trial/delete-trial', {
                 method: 'DELETE',
-                body: JSON.stringify({ trial_id: trialId })
+                body: JSON.stringify({ trial_id: trialId, pattern_code: patternCode })
             });
         } catch (error) {
             console.error('Failed to delete trial card:', error);
@@ -275,11 +275,11 @@ export const trialService = {
      * @param trialIds - Array of trial IDs to delete
      * @returns Promise resolving to API response
      */
-    async bulkDeleteTrialCards(trialIds: string[]): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    async bulkDeleteTrialCards(trialIds: string[], patternCodes: string[]): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         try {
             return await apiService.request('/trial/delete-trial', {
                 method: 'DELETE',
-                body: JSON.stringify({ trial_id: trialIds })
+                body: JSON.stringify({ trial_id: trialIds, pattern_code: patternCodes })
             });
         } catch (error) {
             console.error('Failed to bulk delete trial cards:', error);

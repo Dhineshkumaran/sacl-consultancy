@@ -299,7 +299,14 @@ export const approveProgress = async (trial_id, user, trx) => {
         { trial_id }
     );
     await generateAndStoreTrialReport(trial_id, trx);
-    await generateAndStoreConsolidatedReport(trial_id, trx);
+    const [pattern_code_result] = await trx.query(
+        `SELECT pattern_code FROM trial_cards WHERE trial_id = @trial_id`,
+        { trial_id }
+    );
+    if (pattern_code_result && pattern_code_result.length > 0) {
+        const pattern_code = pattern_code_result[0].pattern_code;
+        await generateAndStoreConsolidatedReport(pattern_code, trx);
+    }
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     await trx.query(audit_sql, {
         user_id: user.user_id,

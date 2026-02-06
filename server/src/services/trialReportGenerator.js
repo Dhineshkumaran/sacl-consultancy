@@ -77,44 +77,52 @@ const safeParse = (data, fallback = []) => {
 // Helper to draw a table - HIGHLY OPTIMIZED
 const drawTable = (doc, tableData, startX, startY, colWidths = []) => {
     let currentY = startY;
-    const padding = 3;
-    const rowHeight = 16;
+    const padding = 5;
     const fontSize = 7;
     const headerColor = '#f5f5f5';
 
     // Headers
     doc.font('Helvetica-Bold').fontSize(fontSize);
+
+    // Calculate header row height based on text wrapping
+    let headerHeight = 18;
+    tableData.headers.forEach((header, i) => {
+        const h = doc.heightOfString(header, { width: colWidths[i] - 2 * padding });
+        if (h + padding * 2 > headerHeight) headerHeight = h + padding * 2;
+    });
+
     let currentX = startX;
 
     // Draw Header Background
     doc.save();
     doc.fillColor(headerColor)
-        .rect(startX, currentY, colWidths.reduce((a, b) => a + b, 0), rowHeight)
+        .rect(startX, currentY, colWidths.reduce((a, b) => a + b, 0), headerHeight)
         .fill();
     doc.restore();
 
     // Draw Header Text and Borders
     tableData.headers.forEach((header, i) => {
         doc.fillColor('black')
-            .text(header, currentX + padding, currentY + padding + 1, { width: colWidths[i] - 2 * padding, align: 'left' });
-        doc.rect(currentX, currentY, colWidths[i], rowHeight).strokeColor('#ddd').stroke();
+            .text(header, currentX + padding, currentY + padding, { width: colWidths[i] - 2 * padding, align: 'left' });
+        doc.rect(currentX, currentY, colWidths[i], headerHeight).strokeColor('#ddd').stroke();
         currentX += colWidths[i];
     });
 
-    currentY += rowHeight;
+    currentY += headerHeight;
 
     // Rows
+    const dataRowHeight = 18;
     doc.font('Helvetica').fontSize(fontSize);
     tableData.rows.forEach(row => {
         currentX = startX;
 
         row.forEach((cell, i) => {
             const text = cell !== null && cell !== undefined ? String(cell) : '-';
-            doc.text(text, currentX + padding, currentY + padding + 1, { width: colWidths[i] - 2 * padding, align: 'left' });
-            doc.rect(currentX, currentY, colWidths[i], rowHeight).strokeColor('#ddd').stroke();
+            doc.text(text, currentX + padding, currentY + padding, { width: colWidths[i] - 2 * padding, align: 'left' });
+            doc.rect(currentX, currentY, colWidths[i], dataRowHeight).strokeColor('#ddd').stroke();
             currentX += colWidths[i];
         });
-        currentY += rowHeight;
+        currentY += dataRowHeight;
     });
 
     return currentY;
@@ -251,8 +259,8 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     ];
     yNext = drawVerticalTable(doc, sandRows, col1X, yNext, 535) + 12;
 
-    // 5. Mould Correction (Below Sand)
-    yNext = drawSectionTitle(doc, "4. MOULD CORRECTION", col1X, yNext);
+    // 5. Moulding (Below Sand)
+    yNext = drawSectionTitle(doc, "4. MOULDING", col1X, yNext);
     const mouldRows = [
         { label: "Date", value: moulding?.date ? new Date(moulding.date).toISOString().slice(0, 10) : '-' },
         { label: "Mould Thickness", value: moulding?.mould_thickness },
@@ -279,6 +287,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     const mechRows = safeParse(meta.mech_properties, []);
     const impactRows = safeParse(meta.impact_strength, []);
     const microRows = safeParse(meta.micro_structure, []);
+    const metaHardRows = safeParse(meta.hardness, []);
 
     let metLeftY = p2y;
 
@@ -311,6 +320,17 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
         p2y = drawTable(doc, { headers, rows }, col1X, p2y, colWidths) + 10;
     }
 
+    if (metaHardRows.length > 0) {
+        doc.font('Helvetica-Bold').fontSize(7).text("Hardness Inspection", col1X, p2y);
+        p2y += 10;
+        const headers = Object.keys(metaHardRows[0]);
+        const rows = metaHardRows.map(r => headers.map(h => r[h]));
+
+        // Define custom widths for better fit
+        const colWidths = [45, 45, 45, 50, 50, 50, 50, 200];
+        p2y = drawTable(doc, { headers, rows }, col1X, p2y, colWidths) + 12;
+    }
+
     p2y += 5;
 
     // 7. Visual & Dimensional & Machine Shop
@@ -324,10 +344,27 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
 
     const visInspections = safeParse(visual?.inspections, []);
     if (visInspections.length > 0) {
-        doc.font('Helvetica-Bold').fontSize(7).text("Visual Inspection", col1X, visitY);
+        doc.font('Helvetica-Bold').fontSize(7).text("Visual Inspection Results", col1X, visitY);
         visitY += 10;
         visitY = drawTable(doc, { headers: ['Cav', 'Insp', 'Rej', 'Reason'], rows: visInspections.map(r => [r['Cavity Number'], r['Inspected Quantity'], r['Rejected Quantity'], r['Reason for rejection']]) }, col1X, visitY, [30, 30, 30, 170]) + 8;
     }
+
+    // Dimensional (Right)
+    dimY = drawSectionTitle(doc, "7. DIMENSIONAL INSPECTION", col2X, dimY);
+    const dimSubRows = [
+        { label: "Date", value: dimensional?.inspection_date ? new Date(dimensional.inspection_date).toISOString().slice(0, 10) : '-' },
+        { label: "Weight", value: `${dimensional?.casting_weight || '-'} kg` },
+        { label: "Yield", value: `${dimensional?.yields || '-'} %` }
+    ];
+    dimY = drawVerticalTable(doc, dimSubRows, col2X, dimY, colWidth) + 8;
+
+    const dimInspections = safeParse(dimensional?.inspections, []);
+    if (dimInspections.length > 0) {
+        dimY = drawTable(doc, { headers: ['Cavity', 'Weight (kg)'], rows: Array.isArray(dimInspections) ? dimInspections.map(r => [r['Cavity Number'], r['Casting Weight']]) : [] }, col2X, dimY, [130, 130]) + 8;
+    }
+
+    // Move NDT and Hardness below BOTH to span full width
+    p2NextY = Math.max(visitY, dimY) + 15;
 
     // NDT
     const ndtRows = safeParse(visual.ndt_inspection, []);
@@ -335,18 +372,17 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
         const sectionOk = visual?.ndt_inspection_ok;
         const sectionRes = sectionOk === null || sectionOk === undefined ? "-" : (sectionOk ? "OK" : "NOT OK");
 
-        doc.font('Helvetica-Bold').fontSize(7).text(`NDT Inspection (Result: ${sectionRes})`, col1X, visitY);
-        visitY += 10;
+        p2NextY = drawSectionTitle(doc, `NDT INSPECTION ANALYSIS (Result: ${sectionRes})`, col1X, p2NextY);
         if (visual?.ndt_inspection_remarks) {
-            doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${visual?.ndt_inspection_remarks}`, col1X, visitY);
-            visitY += 10;
+            doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${visual?.ndt_inspection_remarks}`, col1X, p2NextY);
+            p2NextY += 10;
         }
 
         const headers = Object.keys(ndtRows[0]);
         const rows = ndtRows.map(r => headers.map(h => r[h]));
-        const colWidths = headers.map(() => 260 / headers.length);
+        const colWidths = [45, 45, 45, 50, 50, 300];
 
-        visitY = drawTable(doc, { headers, rows }, col1X, visitY, colWidths) + 10;
+        p2NextY = drawTable(doc, { headers, rows }, col1X, p2NextY, colWidths) + 15;
     }
 
     // Hardness
@@ -355,35 +391,20 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
         const sectionOk = visual?.hardness_ok;
         const sectionRes = sectionOk === null || sectionOk === undefined ? "-" : (sectionOk ? "OK" : "NOT OK");
 
-        doc.font('Helvetica-Bold').fontSize(7).text(`Hardness (Result: ${sectionRes})`, col1X, visitY);
-        visitY += 10;
+        p2NextY = drawSectionTitle(doc, `HARDNESS INSPECTION (Result: ${sectionRes})`, col1X, p2NextY);
         if (visual?.hardness_remarks) {
-            doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${visual?.hardness_remarks}`, col1X, visitY);
-            visitY += 10;
+            doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${visual?.hardness_remarks}`, col1X, p2NextY);
+            p2NextY += 10;
         }
 
         const headers = Object.keys(hardRows[0]);
         const rows = hardRows.map(r => headers.map(h => r[h]));
-        const colWidths = headers.map(() => 260 / headers.length);
+        const colWidths = [45, 45, 45, 50, 50, 300];
 
-        visitY = drawTable(doc, { headers, rows }, col1X, visitY, colWidths) + 10;
+        p2NextY = drawTable(doc, { headers, rows }, col1X, p2NextY, colWidths) + 15;
     }
 
-    // Dimensional (Right)
-    dimY = drawSectionTitle(doc, "7. DIMENSIONAL INSPECTION", col2X, dimY);
-    const dimRows = [
-        { label: "Date", value: dimensional?.inspection_date ? new Date(dimensional.inspection_date).toISOString().slice(0, 10) : '-' },
-        { label: "Weight", value: `${dimensional?.casting_weight || '-'} kg` },
-        { label: "Yield", value: `${dimensional?.yields || '-'} %` }
-    ];
-    dimY = drawVerticalTable(doc, dimRows, col2X, dimY, colWidth) + 8;
-
-    const dimInspections = safeParse(dimensional?.inspections, []);
-    if (dimInspections.length > 0) {
-        dimY = drawTable(doc, { headers: ['Cavity', 'Weight (kg)'], rows: Array.isArray(dimInspections) ? dimInspections.map(r => [r['Cavity Number'], r['Casting Weight']]) : [] }, col2X, dimY, [130, 130]) + 8;
-    }
-
-    p2NextY = Math.max(visitY, dimY) + 10;
+    p2NextY = p2NextY + 10;
 
     // 8. Machine Shop (Full Width or Left)
     if (Object.keys(mcShop).length > 0) {

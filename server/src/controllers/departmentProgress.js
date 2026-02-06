@@ -6,7 +6,7 @@ export const getProgress = async (req, res, next) => {
         `SELECT department_progress.*, departments.department_name, t.part_name, t.pattern_code, t.disa, t.date_of_sampling FROM department_progress 
          JOIN departments ON department_progress.department_id = departments.department_id 
          JOIN trial_cards t ON department_progress.trial_id = t.trial_id 
-         WHERE department_progress.username = @username AND department_progress.approval_status = 'pending'`,
+         WHERE t.deleted_at IS NULL AND department_progress.username = @username AND department_progress.approval_status = 'pending'`,
         { username }
     );
     res.status(200).json({
@@ -31,7 +31,7 @@ export const getCompletedTrials = async (req, res, next) => {
          FROM department_progress dp
          JOIN trial_cards t ON dp.trial_id = t.trial_id
          JOIN departments d ON dp.department_id = d.department_id
-         WHERE dp.department_id = @department_id 
+         WHERE t.deleted_at IS NULL AND dp.department_id = @department_id 
          AND (dp.approval_status = 'approved')
          ORDER BY dp.completed_at DESC`,
         { department_id: req.user.department_id }
