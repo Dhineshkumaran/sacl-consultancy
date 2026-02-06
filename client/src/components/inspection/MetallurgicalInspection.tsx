@@ -170,51 +170,6 @@ function SectionTable({
       let copy = { ...prev, [rowId]: arr };
 
       const findRow = (labelPart: string) => rows?.find(r => r?.label?.toLowerCase()?.includes(labelPart?.toLowerCase()));
-      const inspectedRow = findRow("inspected quantity");
-      const acceptedRow = findRow("accepted quantity");
-      const rejectedRow = findRow("rejected quantity");
-      const percentageRow = findRow("rejection percentage");
-
-      if (inspectedRow && acceptedRow && rejectedRow) {
-        const inspectedValues = copy[inspectedRow.id] || [];
-        const acceptedValues = copy[acceptedRow.id] || [];
-        const rejectedValues = [...(copy[rejectedRow.id] || [])];
-        const percentageValues = percentageRow ? [...(copy[percentageRow.id] || [])] : [];
-
-        const inspectedNum = parseFloat(String(inspectedValues[colIndex] || '').trim());
-        const acceptedNum = parseFloat(String(acceptedValues[colIndex] || '').trim());
-
-        if (!isNaN(inspectedNum) && !isNaN(acceptedNum)) {
-          if (acceptedNum > inspectedNum) {
-            rejectedValues[colIndex] = 'Invalid';
-            if (percentageRow) percentageValues[colIndex] = 'Invalid';
-            if (showAlert) {
-              showAlert('error', `Column ${colIndex + 1}: Accepted quantity (${acceptedNum}) cannot be greater than Inspected quantity (${inspectedNum})`);
-            }
-          } else {
-            const calculatedRejected = inspectedNum - acceptedNum;
-            rejectedValues[colIndex] = calculatedRejected >= 0 ? calculatedRejected.toString() : '';
-
-            if (percentageRow) {
-              if (inspectedNum > 0) {
-                percentageValues[colIndex] = ((calculatedRejected / inspectedNum) * 100).toFixed(2);
-              } else {
-                percentageValues[colIndex] = '0.00';
-              }
-            }
-          }
-          copy = { ...copy, [rejectedRow.id]: rejectedValues };
-          if (percentageRow) copy = { ...copy, [percentageRow.id]: percentageValues };
-
-          const rejectedCombined = rejectedValues?.map(v => v || "").join('|');
-          onChange(rejectedRow.id, { value: rejectedCombined });
-
-          if (percentageRow) {
-            const percentageCombined = percentageValues?.map(v => v || "").join('|');
-            onChange(percentageRow.id, { value: percentageCombined });
-          }
-        }
-      }
 
       const combined = arr?.map(v => v || "")?.join('|');
       const total = arr?.reduce((acc, s) => {
@@ -333,7 +288,7 @@ function SectionTable({
                     const isFieldDisabled = ((user?.role === 'HOD' || user?.role === 'Admin' || user?.department_id === 8) && !isEditing);
 
                     return (
-                      <TableCell key={c?.id} sx={{ display: r?.label?.toLowerCase()?.includes('reason') ? 'none' : 'table-cell' }}>
+                      <TableCell key={c?.id}>
                         <TextField
                           size="small"
                           fullWidth
@@ -348,7 +303,7 @@ function SectionTable({
                               bgcolor: 'inherit'
                             }
                           }}
-                          disabled={isFieldDisabled || r.label.toLowerCase().includes('rejected quantity') || r.label.toLowerCase().includes('rejection percentage')}
+                          disabled={isFieldDisabled}
                           error={false}
                         />
                       </TableCell>
@@ -357,7 +312,7 @@ function SectionTable({
 
 
 
-                  {showTotal && !r?.label?.toLowerCase()?.includes('reason') && (
+                  {showTotal && (
                     <TableCell sx={{ textAlign: 'center', fontWeight: 700 }}>
                       {totalToShow !== null && totalToShow !== undefined ? totalToShow : "-"}
                     </TableCell>
@@ -598,7 +553,7 @@ export default function MetallurgicalInspection() {
 
   const [mechRows, setMechRows] = useState<Row[]>(initialRows(["Cavity Number", "Tensile strength", "Yield strength", "Elongation"]));
   const [impactRows, setImpactRows] = useState<Row[]>(initialRows(["Cavity Number", "Cold Temp °C", "Room Temp °C"]));
-  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"]));
+  const [hardRows, setHardRows] = useState<Row[]>(initialRows(["Cavity Number", "Surface", "Core"]));
 
   const handleAttachFiles = (newFiles: File[]) => {
     setAttachedFiles(prev => [...prev, ...newFiles]);
@@ -715,7 +670,7 @@ export default function MetallurgicalInspection() {
             setImpactOk(data.impact_strength_ok === null || data.impact_strength_ok === undefined ? null : (data.impact_strength_ok === true || data.impact_strength_ok === 1 || String(data.impact_strength_ok) === "1" || String(data.impact_strength_ok) === "true"));
             setImpactRemarks(data.impact_strength_remarks || "");
 
-            setHardRows(restoreSection(data.hardness, ["Cavity Number", "Surface", "Core", "Inspected Quantity", "Accepted Quantity", "Rejected Quantity", "Rejection Percentage", "Reason for rejection"], null, ""));
+            setHardRows(restoreSection(data.hardness, ["Cavity Number", "Surface", "Core"], null, ""));
             setHardOk(data.hardness_ok === null || data.hardness_ok === undefined ? null : (data.hardness_ok === true || data.hardness_ok === 1 || String(data.hardness_ok) === "1" || String(data.hardness_ok) === "true"));
             setHardRemarks(data.hardness_remarks || "");
 
@@ -821,32 +776,13 @@ export default function MetallurgicalInspection() {
     const hardCavityRow = getHardRow('cavity number');
     const surfaceRow = getHardRow('surface');
     const coreRow = getHardRow('core');
-    const hardInspectedRow = getHardRow('inspected quantity');
-    const hardAcceptedRow = getHardRow('accepted quantity');
-    const hardRejectedRow = getHardRow('rejected quantity');
-    const hardReasonRow = getHardRow('reason for rejection');
 
     const hardMaxCols = Math.max(...(source?.hardRows || [])?.map((r: any) => (r?.value ? String(r?.value).split('|').length : 0)), 0);
     const hardness = Array.from({ length: hardMaxCols }).map((_, idx) => {
-      const inspected = hardInspectedRow?.value?.split('|')[idx] || "";
-      const accepted = hardAcceptedRow?.value?.split('|')[idx] || "";
-      const rejected = hardRejectedRow?.value?.split('|')[idx] || "";
-      const rejectionPercentage = (() => {
-        const ins = parseFloat(String(inspected || '0'));
-        const rej = parseFloat(String(rejected || '0'));
-        if (isNaN(ins) || ins === 0) return "0.00";
-        return ((rej / ins) * 100).toFixed(2);
-      })();
-
       return {
         'Cavity Number': String(hardCavityRow?.value?.split('|')[idx] || ""),
         'Surface': String(surfaceRow?.value?.split('|')[idx] || ""),
         'Core': String(coreRow?.value?.split('|')[idx] || ""),
-        'Inspected Quantity': String(inspected),
-        'Accepted Quantity': String(accepted),
-        'Rejected Quantity': String(rejected),
-        'Rejection Percentage': String(rejectionPercentage),
-        'Reason for rejection': String(hardReasonRow?.value?.split('|')[idx] || ""),
       };
     });
 

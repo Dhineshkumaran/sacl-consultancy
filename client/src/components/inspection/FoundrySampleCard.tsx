@@ -240,7 +240,6 @@ function FoundrySampleCard() {
   const [selectedPart, setSelectedPart] = useState<PartData | null>(null);
   const [selectedPattern, setSelectedPattern] = useState<PartData | null>(null);
   const [trialId, setTrialId] = useState<string>("");
-  const [trialNo, setTrialNo] = useState<string>("");
   const [initiatedBy, setInitiatedBy] = useState<string>("");
   const [masterParts, setMasterParts] = useState<PartData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -339,7 +338,6 @@ function FoundrySampleCard() {
             const data = response.data;
             if (data) {
               setTrialId(data.trial_id || trialIdFromUrl);
-              setTrialNo(data.trial_id?.split('-').pop() || '');
               setSamplingDate(data.date_of_sampling?.split('T')[0] || new Date().toISOString().split("T")[0]);
               setPlanMoulds(data.plan_moulds || '');
               setMachine(data.disa || '');
@@ -442,14 +440,11 @@ function FoundrySampleCard() {
       const trialId = (json && (json.trialId || json.data)) as string | undefined;
       if (trialId) {
         setTrialId(trialId);
-        const formattedTrialId = trialId.includes('-') ? trialId.split('-').pop() : trialId;
-        setTrialNo(formattedTrialId || "");
       } else {
         throw new Error("Invalid response");
       }
     } catch (error) {
       console.warn("Using fallback trial ID", error);
-      setTrialNo(`${Date.now()}`);
     } finally {
       setTrialLoading(false);
     }
@@ -460,7 +455,6 @@ function FoundrySampleCard() {
       return;
     }
     if (selectedPart) fetchTrialId();
-    else setTrialNo("");
   }, [selectedPart, user, trialIdFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePartChange = (v: PartData | null) => { setSelectedPart(v); };
@@ -624,7 +618,7 @@ function FoundrySampleCard() {
                           <Typography variant="caption" sx={{ fontWeight: 600, color: COLORS.textSecondary }}>TRIAL REFERENCE</Typography>
                           <TextField
                             fullWidth
-                            value={trialNo}
+                            value={trialId}
                             placeholder={ "Generating..."}
                             InputProps={{
                               readOnly: true,

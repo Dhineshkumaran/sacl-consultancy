@@ -2,6 +2,7 @@ import Client from '../config/connection.js';
 import { createDepartmentProgress, updateDepartment, updateRole } from '../services/departmentProgress.js';
 import logger from '../config/logger.js';
 import sendMail from '../utils/mailSender.js';
+import { generateAndStoreConsolidatedReport } from '../services/consolidatedReportGenerator.js';
 
 export const createTrial = async (req, res, next) => {
     const { trial_id, part_name, pattern_code, trial_type, material_grade, initiated_by, date_of_sampling, plan_moulds, actual_moulds, reason_for_sampling, status, disa, sample_traceability, mould_correction, tooling_modification, remarks } = req.body || {};

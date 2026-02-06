@@ -41,9 +41,9 @@ export const getDashboardStats = async (req, res, next) => {
 
         const [pendingCardsResult] = await Client.query(
             `SELECT COUNT(*) as count 
-             FROM department_progress 
+             FROM department_progress dp JOIN trial_cards t ON dp.trial_id = t.trial_id 
              WHERE username = @username 
-             AND approval_status = 'pending'`,
+             AND dp.approval_status = 'pending' AND t.deleted_at IS NULL`,
             { username }
         );
         const pendingCards = pendingCardsResult[0].count;
@@ -89,9 +89,9 @@ export const getDashboardStats = async (req, res, next) => {
 
         const [pendingCardsResult] = await Client.query(
             `SELECT COUNT(*) as count 
-             FROM department_progress 
+             FROM department_progress dp JOIN trial_cards t ON dp.trial_id = t.trial_id 
              WHERE username = @username 
-             AND approval_status = 'pending'`,
+             AND dp.approval_status = 'pending' AND t.deleted_at IS NULL`,
             { username }
         );
         const pendingCards = pendingCardsResult[0].count;

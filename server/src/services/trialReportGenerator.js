@@ -310,8 +310,17 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     let metRightY = p2y;
 
     if (mechRows.length > 0) {
-        doc.font('Helvetica-Bold').fontSize(7).text("Mechanical Properties", col1X, metLeftY);
+        const mechOk = meta?.mech_properties_ok;
+        const mechRes = mechOk === null || mechOk === undefined ? "-" : (mechOk ? "OK" : "NOT OK");
+
+        doc.font('Helvetica-Bold').fontSize(7).text(`Mechanical Properties (Result: ${mechRes})`, col1X, metLeftY);
         metLeftY += 10;
+
+        if (meta?.mech_properties_remarks) {
+            doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${meta.mech_properties_remarks}`, col1X, metLeftY);
+            metLeftY += 10;
+        }
+
         const headers = Object.keys(mechRows[0]);
         const rows = mechRows.map(r => headers.map(h => r[h]));
         const colWidths = headers.map(() => 250 / headers.length);
@@ -319,8 +328,17 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     }
 
     if (impactRows.length > 0) {
-        doc.font('Helvetica-Bold').fontSize(7).text("Impact Strength", col2X, metRightY);
+        const impactOk = meta?.impact_strength_ok;
+        const impactRes = impactOk === null || impactOk === undefined ? "-" : (impactOk ? "OK" : "NOT OK");
+
+        doc.font('Helvetica-Bold').fontSize(7).text(`Impact Strength (Result: ${impactRes})`, col2X, metRightY);
         metRightY += 10;
+
+        if (meta?.impact_strength_remarks) {
+            doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${meta.impact_strength_remarks}`, col2X, metRightY);
+            metRightY += 10;
+        }
+
         const headers = Object.keys(impactRows[0]);
         const rows = impactRows.map(r => headers.map(h => r[h]));
         const colWidths = headers.map(() => 250 / headers.length);
@@ -330,8 +348,17 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     p2y = Math.max(metLeftY, metRightY);
 
     if (microRows.length > 0) {
-        doc.font('Helvetica-Bold').fontSize(7).text("Microstructure", col1X, p2y);
+        const microOk = meta?.micro_structure_ok;
+        const microRes = microOk === null || microOk === undefined ? "-" : (microOk ? "OK" : "NOT OK");
+
+        doc.font('Helvetica-Bold').fontSize(7).text(`Microstructure (Result: ${microRes})`, col1X, p2y);
         p2y += 10;
+
+        if (meta?.micro_structure_remarks) {
+            doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${meta.micro_structure_remarks}`, col1X, p2y);
+            p2y += 10;
+        }
+
         const headers = Object.keys(microRows[0]);
         const rows = microRows.map(r => headers.map(h => r[h]));
         const colWidths = headers.map(() => 535 / headers.length); // Full width
@@ -354,7 +381,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
         const rows = metaHardRows.map(r => headers.map(h => r[h]));
 
         // Define custom widths for better fit
-        const colWidths = [45, 45, 45, 50, 50, 50, 50, 200];
+        const colWidths = headers.map(() => 535 / headers.length);
         p2y = drawTable(doc, { headers, rows }, col1X, p2y, colWidths) + 12;
     }
 
@@ -367,7 +394,16 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
 
     // Visual (Left)
     visitY = drawSectionTitle(doc, "6. VISUAL INSPECTION", col1X, visitY);
-    visitY = drawVerticalTable(doc, [{ label: "Inspection Result", value: visual?.visual_ok ? "OK" : "NOT OK" }, { label: "Remarks", value: visual?.remarks }], col1X, visitY, colWidth) + 8;
+
+    const visualRes = visual?.visual_ok === null || visual?.visual_ok === undefined ? "-" : (visual?.visual_ok ? "OK" : "NOT OK");
+    doc.font('Helvetica-Bold').fontSize(7).text(`Result: ${visualRes}`, col1X, visitY);
+    visitY += 10;
+
+    if (visual?.remarks) {
+        doc.font('Helvetica-Oblique').fontSize(7).text(`Remarks: ${visual.remarks}`, col1X, visitY);
+        visitY += 10;
+    }
+    visitY += 5;
 
     const visInspections = safeParse(visual?.inspections, []);
     if (visInspections.length > 0) {
@@ -409,7 +445,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
 
         const headers = Object.keys(ndtRows[0]);
         const rows = ndtRows.map(r => headers.map(h => r[h]));
-        const colWidths = [45, 45, 45, 50, 50, 300];
+        const colWidths = headers.map(h => h.toLowerCase().includes('reason') ? 300 : (235 / (headers.length - 1)));
 
         p2NextY = drawTable(doc, { headers, rows }, col1X, p2NextY, colWidths) + 15;
     }
@@ -430,7 +466,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
 
         const headers = Object.keys(hardRows[0]);
         const rows = hardRows.map(r => headers.map(h => r[h]));
-        const colWidths = [45, 45, 45, 50, 50, 300];
+        const colWidths = headers.map(h => h.toLowerCase().includes('reason') ? 300 : (235 / (headers.length - 1)));
 
         p2NextY = drawTable(doc, { headers, rows }, col1X, p2NextY, colWidths) + 15;
     }

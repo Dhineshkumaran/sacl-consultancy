@@ -54,13 +54,13 @@ app.use(cors({
   credentials: true
 }))
 
-app.use(
-  morgan("combined", {
-    stream: {
-      write: message => logger.info(message.trim())
-    }
-  })
-);
+// app.use(
+//   morgan("combined", {
+//     stream: {
+//       write: message => logger.info(message.trim())
+//     }
+//   })
+// );
 
 app.use((req, res, next) => {
   req.clientIp = getClientIp(req);
