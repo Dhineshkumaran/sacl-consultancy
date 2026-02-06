@@ -261,7 +261,7 @@ export const deleteTrialCard = async (req, res, next) => {
             });
         }
         for (const pattern_code of patternCodes) {
-            await generateAndStoreConsolidatedReport(pattern_code, Client);
+            await generateAndStoreConsolidatedReport(pattern_code, trx);
         }
     });
 
@@ -284,8 +284,19 @@ export const restoreTrialCard = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'No trial ID provided.' });
     }
 
-    const sql = `UPDATE trial_cards SET deleted_at = NULL, deleted_by = NULL WHERE trial_id = @trial_id`;
-    await Client.query(sql, { trial_id });
+    await Client.transaction(async (trx) => {
+        const sql = `UPDATE trial_cards SET deleted_at = NULL, deleted_by = NULL WHERE trial_id = @trial_id`;
+        await trx.query(sql, { trial_id });
+
+        const [pattern_code_result] = await trx.query(
+            `SELECT pattern_code FROM trial_cards WHERE trial_id = @trial_id`,
+            { trial_id }
+        );
+        if (pattern_code_result && pattern_code_result.length > 0) {
+            const pattern_code = pattern_code_result[0].pattern_code;
+            await generateAndStoreConsolidatedReport(pattern_code, trx);
+        }
+    });
 
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, trial_id, action, remarks) VALUES (@user_id, @department_id, @trial_id, @action, @remarks)';
     await Client.query(audit_sql, {
@@ -331,15 +342,6 @@ export const restoreTrialReport = async (req, res, next) => {
 
     const sql = `UPDATE trial_reports SET deleted_at = NULL, deleted_by = NULL WHERE trial_id = @trial_id`;
     await Client.query(sql, { trial_id });
-
-    const [pattern_code_result] = await Client.query(
-        `SELECT pattern_code FROM trial_cards WHERE trial_id = @trial_id`,
-        { trial_id }
-    );
-    if (pattern_code_result && pattern_code_result.length > 0) {
-        const pattern_code = pattern_code_result[0].pattern_code;
-        await generateAndStoreConsolidatedReport(pattern_code, Client);
-    }
 
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
     await Client.query(audit_sql, {
