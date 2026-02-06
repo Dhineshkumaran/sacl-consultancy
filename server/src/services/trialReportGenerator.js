@@ -111,10 +111,17 @@ const drawTable = (doc, tableData, startX, startY, colWidths = []) => {
     currentY += headerHeight;
 
     // Rows
-    const dataRowHeight = 18;
     doc.font('Helvetica').fontSize(fontSize);
     tableData.rows.forEach(row => {
         currentX = startX;
+
+        // Calculate max height for this row
+        let dataRowHeight = 18;
+        row.forEach((cell, i) => {
+            const text = cell !== null && cell !== undefined ? String(cell) : '-';
+            const h = doc.heightOfString(text, { width: colWidths[i] - 2 * padding });
+            if (h + padding * 2 > dataRowHeight) dataRowHeight = h + padding * 2;
+        });
 
         row.forEach((cell, i) => {
             const text = cell !== null && cell !== undefined ? String(cell) : '-';
@@ -131,7 +138,6 @@ const drawTable = (doc, tableData, startX, startY, colWidths = []) => {
 // Draw a Vertical key-value table - HIGHLY OPTIMIZED
 const drawVerticalTable = (doc, data, startX, startY, width) => {
     let currentY = startY;
-    const rowHeight = 14;
     const fontSize = 7;
     const labelWidth = width * 0.45;
     const valueWidth = width * 0.55;
@@ -140,6 +146,17 @@ const drawVerticalTable = (doc, data, startX, startY, width) => {
     doc.fontSize(fontSize);
 
     data.forEach(item => {
+        const labelText = item.label || "";
+        const valueText = item.value !== null && item.value !== undefined ? String(item.value) : "-";
+
+        // Calculate heights
+        doc.font('Helvetica-Bold');
+        const h1 = doc.heightOfString(labelText, { width: labelWidth - 2 * padding });
+        doc.font('Helvetica');
+        const h2 = doc.heightOfString(valueText, { width: valueWidth - 2 * padding });
+
+        const rowHeight = Math.max(h1, h2) + padding * 2 + 2;
+
         // Label Bg
         doc.save();
         doc.fillColor('#fafafa').rect(startX, currentY, labelWidth, rowHeight).fill();
@@ -150,8 +167,8 @@ const drawVerticalTable = (doc, data, startX, startY, width) => {
         doc.rect(startX + labelWidth, currentY, valueWidth, rowHeight).strokeColor('#e0e0e0').stroke();
 
         // Text
-        doc.font('Helvetica-Bold').text(item.label, startX + padding, currentY + padding + 1, { width: labelWidth - 2 * padding });
-        doc.font('Helvetica').text(item.value !== null && item.value !== undefined ? String(item.value) : '-', startX + labelWidth + padding, currentY + padding + 1, { width: valueWidth - 2 * padding });
+        doc.font('Helvetica-Bold').text(labelText, startX + padding, currentY + padding + 1, { width: labelWidth - 2 * padding });
+        doc.font('Helvetica').text(valueText, startX + labelWidth + padding, currentY + padding + 1, { width: valueWidth - 2 * padding });
 
         currentY += rowHeight;
     });
@@ -290,6 +307,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
     const metaHardRows = safeParse(meta.hardness, []);
 
     let metLeftY = p2y;
+    let metRightY = p2y;
 
     if (mechRows.length > 0) {
         doc.font('Helvetica-Bold').fontSize(7).text("Mechanical Properties", col1X, metLeftY);
@@ -300,16 +318,16 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
         metLeftY = drawTable(doc, { headers, rows }, col1X, metLeftY, colWidths) + 10;
     }
 
-    p2y = metLeftY;
-
     if (impactRows.length > 0) {
-        doc.font('Helvetica-Bold').fontSize(7).text("Impact Strength", col1X, p2y);
-        p2y += 10;
+        doc.font('Helvetica-Bold').fontSize(7).text("Impact Strength", col2X, metRightY);
+        metRightY += 10;
         const headers = Object.keys(impactRows[0]);
         const rows = impactRows.map(r => headers.map(h => r[h]));
         const colWidths = headers.map(() => 250 / headers.length);
-        p2y = drawTable(doc, { headers, rows }, col1X, p2y, colWidths) + 10;
+        metRightY = drawTable(doc, { headers, rows }, col2X, metRightY, colWidths) + 10;
     }
+
+    p2y = Math.max(metLeftY, metRightY);
 
     if (microRows.length > 0) {
         doc.font('Helvetica-Bold').fontSize(7).text("Microstructure", col1X, p2y);
