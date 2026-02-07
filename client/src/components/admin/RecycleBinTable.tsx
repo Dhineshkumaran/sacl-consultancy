@@ -11,9 +11,9 @@ import {
     Tooltip,
     Typography,
     Box,
-    CircularProgress,
     Button
 } from '@mui/material';
+import GearSpinner from '../common/GearSpinner';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Swal from 'sweetalert2';
@@ -86,7 +86,7 @@ const RecycleBinTable: React.FC = () => {
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
+                <GearSpinner />
             </Box>
         );
     }

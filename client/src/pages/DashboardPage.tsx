@@ -17,10 +17,11 @@ import StatsGrid from '../components/dashboard/StatsGrid';
 import { getDepartmentInfo } from '../utils/dashboardUtils';
 import { type StatItem } from '../data/dashboardData';
 import { getDashboardStats } from '../services/statsService';
-import { CircularProgress, Box, Typography, Button, TextField, InputAdornment } from '@mui/material';
+import { Box, Typography, Button, TextField, InputAdornment } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import GearSpinner from '../components/common/GearSpinner';
 import PendingTrialsView from '../components/dashboard/PendingTrialsView';
 import CompletedTrialsView from '../components/dashboard/CompletedTrialsView';
 import ProgressingTrialsGrid from '../components/dashboard/ProgressingTrialsGrid';
@@ -138,7 +139,7 @@ const Dashboard: React.FC = () => {
               {/* Stats Grid */}
               {loadingStats ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                  <CircularProgress />
+                  <GearSpinner />
                 </Box>
               ) : (
                 <StatsGrid stats={stats} />

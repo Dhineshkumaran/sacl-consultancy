@@ -8,7 +8,6 @@ import {
     TableRow,
     Paper,
     Button,
-    CircularProgress,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -16,6 +15,7 @@ import {
     Box,
     Typography,
 } from '@mui/material';
+import GearSpinner from '../common/GearSpinner';
 import { trialService } from '../../services/trialService';
 import DocumentViewer from '../common/DocumentViewer';
 
@@ -67,7 +67,7 @@ const ConsolidatedReportsTable: React.FC = () => {
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                <CircularProgress />
+                <GearSpinner />
             </Box>
         );
     }

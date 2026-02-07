@@ -11,6 +11,7 @@ export interface User {
   needsPasswordChange?: boolean;
   created_at?: string;
   last_login?: string;
+  machine_shop_user_type?: 'N/A' | 'NPD' | 'REGULAR';
 }
 
 export interface CreateUserRequest {
@@ -20,7 +21,8 @@ export interface CreateUserRequest {
   department_name?: string | null;
   department_id?: number | null;
   role?: string;
-  password: string;
+  password?: string;
+  machine_shop_user_type?: 'N/A' | 'NPD' | 'REGULAR';
 }
 
 export interface LoginCredentials {

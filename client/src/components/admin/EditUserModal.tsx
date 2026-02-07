@@ -74,10 +74,15 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => {
+            const newData = { ...prev, [name]: value };
+
+            if (name === 'role' && value === 'Admin') {
+                newData.department_id = '';
+            }
+
+            return newData;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -252,6 +257,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                             </select>
                         </div>
                     </div>
+
 
                     <div className="form-row">
                         <div className="form-group password-field">

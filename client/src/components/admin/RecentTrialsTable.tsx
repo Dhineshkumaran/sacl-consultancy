@@ -8,13 +8,13 @@ import {
   TableRow,
   Paper,
   Button,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Box,
 } from '@mui/material';
+import GearSpinner from '../common/GearSpinner';
 import { trialService } from '../../services/trialService';
 import DocumentViewer from '../common/DocumentViewer';
 
@@ -71,7 +71,7 @@ const RecentTrialsTable: React.FC = () => {
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-        <CircularProgress />
+        <GearSpinner />
       </Box>
     );
   }
@@ -130,12 +130,12 @@ const RecentTrialsTable: React.FC = () => {
                         fontWeight: 600,
                         backgroundColor:
                           trial.status?.toUpperCase() === 'CLOSED' ? '#e6f4ea' :
-                          trial.status?.toUpperCase() === 'CREATED' ? '#e1f5fe' :
-                            '#fff3cd',
+                            trial.status?.toUpperCase() === 'CREATED' ? '#e1f5fe' :
+                              '#fff3cd',
                         color:
                           trial.status?.toUpperCase() === 'CLOSED' ? '#1e7e34' :
-                          trial.status?.toUpperCase() === 'CREATED' ? '#0288d1' :
-                            '#856404',
+                            trial.status?.toUpperCase() === 'CREATED' ? '#0288d1' :
+                              '#856404',
                         display: 'inline-block',
                         whiteSpace: 'nowrap'
                       }}

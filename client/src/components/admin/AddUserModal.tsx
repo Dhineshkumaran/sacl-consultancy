@@ -24,6 +24,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
     full_name: '',
     department_id: '',
     role: 'User',
+    machine_shop_user_type: 'N/A',
   });
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,10 +53,25 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+
+      if (name === 'department_id') {
+        const isMS = value === '8';
+        if (!isMS) {
+          newData.machine_shop_user_type = 'N/A';
+        } else if (prev.machine_shop_user_type === 'N/A') {
+          newData.machine_shop_user_type = '';
+        }
+      }
+
+      if (name === 'role' && value === 'Admin') {
+        newData.department_id = '';
+        newData.machine_shop_user_type = 'N/A';
+      }
+
+      return newData;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,11 +90,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
     setLoading(true);
 
     try {
-      const payload = {
+      const payload: any = {
         username: formData.username,
         full_name: formData.full_name,
         department_id: formData.department_id ? parseInt(formData.department_id) : null,
         role: formData.role,
+        machine_shop_user_type: (formData.machine_shop_user_type || 'N/A') as 'N/A' | 'NPD' | 'REGULAR',
         password: formData.username,
       };
 
@@ -89,6 +106,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
         full_name: '',
         department_id: '',
         role: 'User',
+        machine_shop_user_type: 'N/A',
       });
 
       Swal.fire({
@@ -173,27 +191,49 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
               </select>
             </div>
             {formData.role !== 'Admin' && (
-              <div className="form-group">
-                <label htmlFor="department_id">Department</label>
-                <select
-                  id="department_id"
-                  name="department_id"
-                  value={formData.department_id}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept.department_id} value={String(dept.department_id)}>
-                      {dept.department_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <>
+                <div className="form-group">
+                  <label htmlFor="department_id">Department</label>
+                  <select
+                    id="department_id"
+                    name="department_id"
+                    value={formData.department_id}
+                    onChange={handleChange}
+                    disabled={loading}
+                    required={formData.role !== 'Admin'}
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((dept) => (
+                      <option key={dept.department_id} value={String(dept.department_id)}>
+                        {dept.department_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Conditional Machine Shop User Type Field */}
+                {formData.department_id === '8' && (
+                  <div className="form-group">
+                    <label htmlFor="machine_shop_user_type">Machine Shop User Type</label>
+                    <select
+                      id="machine_shop_user_type"
+                      name="machine_shop_user_type"
+                      value={formData.machine_shop_user_type}
+                      onChange={handleChange}
+                      disabled={loading}
+                      required
+                    >
+                      <option value="">Select Type</option>
+                      <option value="NPD">NPD</option>
+                      <option value="REGULAR">REGULAR</option>
+                    </select>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
-          <div className="form-info" style={{ marginBottom: '20px', padding: '12px', backgroundColor: '#fff8e1', borderRadius: '8px', border: '1px solid #ffe082' }}>
+          <div className="form-info" style={{ marginBottom: '8px', padding: '10px', backgroundColor: '#fff8e1', borderRadius: '8px', border: '1px solid #ffe082' }}>
             <p style={{ margin: 0, fontSize: '13.5px', color: '#795548', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>💡</span> The user's <strong>username</strong> will be set as their initial password.
             </p>

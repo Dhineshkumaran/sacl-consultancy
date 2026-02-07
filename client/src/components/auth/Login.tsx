@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../services/commonService';
 import './Login.css';
-import './ForgotPasswordModal.css';
 
 import GearSpinner from '../common/GearSpinner';
 
@@ -11,19 +10,26 @@ const Login: React.FC = () => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [touched, setTouched] = useState({ username: false, password: false });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState('');
-  const [otpStep, setOtpStep] = useState<'request' | 'verify' | 'reset'>('request');
+  const [view, setView] = useState<'login' | 'forgot-request' | 'forgot-verify' | 'forgot-reset'>('login');
   const [otpUsername, setOtpUsername] = useState('');
-
   const [otpValue, setOtpValue] = useState('');
+  const [touched, setTouched] = useState({ username: false, password: false });
+  const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const handleBackToLogin = () => {
+    setView('login');
+    setForgotError('');
+    setForgotSuccess('');
+    setOtpValue('');
+    setOtpUsername('');
+    setError('');
+  };
 
   const validateForm = () => {
     if (!credentials.username.trim()) {
@@ -297,263 +303,301 @@ const Login: React.FC = () => {
           <div className="login-header">
             <img src="/assets/SACL-LOGO-01.svg" alt="SACL Logo" className="login-logo" />
             <h2 className="system-title">Digital Trial Card</h2>
-            <p className="login-subtitle">Sign in now.</p>
+            <p className="login-subtitle">
+              {view === 'login' ? 'Sign in now.' :
+                view === 'forgot-request' ? 'Reset your password.' :
+                  view === 'forgot-verify' ? 'Verify your identity.' : 'Set new password.'}
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={credentials.username}
-                onChange={handleChange}
-                onBlur={() => handleBlur('username')}
-                className={getFieldError('username') ? 'input-error' : ''}
-                placeholder="Enter your username"
-                autoComplete="username"
-                disabled={loading}
-                required
-              />
-              {getFieldError('username') && (
-                <span className="field-error">{getFieldError('username')}</span>
-              )}
-            </div>
+          {view === 'login' && (
+            <>
+              <form onSubmit={handleSubmit} className="login-form">
+                <div className="form-group">
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={credentials.username}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur('username')}
+                    className={getFieldError('username') ? 'input-error' : ''}
+                    placeholder="Enter your username"
+                    autoComplete="username"
+                    disabled={loading}
+                    required
+                  />
+                  {getFieldError('username') && (
+                    <span className="field-error">{getFieldError('username')}</span>
+                  )}
+                </div>
 
-            <div className="form-group">
-              <div className="password-input-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="password"
-                  value={credentials.password}
-                  onChange={handleChange}
-                  onBlur={() => handleBlur('password')}
-                  className={getFieldError('password') ? 'input-error' : ''}
-                  placeholder="Password"
-                  autoComplete="current-password"
-                  disabled={loading}
-                  required
-                />
+                <div className="form-group">
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      value={credentials.password}
+                      onChange={handleChange}
+                      onBlur={() => handleBlur('password')}
+                      className={getFieldError('password') ? 'input-error' : ''}
+                      placeholder="Password"
+                      autoComplete="current-password"
+                      disabled={loading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={loading}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  {getFieldError('password') && (
+                    <span className="field-error">{getFieldError('password')}</span>
+                  )}
+                </div>
+
+                {error && (
+                  <div className="error-message">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <button type="submit" disabled={loading || !credentials.username || !credentials.password} className="login-button">
+                  {loading ? (
+                    <>
+                      <GearSpinner className="gear-white" />
+                      Signing in...
+                    </>
+                  ) : 'Login'}
+                </button>
+              </form>
+              <div style={{ textAlign: 'right', marginTop: '16px' }}>
                 <button
                   type="button"
-                  className="toggle-password"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="forgot-password-link"
+                  style={{ background: 'none', border: 'none', color: '#1976d2', cursor: 'pointer', padding: 0, fontSize: '0.95em', fontWeight: 500 }}
+                  onClick={() => setView('forgot-request')}
                 >
-                  {showPassword ? (
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                    </svg>
-                  )}
+                  Forgot Password?
                 </button>
               </div>
-              {getFieldError('password') && (
-                <span className="field-error">{getFieldError('password')}</span>
-              )}
-            </div>
-
-            {error && (
-              <div className="error-message">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button type="submit" disabled={loading || !credentials.username || !credentials.password} className="login-button">
-              {loading ? (
-                <>
-                  <GearSpinner className="gear-white" />
-                  Signing in...
-                </>
-              ) : 'Login'}
-            </button>
-          </form>
-          <div style={{ textAlign: 'right', marginTop: '8px' }}>
-            <button
-              type="button"
-              className="forgot-password-link"
-              style={{ background: 'none', border: 'none', color: '#1976d2', cursor: 'pointer', padding: 0, fontSize: '0.95em' }}
-              onClick={() => setShowForgotModal(true)}
-            >
-              Forgot Password?
-            </button>
-          </div>
+            </>
+          )}
           {/* Forgot Password Modal will be rendered here */}
-          {showForgotModal && (
-            <div className="forgot-modal-overlay">
-              <div className="forgot-modal-content">
-                <button className="forgot-close-btn" onClick={() => { setShowForgotModal(false); setOtpStep('request'); setOtpValue(''); setOtpUsername(''); }} title="Close">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
+          {view === 'forgot-request' && (
+            <div className="login-form">
+              <form
+                className="login-form"
+                onSubmit={async e => {
+                  e.preventDefault();
+                  setForgotError('');
+                  setForgotSuccess('');
+                  setForgotLoading(true);
+                  const form = e.target as HTMLFormElement;
+                  const username = (form.forgotUsername as HTMLInputElement).value;
+                  const email = (form.forgotEmail as HTMLInputElement).value;
+                  try {
+                    const { authService } = await import('../../services/authService');
+                    await authService.forgotPasswordRequest(username, email);
+                    setOtpUsername(username);
+                    setView('forgot-verify');
+                  } catch (err: any) {
+                    setForgotError(err.message || 'Failed to send OTP');
+                  } finally {
+                    setForgotLoading(false);
+                  }
+                }}
+              >
+                <div className="form-group">
+                  <input
+                    type="text"
+                    name="forgotUsername"
+                    placeholder="Username"
+                    required
+                    disabled={forgotLoading}
+                  />
+                </div>
+                <div className="form-group">
+                  <input
+                    type="email"
+                    name="forgotEmail"
+                    placeholder="Email Address"
+                    required
+                    disabled={forgotLoading}
+                  />
+                </div>
+                {forgotError && (
+                  <div className="error-message">
+                    <span>{forgotError}</span>
+                  </div>
+                )}
+                <button type="submit" disabled={forgotLoading} className="login-button">
+                  {forgotLoading ? (
+                    <>
+                      <GearSpinner className="gear-white" />
+                      Sending OTP...
+                    </>
+                  ) : 'Send OTP'}
                 </button>
-                <h3>Forgot Password</h3>
-                {otpStep === 'request' && (
-                  <form
-                    className="forgot-form"
-                    onSubmit={async e => {
-                      e.preventDefault();
-                      setForgotError('');
-                      setForgotSuccess('');
-                      setForgotLoading(true);
-                      const form = e.target as HTMLFormElement;
-                      const username = (form.forgotUsername as HTMLInputElement).value;
-                      const email = (form.forgotEmail as HTMLInputElement).value;
-                      try {
-                        const { authService } = await import('../../services/authService');
-                        await authService.forgotPasswordRequest(username, email);
-                        setOtpUsername(username);
-                        setOtpStep('verify');
-                      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-                        setForgotError(err.message || 'Failed to send OTP');
-                      } finally {
-                        setForgotLoading(false);
-                      }
-                    }}
-                  // style handled by className
-                  >
-                    <div style={{ padding: '12px', backgroundColor: '#e3f2fd', border: '1px solid #90caf9', borderRadius: '4px', marginBottom: '16px', fontSize: '14px', color: '#1565c0' }}>
-                      <strong>Note:</strong> If you don't know your username and password, please contact the admin for assistance.
-                    </div>
-                    <input
-                      type="text"
-                      name="forgotUsername"
-                      placeholder="Enter your username"
-                      required
-                    />
-                    <input
-                      type="email"
-                      name="forgotEmail"
-                      placeholder="Enter your email address"
-                      required
-                    />
-                    <button type="submit" disabled={forgotLoading}>
-                      {forgotLoading ? (
-                        <>
-                          <GearSpinner />
-                          Sending...
-                        </>
-                      ) : 'Send OTP'}
-                    </button>
-                    {forgotError && <span className="forgot-error">{forgotError}</span>}
-                    {forgotSuccess && <span className="forgot-success">{forgotSuccess}</span>}
-                  </form>
-                )}
-                {otpStep === 'verify' && (
-                  <form
-                    className="forgot-form"
-                    onSubmit={e => {
-                      e.preventDefault();
-                      setForgotError('');
-                      const form = e.target as HTMLFormElement;
-                      const otp = (form.otpCode as HTMLInputElement).value;
-                      if (!otp) {
-                        setForgotError('OTP is required');
-                        return;
-                      }
-                      setOtpValue(otp);
-                      setOtpStep('reset');
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="otpCode"
-                      placeholder="Enter OTP"
-                      required
-                    />
-                    <button type="submit">
-                      Verify OTP
-                    </button>
-                    {forgotError && <span className="forgot-error">{forgotError}</span>}
-                  </form>
-                )}
-                {otpStep === 'reset' && (
-                  <form
-                    className="forgot-form"
-                    onSubmit={async e => {
-                      e.preventDefault();
-                      setForgotError('');
-                      setForgotSuccess('');
-                      setForgotLoading(true);
-                      const form = e.target as HTMLFormElement;
-                      const newPassword = (form.otpNewPassword as HTMLInputElement).value;
-                      if (!otpUsername || !otpValue || !newPassword) {
-                        setForgotError('All fields are required');
-                        setForgotLoading(false);
-                        return;
-                      }
-                      try {
-                        const { authService } = await import('../../services/authService');
-                        await authService.resetPasswordWithOtp(otpUsername, otpValue, newPassword);
-                        setForgotSuccess('Password updated successfully. You can now log in.');
-                        setTimeout(() => {
-                          setShowForgotModal(false);
-                          setForgotSuccess('');
-                          setOtpStep('request');
-                          setOtpValue('');
-                          setOtpUsername('');
-                        }, 2000);
-                      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-                        setForgotError(err.message || 'Failed to reset password');
-                      } finally {
-                        setForgotLoading(false);
-                      }
-                    }}
-                  >
-
-                    <div className="password-input-wrapper">
-                      <input
-                        type={showResetPassword ? "text" : "password"}
-                        name="otpNewPassword"
-                        placeholder="Enter new password"
-                        required
-                        style={{ paddingRight: '48px', width: '100%' }} // Inline style to ensure padding for icon if CSS doesn't catch it
-                      />
-                      <button
-                        type="button"
-                        className="toggle-password"
-                        onClick={() => setShowResetPassword(!showResetPassword)}
-                        aria-label={showResetPassword ? "Hide password" : "Show password"}
-                        style={{ right: '10px', background: 'transparent', color: '#9e9e9e', padding: '4px' }} // Adjustment for modal context and override form button styles
-                      >
-                        {showResetPassword ? (
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    <button type="submit" disabled={forgotLoading}>
-                      {forgotLoading ? (
-                        <>
-                          <GearSpinner />
-                          Updating...
-                        </>
-                      ) : 'Reset Password'}
-                    </button>
-                    {forgotError && <span className="forgot-error">{forgotError}</span>}
-                    {forgotSuccess && <span className="forgot-success">{forgotSuccess}</span>}
-                  </form>
-                )}
-              </div>
+                <button
+                  type="button"
+                  className="forgot-password-link"
+                  onClick={handleBackToLogin}
+                  style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', marginTop: '8px', fontSize: '0.9em' }}
+                >
+                  Back to Login
+                </button>
+              </form>
             </div>
+          )}
+
+          {view === 'forgot-verify' && (
+            <form
+              className="login-form"
+              onSubmit={e => {
+                e.preventDefault();
+                setForgotError('');
+                const form = e.target as HTMLFormElement;
+                const otp = (form.otpCode as HTMLInputElement).value;
+                if (!otp) {
+                  setForgotError('OTP is required');
+                  return;
+                }
+                setOtpValue(otp);
+                setView('forgot-reset');
+              }}
+            >
+              <div className="form-group">
+                <input
+                  type="text"
+                  name="otpCode"
+                  placeholder="Enter 6-digit OTP"
+                  required
+                />
+              </div>
+              {forgotError && (
+                <div className="error-message">
+                  <span>{forgotError}</span>
+                </div>
+              )}
+              <button type="submit" className="login-button">
+                Verify OTP
+              </button>
+              <button
+                type="button"
+                className="forgot-password-link"
+                onClick={handleBackToLogin}
+                style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', marginTop: '8px', fontSize: '0.9em' }}
+              >
+                Back to Login
+              </button>
+            </form>
+          )}
+
+          {view === 'forgot-reset' && (
+            <form
+              className="login-form"
+              onSubmit={async e => {
+                e.preventDefault();
+                setForgotError('');
+                setForgotSuccess('');
+                setForgotLoading(true);
+                const form = e.target as HTMLFormElement;
+                const newPassword = (form.otpNewPassword as HTMLInputElement).value;
+                if (!otpUsername || !otpValue || !newPassword) {
+                  setForgotError('All fields are required');
+                  setForgotLoading(false);
+                  return;
+                }
+                try {
+                  const { authService } = await import('../../services/authService');
+                  await authService.resetPasswordWithOtp(otpUsername, otpValue, newPassword);
+                  setForgotSuccess('Password updated successfully! Redirecting to login...');
+                  setTimeout(() => {
+                    handleBackToLogin();
+                  }, 2500);
+                } catch (err: any) {
+                  setForgotError(err.message || 'Failed to reset password');
+                } finally {
+                  setForgotLoading(false);
+                }
+              }}
+            >
+              <div className="form-group">
+                <div className="password-input-wrapper">
+                  <input
+                    type={showResetPassword ? "text" : "password"}
+                    name="otpNewPassword"
+                    placeholder="New Password"
+                    required
+                    disabled={forgotLoading}
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowResetPassword(!showResetPassword)}
+                    aria-label={showResetPassword ? "Hide password" : "Show password"}
+                  >
+                    {showResetPassword ? (
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                        <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+              {forgotError && (
+                <div className="error-message">
+                  <span>{forgotError}</span>
+                </div>
+              )}
+              {forgotSuccess && (
+                <div className="success-message" style={{ color: '#388e3c', backgroundColor: '#e8f5e9', padding: '12px', borderRadius: '8px', fontSize: '14px', textAlign: 'center' }}>
+                  <span>{forgotSuccess}</span>
+                </div>
+              )}
+              <button type="submit" disabled={forgotLoading} className="login-button">
+                {forgotLoading ? (
+                  <>
+                    <GearSpinner className="gear-white" />
+                    Updating...
+                  </>
+                ) : 'Reset Password'}
+              </button>
+              <button
+                type="button"
+                className="forgot-password-link"
+                onClick={handleBackToLogin}
+                style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', marginTop: '8px', fontSize: '0.9em' }}
+              >
+                Back to Login
+              </button>
+            </form>
           )}
         </div>
       </div>

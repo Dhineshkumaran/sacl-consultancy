@@ -4,7 +4,7 @@ export const userSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters").max(50),
     full_name: z.string().min(1, "Full name is required").max(100),
     email: z.string().email("Invalid email address").max(100).optional().nullable(),
-    password: z.string().min(6, "Password must be at least 6 characters").optional(),
+    password: z.string().optional(),
     department_id: z.number().int().optional().nullable(),
     role: z.enum(['User', 'HOD', 'Admin']).default('User'),
     machine_shop_user_type: z.enum(['N/A', 'NPD', 'REGULAR']).default('N/A'),

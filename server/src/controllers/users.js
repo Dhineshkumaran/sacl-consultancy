@@ -16,8 +16,8 @@ export const getAllUsers = async (req, res, next) => {
 };
 
 export const createUser = async (req, res, next) => {
-    const { username, password, full_name, department_id, role } = req.body;
-    if (!username || !password || !full_name || !department_id || !role) {
+    const { username, password, full_name, department_id, role, machine_shop_user_type } = req.body;
+    if (!username || !password || !full_name || !department_id || !role || !machine_shop_user_type) {
         throw new CustomError('Missing required fields', 400);
     }
     const [existing] = await Client.query('SELECT TOP 1 user_id FROM users WHERE username = @username', { username });
@@ -27,8 +27,8 @@ export const createUser = async (req, res, next) => {
     }
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
     const hash = await bcrypt.hash(password, saltRounds);
-    const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role, needs_password_change, email_verified) VALUES (@username, @full_name, @password_hash, @department_id, @role, 1, 0)';
-    await Client.query(sql, { username, full_name, password_hash: hash, department_id, role });
+    const sql = 'INSERT INTO users (username, full_name, password_hash, department_id, role, needs_password_change, email_verified, machine_shop_user_type) VALUES (@username, @full_name, @password_hash, @department_id, @role, 1, 0, @machine_shop_user_type)';
+    await Client.query(sql, { username, full_name, password_hash: hash, department_id, role, machine_shop_user_type });
     const audit_sql = 'INSERT INTO audit_log (user_id, department_id, action, remarks) VALUES (@user_id, @department_id, @action, @remarks)';
     await Client.query(audit_sql, {
         user_id: req.user.user_id,
