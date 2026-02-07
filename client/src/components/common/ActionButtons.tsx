@@ -66,9 +66,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
                 >
                     {loading ? (
                         <>
-                            <div style={{ transform: 'scale(0.7)', display: 'inline-block', marginRight: '4px' }}>
-                                <GearSpinner />
-                            </div>
+                            <GearSpinner size={16} color="white" />
                             Processing...
                         </>
                     ) : (
@@ -92,9 +90,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
                 >
                     {loading ? (
                         <>
-                            <div style={{ transform: 'scale(0.7)', display: 'inline-block', marginRight: '4px' }}>
-                                <GearSpinner />
-                            </div>
+                            <GearSpinner size={16} color="white" />
                             Submitting...
                         </>
                     ) : (

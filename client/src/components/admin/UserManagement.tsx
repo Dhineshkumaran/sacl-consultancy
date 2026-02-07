@@ -4,7 +4,7 @@ import { apiService } from '../../services/commonService';
 import UserTable from './UserTable';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
-import LoadingSpinner from '../common/LoadingSpinner';
+import LoadingState from '../common/LoadingState';
 import './UserManagement.css';
 import Swal from 'sweetalert2';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -147,7 +147,7 @@ const UserManagement: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingState />;
   }
 
   return (

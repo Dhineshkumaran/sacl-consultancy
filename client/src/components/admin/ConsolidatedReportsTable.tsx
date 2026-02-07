@@ -15,7 +15,7 @@ import {
     Box,
     Typography,
 } from '@mui/material';
-import GearSpinner from '../common/GearSpinner';
+import LoadingState from '../common/LoadingState';
 import { trialService } from '../../services/trialService';
 import DocumentViewer from '../common/DocumentViewer';
 
@@ -65,37 +65,27 @@ const ConsolidatedReportsTable: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                <GearSpinner />
-            </Box>
-        );
+        return <LoadingState message="Fetching reports..." />;
     }
 
     return (
         <>
-            <TableContainer
-                sx={{
-                    maxHeight: 'calc(100vh - 400px)',
-                    overflow: 'auto',
-                    borderTop: '1px solid #e0e0e0'
-                }}
-            >
+            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
                 <Table stickyHeader size="medium">
-                    <TableHead>
+                    <TableHead className="premium-table-head">
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Pattern Code</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Part Name</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6', textAlign: 'center' }}>Report</TableCell>
+                            <TableCell className="premium-table-header-cell">Pattern Code</TableCell>
+                            <TableCell className="premium-table-header-cell">Part Name</TableCell>
+                            <TableCell className="premium-table-header-cell" style={{ textAlign: 'center' }}>Report</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {reports.length > 0 ? (
                             reports.map((report) => (
-                                <TableRow key={report.document_id} hover>
-                                    <TableCell sx={{ fontWeight: 600, color: '#2c3e50' }}>{report.pattern_code}</TableCell>
-                                    <TableCell sx={{ color: '#555' }}>{report.part_name}</TableCell>
-                                    <TableCell align="center">
+                                <TableRow key={report.document_id} className="premium-table-row">
+                                    <TableCell className="premium-table-cell-bold">{report.pattern_code}</TableCell>
+                                    <TableCell className="premium-table-cell">{report.part_name}</TableCell>
+                                    <TableCell className="premium-table-cell" align="center">
                                         <Button
                                             variant="outlined"
                                             size="small"
@@ -120,8 +110,10 @@ const ConsolidatedReportsTable: React.FC = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} sx={{ textAlign: 'center', padding: '30px', color: '#999' }}>
-                                    No consolidated reports found
+                                <TableCell colSpan={3} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        No consolidated reports found
+                                    </Typography>
                                 </TableCell>
                             </TableRow>
                         )}

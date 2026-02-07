@@ -303,7 +303,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, onUserUp
                         <button type="submit" className="btn-primary" disabled={loading}>
                             {loading ? (
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                    <div style={{ transform: 'scale(0.4)', height: '20px', width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><GearSpinner /></div>
+                                    <GearSpinner size={16} color="white" />
                                     <span>Updating...</span>
                                 </div>
                             ) : 'Update User'}

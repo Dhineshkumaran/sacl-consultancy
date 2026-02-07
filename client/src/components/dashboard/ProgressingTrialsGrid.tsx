@@ -6,7 +6,7 @@ import { trialService } from '../../services/trialService';
 import departmentProgressService from '../../services/departmentProgressService';
 import { useAuth } from '../../context/AuthContext';
 import ProgressingTrialModal from './ProgressingTrialModal';
-import GearSpinner from '../common/GearSpinner';
+import LoadingState from '../common/LoadingState';
 import { formatDate } from '../../utils/dateUtils';
 
 interface ProgressingTrialsGridProps {
@@ -69,9 +69,7 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                 </Typography>
 
                 {loadingTrials ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                        <div style={{ transform: 'scale(0.7)' }}><GearSpinner /></div>
-                    </Box>
+                    <LoadingState size={24} />
                 ) : progressingTrials.length > 0 ? (
                     <Box sx={{ overflowX: 'auto' }}>
                         <Table

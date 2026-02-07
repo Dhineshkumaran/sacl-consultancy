@@ -9,7 +9,7 @@ import UsersPage from './pages/UsersPage';
 import UpdateEmailPage from './pages/UpdateEmailPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 
-import LoadingSpinner from './components/common/LoadingSpinner';
+import LoadingState from './components/common/LoadingState';
 import MetallurgicalInspection from './components/inspection/MetallurgicalInspection';
 import VisualInspection from './components/inspection/VisualInspection';
 import DimensionalInspection from './components/inspection/DimensionalInspection';
@@ -23,7 +23,7 @@ import MaterialCorrection from './components/inspection/MaterialCorrectionInspec
 const AppRoutes: React.FC = () => {
     const { isAuthenticated, loading, user } = useAuth();
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) return <LoadingState message="Restoring session..." />;
 
     return (
         <Routes>

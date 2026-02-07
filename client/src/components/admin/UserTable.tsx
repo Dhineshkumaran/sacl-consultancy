@@ -139,66 +139,59 @@ const UserTable: React.FC<UserTableProps> = ({
         </span>
       </div>
 
-      <TableContainer sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', marginTop: '20px' }}>
+      <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
         <Table size="small" stickyHeader>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell sx={{ width: '50px' }}>
+          <TableHead className="premium-table-head">
+            <TableRow>
+              <TableCell className="premium-table-header-cell" sx={{ width: '50px' }}>
                 <Checkbox
                   checked={users.length > 0 && selectedUsers.size === users.length}
                   indeterminate={selectedUsers.size > 0 && selectedUsers.size < users.length}
                   onChange={onSelectAllUsers}
+                  size="small"
                 />
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Username</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Full Name</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Action</TableCell>
+              <TableCell className="premium-table-header-cell">ID</TableCell>
+              <TableCell className="premium-table-header-cell">Username</TableCell>
+              <TableCell className="premium-table-header-cell">Full Name</TableCell>
+              <TableCell className="premium-table-header-cell">Email</TableCell>
+              <TableCell className="premium-table-header-cell">Role</TableCell>
+              <TableCell className="premium-table-header-cell">Department</TableCell>
+              <TableCell className="premium-table-header-cell">Status</TableCell>
+              <TableCell className="premium-table-header-cell" style={{ textAlign: 'center' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredUsers.map(user => (
               <TableRow
                 key={user.user_id}
-                sx={{ backgroundColor: selectedUsers.has(user.user_id) ? '#f0f0f0' : 'transparent' }}
+                className="premium-table-row"
+                sx={{ backgroundColor: selectedUsers.has(user.user_id) ? '#f8fafc' : 'transparent' }}
               >
-                <TableCell sx={{ width: '50px' }}>
+                <TableCell className="premium-table-cell" sx={{ width: '50px' }}>
                   <Checkbox
                     checked={selectedUsers.has(user.user_id)}
                     onChange={() => onSelectUser(user.user_id)}
+                    size="small"
                   />
                 </TableCell>
-                <TableCell>{user.user_id}</TableCell>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{user.full_name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
+                <TableCell className="premium-table-cell">{user.user_id}</TableCell>
+                <TableCell className="premium-table-cell-bold">{user.username}</TableCell>
+                <TableCell className="premium-table-cell">{user.full_name}</TableCell>
+                <TableCell className="premium-table-cell">{user.email}</TableCell>
+                <TableCell className="premium-table-cell">
                   <span className={`role-badge role-${user.role.toLowerCase()}`}>
                     {user.role}
                   </span>
                 </TableCell>
-                <TableCell>{user.department_name || 'N/A'}</TableCell>
-                <TableCell>
+                <TableCell className="premium-table-cell">{user.department_name || 'N/A'}</TableCell>
+                <TableCell className="premium-table-cell">
                   <button
                     onClick={() => onToggleStatus(user.user_id, !!user.is_active)}
-                    className={`status-toggle ${user.is_active ? 'active' : 'inactive'}`}
+                    className={`status-pill ${user.is_active ? 'status-pill-active' : 'status-pill-inactive'}`}
                     style={{
-                      padding: '6px 12px',
-                      borderRadius: '20px',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      backgroundColor: user.is_active ? '#e6f4ea' : '#fce8e6',
-                      color: user.is_active ? '#1e7e34' : '#c62828',
-                      transition: 'all 0.2s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
                       margin: '0 auto'
                     }}
                   >
@@ -209,8 +202,8 @@ const UserTable: React.FC<UserTableProps> = ({
                     )}
                   </button>
                 </TableCell>
-                <TableCell sx={{ textAlign: 'center' }}>
-                  <IconButton onClick={() => onEdit(user)} size="small" style={{ color: '#1976d2' }}>
+                <TableCell className="premium-table-cell" sx={{ textAlign: 'center' }}>
+                  <IconButton onClick={() => onEdit(user)} size="small" style={{ color: '#3498db' }}>
                     <EditIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
@@ -218,8 +211,8 @@ const UserTable: React.FC<UserTableProps> = ({
             ))}
             {filteredUsers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} sx={{ textAlign: 'center', padding: '30px', color: '#999' }}>
-                  No users found
+                <TableCell colSpan={9} sx={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                  No users found matching the criteria
                 </TableCell>
               </TableRow>
             )}

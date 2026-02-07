@@ -26,7 +26,7 @@ import {
     DialogContentText,
     DialogTitle
 } from '@mui/material';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import LoadingState from '../components/common/LoadingState';
 import DocumentViewer from '../components/common/DocumentViewer';
 import BackButton from '../components/common/BackButton';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -357,7 +357,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                         }}>
                             {loading ? (
                                 <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
-                                    <LoadingSpinner />
+                                    <LoadingState />
                                 </Box>
                             ) : (
                                 <Box sx={{
@@ -540,7 +540,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                                             Detailed Progress History
                                                                         </Typography>
                                                                         {loadingProgress[trial.trial_id] ? (
-                                                                            <LoadingSpinner />
+                                                                            <LoadingState size={24} message="Loading details..." />
                                                                         ) : (trialProgressData[trial.trial_id] && trialProgressData[trial.trial_id].length > 0) ? (
                                                                             <Grid container spacing={2}>
                                                                                 {trialProgressData[trial.trial_id].map((progress: ProgressItem, index: number) => (

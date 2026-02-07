@@ -384,7 +384,7 @@ const Login: React.FC = () => {
                 <button type="submit" disabled={loading || !credentials.username || !credentials.password} className="login-button">
                   {loading ? (
                     <>
-                      <GearSpinner className="gear-white" />
+                      <GearSpinner size={20} color="white" />
                       Signing in...
                     </>
                   ) : 'Login'}
@@ -453,7 +453,7 @@ const Login: React.FC = () => {
                 <button type="submit" disabled={forgotLoading} className="login-button">
                   {forgotLoading ? (
                     <>
-                      <GearSpinner className="gear-white" />
+                      <GearSpinner size={20} color="white" />
                       Sending OTP...
                     </>
                   ) : 'Send OTP'}
@@ -584,7 +584,7 @@ const Login: React.FC = () => {
               <button type="submit" disabled={forgotLoading} className="login-button">
                 {forgotLoading ? (
                   <>
-                    <GearSpinner className="gear-white" />
+                    <GearSpinner size={20} color="white" />
                     Updating...
                   </>
                 ) : 'Reset Password'}

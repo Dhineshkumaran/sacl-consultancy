@@ -145,7 +145,7 @@ const UpdateEmail: React.FC = () => {
                     disabled={loading || otpSent}
                     sx={{ mt: 2, py: 1, fontWeight: 600 }}
                   >
-                    {loading ? <GearSpinner /> : otpSent ? 'OTP Sent' : 'Send Verification OTP'}
+                    {loading ? <GearSpinner size={20} color="white" /> : otpSent ? 'OTP Sent' : 'Send Verification OTP'}
                   </Button>
                 </Box>
 
@@ -170,7 +170,7 @@ const UpdateEmail: React.FC = () => {
                       disabled={loading || otp.length !== 6}
                       sx={{ mt: 2, py: 1, fontWeight: 600, bgcolor: COLORS.secondary, '&:hover': { bgcolor: '#e38c02' } }}
                     >
-                      {loading ? <GearSpinner /> : 'Verify & Continue'}
+                      {loading ? <GearSpinner size={20} color="white" /> : 'Verify & Continue'}
                     </Button>
                   </Box>
                 )}

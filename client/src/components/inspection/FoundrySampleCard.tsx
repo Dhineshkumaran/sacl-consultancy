@@ -619,14 +619,14 @@ function FoundrySampleCard() {
                           <TextField
                             fullWidth
                             value={trialId}
-                            placeholder={ "Generating..."}
+                            placeholder={"Generating..."}
                             InputProps={{
                               readOnly: true,
                               sx: { bgcolor: "#f1f5f9", fontWeight: 700, color: COLORS.primary },
                               endAdornment: user?.role !== 'HOD' && user?.role !== 'Admin' ? (
                                 <InputAdornment position="end">
                                   <IconButton onClick={() => fetchTrialId()} disabled={!selectedPart || trialLoading} size="small">
-                                    {trialLoading ? <div style={{ transform: 'scale(0.7)' }}><GearSpinner /></div> : <RefreshIcon fontSize="small" />}
+                                    {trialLoading ? <GearSpinner size={16} color={COLORS.primary} /> : <RefreshIcon fontSize="small" />}
                                   </IconButton>
                                 </InputAdornment>
                               ) : undefined

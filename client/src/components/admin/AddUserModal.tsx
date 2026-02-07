@@ -236,7 +236,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onUserCrea
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <div style={{ transform: 'scale(0.4)', height: '20px', width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><GearSpinner /></div>
+                  <GearSpinner size={16} color="white" />
                   <span>Creating...</span>
                 </div>
               ) : 'Create User'}

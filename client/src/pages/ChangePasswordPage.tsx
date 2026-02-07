@@ -271,7 +271,7 @@ const ChangePassword: React.FC = () => {
                   disabled={loading || !isPasswordValid}
                   sx={{ py: 1, fontWeight: 600 }}
                 >
-                  {loading ? <GearSpinner /> : 'Update Password'}
+                  {loading ? <GearSpinner size={20} color="white" /> : 'Update Password'}
                 </Button>
 
                 {message && <Alert severity="success" sx={{ mt: 2 }}>{message}</Alert>}

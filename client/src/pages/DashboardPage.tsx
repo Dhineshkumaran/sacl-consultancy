@@ -21,7 +21,7 @@ import { Box, Typography, Button, TextField, InputAdornment } from '@mui/materia
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import PostAddIcon from '@mui/icons-material/PostAdd';
-import GearSpinner from '../components/common/GearSpinner';
+import LoadingState from '../components/common/LoadingState';
 import PendingTrialsView from '../components/dashboard/PendingTrialsView';
 import CompletedTrialsView from '../components/dashboard/CompletedTrialsView';
 import ProgressingTrialsGrid from '../components/dashboard/ProgressingTrialsGrid';
@@ -138,9 +138,7 @@ const Dashboard: React.FC = () => {
             <>
               {/* Stats Grid */}
               {loadingStats ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                  <GearSpinner />
-                </Box>
+                <LoadingState message="Calculating stats..." />
               ) : (
                 <StatsGrid stats={stats} />
               )}

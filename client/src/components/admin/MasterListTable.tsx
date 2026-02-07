@@ -21,7 +21,7 @@ import {
     InputAdornment
 } from '@mui/material';
 import { masterListService } from '../../services/masterListService';
-import LoadingSpinner from '../common/LoadingSpinner';
+import LoadingState from '../common/LoadingState';
 import Swal from 'sweetalert2';
 
 interface MasterListTableProps {
@@ -144,7 +144,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
         }
     };
 
-    if (loading) return <Box display="flex" justifyContent="center" p={4}><LoadingSpinner /></Box>;
+    if (loading) return <LoadingState />;
     if (error) return <Alert severity="error">{error}</Alert>;
 
     return (
@@ -201,11 +201,11 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                     }}
                 />
             </Box>
-            <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)', overflow: 'auto' }}>
+            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 300px)', overflow: 'auto' }}>
                 <Table size="small" stickyHeader>
-                    <TableHead>
+                    <TableHead className="premium-table-head">
                         <TableRow>
-                            <TableCell padding="checkbox" sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>
+                            <TableCell padding="checkbox" className="premium-table-header-cell" sx={{ position: 'sticky', top: 0, zIndex: 10 }}>
                                 <Checkbox
                                     checked={filteredData.length > 0 && selectedItems.size === filteredData.length}
                                     indeterminate={selectedItems.size > 0 && selectedItems.size < filteredData.length}
@@ -213,10 +213,10 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                     size="small"
                                 />
                             </TableCell>
-                            <TableCell sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>PATTERN CODE</TableCell>
-                            <TableCell sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>PART NAME</TableCell>
-                            <TableCell sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>GRADE</TableCell>
-                            <TableCell align="center" sx={{ bgcolor: '#fafafa', position: 'sticky', top: 0, zIndex: 10, fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>STATUS</TableCell>
+                            <TableCell className="premium-table-header-cell" sx={{ position: 'sticky', top: 0, zIndex: 10 }}>PATTERN CODE</TableCell>
+                            <TableCell className="premium-table-header-cell" sx={{ position: 'sticky', top: 0, zIndex: 10 }}>PART NAME</TableCell>
+                            <TableCell className="premium-table-header-cell" sx={{ position: 'sticky', top: 0, zIndex: 10 }}>GRADE</TableCell>
+                            <TableCell align="center" className="premium-table-header-cell" sx={{ position: 'sticky', top: 0, zIndex: 10 }}>STATUS</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -224,19 +224,20 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                             filteredData.map((row, index) => (
                                 <TableRow
                                     key={row.id || index}
-                                    hover
+                                    className="premium-table-row"
                                     selected={selectedItems.has(row.id)}
                                 >
-                                    <TableCell padding="checkbox">
+                                    <TableCell padding="checkbox" className="premium-table-cell">
                                         <Checkbox
                                             checked={selectedItems.has(row.id)}
                                             onChange={() => handleSelectItem(row.id)}
+                                            size="small"
                                         />
                                     </TableCell>
-                                    <TableCell>{row.pattern_code}</TableCell>
-                                    <TableCell>{row.part_name}</TableCell>
-                                    <TableCell>{row.material_grade}</TableCell>
-                                    <TableCell align="center">
+                                    <TableCell className="premium-table-cell-bold">{row.pattern_code}</TableCell>
+                                    <TableCell className="premium-table-cell">{row.part_name}</TableCell>
+                                    <TableCell className="premium-table-cell">{row.material_grade}</TableCell>
+                                    <TableCell align="center" className="premium-table-cell">
                                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                                             <span
                                                 onClick={async (e) => {
@@ -261,20 +262,8 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                                                         });
                                                     }
                                                 }}
-                                                style={{
-                                                    padding: '4px 12px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '11px',
-                                                    fontWeight: 600,
-                                                    cursor: 'pointer',
-                                                    backgroundColor: (row.is_active === true || Number(row.is_active) === 1) ? '#e6f4ea' : '#fce8e6',
-                                                    color: (row.is_active === true || Number(row.is_active) === 1) ? '#1e7e34' : '#c62828',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    whiteSpace: 'nowrap',
-                                                    transition: 'all 0.2s',
-                                                }}
+                                                className={`status-pill ${(row.is_active === true || Number(row.is_active) === 1) ? 'status-pill-active' : 'status-pill-inactive'}`}
+                                                style={{ cursor: 'pointer' }}
                                             >
                                                 {(row.is_active === true || Number(row.is_active) === 1) ? (
                                                     <><CheckCircleIcon sx={{ fontSize: '13px' }} /> Active</>
@@ -298,7 +287,9 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} align="center">No data found</TableCell>
+                                <TableCell colSpan={5} align="center" className="premium-table-cell" sx={{ py: 4, color: '#94a3b8' }}>
+                                    No data found matching your search.
+                                </TableCell>
                             </TableRow>
                         )}
                     </TableBody>

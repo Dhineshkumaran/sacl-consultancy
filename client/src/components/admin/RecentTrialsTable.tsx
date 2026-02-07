@@ -13,8 +13,9 @@ import {
   DialogContent,
   DialogActions,
   Box,
+  Typography,
 } from '@mui/material';
-import GearSpinner from '../common/GearSpinner';
+import LoadingState from '../common/LoadingState';
 import { trialService } from '../../services/trialService';
 import DocumentViewer from '../common/DocumentViewer';
 
@@ -69,81 +70,59 @@ const RecentTrialsTable: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-        <GearSpinner />
-      </Box>
-    );
+    return <LoadingState message="Fetching trials..." />;
   }
 
   return (
     <>
-      <TableContainer
-        sx={{
-          marginTop: '0px', // Removed top margin as it's inside a container now
-          borderTop: '1px solid #e0e0e0'
-        }}
-      >
+      <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
         <Table stickyHeader size="medium">
-          <TableHead>
+          <TableHead className="premium-table-head">
             <TableRow>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Trial ID</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Part Name</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Pattern Code</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Grade</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Department</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6' }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem', color: '#95a5a6', textAlign: 'center' }}>Report</TableCell>
+              <TableCell className="premium-table-header-cell">Trial ID</TableCell>
+              <TableCell className="premium-table-header-cell">Part Name</TableCell>
+              <TableCell className="premium-table-header-cell">Pattern Code</TableCell>
+              <TableCell className="premium-table-header-cell">Grade</TableCell>
+              <TableCell className="premium-table-header-cell">Date</TableCell>
+              <TableCell className="premium-table-header-cell">Department</TableCell>
+              <TableCell className="premium-table-header-cell">Status</TableCell>
+              <TableCell className="premium-table-header-cell" style={{ textAlign: 'center' }}>Report</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {trials.length > 0 ? (
               trials.map((trial) => (
-                <TableRow key={trial.trial_id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                  <TableCell sx={{ fontWeight: 600, color: '#2c3e50' }}>
+                <TableRow key={trial.trial_id} className="premium-table-row">
+                  <TableCell className="premium-table-cell-bold">
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#f39c12' }} /> {/* Orange dot equivalent */}
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#f39c12' }} />
                       {trial.trial_id}
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: '#555' }}>
+                  <TableCell className="premium-table-cell">
                     <Box sx={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {trial.part_name}
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: '#555' }}>{trial.pattern_code}</TableCell>
-                  <TableCell sx={{ color: '#555' }}>{trial.material_grade}</TableCell>
-                  <TableCell sx={{ color: '#555' }}>{new Date(trial.date_of_sampling).toLocaleDateString('en-GB')}</TableCell>
-                  <TableCell>
-                    <Box sx={{ fontWeight: 500, color: '#3498db' }}>
+                  <TableCell className="premium-table-cell">{trial.pattern_code}</TableCell>
+                  <TableCell className="premium-table-cell">{trial.material_grade}</TableCell>
+                  <TableCell className="premium-table-cell">{new Date(trial.date_of_sampling).toLocaleDateString('en-GB')}</TableCell>
+                  <TableCell className="premium-table-cell">
+                    <Box sx={{ fontWeight: 600, color: '#3498db' }}>
                       {trial.department || 'N/A'}
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    {/* Status Pill matching Master List style */}
+                  <TableCell className="premium-table-cell">
                     <span
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '20px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        backgroundColor:
-                          trial.status?.toUpperCase() === 'CLOSED' ? '#e6f4ea' :
-                            trial.status?.toUpperCase() === 'CREATED' ? '#e1f5fe' :
-                              '#fff3cd',
-                        color:
-                          trial.status?.toUpperCase() === 'CLOSED' ? '#1e7e34' :
-                            trial.status?.toUpperCase() === 'CREATED' ? '#0288d1' :
-                              '#856404',
-                        display: 'inline-block',
-                        whiteSpace: 'nowrap'
-                      }}
+                      className={`status-pill ${trial.status?.toUpperCase() === 'CLOSED' ? 'status-pill-success' :
+                        trial.status?.toUpperCase() === 'CREATED' ? 'status-pill-info' :
+                          'status-pill-warning'
+                        }`}
                     >
                       {trial.status || 'PENDING'}
                     </span>
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell className="premium-table-cell" align="center">
                     {
                       trial.status === 'CLOSED' && trial.file_base64 ? (
                         <Button
@@ -166,14 +145,16 @@ const RecentTrialsTable: React.FC = () => {
                         >
                           View
                         </Button>
-                      ) : "Report not available"
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">N/A</Typography>
+                      )
                     }
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} sx={{ textAlign: 'center', padding: '30px', color: '#999' }}>
+                <TableCell colSpan={8} align="center" className="premium-table-cell" sx={{ py: 6 }}>
                   No trials found
                 </TableCell>
               </TableRow>

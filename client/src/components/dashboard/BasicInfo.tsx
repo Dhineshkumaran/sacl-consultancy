@@ -20,7 +20,6 @@ import {
   Collapse,
 } from "@mui/material";
 import LoadingState from "../common/LoadingState";
-import GearSpinner from "../common/GearSpinner";
 import DocumentViewer from "../common/DocumentViewer";
 import { COLORS, appTheme } from "../../theme/appTheme";
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
@@ -237,7 +236,7 @@ const PatternDatasheetSection = ({ patternCode, data }: { patternCode: string, d
     }
   }, [patternCode, data]);
 
-  if (loading) return <Box sx={{ p: 2, textAlign: 'center' }}><div style={{ display: 'inline-block', transform: 'scale(0.8)' }}><GearSpinner /></div></Box>;
+  if (loading) return <LoadingState size={24} message="Fetching datasheet..." />;
 
   if (!patternData || Object.keys(patternData).length === 0) {
     return (

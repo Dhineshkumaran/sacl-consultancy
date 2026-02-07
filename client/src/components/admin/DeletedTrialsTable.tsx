@@ -13,7 +13,7 @@ import {
     Box,
     Chip
 } from '@mui/material';
-import GearSpinner from '../common/GearSpinner';
+import LoadingState from '../common/LoadingState';
 import RestoreIcon from '@mui/icons-material/Restore';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Swal from 'sweetalert2';
@@ -84,11 +84,7 @@ const DeletedTrialsTable: React.FC = () => {
     };
 
     if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <GearSpinner />
-            </Box>
-        );
+        return <LoadingState message="Fetching deleted trials..." />;
     }
 
     if (deletedTrials.length === 0) {
@@ -102,41 +98,39 @@ const DeletedTrialsTable: React.FC = () => {
     }
 
     return (
-        <TableContainer component={Paper} elevation={0}>
-            <Table sx={{ minWidth: 650 }}>
-                <TableHead sx={{ bgcolor: '#f8f9fa' }}>
+        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
+            <Table sx={{ minWidth: 650 }} stickyHeader>
+                <TableHead className="premium-table-head">
                     <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>Trial ID</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Part Name</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Deleted By</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Deleted At</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Actions</TableCell>
+                        <TableCell className="premium-table-header-cell">Trial ID</TableCell>
+                        <TableCell className="premium-table-header-cell">Part Name</TableCell>
+                        <TableCell className="premium-table-header-cell">Status</TableCell>
+                        <TableCell className="premium-table-header-cell">Deleted By</TableCell>
+                        <TableCell className="premium-table-header-cell">Deleted At</TableCell>
+                        <TableCell className="premium-table-header-cell" align="right">Actions</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {deletedTrials.map((trial) => (
-                        <TableRow key={trial.trial_id} hover>
-                            <TableCell sx={{ fontWeight: 'bold' }}>{trial.trial_id}</TableCell>
-                            <TableCell>{trial.part_name}</TableCell>
-                            <TableCell>
-                                <Chip
-                                    label={trial.status}
-                                    size="small"
-                                    variant="outlined"
-                                    color={trial.status === 'CLOSED' ? 'success' : 'default'}
-                                />
+                        <TableRow key={trial.trial_id} className="premium-table-row">
+                            <TableCell className="premium-table-cell-bold">{trial.trial_id}</TableCell>
+                            <TableCell className="premium-table-cell">{trial.part_name}</TableCell>
+                            <TableCell className="premium-table-cell">
+                                <span className={`status-pill ${trial.status === 'CLOSED' ? 'status-pill-success' : 'status-pill-info'}`}>
+                                    {trial.status}
+                                </span>
                             </TableCell>
-                            <TableCell>{trial.deleted_by || 'Unknown'}</TableCell>
-                            <TableCell>
+                            <TableCell className="premium-table-cell">{trial.deleted_by || 'Unknown'}</TableCell>
+                            <TableCell className="premium-table-cell">
                                 {trial.deleted_at ? new Date(trial.deleted_at).toLocaleString() : '-'}
                             </TableCell>
-                            <TableCell align="right">
+                            <TableCell className="premium-table-cell" align="right">
                                 <Tooltip title="Restore Trial Card">
                                     <IconButton
                                         onClick={() => handleRestore(trial.trial_id)}
                                         color="primary"
                                         size="small"
+                                        sx={{ mr: 1 }}
                                     >
                                         <RestoreIcon />
                                     </IconButton>
