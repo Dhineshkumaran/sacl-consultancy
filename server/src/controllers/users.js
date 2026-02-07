@@ -225,13 +225,9 @@ export const getProfilePhoto = async (req, res, next) => {
 
     const [rows] = await Client.query('SELECT profile_photo FROM users WHERE user_id = @user_id', { user_id: user.user_id });
 
-    if (!rows || rows.length === 0) {
-        throw new CustomError('User not found', 404);
-    }
+    const profilePhoto = rows[0]?.profile_photo ?? null;
 
-    const profilePhoto = rows[0].profile_photo;
-
-    return res.json({ success: true, profilePhoto: profilePhoto || null });
+    return res.json({ success: true, profilePhoto: profilePhoto });
 };
 
 export const adminUpdateUser = async (req, res, next) => {
