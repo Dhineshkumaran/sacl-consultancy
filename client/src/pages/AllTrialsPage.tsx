@@ -390,7 +390,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                             <TableRow>
                                                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={user?.role === 'Admin' ? 10 : 8} className="premium-table-cell">
                                                     <Collapse in={expandedTrialId === trial.trial_id} timeout="auto" unmountOnExit>
-                                                        <Box sx={{ margin: 2, bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
+                                                        <Box sx={{ bgcolor: '#f8fafc', p: 2, borderRadius: 2 }}>
                                                             <Typography variant="h6" gutterBottom component="div" sx={{ fontSize: '1rem', fontWeight: 'bold', mb: 2 }}>
                                                                 Detailed Progress History
                                                             </Typography>
@@ -399,25 +399,24 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                             ) : (trialProgressData[trial.trial_id] && trialProgressData[trial.trial_id].length > 0) ? (
                                                                 <Box sx={{
                                                                     display: 'flex',
-                                                                    flexDirection: { xs: 'row', md: 'column' },
-                                                                    overflowX: { xs: 'auto', md: 'visible' },
+                                                                    flexDirection: 'row',
+                                                                    overflowX: 'auto',
                                                                     gap: 2,
-                                                                    pb: { xs: 1, md: 0 },
+                                                                    pb: 1,
                                                                     '&::-webkit-scrollbar': { height: '8px' },
                                                                     '&::-webkit-scrollbar-track': { background: '#f1f1f1', borderRadius: '4px' },
-                                                                    '&::-webkit-scrollbar-thumb': { background: '#888', borderRadius: '4px' },
-                                                                    '&::-webkit-scrollbar-thumb:hover': { background: '#555' },
+                                                                    '&::-webkit-scrollbar-thumb': { background: '#555' },
                                                                 }}>
                                                                     {trialProgressData[trial.trial_id].map((progress: ProgressItem, index: number) => (
-                                                                        <Box key={index} sx={{ minWidth: { xs: '300px', md: '100%' }, flex: { xs: '0 0 auto', md: '1 1 auto' } }}>
+                                                                        <Box key={index} sx={{ minWidth: '100%', flex: 1 }}>
                                                                             <Card variant="outlined" sx={{ borderRadius: 2 }}>
                                                                                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                                                                                     <Grid container alignItems="center" spacing={2}>
-                                                                                        <Grid size={{ xs: 12, sm: 3 }}>
+                                                                                        <Grid size={{ xs: 3 }}>
                                                                                             <Typography variant="subtitle2" color="textSecondary">Department</Typography>
                                                                                             <Typography variant="body2" fontWeight="medium">{progress.department_name || `Dept ID: ${progress.department_id}`}</Typography>
                                                                                         </Grid>
-                                                                                        <Grid size={{ xs: 12, sm: 2 }}>
+                                                                                        <Grid size={{ xs: 2 }}>
                                                                                             <Typography variant="subtitle2" color="textSecondary">Status</Typography>
                                                                                             <Chip
                                                                                                 label={progress.approval_status}
@@ -464,19 +463,19 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                                                                 </Tooltip>
                                                                                             )}
                                                                                         </Grid>
-                                                                                        <Grid size={{ xs: 12, sm: 3 }}>
+                                                                                        <Grid size={{ xs: 3 }}>
                                                                                             <Typography variant="subtitle2" color="textSecondary">Completed At</Typography>
                                                                                             <Typography variant="body2">
                                                                                                 {progress.completed_at ? new Date(progress.completed_at).toLocaleString() : '-'}
                                                                                             </Typography>
                                                                                         </Grid>
-                                                                                        <Grid size={{ xs: 12, sm: 2 }}>
+                                                                                        <Grid size={{ xs: 2 }}>
                                                                                             <Typography variant="subtitle2" color="textSecondary">Remarks</Typography>
                                                                                             <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
                                                                                                 {progress.remarks || 'No remarks'}
                                                                                             </Typography>
                                                                                         </Grid>
-                                                                                        <Grid size={{ xs: 12, sm: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                                                                        <Grid size={{ xs: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                                                                             <Button
                                                                                                 variant="contained"
                                                                                                 size="small"

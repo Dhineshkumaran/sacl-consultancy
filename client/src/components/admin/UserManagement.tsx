@@ -147,7 +147,7 @@ const UserManagement: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 0 }}>
       <Box sx={{
         display: 'flex',
         justifyContent: 'flex-end',

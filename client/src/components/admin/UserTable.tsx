@@ -76,7 +76,7 @@ const UserTable: React.FC<UserTableProps> = ({
   };
 
   return (
-    <Box className="user-table-container" sx={{ p: 0, width: '100%' }}>
+    <Box className="user-table-container" sx={{ p: 2, width: '100%' }}>
       {/* Filter Section */}
       <Box sx={{
         display: 'flex',
