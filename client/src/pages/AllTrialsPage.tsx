@@ -218,9 +218,6 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                             boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
                         }}>
                             <LoadingState />
-                            <Typography variant="body2" sx={{ mt: 2, color: '#E67E22', fontWeight: 600 }}>
-                                Loading trials repository...
-                            </Typography>
                         </Box>
                     ) : (
                         <>
