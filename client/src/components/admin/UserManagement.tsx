@@ -10,6 +10,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Box, Typography, useMediaQuery, Button } from '@mui/material';
 import { appTheme } from '../../theme/appTheme';
+import LoadingState from '../common/LoadingState';
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -230,19 +231,26 @@ const UserManagement: React.FC = () => {
       )}
 
       <Box sx={{
-        px: { xs: 2, sm: 3 },
+        px: 0,
         pb: 5,
-        mt: 1
+        mt: 1,
+        width: '100%'
       }}>
-        <UserTable
-          users={users}
-          loading={loading}
-          onToggleStatus={handleToggleStatus}
-          onEdit={handleEdit}
-          selectedUsers={selectedUsers}
-          onSelectUser={handleSelectUser}
-          onSelectAllUsers={handleSelectAllUsers}
-        />
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <LoadingState message="Loading users..." />
+          </Box>
+        ) : (
+          <UserTable
+            users={users}
+            loading={loading}
+            onToggleStatus={handleToggleStatus}
+            onEdit={handleEdit}
+            selectedUsers={selectedUsers}
+            onSelectUser={handleSelectUser}
+            onSelectAllUsers={handleSelectAllUsers}
+          />
+        )}
       </Box>
 
       {showCreateModal && (

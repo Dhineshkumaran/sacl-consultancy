@@ -76,7 +76,7 @@ const UserTable: React.FC<UserTableProps> = ({
   };
 
   return (
-    <Box className="user-table-container" sx={{ p: { xs: 2, sm: 3 } }}>
+    <Box className="user-table-container" sx={{ p: { xs: 2, sm: 3 }, width: '100%' }}>
       {/* Filter Section */}
       <Box sx={{
         display: 'flex',
@@ -155,8 +155,6 @@ const UserTable: React.FC<UserTableProps> = ({
           maxHeight: 'calc(100vh - 250px)',
           overflow: 'auto',
           position: 'relative',
-          p: 2,
-          pt: 1,
           backgroundColor: '#fff',
           '& .MuiTable-root': {
             borderCollapse: 'separate',
