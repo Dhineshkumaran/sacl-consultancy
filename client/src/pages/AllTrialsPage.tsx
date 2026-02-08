@@ -34,6 +34,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import DescriptionIcon from '@mui/icons-material/Description';
 import DeleteIcon from '@mui/icons-material/Delete';
+import InfoIcon from '@mui/icons-material/Info';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import Swal from 'sweetalert2';
 import { appTheme, COLORS } from '../theme/appTheme';
@@ -433,37 +435,18 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                                 <TableCell className="premium-table-cell">{trial.material_grade}</TableCell>
                                                 <TableCell className="premium-table-cell">{new Date(trial.date_of_sampling).toLocaleDateString('en-GB')}</TableCell>
                                                 <TableCell className="premium-table-cell">
-                                                    <Box sx={{
-                                                        display: 'inline-block',
-                                                        px: 1, py: 0.3,
-                                                        borderRadius: 5,
-                                                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                                                        bgcolor: '#e0f2fe',
-                                                        color: '#0369a1',
-                                                        fontWeight: 500,
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
+                                                    <span className="status-pill status-pill-info">
                                                         {trial.department || 'N/A'}
-                                                    </Box>
+                                                    </span>
                                                 </TableCell>
                                                 <TableCell className="premium-table-cell">
-                                                    <Box sx={{
-                                                        display: 'inline-block',
-                                                        px: 1, py: 0.3,
-                                                        borderRadius: 5,
-                                                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                                                        bgcolor:
-                                                            trial.status === 'CLOSED' ? '#dcfce7' :
-                                                                trial.status === 'CREATED' ? '#e0f2fe' :
-                                                                    '#fff7ed',
-                                                        color:
-                                                            trial.status === 'CLOSED' ? '#166534' :
-                                                                trial.status === 'CREATED' ? '#0369a1' :
-                                                                    '#9a3412',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
+                                                    <span className={`status-pill ${trial.status === 'CLOSED' ? 'status-pill-success' :
+                                                        trial.status === 'CREATED' ? 'status-pill-info' :
+                                                            'status-pill-warning'
+                                                        }`}>
+                                                        {trial.status === 'CLOSED' ? <CheckCircleIcon sx={{ fontSize: '13px' }} /> : <InfoIcon sx={{ fontSize: '13px' }} />}
                                                         {trial.status || 'CREATED'}
-                                                    </Box>
+                                                    </span>
                                                 </TableCell>
                                                 <TableCell align="center" className="premium-table-cell">
                                                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>

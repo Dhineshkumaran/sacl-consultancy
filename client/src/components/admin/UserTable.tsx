@@ -220,39 +220,33 @@ const UserTable: React.FC<UserTableProps> = ({
                 <TableCell className="premium-table-cell">{user.full_name}</TableCell>
                 <TableCell className="premium-table-cell">{user.email}</TableCell>
                 <TableCell className="premium-table-cell">
-                  <Chip
-                    label={user.role}
-                    size="small"
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase',
-                      bgcolor: user.role === 'Admin' ? '#fee2e2' : '#f1f5f9',
-                      color: user.role === 'Admin' ? '#991b1b' : '#475569',
-                      borderRadius: '6px'
-                    }}
-                  />
+                  <span className={`status-pill ${user.role === 'Admin' ? 'status-pill-error' : 'status-pill-info'}`}>
+                    {user.role}
+                  </span>
                 </TableCell>
                 <TableCell className="premium-table-cell">{user.department_name || 'N/A'}</TableCell>
                 <TableCell className="premium-table-cell">
-                  <Chip
-                    label={user.is_active ? 'Active' : 'Inactive'}
-                    size="small"
+                  <span
                     onClick={() => onToggleStatus(user.user_id, !!user.is_active)}
-                    icon={user.is_active ? <CheckCircleIcon style={{ fontSize: '14px', color: 'inherit' }} /> : <CancelIcon style={{ fontSize: '14px', color: 'inherit' }} />}
-                    sx={{
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      bgcolor: user.is_active ? '#dcfce7' : '#fee2e2',
-                      color: user.is_active ? '#166534' : '#991b1b',
-                      '&:hover': {
-                        bgcolor: user.is_active ? '#bbf7d0' : '#fecaca',
-                      }
-                    }}
-                  />
+                    className={`status-pill ${user.is_active ? 'status-pill-active' : 'status-pill-inactive'}`}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {user.is_active ? (
+                      <><CheckCircleIcon sx={{ fontSize: '13px' }} /> Active</>
+                    ) : (
+                      <><CancelIcon sx={{ fontSize: '13px' }} /> Inactive</>
+                    )}
+                  </span>
                 </TableCell>
                 <TableCell className="premium-table-cell" sx={{ textAlign: 'center' }}>
-                  <IconButton onClick={() => onEdit(user)} size="small" sx={{ color: 'primary.main' }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => onEdit(user)}
+                    sx={{
+                      color: '#3498db',
+                      '&:hover': { bgcolor: '#ebf5fb' }
+                    }}
+                  >
                     <EditIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
