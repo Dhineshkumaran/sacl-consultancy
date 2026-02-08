@@ -10,9 +10,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SearchIcon from '@mui/icons-material/Search';
+import LoadingState from '../common/LoadingState';
 
 interface UserTableProps {
   users: User[];
+  loading?: boolean;
   onToggleStatus: (userId: number, currentStatus: boolean) => void;
   onEdit: (user: User) => void;
   selectedUsers?: Set<number>;
@@ -22,6 +24,7 @@ interface UserTableProps {
 
 const UserTable: React.FC<UserTableProps> = ({
   users,
+  loading = false,
   onToggleStatus,
   onEdit,
   selectedUsers = new Set(),
@@ -146,8 +149,38 @@ const UserTable: React.FC<UserTableProps> = ({
         </Typography>
       </Box>
 
-      <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
-        <Table size="small" stickyHeader>
+      <TableContainer
+        className="premium-table-container"
+        sx={{
+          maxHeight: 'calc(100vh - 250px)',
+          overflow: 'auto',
+          position: 'relative',
+          px: 2,
+          pb: 2,
+          '& .MuiTable-root': {
+            borderCollapse: 'separate',
+            borderSpacing: '0 8px', // Optional: adds space between rows if wanted, but user asked for padding btw table and container
+          }
+        }}
+      >
+        {loading ? (
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            bgcolor: 'rgba(255,255,255,0.7)',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 10,
+            borderRadius: '12px'
+          }}>
+            <LoadingState message="Loading users..." />
+          </Box>
+        ) : null}
+        <Table size="small" stickyHeader sx={{ borderCollapse: 'separate', borderSpacing: 0 }}>
           <TableHead className="premium-table-head">
             <TableRow>
               <TableCell className="premium-table-header-cell" sx={{ width: '50px' }}>

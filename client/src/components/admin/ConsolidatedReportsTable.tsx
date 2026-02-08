@@ -70,7 +70,20 @@ const ConsolidatedReportsTable: React.FC = () => {
 
     return (
         <>
-            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
+            <TableContainer
+                className="premium-table-container"
+                sx={{
+                    maxHeight: 'calc(100vh - 400px)',
+                    overflow: 'auto',
+                    p: 2,
+                    pt: 1,
+                    backgroundColor: '#fff',
+                    '& .MuiTable-root': {
+                        borderCollapse: 'separate',
+                        borderSpacing: 0,
+                    }
+                }}
+            >
                 <Table stickyHeader size="medium">
                     <TableHead className="premium-table-head">
                         <TableRow>
@@ -87,19 +100,17 @@ const ConsolidatedReportsTable: React.FC = () => {
                                     <TableCell className="premium-table-cell">{report.part_name}</TableCell>
                                     <TableCell className="premium-table-cell" align="center">
                                         <Button
-                                            variant="outlined"
+                                            variant="contained"
                                             size="small"
                                             onClick={() => handleViewReport(report)}
                                             sx={{
-                                                borderRadius: 1,
+                                                borderRadius: 2,
                                                 textTransform: 'none',
                                                 fontSize: '0.75rem',
-                                                padding: '2px 10px',
-                                                borderColor: '#3498db',
-                                                color: '#3498db',
+                                                px: 2,
+                                                bgcolor: '#E67E22',
                                                 '&:hover': {
-                                                    borderColor: '#2980b9',
-                                                    bgcolor: '#ebf5fb'
+                                                    bgcolor: '#D35400'
                                                 }
                                             }}
                                         >

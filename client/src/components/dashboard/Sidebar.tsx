@@ -142,12 +142,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen = f
                                 }}
                             >
                                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                                    <ListItemIcon sx={{ minWidth: 32, color: isActive ? '#E67E22' : '#888', mr: 1 }}>
+                                    <ListItemIcon sx={{ minWidth: 36, color: isActive ? '#E67E22' : '#888', mr: 1.5 }}>
                                         {item.icon}
                                     </ListItemIcon>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: isActive ? 700 : 600, lineHeight: 1.2 }}>
-                                        {item.label}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: isActive ? 700 : 600, lineHeight: 1.1, mb: 0.5 }}>
+                                            {item.label}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ color: isActive ? '#E67E22' : '#999', lineHeight: 1, opacity: isActive ? 0.9 : 0.8 }}>
+                                            {item.subLabel}
+                                        </Typography>
+                                    </Box>
                                 </Box>
                             </ListItemButton>
                         </ListItem>

@@ -4,7 +4,6 @@ import { apiService } from '../../services/commonService';
 import UserTable from './UserTable';
 import AddUserModal from './AddUserModal';
 import EditUserModal from './EditUserModal';
-import LoadingState from '../common/LoadingState';
 import './UserManagement.css';
 import Swal from 'sweetalert2';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -148,44 +147,32 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const isMobile = useMediaQuery(appTheme.breakpoints.down('sm'));
-
-  if (loading) {
-    return <LoadingState />;
-  }
-
   return (
     <Box sx={{ p: { xs: 2.25, sm: 3 } }}>
       <Box sx={{
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         alignItems: 'center',
         mb: 3,
         flexWrap: 'wrap',
         gap: 2
       }}>
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          color="primary"
-          sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
-        >
-          User Management
-        </Typography>
         <Button
           variant="contained"
-          color="primary"
           onClick={() => setShowCreateModal(true)}
           sx={{
-            textTransform: 'none',
-            fontWeight: 600,
-            borderRadius: 1.5,
-            px: 3,
-            py: 1,
-            boxShadow: '0 4px 12px rgba(30, 58, 138, 0.15)',
+            bgcolor: '#E67E22',
             '&:hover': {
-              boxShadow: '0 6px 16px rgba(30, 58, 138, 0.25)',
-            }
+              bgcolor: '#D35400',
+              boxShadow: '0 6px 16px rgba(230, 126, 34, 0.25)',
+            },
+            textTransform: 'none',
+            fontWeight: 700,
+            borderRadius: 1.5,
+            px: 4,
+            py: 1,
+            boxShadow: '0 4px 12px rgba(230, 126, 34, 0.15)',
+            transition: 'all 0.3s ease'
           }}
         >
           Create New User
@@ -244,6 +231,7 @@ const UserManagement: React.FC = () => {
 
       <UserTable
         users={users}
+        loading={loading}
         onToggleStatus={handleToggleStatus}
         onEdit={handleEdit}
         selectedUsers={selectedUsers}
