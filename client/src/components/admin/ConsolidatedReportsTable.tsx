@@ -74,6 +74,7 @@ const ConsolidatedReportsTable: React.FC = () => {
                     pt: 1,
                     backgroundColor: '#fff',
                     position: 'relative',
+                    minHeight: loading ? '200px' : 'auto',
                     '& .MuiTable-root': {
                         borderCollapse: 'separate',
                         borderSpacing: 0,

@@ -103,26 +103,28 @@ const DeletedTrialsTable: React.FC = () => {
                     <LoadingState message="Fetching deleted trials..." />
                 </Box>
             ) : null}
-            {!loading && deletedTrials.length === 0 ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography variant="body1" color="textSecondary">
-                        No deleted trial cards found.
-                    </Typography>
-                </Box>
-            ) : (
-                <Table sx={{ minWidth: 650 }} stickyHeader>
-                    <TableHead className="premium-table-head">
+            <Table sx={{ minWidth: 650 }} stickyHeader>
+                <TableHead className="premium-table-head">
+                    <TableRow>
+                        <TableCell className="premium-table-header-cell">Trial ID</TableCell>
+                        <TableCell className="premium-table-header-cell">Part Name</TableCell>
+                        <TableCell className="premium-table-header-cell">Status</TableCell>
+                        <TableCell className="premium-table-header-cell">Deleted By</TableCell>
+                        <TableCell className="premium-table-header-cell">Deleted At</TableCell>
+                        <TableCell className="premium-table-header-cell" align="right">Actions</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {!loading && deletedTrials.length === 0 ? (
                         <TableRow>
-                            <TableCell className="premium-table-header-cell">Trial ID</TableCell>
-                            <TableCell className="premium-table-header-cell">Part Name</TableCell>
-                            <TableCell className="premium-table-header-cell">Status</TableCell>
-                            <TableCell className="premium-table-header-cell">Deleted By</TableCell>
-                            <TableCell className="premium-table-header-cell">Deleted At</TableCell>
-                            <TableCell className="premium-table-header-cell" align="right">Actions</TableCell>
+                            <TableCell colSpan={6} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                                <Typography variant="body1" color="textSecondary">
+                                    No deleted trial cards found.
+                                </Typography>
+                            </TableCell>
                         </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {deletedTrials.map((trial) => (
+                    ) : (
+                        deletedTrials.map((trial) => (
                             <TableRow key={trial.trial_id} className="premium-table-row">
                                 <TableCell className="premium-table-cell-bold">{trial.trial_id}</TableCell>
                                 <TableCell className="premium-table-cell">{trial.part_name}</TableCell>
@@ -157,10 +159,10 @@ const DeletedTrialsTable: React.FC = () => {
                                     </Tooltip>
                                 </TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
+                        ))
+                    )}
+                </TableBody>
+            </Table>
         </TableContainer>
     );
 };

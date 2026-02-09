@@ -501,7 +501,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center" className="premium-table-cell" sx={{ py: 5, color: 'text.secondary' }}>
+                                        <TableCell colSpan={user?.role === 'Admin' ? 10 : 8} align="center" className="premium-table-cell" sx={{ py: 5, color: 'text.secondary' }}>
                                             No trials found.
                                         </TableCell>
                                     </TableRow>

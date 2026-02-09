@@ -84,7 +84,7 @@ const RecycleBinTable: React.FC = () => {
     };
 
     return (
-        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative' }}>
+        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative', minHeight: loading ? '200px' : 'auto' }}>
             {loading ? (
                 <Box sx={{
                     display: 'flex',
@@ -103,25 +103,27 @@ const RecycleBinTable: React.FC = () => {
                     <LoadingState message="Fetching deleted reports..." />
                 </Box>
             ) : null}
-            {!loading && deletedTrials.length === 0 ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography variant="body1" color="textSecondary">
-                        Recycle bin is empty.
-                    </Typography>
-                </Box>
-            ) : (
-                <Table sx={{ minWidth: 650 }} stickyHeader>
-                    <TableHead className="premium-table-head">
+            <Table sx={{ minWidth: 650 }} stickyHeader>
+                <TableHead className="premium-table-head">
+                    <TableRow>
+                        <TableCell className="premium-table-header-cell">Trial ID</TableCell>
+                        <TableCell className="premium-table-header-cell">Part Name</TableCell>
+                        <TableCell className="premium-table-header-cell">Deleted By</TableCell>
+                        <TableCell className="premium-table-header-cell">Deleted At</TableCell>
+                        <TableCell className="premium-table-header-cell" align="right">Actions</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {!loading && deletedTrials.length === 0 ? (
                         <TableRow>
-                            <TableCell className="premium-table-header-cell">Trial ID</TableCell>
-                            <TableCell className="premium-table-header-cell">Part Name</TableCell>
-                            <TableCell className="premium-table-header-cell">Deleted By</TableCell>
-                            <TableCell className="premium-table-header-cell">Deleted At</TableCell>
-                            <TableCell className="premium-table-header-cell" align="right">Actions</TableCell>
+                            <TableCell colSpan={5} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                                <Typography variant="body1" color="textSecondary">
+                                    Recycle bin is empty.
+                                </Typography>
+                            </TableCell>
                         </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {deletedTrials.map((trial) => (
+                    ) : (
+                        deletedTrials.map((trial) => (
                             <TableRow key={trial.document_id} className="premium-table-row">
                                 <TableCell className="premium-table-cell-bold">{trial.trial_id}</TableCell>
                                 <TableCell className="premium-table-cell">{trial.part_name}</TableCell>
@@ -151,10 +153,10 @@ const RecycleBinTable: React.FC = () => {
                                     </Tooltip>
                                 </TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
+                        ))
+                    )}
+                </TableBody>
+            </Table>
         </TableContainer>
     );
 };
