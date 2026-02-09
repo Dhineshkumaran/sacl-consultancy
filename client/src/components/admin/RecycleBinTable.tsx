@@ -84,7 +84,7 @@ const RecycleBinTable: React.FC = () => {
     };
 
     return (
-        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative', minHeight: loading ? '200px' : 'auto' }}>
+        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative', minHeight: loading || deletedTrials.length === 0 ? '300px' : 'auto' }}>
             {loading ? (
                 <Box sx={{
                     display: 'flex',
@@ -116,7 +116,7 @@ const RecycleBinTable: React.FC = () => {
                 <TableBody>
                     {!loading && deletedTrials.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                            <TableCell colSpan={5} align="center" className="premium-table-cell" sx={{ py: 12 }}>
                                 <Typography variant="body1" color="textSecondary">
                                     Recycle bin is empty.
                                 </Typography>

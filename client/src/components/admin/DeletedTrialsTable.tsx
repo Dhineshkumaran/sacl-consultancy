@@ -84,7 +84,7 @@ const DeletedTrialsTable: React.FC = () => {
     };
 
     return (
-        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative' }}>
+        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative', minHeight: loading || deletedTrials.length === 0 ? '300px' : 'auto' }}>
             {loading ? (
                 <Box sx={{
                     display: 'flex',
@@ -117,7 +117,7 @@ const DeletedTrialsTable: React.FC = () => {
                 <TableBody>
                     {!loading && deletedTrials.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={6} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                            <TableCell colSpan={6} align="center" className="premium-table-cell" sx={{ py: 12 }}>
                                 <Typography variant="body1" color="textSecondary">
                                     No deleted trial cards found.
                                 </Typography>

@@ -201,7 +201,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                     }}
                 />
             </Box>
-            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 300px)', overflow: 'auto', position: 'relative', minHeight: loading ? '200px' : 'auto' }}>
+            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 300px)', overflow: 'auto', position: 'relative', minHeight: loading || filteredData.length === 0 ? '300px' : 'auto' }}>
                 {loading ? (
                     <Box sx={{
                         display: 'flex',
@@ -305,7 +305,7 @@ const MasterListTable: React.FC<MasterListTableProps> = ({ onEdit }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} align="center" className="premium-table-cell" sx={{ py: 4, color: '#94a3b8' }}>
+                                <TableCell colSpan={5} align="center" className="premium-table-cell" sx={{ py: 12, color: '#94a3b8' }}>
                                     No data found matching your search.
                                 </TableCell>
                             </TableRow>

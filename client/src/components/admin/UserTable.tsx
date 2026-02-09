@@ -156,6 +156,7 @@ const UserTable: React.FC<UserTableProps> = ({
           overflow: 'auto',
           position: 'relative',
           backgroundColor: '#fff',
+          minHeight: loading || filteredUsers.length === 0 ? '300px' : 'auto',
           '& .MuiTable-root': {
             borderCollapse: 'separate',
             borderSpacing: 0,
@@ -254,7 +255,7 @@ const UserTable: React.FC<UserTableProps> = ({
             ))}
             {filteredUsers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} sx={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                <TableCell colSpan={9} align="center" className="premium-table-cell" sx={{ py: 12, color: '#94a3b8' }}>
                   No users found matching the criteria
                 </TableCell>
               </TableRow>

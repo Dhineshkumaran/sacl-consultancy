@@ -265,7 +265,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                         </Box>
                     </Box>
 
-                    <Box sx={{ position: 'relative', minHeight: loading ? '200px' : 'auto' }}>
+                    <Box sx={{ position: 'relative', minHeight: loading || filteredTrials.length === 0 ? '300px' : 'auto' }}>
                         {loading ? (
                             <Box sx={{
                                 display: 'flex',
@@ -501,7 +501,7 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={user?.role === 'Admin' ? 10 : 8} align="center" className="premium-table-cell" sx={{ py: 5, color: 'text.secondary' }}>
+                                        <TableCell colSpan={user?.role === 'Admin' ? 10 : 8} align="center" className="premium-table-cell" sx={{ py: 12, color: 'text.secondary' }}>
                                             No trials found.
                                         </TableCell>
                                     </TableRow>

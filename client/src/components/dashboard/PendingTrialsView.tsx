@@ -103,7 +103,7 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username, departm
             )}
 
             {/* Pending Cards Table */}
-            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 350px)', overflow: 'auto', position: 'relative', minHeight: loading ? '200px' : 'auto' }}>
+            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 350px)', overflow: 'auto', position: 'relative', minHeight: loading || pendingTrials.length === 0 ? '300px' : 'auto' }}>
                 {loading ? (
                     <Box sx={{
                         display: 'flex',
@@ -160,7 +160,7 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username, departm
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={isMobile ? 3 : isTablet ? 5 : 7} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                                <TableCell colSpan={isMobile ? 3 : isTablet ? 5 : 7} align="center" className="premium-table-cell" sx={{ py: 12 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         No pending sample cards at the moment
                                     </Typography>

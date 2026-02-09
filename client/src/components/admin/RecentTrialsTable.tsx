@@ -71,7 +71,7 @@ const RecentTrialsTable: React.FC = () => {
 
   return (
     <>
-      <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative', minHeight: loading ? '200px' : 'auto' }}>
+      <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative', minHeight: loading || trials.length === 0 ? '300px' : 'auto' }}>
         {loading ? (
           <Box sx={{
             display: 'flex',
@@ -168,7 +168,7 @@ const RecentTrialsTable: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                <TableCell colSpan={8} align="center" className="premium-table-cell" sx={{ py: 12 }}>
                   No trials found
                 </TableCell>
               </TableRow>

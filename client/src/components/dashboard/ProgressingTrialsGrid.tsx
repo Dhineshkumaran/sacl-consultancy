@@ -53,7 +53,7 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
 
     return (
         <>
-            <Box sx={{ mb: 3, position: 'relative', minHeight: loadingTrials ? '200px' : 'auto' }}>
+            <Box sx={{ mb: 3, position: 'relative', minHeight: loadingTrials || progressingTrials.length === 0 ? '300px' : 'auto' }}>
                 {loadingTrials ? (
                     <Box sx={{
                         display: 'flex',
@@ -260,7 +260,7 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={departmentId === 8 ? 5 : 9} align="center" sx={{ py: 6, bgcolor: '#f8f9fa !important' }}>
+                                    <TableCell colSpan={departmentId === 8 ? 5 : 9} align="center" sx={{ py: 12, bgcolor: '#f8f9fa !important' }}>
                                         <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
                                             No progressing trials at the moment
                                         </Typography>

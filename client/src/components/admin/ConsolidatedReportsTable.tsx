@@ -74,7 +74,7 @@ const ConsolidatedReportsTable: React.FC = () => {
                     pt: 1,
                     backgroundColor: '#fff',
                     position: 'relative',
-                    minHeight: loading ? '200px' : 'auto',
+                    minHeight: loading || reports.length === 0 ? '300px' : 'auto',
                     '& .MuiTable-root': {
                         borderCollapse: 'separate',
                         borderSpacing: 0,
@@ -136,7 +136,7 @@ const ConsolidatedReportsTable: React.FC = () => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} align="center" className="premium-table-cell" sx={{ py: 6 }}>
+                                <TableCell colSpan={3} align="center" className="premium-table-cell" sx={{ py: 12 }}>
                                     <Typography variant="body2" color="text.secondary">
                                         No consolidated reports found
                                     </Typography>
