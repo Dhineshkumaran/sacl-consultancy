@@ -3,7 +3,6 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableContainer,
     TableHead,
     TableRow,
     Paper,
@@ -64,13 +63,9 @@ const ConsolidatedReportsTable: React.FC = () => {
         });
     };
 
-    if (loading) {
-        return <LoadingState message="Fetching reports..." />;
-    }
-
     return (
         <>
-            <TableContainer
+            <Box
                 className="premium-table-container"
                 sx={{
                     maxHeight: 'calc(100vh - 400px)',
@@ -78,12 +73,31 @@ const ConsolidatedReportsTable: React.FC = () => {
                     p: 2,
                     pt: 1,
                     backgroundColor: '#fff',
+                    position: 'relative',
                     '& .MuiTable-root': {
                         borderCollapse: 'separate',
                         borderSpacing: 0,
                     }
                 }}
             >
+                {loading ? (
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        bgcolor: 'rgba(255,255,255,0.7)',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10,
+                        borderRadius: '12px',
+                        backdropFilter: 'blur(2px)'
+                    }}>
+                        <LoadingState message="Fetching reports..." />
+                    </Box>
+                ) : null}
                 <Table stickyHeader size="medium">
                     <TableHead className="premium-table-head">
                         <TableRow>
@@ -130,7 +144,7 @@ const ConsolidatedReportsTable: React.FC = () => {
                         )}
                     </TableBody>
                 </Table>
-            </TableContainer>
+            </Box>
             <Typography variant="caption" sx={{ display: { xs: 'block', sm: 'none' }, color: 'text.secondary', textAlign: 'center', mt: 1 }}>
                 Swipe to view more
             </Typography>

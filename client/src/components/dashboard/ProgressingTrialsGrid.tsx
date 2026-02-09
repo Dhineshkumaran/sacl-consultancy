@@ -53,7 +53,26 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
 
     return (
         <>
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mb: 3, position: 'relative', minHeight: loadingTrials ? '200px' : 'auto' }}>
+                {loadingTrials ? (
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        bgcolor: 'rgba(255,255,255,0.7)',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10,
+                        borderRadius: '12px',
+                        backdropFilter: 'blur(2px)'
+                    }}>
+                        <LoadingState message="Fetching trials..." />
+                    </Box>
+                ) : null}
+
                 <Typography
                     variant="h6"
                     sx={{
@@ -68,9 +87,7 @@ const ProgressingTrialsGrid: React.FC<ProgressingTrialsGridProps> = ({ departmen
                     Progressing Trials
                 </Typography>
 
-                {loadingTrials ? (
-                    <LoadingState size={24} />
-                ) : progressingTrials.length > 0 ? (
+                {progressingTrials.length > 0 ? (
                     <>
                         <Box sx={{ overflowX: 'auto' }}>
                             <Table

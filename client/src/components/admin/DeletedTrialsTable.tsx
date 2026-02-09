@@ -83,72 +83,84 @@ const DeletedTrialsTable: React.FC = () => {
         }
     };
 
-    if (loading) {
-        return <LoadingState message="Fetching deleted trials..." />;
-    }
-
-    if (deletedTrials.length === 0) {
-        return (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="body1" color="textSecondary">
-                    No deleted trial cards found.
-                </Typography>
-            </Box>
-        );
-    }
-
     return (
-        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto' }}>
-            <Table sx={{ minWidth: 650 }} stickyHeader>
-                <TableHead className="premium-table-head">
-                    <TableRow>
-                        <TableCell className="premium-table-header-cell">Trial ID</TableCell>
-                        <TableCell className="premium-table-header-cell">Part Name</TableCell>
-                        <TableCell className="premium-table-header-cell">Status</TableCell>
-                        <TableCell className="premium-table-header-cell">Deleted By</TableCell>
-                        <TableCell className="premium-table-header-cell">Deleted At</TableCell>
-                        <TableCell className="premium-table-header-cell" align="right">Actions</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {deletedTrials.map((trial) => (
-                        <TableRow key={trial.trial_id} className="premium-table-row">
-                            <TableCell className="premium-table-cell-bold">{trial.trial_id}</TableCell>
-                            <TableCell className="premium-table-cell">{trial.part_name}</TableCell>
-                            <TableCell className="premium-table-cell">
-                                <span className={`status-pill ${trial.status === 'CLOSED' ? 'status-pill-success' : 'status-pill-info'}`}>
-                                    {trial.status}
-                                </span>
-                            </TableCell>
-                            <TableCell className="premium-table-cell">{trial.deleted_by || 'Unknown'}</TableCell>
-                            <TableCell className="premium-table-cell">
-                                {trial.deleted_at ? new Date(trial.deleted_at).toLocaleString() : '-'}
-                            </TableCell>
-                            <TableCell className="premium-table-cell" align="right">
-                                <Tooltip title="Restore Trial Card">
-                                    <IconButton
-                                        onClick={() => handleRestore(trial.trial_id)}
-                                        color="primary"
-                                        size="small"
-                                        sx={{ mr: 1 }}
-                                    >
-                                        <RestoreIcon />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete Permanently">
-                                    <IconButton
-                                        onClick={() => handlePermanentDelete(trial.trial_id)}
-                                        color="error"
-                                        size="small"
-                                    >
-                                        <DeleteForeverIcon />
-                                    </IconButton>
-                                </Tooltip>
-                            </TableCell>
+        <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 400px)', overflow: 'auto', position: 'relative' }}>
+            {loading ? (
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    bgcolor: 'rgba(255,255,255,0.7)',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: 10,
+                    borderRadius: '12px',
+                    backdropFilter: 'blur(2px)'
+                }}>
+                    <LoadingState message="Fetching deleted trials..." />
+                </Box>
+            ) : null}
+            {!loading && deletedTrials.length === 0 ? (
+                <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Typography variant="body1" color="textSecondary">
+                        No deleted trial cards found.
+                    </Typography>
+                </Box>
+            ) : (
+                <Table sx={{ minWidth: 650 }} stickyHeader>
+                    <TableHead className="premium-table-head">
+                        <TableRow>
+                            <TableCell className="premium-table-header-cell">Trial ID</TableCell>
+                            <TableCell className="premium-table-header-cell">Part Name</TableCell>
+                            <TableCell className="premium-table-header-cell">Status</TableCell>
+                            <TableCell className="premium-table-header-cell">Deleted By</TableCell>
+                            <TableCell className="premium-table-header-cell">Deleted At</TableCell>
+                            <TableCell className="premium-table-header-cell" align="right">Actions</TableCell>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHead>
+                    <TableBody>
+                        {deletedTrials.map((trial) => (
+                            <TableRow key={trial.trial_id} className="premium-table-row">
+                                <TableCell className="premium-table-cell-bold">{trial.trial_id}</TableCell>
+                                <TableCell className="premium-table-cell">{trial.part_name}</TableCell>
+                                <TableCell className="premium-table-cell">
+                                    <span className={`status-pill ${trial.status === 'CLOSED' ? 'status-pill-success' : 'status-pill-info'}`}>
+                                        {trial.status}
+                                    </span>
+                                </TableCell>
+                                <TableCell className="premium-table-cell">{trial.deleted_by || 'Unknown'}</TableCell>
+                                <TableCell className="premium-table-cell">
+                                    {trial.deleted_at ? new Date(trial.deleted_at).toLocaleString() : '-'}
+                                </TableCell>
+                                <TableCell className="premium-table-cell" align="right">
+                                    <Tooltip title="Restore Trial Card">
+                                        <IconButton
+                                            onClick={() => handleRestore(trial.trial_id)}
+                                            color="primary"
+                                            size="small"
+                                            sx={{ mr: 1 }}
+                                        >
+                                            <RestoreIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Delete Permanently">
+                                        <IconButton
+                                            onClick={() => handlePermanentDelete(trial.trial_id)}
+                                            color="error"
+                                            size="small"
+                                        >
+                                            <DeleteForeverIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
         </TableContainer>
     );
 };

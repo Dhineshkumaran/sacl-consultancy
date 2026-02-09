@@ -93,10 +93,6 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username, departm
         }
     };
 
-    if (loading) {
-        return <LoadingState message="Fetching pending cards..." />;
-    }
-
     return (
         <Box sx={{ p: { xs: 1, sm: 2.5, md: 3 } }}>
             {/* Error State */}
@@ -107,7 +103,25 @@ const PendingTrialsView: React.FC<PendingTrialsViewProps> = ({ username, departm
             )}
 
             {/* Pending Cards Table */}
-            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 350px)', overflow: 'auto' }}>
+            <TableContainer className="premium-table-container" sx={{ maxHeight: 'calc(100vh - 350px)', overflow: 'auto', position: 'relative' }}>
+                {loading ? (
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        bgcolor: 'rgba(255,255,255,0.7)',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10,
+                        borderRadius: '12px',
+                        backdropFilter: 'blur(2px)'
+                    }}>
+                        <LoadingState message="Fetching pending cards..." />
+                    </Box>
+                ) : null}
                 <Table size={isMobile ? "small" : "medium"} stickyHeader>
                     <TableHead className="premium-table-head">
                         <TableRow>

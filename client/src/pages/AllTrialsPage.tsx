@@ -265,24 +265,25 @@ export default function AllTrialsPage({ embedded = false }: AllTrialsPageProps) 
                         </Box>
                     </Box>
 
-                    <Box sx={{ position: 'relative' }}>
-                        {loading && (
+                    <Box sx={{ position: 'relative', minHeight: loading ? '200px' : 'auto' }}>
+                        {loading ? (
                             <Box sx={{
                                 display: 'flex',
-                                flexDirection: 'column',
                                 justifyContent: 'center',
                                 alignItems: 'center',
+                                bgcolor: 'rgba(255,255,255,0.7)',
                                 position: 'absolute',
                                 top: 0,
                                 left: 0,
                                 right: 0,
                                 bottom: 0,
                                 zIndex: 10,
+                                borderRadius: '12px',
                                 backdropFilter: 'blur(2px)'
                             }}>
-                                <LoadingState />
+                                <LoadingState message="Fetching trials..." />
                             </Box>
-                        )}
+                        ) : null}
                         <Table stickyHeader size="medium">
                             <TableHead className="premium-table-head">
                                 <TableRow>
