@@ -13,6 +13,9 @@ import {
     DialogActions,
     Box,
     Typography,
+    TableContainer,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
 import LoadingState from '../common/LoadingState';
 import { trialService } from '../../services/trialService';
@@ -30,6 +33,9 @@ const ConsolidatedReportsTable: React.FC = () => {
     const [reports, setReports] = useState<ConsolidatedReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewReport, setViewReport] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -64,21 +70,14 @@ const ConsolidatedReportsTable: React.FC = () => {
     };
 
     return (
-        <>
-            <Box
+        <Box sx={{ p: { xs: 1, sm: 2.5, md: 3 } }}>
+            <TableContainer
                 className="premium-table-container"
                 sx={{
-                    maxHeight: 'calc(100vh - 400px)',
+                    maxHeight: 'calc(100vh - 350px)',
                     overflow: 'auto',
-                    p: 2,
-                    pt: 1,
-                    backgroundColor: '#fff',
                     position: 'relative',
-                    minHeight: loading || reports.length === 0 ? '300px' : 'auto',
-                    '& .MuiTable-root': {
-                        borderCollapse: 'separate',
-                        borderSpacing: 0,
-                    }
+                    minHeight: loading || reports.length === 0 ? '300px' : 'auto'
                 }}
             >
                 {loading ? (
@@ -99,7 +98,7 @@ const ConsolidatedReportsTable: React.FC = () => {
                         <LoadingState message="Fetching reports..." />
                     </Box>
                 ) : null}
-                <Table stickyHeader size="medium">
+                <Table stickyHeader size={isMobile ? "small" : "medium"}>
                     <TableHead className="premium-table-head">
                         <TableRow>
                             <TableCell className="premium-table-header-cell">Pattern Code</TableCell>
@@ -145,7 +144,7 @@ const ConsolidatedReportsTable: React.FC = () => {
                         )}
                     </TableBody>
                 </Table>
-            </Box>
+            </TableContainer>
             <Typography variant="caption" sx={{ display: { xs: 'block', sm: 'none' }, color: 'text.secondary', textAlign: 'center', mt: 1 }}>
                 Swipe to view more
             </Typography>
@@ -164,7 +163,7 @@ const ConsolidatedReportsTable: React.FC = () => {
                     <Button onClick={() => setViewReport(null)}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </>
+        </Box>
     );
 };
 

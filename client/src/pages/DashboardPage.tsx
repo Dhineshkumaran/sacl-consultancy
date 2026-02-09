@@ -269,9 +269,7 @@ const Dashboard: React.FC = () => {
             )}
 
             {(user?.role === 'Admin' || user?.department_id == 2 || user?.department_id == 3) && currentView === 'consolidated-reports' && (
-              <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
-                <ConsolidatedReportsTable />
-              </Box>
+              <ConsolidatedReportsTable />
             )}
 
             {user?.role === 'Admin' && currentView === 'employees' && (
