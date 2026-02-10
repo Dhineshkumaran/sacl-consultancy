@@ -945,42 +945,11 @@ export default function VisualInspection({
                                 <BasicInfo trialId={trialId} />
 
                                 <Paper sx={{ p: { xs: 2, md: 4 }, mb: 4, overflow: 'hidden' }}>
-                                    <SectionTable
-                                        title="NDT INSPECTION ANALYSIS"
-                                        rows={ndtRows}
-                                        onChange={handleNdtChange}
-                                        showTotal={true}
-                                        showAlert={showAlert}
-                                        user={user}
-                                        isEditing={isEditing}
-                                        onSectionChange={handleNdtSectionChange}
-                                    />
-
-                                </Paper>
-
-                                <Paper sx={{ p: { xs: 2, md: 4 }, mb: 4, overflow: 'hidden' }}>
-                                    <SectionTable
-                                        title="HARDNESS INSPECTION"
-                                        rows={hardRows}
-                                        onChange={handleHardnessChange}
-                                        showAlert={showAlert}
-                                        user={user}
-                                        isEditing={isEditing}
-                                        onSectionChange={handleHardnessSectionChange}
-                                    />
-                                </Paper>
-
-                                <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
-
                                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                                         <ScienceIcon sx={{ color: COLORS.blueHeaderText, fontSize: 20 }} />
                                         <Typography variant="subtitle2" sx={{ color: COLORS.primary }}>VISUAL INSPECTION DETAILS</Typography>
                                     </Box>
                                     <Divider sx={{ mb: 2, borderColor: COLORS.border }} />
-
-                                    <Grid container spacing={2} sx={{ mb: 2 }}>
-                                    </Grid>
-
 
                                     <Box sx={{ overflowX: "auto", border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
                                         <Table size="small">
@@ -1170,8 +1139,35 @@ export default function VisualInspection({
                                     >
                                         Add Column
                                     </Button>
+                                </Paper>
 
-                                    <Box sx={{ p: 3, bgcolor: "#fff", borderTop: `1px solid ${COLORS.border}` }}>
+                                <Paper sx={{ p: { xs: 2, md: 4 }, mb: 4, overflow: 'hidden' }}>
+                                    <SectionTable
+                                        title="HARDNESS INSPECTION"
+                                        rows={hardRows}
+                                        onChange={handleHardnessChange}
+                                        showAlert={showAlert}
+                                        user={user}
+                                        isEditing={isEditing}
+                                        onSectionChange={handleHardnessSectionChange}
+                                    />
+                                </Paper>
+
+                                <Paper sx={{ p: { xs: 2, md: 4 }, mb: 4, overflow: 'hidden' }}>
+                                    <SectionTable
+                                        title="NDT INSPECTION ANALYSIS"
+                                        rows={ndtRows}
+                                        onChange={handleNdtChange}
+                                        showTotal={true}
+                                        showAlert={showAlert}
+                                        user={user}
+                                        isEditing={isEditing}
+                                        onSectionChange={handleNdtSectionChange}
+                                    />
+                                </Paper>
+
+                                <Paper sx={{ p: { xs: 2, md: 4 }, overflow: 'hidden' }}>
+                                    <Box sx={{ p: 1, bgcolor: "#fff" }}>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, textTransform: "uppercase" }}>
                                             Attach PDF / Image Files
                                         </Typography>
@@ -1187,7 +1183,7 @@ export default function VisualInspection({
                                     </Box>
 
 
-                                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="stretch" gap={2} sx={{ mt: 2, mb: 4 }}>
+                                    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="flex-end" alignItems="stretch" gap={2} sx={{ mt: 2, mb: 1 }}>
                                         <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2} width={{ xs: '100%', sm: 'auto' }}>
                                             {user?.department_id !== 8 && (
                                                 <ActionButtons
@@ -1221,7 +1217,6 @@ export default function VisualInspection({
                                             )}
                                         </Box>
                                     </Box>
-
                                 </Paper>
 
                                 <PreviewModal
@@ -1274,6 +1269,52 @@ export default function VisualInspection({
                                                 </Box>
                                             )}
 
+                                            {/* Hardness Preview in Modal */}
+                                            {previewPayload?.hard_rows && previewPayload.hard_rows.length > 0 && (
+                                                <Box mt={3}>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>HARDNESS INSPECTION</Typography>
+                                                    <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
+                                                        <Table size="small">
+                                                            <TableHead>
+                                                                <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
+                                                                    {previewPayload?.cols?.map((col: string, i: number) => (
+                                                                        <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{col}</TableCell>
+                                                                    ))}
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
+                                                                </TableRow>
+                                                            </TableHead>
+                                                            <TableBody>
+                                                                {previewPayload?.hard_rows?.map((r: any, idx: number) => {
+                                                                    const vals = (r?.value || "")?.split('|');
+                                                                    return (
+                                                                        <TableRow key={idx}>
+                                                                            <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r?.label}</TableCell>
+                                                                            {previewPayload?.cols?.map((_: any, j: number) => (
+                                                                                <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.75rem', fontFamily: 'Roboto Mono' }}>
+                                                                                    {vals?.[j]?.trim() || "-"}
+                                                                                </TableCell>
+                                                                            ))}
+                                                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700 }}>{r?.total ?? "-"}</TableCell>
+                                                                        </TableRow>
+                                                                    );
+                                                                })}
+                                                                <TableRow>
+                                                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
+                                                                    <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center' }}>                                                                        {previewPayload?.hard_ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                                {previewPayload?.hard_remarks && (
+                                                                    <TableRow>
+                                                                        <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Remarks</TableCell>
+                                                                        <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload?.hard_remarks}</TableCell>                                                                    </TableRow>
+                                                                )}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </Box>
+                                                </Box>
+                                            )}
+
                                             {/* NDT Preview in Modal */}
                                             {previewPayload?.ndt_rows && previewPayload.ndt_rows.length > 0 && (
                                                 <Box mt={3}>
@@ -1314,52 +1355,6 @@ export default function VisualInspection({
                                                                         <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Remarks</TableCell>
                                                                         <TableCell colSpan={(previewPayload?.cols?.length || 0) + 1} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload?.ndt_remarks}</TableCell>
                                                                     </TableRow>
-                                                                )}
-                                                            </TableBody>
-                                                        </Table>
-                                                    </Box>
-                                                </Box>
-                                            )}
-
-                                            {/* Hardness Preview in Modal */}
-                                            {previewPayload?.hard_rows && previewPayload.hard_rows.length > 0 && (
-                                                <Box mt={3}>
-                                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>HARDNESS INSPECTION</Typography>
-                                                    <Box sx={{ overflowX: 'auto', border: `1px solid ${COLORS.border}`, borderRadius: 1 }}>
-                                                        <Table size="small">
-                                                            <TableHead>
-                                                                <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Parameter</TableCell>
-                                                                    {previewPayload?.cols?.map((col: string, i: number) => (
-                                                                        <TableCell key={i} sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>{col}</TableCell>
-                                                                    ))}
-                                                                    <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem', textAlign: 'center' }}>Total</TableCell>
-                                                                </TableRow>
-                                                            </TableHead>
-                                                            <TableBody>
-                                                                {previewPayload?.hard_rows?.map((r: any, idx: number) => {
-                                                                    const vals = (r?.value || "")?.split('|');
-                                                                    return (
-                                                                        <TableRow key={idx}>
-                                                                            <TableCell sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{r?.label}</TableCell>
-                                                                            {previewPayload?.cols?.map((_: any, j: number) => (
-                                                                                <TableCell key={j} sx={{ textAlign: 'center', fontSize: '0.75rem', fontFamily: 'Roboto Mono' }}>
-                                                                                    {vals?.[j]?.trim() || "-"}
-                                                                                </TableCell>
-                                                                            ))}
-                                                                            <TableCell sx={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700 }}>{r?.total ?? "-"}</TableCell>
-                                                                        </TableRow>
-                                                                    );
-                                                                })}
-                                                                <TableRow>
-                                                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Status</TableCell>
-                                                                    <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center' }}>                                                                        {previewPayload?.hard_ok ? <Chip label="OK" color="success" size="small" /> : <Chip label="NOT OK" color="error" size="small" />}
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                                {previewPayload?.hard_remarks && (
-                                                                    <TableRow>
-                                                                        <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>Remarks</TableCell>
-                                                                        <TableCell colSpan={previewPayload?.cols?.length || 0} sx={{ textAlign: 'center', fontSize: '0.75rem' }}>{previewPayload?.hard_remarks}</TableCell>                                                                    </TableRow>
                                                                 )}
                                                             </TableBody>
                                                         </Table>
