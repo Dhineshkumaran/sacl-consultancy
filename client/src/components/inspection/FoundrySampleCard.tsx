@@ -70,141 +70,48 @@ interface PartData {
   chemical_composition: any;
   micro_structure: string;
   tensile: string;
-  impact?: string;
-  hardness: string;
+  yield: string;
+  elongation: string;
+  impact_cold: string;
+  impact_room: string;
+  hardness_surface: string;
+  hardness_core: string;
   xray: string;
   mpi?: string;
   created_at: string;
 }
 
 const parseChemicalComposition = (composition: any) => {
-  const blank = { c: "", si: "", mn: "", p: "", s: "", mg: "", cr: "", cu: "" };
-  if (!composition) return blank;
-  let obj: any = composition;
-  if (typeof composition === "string") {
-    try {
-      obj = JSON.parse(composition);
-    } catch (e) {
-      const result = { ...blank };
-      const parts = composition.split(/\s+(?=[A-Z][a-z]?[a-z]?\s*:)/);
-      parts.forEach(part => {
-        const match = part.match(/^([A-Za-z]+)\s*:\s*(.+?)(?:%|$)/);
-        if (match) {
-          const element = match[1].toLowerCase().trim();
-          const value = match[2].trim();
-          if (element === 'c') result.c = value;
-          else if (element === 'si' || element === 'silicon') result.si = value;
-          else if (element === 'mn') result.mn = value;
-          else if (element === 'p') result.p = value;
-          else if (element === 's') result.s = value;
-          else if (element === 'mg') result.mg = value;
-          else if (element === 'cr') result.cr = value;
-          else if (element === 'cu') result.cu = value;
-        }
-      });
-      return result;
-    }
+  if (!composition) {
+    return {
+      c: "--", si: "--", mn: "--", p: "--", s: "--", mg: "--", cr: "--", cu: "--",
+      nodularity: "--", pearlite: "--", carbide: "--"
+    };
   }
-  if (typeof obj !== "object" || obj === null) return blank;
-  const map: Record<string, any> = {};
-  Object.keys(obj).forEach((k) => {
-    if (typeof k === "string") { map[k.toLowerCase().replace(/\s+/g, "")] = obj[k]; }
-  });
-  const siKeyCandidates = ["si", "silicon"];
-  const getFirst = (keys: string[]) => {
-    for (const k of keys) {
-      if (map[k] !== undefined && map[k] !== null) return String(map[k]);
-    }
-    return "";
-  };
-  return {
-    c: getFirst(["c"]), si: getFirst(siKeyCandidates), mn: getFirst(["mn"]), p: getFirst(["p"]),
-    s: getFirst(["s"]), mg: getFirst(["mg"]), cr: getFirst(["cr"]), cu: getFirst(["cu"]),
-  };
-};
 
-const parseTensileData = (tensile: string) => {
-  if (!tensile) return { tensileStrength: "", yieldStrength: "", elongation: "", impactCold: "", impactRoom: "" };
-  let tensileStrength = "", yieldStrength = "", elongation = "", impactCold = "", impactRoom = "";
-  const spaceSepMatches = tensile.match(/([≥>=]+)?\s*(\d+)\s*(?:MPa|N\/mm²|N\/mm2)?/g);
-  if (spaceSepMatches && spaceSepMatches.length >= 2) {
-    const first = spaceSepMatches[0].match(/([≥>=]+)?\s*(\d+)/);
-    if (first) tensileStrength = (first[1] || "≥") + first[2];
-    const second = spaceSepMatches[1].match(/([≥>=]+)?\s*(\d+)/);
-    if (second) yieldStrength = (second[1] || "≥") + second[2];
-    if (spaceSepMatches.length >= 3) {
-      const third = spaceSepMatches[2].match(/([≥>=]+)?\s*(\d+)/);
-      if (third) elongation = (third[1] || "≥") + third[2];
-    }
-    return { tensileStrength, yieldStrength, elongation, impactCold, impactRoom };
+  try {
+    const data = typeof composition === 'string' ? JSON.parse(composition) : composition;
+    return {
+      c: data.C || data.c || "--",
+      si: data.Si || data.si || "--",
+      mn: data.Mn || data.mn || "--",
+      p: data.P || data.p || "--",
+      s: data.S || data.s || "--",
+      mg: data.Mg || data.mg || "--",
+      cr: data.Cr || data.cr || "--",
+      cu: data.Cu || data.cu || "--",
+      nodularity: data.Nodularity || data.nodularity || "--",
+      pearlite: data.Pearlite || data.pearlite || "--",
+      carbide: data.Carbide || data.carbide || "--"
+    };
+  } catch (e) {
+    return {
+      c: "--", si: "--", mn: "--", p: "--", s: "--", mg: "--", cr: "--", cu: "--",
+      nodularity: "--", pearlite: "--", carbide: "--"
+    };
   }
-  const lines = tensile.split("\n");
-  lines.forEach((line) => {
-    const cleanLine = line.trim();
-    if (cleanLine.match(/\d+\s*(MPa|N\/mm²)/) || cleanLine.includes("Tensile") || cleanLine.match(/[≥>]\s*\d+/)) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !tensileStrength) tensileStrength = `${match[1]}${match[2]}`;
-    }
-    if (cleanLine.includes("Yield")) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !yieldStrength) yieldStrength = `${match[1]}${match[2]}`;
-    }
-    if (cleanLine.includes("Elongation") || cleanLine.includes("%")) {
-      const match = cleanLine.match(/([≥>]?)\s*(\d+)/); if (match && !elongation) elongation = `${match[1]}${match[2]}`;
-    }
-  });
-  return { tensileStrength, yieldStrength, elongation, impactCold, impactRoom };
 };
 
-const parseMicrostructureData = (microstructure: string) => {
-  if (!microstructure) return { nodularity: "--", pearlite: "--", carbide: "--" };
-  let nodularity = "", pearlite = "", carbide = "";
-  const lines = microstructure.split("\n");
-  lines.forEach((line) => {
-    const cleanLine = line.trim().toLowerCase();
-    if (cleanLine.includes("nodularity") || cleanLine.includes("spheroidization")) {
-      const match = cleanLine.match(/([≥≤]?)\s*(\d+)/);
-      if (match) nodularity = `${match[1]}${match[2]}`;
-    }
-    else if (cleanLine.includes("shape") && cleanLine.match(/(\d+)\s*%/)) {
-      const match = cleanLine.match(/([≥≤<>]?)\s*(\d+)\s*%/);
-      if (match && !nodularity) nodularity = `${match[1] || "≥"}${match[2]}`;
-    }
-    if (cleanLine.includes("pearlite") || cleanLine.includes("pearlitic")) {
-      const match = cleanLine.match(/([≥≤<>]?)\s*(\d+)/);
-      if (match) pearlite = `${match[1]}${match[2]}`;
-    }
-    else if (cleanLine.includes("matrix") && cleanLine.includes("ferrite")) {
-      const match = cleanLine.match(/([≥≤<>=]?)\s*(\d+)\s*%/);
-      if (match && !pearlite) pearlite = `${match[1] || "≥"}${match[2]}`;
-    }
-    if (cleanLine.includes("carbide")) {
-      const match = cleanLine.match(/([≥≤<>=]?)\s*(\d+)/);
-      if (match) carbide = `${match[1]}${match[2]}`;
-    }
-  });
-  return { nodularity: nodularity || "--", pearlite: pearlite || "--", carbide: carbide || "--" };
-};
-
-const parseHardnessData = (hardness: string) => {
-  if (!hardness) return { surface: "--", core: "--" };
-  const lines = hardness.split("\n");
-  let surface = "", core = "";
-  lines.forEach((line) => {
-    const cleanLine = line.trim().toLowerCase();
-    if (cleanLine.includes("surface")) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
-      if (match) surface = match[1].replace(/\s+/g, ' ');
-    }
-    else if (cleanLine.includes("core")) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
-      if (match) core = match[1].replace(/\s+/g, ' ');
-    }
-    else if (!surface) {
-      const match = cleanLine.match(/(\d+\s*[-–]\s*\d+|\d+)/);
-      if (match) surface = match[1].replace(/\s+/g, ' ');
-    }
-  });
-  return { surface: surface || "--", core: core || "--" };
-};
 
 const SectionHeader = ({ icon, title, color }: { icon: React.ReactNode, title: string, color: string }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, pb: 1, borderBottom: `2px solid ${color}`, width: '100%' }}>
@@ -425,10 +332,33 @@ function FoundrySampleCard() {
   useEffect(() => {
     if (selectedPart) {
       setSelectedPattern(selectedPart);
-      setChemState(parseChemicalComposition(selectedPart?.chemical_composition));
-      setTensileState(parseTensileData(selectedPart?.tensile));
-      setMicroState(parseMicrostructureData(selectedPart?.micro_structure));
-      setHardnessState(parseHardnessData(selectedPart?.hardness));
+      const parsedChem = parseChemicalComposition(selectedPart.chemical_composition);
+      setChemState({
+        c: parsedChem.c,
+        si: parsedChem.si,
+        mn: parsedChem.mn,
+        p: parsedChem.p,
+        s: parsedChem.s,
+        mg: parsedChem.mg,
+        cr: parsedChem.cr,
+        cu: parsedChem.cu
+      });
+      setTensileState({
+        tensileStrength: selectedPart.tensile || "",
+        yieldStrength: selectedPart.yield || "",
+        elongation: selectedPart.elongation || "",
+        impactCold: selectedPart.impact_cold || "",
+        impactRoom: selectedPart.impact_room || ""
+      });
+      setMicroState({
+        nodularity: parsedChem.nodularity || "--",
+        pearlite: parsedChem.pearlite || "--",
+        carbide: parsedChem.carbide || "--"
+      });
+      setHardnessState({
+        surface: selectedPart.hardness_surface || "--",
+        core: selectedPart.hardness_core || "--"
+      });
     } else { setSelectedPattern(null); }
   }, [selectedPart]);
 

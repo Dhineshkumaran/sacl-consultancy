@@ -111,80 +111,28 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 if (typeof initialData.chemical_composition === 'string') {
                     try {
                         obj = JSON.parse(initialData.chemical_composition);
-                        chemComp = obj;
                     } catch (e) {
-                        const result = { C: '', Si: '', Mn: '', P: '', S: '', Mg: '', Cr: '', Cu: '', Nodularity: '', Pearlite: '', Carbide: '' };
-                        const regex = /([A-Za-z]+)\s*:\s*([^:]+?)(?=\s+[A-Za-z]+\s*:|$)/g;
-                        const matches = [...initialData.chemical_composition.matchAll(regex)];
-
-                        matches.forEach(match => {
-                            const element = match[1].trim();
-                            let value = match[2].trim();
-                            value = value.replace(/%/g, '').trim();
-
-                            if (element.toLowerCase() === 'c' || element.toLowerCase() === 'carbon') result.C = value;
-                            else if (element.toLowerCase() === 'si' || element.toLowerCase() === 'silicon') result.Si = value;
-                            else if (element.toLowerCase() === 'mn' || element.toLowerCase() === 'manganese') result.Mn = value;
-                            else if (element.toLowerCase() === 'p' || element.toLowerCase() === 'phosphorus') result.P = value;
-                            else if (element.toLowerCase() === 's' || element.toLowerCase() === 'sulfur' || element.toLowerCase() === 'sulphur') result.S = value;
-                            else if (element.toLowerCase() === 'mg' || element.toLowerCase() === 'magnesium') result.Mg = value;
-                            else if (element.toLowerCase() === 'cr' || element.toLowerCase() === 'chromium') result.Cr = value;
-                            else if (element.toLowerCase() === 'cu' || element.toLowerCase() === 'copper') result.Cu = value;
-                            else if (element.toLowerCase() === 'nodularity') result.Nodularity = value;
-                            else if (element.toLowerCase() === 'pearlite') result.Pearlite = value;
-                            else if (element.toLowerCase() === 'carbide') result.Carbide = value;
-                        });
-
-                        chemComp = result;
-                        obj = null;
+                        console.error("Failed to parse chemical composition JSON:", e);
+                        obj = {};
                     }
-                } else {
-                    chemComp = obj;
                 }
+
+                chemComp = {
+                    C: obj.C || obj.c || '',
+                    Si: obj.Si || obj.si || '',
+                    Mn: obj.Mn || obj.mn || '',
+                    P: obj.P || obj.p || '',
+                    S: obj.S || obj.s || '',
+                    Mg: obj.Mg || obj.mg || '',
+                    Cr: obj.Cr || obj.cr || '',
+                    Cu: obj.Cu || obj.cu || '',
+                    Nodularity: obj.Nodularity || obj.nodularity || '',
+                    Pearlite: obj.Pearlite || obj.pearlite || '',
+                    Carbide: obj.Carbide || obj.carbide || ''
+                };
             }
 
-            // Tensile Parsing
-            let tensileStr = '', yieldStr = '', elongStr = '';
-            if (initialData.tensile) {
-                const simpleParts = initialData.tensile.trim().split(' ');
 
-                if (simpleParts.length === 3) {
-                    tensileStr = simpleParts[0];
-                    yieldStr = simpleParts[1];
-                    elongStr = simpleParts[2];
-                } else {
-                    tensileStr = initialData.tensile;
-                }
-            }
-
-            // Impact Parsing
-            let impactCold = '', impactRoom = '';
-            if (initialData.impact) {
-                const coldMatch = initialData.impact.match(/Cold:\s*(.*?)(?=\s*Room:|$)/i);
-                if (coldMatch) impactCold = coldMatch[1].trim();
-                const roomMatch = initialData.impact.match(/Room:\s*(.*?)$/i);
-                if (roomMatch) impactRoom = roomMatch[1].trim();
-            }
-
-            // Hardness Parsing
-            let hardSurf = '', hardCore = '';
-            if (initialData.hardness) {
-                const surfMatch = initialData.hardness.match(/Surface:\s*(.*?)(?=\s*Core:|$)/i);
-                if (surfMatch) hardSurf = surfMatch[1].trim();
-                const coreMatch = initialData.hardness.match(/Core:\s*(.*?)$/i);
-                if (coreMatch) hardCore = coreMatch[1].trim();
-            }
-
-            // Xray Parsing
-            let xrayVal = '', mpiVal = '';
-            if (initialData.xray) {
-                const parts = initialData.xray.split('•');
-                const xrayPart = parts.find((p: string) => p.trim().startsWith('X-Ray:'));
-                const mpiPart = parts.find((p: string) => p.trim().startsWith('MPI:'));
-                if (xrayPart) xrayVal = xrayPart.replace('X-Ray:', '').trim();
-                if (mpiPart) mpiVal = mpiPart.replace('MPI:', '').trim();
-                if (!xrayPart && !mpiPart && parts.length === 1) xrayVal = initialData.xray;
-            }
 
             setFormData({
                 pattern_code: initialData.pattern_code || '',
@@ -192,15 +140,15 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 material_grade: initialData.material_grade || '',
                 chemical_composition: chemComp,
                 micro_structure: initialData.micro_structure || '',
-                tensile_strength_min: tensileStr,
-                yield_strength_min: yieldStr,
-                elongation: elongStr,
-                impact_cold: impactCold,
-                impact_room: impactRoom,
-                hardness_surface: hardSurf,
-                hardness_core: hardCore,
-                xray: xrayVal,
-                mpi: mpiVal,
+                tensile_strength_min: initialData.tensile || '',
+                yield_strength_min: initialData.yield || '',
+                elongation: initialData.elongation || '',
+                impact_cold: initialData.impact_cold || '',
+                impact_room: initialData.impact_room || '',
+                hardness_surface: initialData.hardness_surface || '',
+                hardness_core: initialData.hardness_core || '',
+                xray: initialData.xray || '',
+                mpi: initialData.mpi || '',
                 number_of_cavity: initialData.number_of_cavity || '',
                 pattern_plate_thickness_sp: initialData.pattern_plate_thickness_sp || '',
                 pattern_plate_thickness_pp: initialData.pattern_plate_thickness_pp || '',
@@ -212,12 +160,12 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 crush_pin_height_pp: initialData.crush_pin_height_pp || '',
                 core_weight: initialData.core_weight || '',
                 core_mask_weight_sp: initialData.core_mask_weight_sp || '',
-                core_mask_weight_pp: initialData.core_mask_weight_pp || '',
+                core_mask_weight_pp: (initialData as any).core_mask_weight_pp || '',
                 core_mask_thickness: initialData.core_mask_thickness || '',
                 estimated_casting_weight: initialData.estimated_casting_weight || '',
                 estimated_bunch_weight: initialData.estimated_bunch_weight || '',
                 yield_label: initialData.yield_label || '',
-                remarks: initialData.tooling_remarks || initialData.remarks || ''
+                remarks: (initialData as any).tooling_remarks || initialData.remarks || ''
             });
         } else {
             setFormData({
@@ -299,10 +247,15 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 material_grade: formData.material_grade.trim() || null,
                 chemical_composition: Object.keys(chemicalComposition).length > 0 ? chemicalComposition : null,
                 micro_structure: formData.micro_structure.trim() || null,
-                tensile: tensile,
-                impact: impact,
-                hardness: hardness,
-                xray: xray,
+                tensile: formData.tensile_strength_min.trim() || null,
+                yield: formData.yield_strength_min.trim() || null,
+                elongation: formData.elongation.trim() || null,
+                impact_cold: formData.impact_cold.trim() || null,
+                impact_room: formData.impact_room.trim() || null,
+                hardness_surface: formData.hardness_surface.trim() || null,
+                hardness_core: formData.hardness_core.trim() || null,
+                xray: formData.xray.trim() || null,
+                mpi: formData.mpi.trim() || null,
                 number_of_cavity: formData.number_of_cavity,
                 pattern_plate_thickness_sp: formData.pattern_plate_thickness_sp,
                 pattern_plate_thickness_pp: formData.pattern_plate_thickness_pp,

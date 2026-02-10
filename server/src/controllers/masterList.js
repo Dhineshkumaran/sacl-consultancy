@@ -12,9 +12,14 @@ export const getMasterList = async (req, res, next) => {
             m.chemical_composition,
             m.micro_structure,
             m.tensile,
-            m.impact,
-            m.hardness,
+            m.yield,
+            m.elongation,
+            m.impact_cold,
+            m.impact_room,
+            m.hardness_surface,
+            m.hardness_core,
             m.xray,
+            m.mpi,
             m.is_active,
             t.id AS tooling_id,
             t.number_of_cavity,
@@ -48,9 +53,14 @@ export const getMasterList = async (req, res, next) => {
                 m.chemical_composition,
                 m.micro_structure,
                 m.tensile,
-                m.impact,
-                m.hardness,
+                m.yield,
+                m.elongation,
+                m.impact_cold,
+                m.impact_room,
+                m.hardness_surface,
+                m.hardness_core,
                 m.xray,
+                m.mpi,
                 m.is_active,
                 t.id AS tooling_id,
                 t.number_of_cavity,
@@ -95,9 +105,14 @@ export const getMasterByPatternCode = async (req, res, next) => {
             m.chemical_composition,
             m.micro_structure,
             m.tensile,
-            m.impact,
-            m.hardness,
+            m.yield,
+            m.elongation,
+            m.impact_cold,
+            m.impact_room,
+            m.hardness_surface,
+            m.hardness_core,
             m.xray,
+            m.mpi,
             m.is_active,
             t.id AS tooling_id,
             t.number_of_cavity,
@@ -127,7 +142,8 @@ export const getMasterByPatternCode = async (req, res, next) => {
 
 export const createMasterList = async (req, res, next) => {
     const {
-        pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray,
+        pattern_code, part_name, material_grade, chemical_composition, micro_structure,
+        tensile, yield: yield_val, elongation, impact_cold, impact_room, hardness_surface, hardness_core, xray, mpi,
         number_of_cavity, cavity_identification, pattern_material, core_weight, core_mask_thickness,
         estimated_casting_weight, estimated_bunch_weight, pattern_plate_thickness_sp, pattern_plate_weight_sp,
         core_mask_weight_sp, crush_pin_height_sp, pattern_plate_thickness_pp,
@@ -145,9 +161,15 @@ export const createMasterList = async (req, res, next) => {
 
     await Client.transaction(async (trx) => {
         const masterSql = `
-            INSERT INTO master_card (pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray) 
+            INSERT INTO master_card (
+                pattern_code, part_name, material_grade, chemical_composition, micro_structure, 
+                tensile, yield, elongation, impact_cold, impact_room, hardness_surface, hardness_core, xray, mpi
+            ) 
             OUTPUT INSERTED.id
-            VALUES (@pattern_code, @part_name, @material_grade, @chemical_composition, @micro_structure, @tensile, @impact, @hardness, @xray)
+            VALUES (
+                @pattern_code, @part_name, @material_grade, @chemical_composition, @micro_structure, 
+                @tensile, @yield_val, @elongation, @impact_cold, @impact_room, @hardness_surface, @hardness_core, @xray, @mpi
+            )
         `;
 
         const masterResult = await trx.query(masterSql, {
@@ -157,9 +179,14 @@ export const createMasterList = async (req, res, next) => {
             chemical_composition: chemicalCompositionStr,
             micro_structure,
             tensile,
-            impact,
-            hardness,
-            xray
+            yield: yield_val,
+            elongation,
+            impact_cold,
+            impact_room,
+            hardness_surface,
+            hardness_core,
+            xray,
+            mpi
         });
 
         const masterId = masterResult[0][0]?.id;
@@ -230,7 +257,8 @@ export const updateMasterList = async (req, res, next) => {
     id = parseInt(id);
 
     const {
-        pattern_code, part_name, material_grade, chemical_composition, micro_structure, tensile, impact, hardness, xray,
+        pattern_code, part_name, material_grade, chemical_composition, micro_structure,
+        tensile, yield: yield_val, elongation, impact_cold, impact_room, hardness_surface, hardness_core, xray, mpi,
         number_of_cavity, cavity_identification, pattern_material, core_weight, core_mask_thickness,
         estimated_casting_weight, estimated_bunch_weight, pattern_plate_thickness_sp, pattern_plate_weight_sp,
         core_mask_weight_sp, crush_pin_height_sp, pattern_plate_thickness_pp,
@@ -247,7 +275,24 @@ export const updateMasterList = async (req, res, next) => {
         : chemical_composition;
 
     await Client.transaction(async (trx) => {
-        const masterSql = `UPDATE master_card SET pattern_code=@pattern_code, part_name=@part_name, material_grade=@material_grade, chemical_composition=@chemical_composition, micro_structure=@micro_structure, tensile=@tensile, impact=@impact, hardness=@hardness, xray=@xray WHERE id=@id`;
+        const masterSql = `
+            UPDATE master_card SET 
+                pattern_code=@pattern_code, 
+                part_name=@part_name, 
+                material_grade=@material_grade, 
+                chemical_composition=@chemical_composition, 
+                micro_structure=@micro_structure, 
+                tensile=@tensile, 
+                yield=@yield, 
+                elongation=@elongation, 
+                impact_cold=@impact_cold, 
+                impact_room=@impact_room, 
+                hardness_surface=@hardness_surface, 
+                hardness_core=@hardness_core, 
+                xray=@xray, 
+                mpi=@mpi 
+            WHERE id=@id
+        `;
         await trx.query(masterSql, {
             pattern_code,
             part_name,
@@ -255,9 +300,14 @@ export const updateMasterList = async (req, res, next) => {
             chemical_composition: chemicalCompositionStr,
             micro_structure,
             tensile,
-            impact,
-            hardness,
+            yield: yield_val,
+            elongation,
+            impact_cold,
+            impact_room,
+            hardness_surface,
+            hardness_core,
             xray,
+            mpi,
             id
         });
 
