@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { PDFDocument as PDFLib } from 'pdf-lib';
 
 // Helper to fetch data (extracted from the controller logic)
 export const fetchTrialData = async (trial_id, trx) => {
@@ -561,32 +562,58 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
 
     return new Promise((resolve, reject) => {
         doc.on('end', async () => {
-            const pdfBuffer = Buffer.concat(chunks);
-            const base64PDF = pdfBuffer.toString('base64');
-            const fileName = `Trial_Report_${trial_id}.pdf`;
+            let finalBuffer = Buffer.concat(chunks);
 
             try {
-                const [existingReport] = await trx.query(
-                    `SELECT document_id FROM trial_reports WHERE trial_id = @trial_id`,
-                    { trial_id }
-                );
+                const pdfAttachments = (data.documents || []).filter(item => /\.pdf$/i.test(item.file_name));
 
-                if (existingReport && existingReport.length > 0) {
-                    await trx.query(
-                        `UPDATE trial_reports SET document_type = 'FULL_REPORT', file_name = @file_name, file_base64 = @file_base64 
-                         WHERE trial_id = @trial_id`,
-                        { trial_id, file_name: fileName, file_base64: base64PDF }
-                    );
-                } else {
-                    await trx.query(
-                        `INSERT INTO trial_reports (trial_id, document_type, file_name, file_base64) 
-                         VALUES (@trial_id, 'FULL_REPORT', @file_name, @file_base64)`,
-                        { trial_id, file_name: fileName, file_base64: base64PDF }
-                    );
+                if (pdfAttachments.length > 0) {
+                    try {
+                        const mergedPdf = await PDFLib.load(finalBuffer);
+                        for (const item of pdfAttachments) {
+                            try {
+                                const donorPdf = await PDFLib.load(Buffer.from(item.file_base64, 'base64'), { ignoreEncryption: true });
+                                const donorPages = await mergedPdf.copyPages(donorPdf, donorPdf.getPageIndices());
+                                donorPages.forEach((page) => mergedPdf.addPage(page));
+                            } catch (itemErr) {
+                                console.error(`Error merging PDF ${item.file_name}:`, itemErr);
+                            }
+                        }
+                        const savedBytes = await mergedPdf.save();
+                        finalBuffer = Buffer.from(savedBytes);
+                    } catch (libErr) {
+                        console.error("Error during pdf-lib merging:", libErr);
+                    }
                 }
-                resolve(true);
-            } catch (err) {
-                reject(err);
+
+                const base64PDF = finalBuffer.toString('base64');
+                const fileName = `Trial_Report_${trial_id}.pdf`;
+
+                try {
+                    const [existingReport] = await trx.query(
+                        `SELECT document_id FROM trial_reports WHERE trial_id = @trial_id`,
+                        { trial_id }
+                    );
+
+                    if (existingReport && existingReport.length > 0) {
+                        await trx.query(
+                            `UPDATE trial_reports SET document_type = 'FULL_REPORT', file_name = @file_name, file_base64 = @file_base64 
+                         WHERE trial_id = @trial_id`,
+                            { trial_id, file_name: fileName, file_base64: base64PDF }
+                        );
+                    } else {
+                        await trx.query(
+                            `INSERT INTO trial_reports (trial_id, document_type, file_name, file_base64) 
+                         VALUES (@trial_id, 'FULL_REPORT', @file_name, @file_base64)`,
+                            { trial_id, file_name: fileName, file_base64: base64PDF }
+                        );
+                    }
+                    resolve(true);
+                } catch (err) {
+                    reject(err);
+                }
+            } catch (outerErr) {
+                reject(outerErr);
             }
         });
         doc.on('error', reject);
