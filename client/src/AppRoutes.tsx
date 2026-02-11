@@ -50,7 +50,7 @@ const AppRoutes: React.FC = () => {
             } />
 
             <Route path="/material-correction" element={
-                <ProtectedRoute requiredDepartment={[1, 3, 8]}><MaterialCorrection /></ProtectedRoute>
+                <ProtectedRoute requiredDepartment={[1, 3, 6, 7, 8]}><MaterialCorrection /></ProtectedRoute>
             } />
 
             <Route path="/visual-inspection" element={
