@@ -87,7 +87,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
         setFormData((prev: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
             ...prev,
             chemical_composition: {
-                ...prev.chemical_composition,
+                ...(prev?.chemical_composition || {}),
                 [element]: value
             }
         }));
@@ -118,21 +118,19 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                 }
 
                 chemComp = {
-                    C: obj.C || obj.c || '',
-                    Si: obj.Si || obj.si || '',
-                    Mn: obj.Mn || obj.mn || '',
-                    P: obj.P || obj.p || '',
-                    S: obj.S || obj.s || '',
-                    Mg: obj.Mg || obj.mg || '',
-                    Cr: obj.Cr || obj.cr || '',
-                    Cu: obj.Cu || obj.cu || '',
-                    Nodularity: obj.Nodularity || obj.nodularity || '',
-                    Pearlite: obj.Pearlite || obj.pearlite || '',
-                    Carbide: obj.Carbide || obj.carbide || ''
+                    C: obj?.C || obj?.c || '',
+                    Si: obj?.Si || obj?.si || '',
+                    Mn: obj?.Mn || obj?.mn || '',
+                    P: obj?.P || obj?.p || '',
+                    S: obj?.S || obj?.s || '',
+                    Mg: obj?.Mg || obj?.mg || '',
+                    Cr: obj?.Cr || obj?.cr || '',
+                    Cu: obj?.Cu || obj?.cu || '',
+                    Nodularity: obj?.Nodularity || obj?.nodularity || '',
+                    Pearlite: obj?.Pearlite || obj?.pearlite || '',
+                    Carbide: obj?.Carbide || obj?.carbide || ''
                 };
             }
-
-
 
             setFormData({
                 pattern_code: initialData.pattern_code || '',
@@ -210,9 +208,11 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
 
         try {
             const chemicalComposition: Record<string, string> = {};
-            Object.entries(formData.chemical_composition).forEach(([element, value]) => {
-                if (typeof value === 'string' && value.trim() !== '') {
-                    chemicalComposition[element] = value.trim();
+            const chemData = formData.chemical_composition || {};
+            Object.entries(chemData).forEach(([element, value]) => {
+                const stringValue = String(value || "");
+                if (stringValue.trim() !== '') {
+                    chemicalComposition[element] = stringValue.trim();
                 }
             });
 
@@ -490,7 +490,7 @@ const AddMasterModal: React.FC<AddMasterModalProps> = ({ isOpen, onClose, initia
                                     {chemicalElements.map((element) => (
                                         <TableCell key={element} align="center" sx={{ p: 0.5 }}>
                                             <TextField
-                                                value={formData.chemical_composition[element]}
+                                                value={formData.chemical_composition?.[element] || ""}
                                                 onChange={(e) => handleChemicalChange(element, e.target.value)}
                                                 placeholder="--"
                                                 size="small"
