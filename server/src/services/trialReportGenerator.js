@@ -1,5 +1,4 @@
 import PDFDocument from 'pdfkit';
-import { PDFDocument as PDFLib } from 'pdf-lib';
 import logger from '../config/logger.js';
 
 // Helper to fetch data (extracted from the controller logic)
@@ -565,28 +564,6 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
             let finalBuffer = Buffer.concat(chunks);
 
             try {
-                const pdfAttachments = (data.documents || []).filter(item => /\.pdf$/i.test(item.file_name));
-
-                if (pdfAttachments.length > 0) {
-                    try {
-                        const mergedPdf = await PDFLib.load(finalBuffer);
-                        for (const item of pdfAttachments) {
-                            try {
-                                const base64Data = item.file_base64.replace(/^data:application\/pdf;base64,/, "");
-                                const donorPdf = await PDFLib.load(Buffer.from(base64Data, 'base64'), { ignoreEncryption: true });
-                                const donorPages = await mergedPdf.copyPages(donorPdf, donorPdf.getPageIndices());
-                                donorPages.forEach((page) => mergedPdf.addPage(page));
-                            } catch (itemErr) {
-                                logger.error(`Error merging PDF ${item.file_name}:`, itemErr);
-                            }
-                        }
-                        const savedBytes = await mergedPdf.save();
-                        finalBuffer = Buffer.from(savedBytes);
-                    } catch (libErr) {
-                        reject(libErr);
-                    }
-                }
-
                 const base64PDF = finalBuffer.toString('base64');
                 const fileName = `Trial_Report_${trial_id}.pdf`;
 
