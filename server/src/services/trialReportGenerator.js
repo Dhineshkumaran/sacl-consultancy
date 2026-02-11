@@ -37,7 +37,7 @@ export const fetchTrialData = async (trial_id, trx) => {
         `SELECT * FROM material_correction WHERE trial_id = @trial_id`, { trial_id }
     );
     const [documents] = await trx.query(
-        `SELECT * FROM documents WHERE trial_id = @trial_id ORDER BY document_type`, { trial_id }
+        `SELECT * FROM documents WHERE trial_id = @trial_id ORDER BY uploaded_at ASC, document_type`, { trial_id }
     );
 
     return {
