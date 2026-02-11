@@ -510,7 +510,7 @@ export const generateAndStoreTrialReport = async (trial_id, trx) => {
         for (const [category, docs] of Object.entries(groupedDocs)) {
             doc.addPage();
             doc.font('Helvetica-Bold').fontSize(12).fillColor('#2c3e50')
-                .text(`ATTACHMENTS: ${category.replace(/_/g, ' ')}`, 30, 25);
+                .text(`ATTACHMENTS: ${category.replace(/_/g, ' ')}`, 30, 25, { align: 'center', width: 535 });
             doc.moveTo(30, 40).lineTo(565, 40).strokeColor('#2c3e50').stroke();
 
             let currentAttY = 55;
